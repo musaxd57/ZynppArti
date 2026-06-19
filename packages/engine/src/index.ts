@@ -6,3 +6,4 @@ export { drawWall } from './render-wall';
 export { EntityLayer } from './entity-layer';
 export { createCanvasApp } from './canvas-app';
 export type { CanvasHandle } from './canvas-app';
+export type { SceneTool, ScenePointer } from './tool';

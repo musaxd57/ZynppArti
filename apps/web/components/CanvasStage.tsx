@@ -1,43 +1,62 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createCanvasApp, type CanvasHandle } from '@zynpparti/engine';
-import { EntityStore } from '@zynpparti/document';
+import { EntityStore, History } from '@zynpparti/document';
+import { ToolManager, createSnapper } from '@zynpparti/tools';
 import { seedDemo } from '@/lib/demo-seed';
+import { Toolbar } from './Toolbar';
 
 /**
- * Engine canvas motorunu DOM'a bağlayan ince React sarmalı.
+ * Engine canvas + araç yöneticisini DOM'a bağlayan React sarmalı.
  * PixiJS yalnızca istemcide çalışır → 'use client' + useEffect içinde mount edilir.
  */
 export function CanvasStage() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [ui, setUi] = useState<{ manager: ToolManager; history: History } | null>(null);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    // Doküman store'u + geçici demo duvarlar (1C'de araçlarla değişecek).
     const store = new EntityStore();
-    seedDemo(store);
+    seedDemo(store); // geçici demo duvarlar (kendi history'siyle "bakılı")
 
     let handle: CanvasHandle | undefined;
+    let manager: ToolManager | undefined;
     let disposed = false;
 
-    // Async init; React Strict Mode'un çift-mount'una karşı 'disposed' koruması.
     void createCanvasApp(el, store).then((h) => {
       if (disposed) {
         h.destroy();
-      } else {
-        handle = h;
+        return;
       }
+      handle = h;
+      const history = new History(store);
+      manager = new ToolManager({
+        store,
+        history,
+        index: h.index,
+        overlay: h.overlay,
+        pixelSize: h.pixelSize,
+        snap: createSnapper(store, h.index, h.pixelSize),
+      });
+      h.setActiveTool(manager);
+      setUi({ manager, history });
     });
 
     return () => {
       disposed = true;
+      manager?.destroy();
       handle?.destroy();
-      handle = undefined;
+      setUi(null);
     };
   }, []);
 
-  return <div ref={containerRef} className="h-full w-full" />;
+  return (
+    <>
+      <div ref={containerRef} className="h-full w-full" />
+      {ui && <Toolbar manager={ui.manager} history={ui.history} />}
+    </>
+  );
 }

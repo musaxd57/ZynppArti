@@ -5,6 +5,12 @@
 
 ---
 
+## ADR-0010 — Araç FSM deseni: xstate makine (durum) + sınıf (efekt)
+**Tarih:** 2026-06-19 · **Durum:** Kabul (otonom çalışmada alınan varsayım)
+**Bağlam:** CLAUDE.md §5/§8.3 araçların XState FSM olmasını ister. xstate v5 aksiyonlarına servis (store/history/pixi) enjekte etmek boilerplate yükü getiriyor; ama saf makine de side-effect içermemeli.
+**Karar:** Her araç için xstate makinesi **durumun tek kaynağıdır** (idle/drawing; idle/pressed/dragging). WallTool: efekt (segment ekleme) makine `commit` aksiyonundan, `input` ile verilen callback üzerinden yapılır. SelectTool: makine yalnız pointer fazını tutar; hit-test/komut gibi efektler sınıfta yapılır, faz makineden okunur. EraseTool gibi tek-durumlu araçlar makinesiz.
+**Sonuç:** FSM gereği korunur + makineler saf/test edilebilir (transition testleri). Pixi/efekt sınıfta izole. Takas: SelectTool'da faz makine ile sınıf mantığı biraz dağınık; tek-FSM'e (efektleri aksiyonlara taşıyarak) ileride sıkılaştırılabilir.
+
 ## ADR-0009 — Faz 1 inşa sırası: önce saf doküman çekirdeği (1A)
 **Tarih:** 2026-06-19 · **Durum:** Kabul
 **Bağlam:** İnteraktif duvar düzenleme üç parçaya bağlı: doküman modeli (entity+Command+undo/redo), engine'in çizmesi, araçların input→Command çevirmesi. Hangisiyle başlamalı?

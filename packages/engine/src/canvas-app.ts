@@ -4,25 +4,32 @@ import type { EntityStore } from '@zynpparti/document';
 import { type Camera, DEFAULT_CAMERA, screenToWorld, zoomAt, clamp } from './transform';
 import { EntityLayer } from './entity-layer';
 import type { AABB, SpatialIndex } from './spatial-index';
+import type { SceneTool, ScenePointer } from './tool';
 
 /** `createCanvasApp` tarafından döndürülen kontrol kolu. */
 export interface CanvasHandle {
-  /** Mekânsal indeks (hit-test/snapping için; 1C araçları kullanır). */
+  readonly store: EntityStore;
+  /** Mekânsal indeks (hit-test/snapping için). */
   readonly index: SpatialIndex;
+  /** Araçların geçici (rubber-band/seçim) çizim yaptığı dünya-uzayı katmanı. */
+  readonly overlay: Container;
+  /** Bir ekran pikselinin kaç dünya birimi olduğu (zoom'a göre tolerans ölçekleme). */
+  pixelSize(): number;
+  /** Aktif aracı ayarla (null = araç yok, yalnız gezinme). */
+  setActiveTool(tool: SceneTool | null): void;
   destroy: () => void;
 }
 
 const GRID_SPACING = 50; // dünya birimi (cm)
-const GRID_EXTENT = 5000; // grid bu yarıçapta çizilir (-EXTENT..EXTENT)
+const GRID_EXTENT = 5000;
 const MIN_ZOOM = 0.05;
 const MAX_ZOOM = 40;
 const ZOOM_SENSITIVITY = 0.0015;
 
 /**
- * Verilen DOM konteynerine PixiJS tabanlı tuval kurar: sürükle → pan, tekerlek → imleç-merkezli
- * zoom, sabit ızgara, ve `store`'a abone entity katmanı (mekânsal indeks + viewport culling).
- *
- * Bu motor React'e bağımlı DEĞİLDİR (saf DOM/PixiJS) — CLAUDE.md §4/§5.
+ * PixiJS tuvali: gezinme (Space/orta-tuş ile pan, tekerlek ile zoom), ızgara, store'a abone
+ * entity katmanı (mekânsal indeks + culling) ve aktif araca yönlendirilen etkileşim.
+ * React'e bağımlı DEĞİL (saf DOM/PixiJS).
  */
 export async function createCanvasApp(
   container: HTMLElement,
@@ -45,9 +52,12 @@ export async function createCanvasApp(
   const entityLayer = new EntityLayer(store);
   world.addChild(entityLayer.container);
 
-  let camera: Camera = DEFAULT_CAMERA;
+  const overlay = new Container();
+  world.addChild(overlay);
 
-  /** Ekranın görünür alanının dünya koordinatındaki sınır kutusu (culling için). */
+  let camera: Camera = DEFAULT_CAMERA;
+  let activeTool: SceneTool | null = null;
+
   function viewportBounds(): AABB {
     const tl = screenToWorld({ x: 0, y: 0 }, camera);
     const br = screenToWorld({ x: app.screen.width, y: app.screen.height }, camera);
@@ -60,19 +70,12 @@ export async function createCanvasApp(
     entityLayer.cull(viewportBounds());
   }
 
-  // Açılışta dünya orijinini ekranın ortasına yerleştir.
   camera = { x: app.screen.width / 2, y: app.screen.height / 2, zoom: 1 };
   applyCamera();
-
-  // Pencere boyutu değişince yeniden cull et (kamera aynı kalsa da viewport değişir).
   app.renderer.on('resize', () => entityLayer.cull(viewportBounds()));
 
   const canvas = app.canvas;
 
-  /**
-   * Fare olayının ekran konumunu PixiJS sahne (logical) koordinatına çevirir.
-   * CLAUDE.md §8.1: konteyner CSS ile ölçeklenmişse `screen/rect` oranıyla düzelt.
-   */
   function pointerPos(e: PointerEvent | WheelEvent): Vec2 {
     const rect = canvas.getBoundingClientRect();
     const sx = app.screen.width / rect.width;
@@ -80,37 +83,62 @@ export async function createCanvasApp(
     return { x: (e.clientX - rect.left) * sx, y: (e.clientY - rect.top) * sy };
   }
 
-  // --- Pan (sürükle) ---
-  let dragging = false;
-  let dragStart: Vec2 = { x: 0, y: 0 };
+  function scenePointer(e: PointerEvent): ScenePointer {
+    return {
+      world: screenToWorld(pointerPos(e), camera),
+      shiftKey: e.shiftKey,
+      altKey: e.altKey,
+      ctrlKey: e.ctrlKey || e.metaKey,
+    };
+  }
+
+  // --- Gezinme durumu ---
+  let spaceHeld = false;
+  let panning = false;
+  let panStart: Vec2 = { x: 0, y: 0 };
   let cameraStart: Camera = camera;
 
-  function onPointerDown(e: PointerEvent): void {
-    dragging = true;
-    dragStart = pointerPos(e);
+  function beginPan(e: PointerEvent): void {
+    panning = true;
+    panStart = pointerPos(e);
     cameraStart = camera;
     canvas.setPointerCapture(e.pointerId);
     canvas.style.cursor = 'grabbing';
   }
 
+  function onPointerDown(e: PointerEvent): void {
+    const wantsPan = spaceHeld || e.button === 1; // Space-basılı veya orta tuş
+    if (wantsPan) {
+      beginPan(e);
+      return;
+    }
+    if (e.button === 0) activeTool?.onPointerDown?.(scenePointer(e));
+  }
+
   function onPointerMove(e: PointerEvent): void {
-    if (!dragging) return;
-    const p = pointerPos(e);
-    camera = {
-      zoom: cameraStart.zoom,
-      x: cameraStart.x + (p.x - dragStart.x),
-      y: cameraStart.y + (p.y - dragStart.y),
-    };
-    applyCamera();
+    if (panning) {
+      const p = pointerPos(e);
+      camera = {
+        zoom: cameraStart.zoom,
+        x: cameraStart.x + (p.x - panStart.x),
+        y: cameraStart.y + (p.y - panStart.y),
+      };
+      applyCamera();
+      return;
+    }
+    activeTool?.onPointerMove?.(scenePointer(e));
   }
 
   function onPointerUp(e: PointerEvent): void {
-    dragging = false;
-    if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
-    canvas.style.cursor = 'grab';
+    if (panning) {
+      panning = false;
+      if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
+      canvas.style.cursor = spaceHeld ? 'grab' : 'default';
+      return;
+    }
+    activeTool?.onPointerUp?.(scenePointer(e));
   }
 
-  // --- Zoom (fare tekerleği, imleç-merkezli) ---
   function onWheel(e: WheelEvent): void {
     e.preventDefault();
     const pivot = pointerPos(e);
@@ -120,28 +148,58 @@ export async function createCanvasApp(
     applyCamera();
   }
 
-  canvas.style.cursor = 'grab';
+  function onKeyDown(e: KeyboardEvent): void {
+    if (e.code === 'Space' && !spaceHeld) {
+      spaceHeld = true;
+      if (!panning) canvas.style.cursor = 'grab';
+      e.preventDefault();
+      return;
+    }
+    activeTool?.onKeyDown?.(e);
+  }
+
+  function onKeyUp(e: KeyboardEvent): void {
+    if (e.code === 'Space') {
+      spaceHeld = false;
+      if (!panning) canvas.style.cursor = 'default';
+    }
+  }
+
+  canvas.style.cursor = 'default';
   canvas.addEventListener('pointerdown', onPointerDown);
   canvas.addEventListener('pointermove', onPointerMove);
   canvas.addEventListener('pointerup', onPointerUp);
   canvas.addEventListener('pointerleave', onPointerUp);
   canvas.addEventListener('wheel', onWheel, { passive: false });
+  window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('keyup', onKeyUp);
 
   return {
+    store,
     index: entityLayer.index,
+    overlay,
+    pixelSize: () => 1 / camera.zoom,
+    setActiveTool(tool: SceneTool | null): void {
+      if (activeTool === tool) return;
+      activeTool?.onDeactivate?.();
+      activeTool = tool;
+      activeTool?.onActivate?.();
+    },
     destroy(): void {
       canvas.removeEventListener('pointerdown', onPointerDown);
       canvas.removeEventListener('pointermove', onPointerMove);
       canvas.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointerleave', onPointerUp);
       canvas.removeEventListener('wheel', onWheel);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      activeTool?.onDeactivate?.();
       entityLayer.destroy();
       app.destroy(true, { children: true });
     },
   };
 }
 
-/** Sabit bir ızgara + vurgulu orijin eksenleri çizer (dünya uzayında). */
 function drawGrid(target: Container): void {
   const grid = new Graphics();
   for (let x = -GRID_EXTENT; x <= GRID_EXTENT; x += GRID_SPACING) {

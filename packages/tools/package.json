@@ -1,0 +1,27 @@
+{
+  "name": "@zynpparti/tools",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest run",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zynpparti/document": "workspace:*",
+    "@zynpparti/engine": "workspace:*",
+    "@zynpparti/geometry": "workspace:*",
+    "pixi.js": "^8.6.6",
+    "xstate": "^5.19.0"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.8"
+  }
+}
