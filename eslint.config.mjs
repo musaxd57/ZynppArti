@@ -5,7 +5,14 @@ import globals from 'globals';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/.next/**', '**/.turbo/**', '**/coverage/**', '**/node_modules/**'],
+    ignores: [
+      '**/dist/**',
+      '**/.next/**',
+      '**/.turbo/**',
+      '**/coverage/**',
+      '**/node_modules/**',
+      '**/next-env.d.ts', // Next.js tarafından üretilir; düzenlenmez/lint'lenmez
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

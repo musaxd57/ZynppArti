@@ -64,6 +64,16 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
+  packages/document:
+    dependencies:
+      '@zynpparti/geometry':
+        specifier: workspace:*
+        version: link:../geometry
+    devDependencies:
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.19.21)(lightningcss@1.32.0)
+
   packages/engine:
     dependencies:
       '@zynpparti/geometry':

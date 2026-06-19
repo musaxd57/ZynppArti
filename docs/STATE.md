@@ -22,12 +22,12 @@
 - `packages/geometry` — saf TS `Vec2` + `polygonArea` (Shoelace, test'li).
 - Tooling: TS strict base, ESLint flat config, Prettier, Turborepo, pnpm workspaces.
 
-**Sıradaki adım (Faz 1 — Çizim + Import + Mahal):**
-1. `packages/document` — entity store + Command + undo/redo (CLAUDE.md §6.3).
-2. `packages/tools` — XState ile çizim araçları (duvar/seç/taşı), snapping.
-3. `packages/io` — DXF import (sonra libredwg-web), 2-nokta ölçekleme.
-4. Mahal otomatik bulma + isim + canlı m².
-> Faz 1'e geçmeden Moses onayı beklenir.
+**Faz 1 ilerleme (branch `feat/phase-1-drawing`):**
+- ✅ **1A — `packages/document`**: `EntityStore` + `Command` (Add/Remove/Update) + `History` (undo/redo). Saf TS, 13 test. Wall entity (segment+kalınlık, cm). Tüm zincir yeşil.
+- ⬜ **1B — engine entity render**: store'a abone entity katmanı, duvar çizimi.
+- ⬜ **1C — `packages/tools`**: XState select/wall araçları + kısayollar (`docs/UX-INTERACTIONS.md`), snapping. → interaktif çizim/seç/taşı/sil/undo.
+- ⬜ **1D — `packages/io`**: DXF import + 2-nokta ölçekleme + export. *(dxf-parser bağımlılığı — eklemeden önce Moses'a sor.)*
+- ⬜ **1E — mahal/m²**: kapalı bölge bulma + Space + canlı m² + tablo. *(metin atlasına TR_CHARSET baştan kat — `docs/I18N-TEXT.md`; xlsx eklemeden önce sor.)*
 
 **Notlar / kararlar:**
 - AI çağrıları için sağlayıcı-bağımsız adapter kararı eklendi (ADR-0006); Faz 0'da kurulmadı, Faz 2'de.
