@@ -7,22 +7,23 @@
 
 ## ŞU AN
 
-**Faz:** 0 — İskelet → **TAMAMLANDI** ✅
-**Branch:** `feat/phase-0-scaffold`
-**Durum:** Monorepo iskeleti + pan/zoom yapan boş canvas + yeşil doğrulama zinciri kuruldu.
+**Faz:** 1 — Çizim + Import + Mahal → **TAMAMLANDI** ✅ (Faz 0 da bitti)
+**Branch:** `feat/phase-1-drawing` → **main'e fast-forward + push edildi**
+**Durum:** İnteraktif duvar çizimi/seç/taşı/sil/undo, DXF import + ölçekleme + DXF/PNG export, otomatik mahal bulma + canlı m² + Türkçe etiketler + **Excel (xlsx) export çalışıyor**.
 
-**Faz 0 kabul kriteri karşılandı:**
-- `pnpm dev` → tarayıcıda pan (sürükle) + zoom (tekerlek, imleç-merkezli) + grid. Dev sunucusu HTTP 200, sayfa içeriği doğrulandı.
-- `pnpm typecheck` (3/3) · `pnpm test` (geometry 3 + engine 4) · `pnpm lint` (3/3) · `pnpm build` → **hepsi yeşil**.
-- GitHub Actions CI workflow eklendi (`.github/workflows/ci.yml`).
+**Son doğrulama (1E sonu):** typecheck 6/6 · test ~71 · lint 6/6 · build 1/1 · dev HTTP 200, temiz derlendi.
 
-**Kurulan yapı:**
-- `apps/web` — Next.js 15 + React 19 + Tailwind v4; `CanvasStage` client component engine'i mount eder.
-- `packages/engine` — PixiJS v8 `createCanvasApp` (pan/zoom/grid) + saf `Camera` transform util'leri (test'li).
-- `packages/geometry` — saf TS `Vec2` + `polygonArea` (Shoelace, test'li).
-- Tooling: TS strict base, ESLint flat config, Prettier, Turborepo, pnpm workspaces.
+**Net özellik durumu (çalışıyor mu?):**
+- Duvar çiz (L) / seç-taşı (V) / sil (E) / undo-redo (Ctrl+Z/Y) → **ÇALIŞIYOR**
+- DXF yükle + 2-nokta ölçekle (K) + DXF indir + PNG indir → **ÇALIŞIYOR**
+- Otomatik mahal bulma + canlı m² + düzenlenebilir Türkçe ad → **ÇALIŞIYOR**
+- **Mahal listesini Excel'e (.xlsx) aktarma → ÇALIŞIYOR** (RoomList "Excel İndir" butonu)
 
-**Faz 1 ilerleme (branch `feat/phase-1-drawing`):**
+**Sıradaki:** **Faz 2** (AI render + copilot) — başlamadan Moses onayı beklenir.
+
+---
+
+## FAZ 1 TAŞLARI (branch `feat/phase-1-drawing`):
 - ✅ **1A — `packages/document`**: `EntityStore` + `Command` (Add/Remove/Update) + `History` (undo/redo). Saf TS, 13 test. Wall entity (segment+kalınlık, cm). Tüm zincir yeşil.
 - ✅ **1B — engine entity render + mekânsal indeks**: `EntityLayer` (store aboneliği, dirty-render), `SpatialIndex` (rbush R-tree), `hitTest` (broad→narrow), viewport culling. Geometry: `distanceToSegment`/`closestPointOnSegment`/`pointInPolygon`. Web'de geçici demo duvarlar görünüyor. Test 38, zincir yeşil. (ENGINEERING-NOTES §2.)
 - ✅ **1C — `packages/tools`**: xstate WallTool (idle→drawing zincir) + SelectTool (seç/sürükle-taşı/Delete) + EraseTool + `ToolManager` (kısayol: V/L/E, Ctrl+Z/Y), `createSnapper` (uç-nokta→ızgara). Engine'e tool routing + overlay + Space/orta-tuş pan. Web'de araç çubuğu. Test +9 (toplam 47). Zincir yeşil. Desen: ADR-0010. (xstate eklendi.)
