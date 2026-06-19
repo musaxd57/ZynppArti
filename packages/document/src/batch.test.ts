@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { EntityStore } from './store';
 import { History } from './history';
 import { AddEntity, UpdateEntity, BatchCommand } from './command';
-import { makeWall } from './test-helpers';
+import { makeWall, wallOf } from './test-helpers';
 
 describe('BatchCommand', () => {
   it('applies many adds as a single undo step', () => {
@@ -38,11 +38,11 @@ describe('BatchCommand', () => {
         new UpdateEntity({ ...b, end: { x: 0, y: 200 } }),
       ]),
     );
-    expect(store.get('a')?.end).toEqual({ x: 200, y: 0 });
-    expect(store.get('b')?.end).toEqual({ x: 0, y: 200 });
+    expect(wallOf(store, 'a').end).toEqual({ x: 200, y: 0 });
+    expect(wallOf(store, 'b').end).toEqual({ x: 0, y: 200 });
 
     history.undo();
-    expect(store.get('a')?.end).toEqual({ x: 100, y: 0 });
-    expect(store.get('b')?.end).toEqual({ x: 0, y: 100 });
+    expect(wallOf(store, 'a').end).toEqual({ x: 100, y: 0 });
+    expect(wallOf(store, 'b').end).toEqual({ x: 0, y: 100 });
   });
 });

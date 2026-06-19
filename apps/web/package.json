@@ -13,11 +13,13 @@
   "dependencies": {
     "@zynpparti/document": "workspace:*",
     "@zynpparti/engine": "workspace:*",
+    "@zynpparti/geometry": "workspace:*",
     "@zynpparti/io": "workspace:*",
     "@zynpparti/tools": "workspace:*",
     "next": "^15.1.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { EntityStore } from './store';
-import { makeWall } from './test-helpers';
+import { makeWall, wallOf } from './test-helpers';
 
 describe('EntityStore', () => {
   it('puts, gets and reports presence/size', () => {
@@ -21,7 +21,7 @@ describe('EntityStore', () => {
     store.put(makeWall('w1'));
     store.put(makeWall('w1', { x: 0, y: 0 }, { x: 200, y: 0 }));
     expect(store.size).toBe(1);
-    expect(store.get('w1')?.end).toEqual({ x: 200, y: 0 });
+    expect(wallOf(store, 'w1').end).toEqual({ x: 200, y: 0 });
   });
 
   it('deletes an entity', () => {

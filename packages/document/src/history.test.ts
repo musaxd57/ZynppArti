@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { EntityStore } from './store';
 import { History } from './history';
 import { AddEntity, UpdateEntity } from './command';
-import { makeWall } from './test-helpers';
+import { makeWall, wallOf } from './test-helpers';
 
 describe('History', () => {
   it('dispatch → undo → redo round-trips an add', () => {
@@ -30,10 +30,10 @@ describe('History', () => {
 
     history.dispatch(new AddEntity(w));
     history.dispatch(new UpdateEntity({ ...w, start: { x: 50, y: 50 } }));
-    expect(store.get('w1')?.start).toEqual({ x: 50, y: 50 });
+    expect(wallOf(store, 'w1').start).toEqual({ x: 50, y: 50 });
 
     history.undo();
-    expect(store.get('w1')?.start).toEqual({ x: 0, y: 0 });
+    expect(wallOf(store, 'w1').start).toEqual({ x: 0, y: 0 });
   });
 
   it('clears the redo stack after a new dispatch', () => {

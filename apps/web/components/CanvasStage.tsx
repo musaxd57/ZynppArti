@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createCanvasApp, type CanvasHandle } from '@zynpparti/engine';
-import { EntityStore, History } from '@zynpparti/document';
+import { EntityStore, History, RoomManager } from '@zynpparti/document';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
 import { seedDemo } from '@/lib/demo-seed';
 import { Toolbar } from './Toolbar';
+import { RoomList } from './RoomList';
 
 /**
  * Engine canvas + araç yöneticisini DOM'a bağlayan React sarmalı.
@@ -29,6 +30,7 @@ export function CanvasStage() {
 
     let handle: CanvasHandle | undefined;
     let manager: ToolManager | undefined;
+    let rooms: RoomManager | undefined;
     let disposed = false;
 
     void createCanvasApp(el, store).then((h) => {
@@ -38,6 +40,8 @@ export function CanvasStage() {
       }
       handle = h;
       const history = new History(store);
+      // Mahalleri otomatik bul (engine entity katmanı abone olduktan sonra).
+      rooms = new RoomManager(store);
       manager = new ToolManager({
         store,
         history,
@@ -52,6 +56,7 @@ export function CanvasStage() {
 
     return () => {
       disposed = true;
+      rooms?.destroy();
       manager?.destroy();
       handle?.destroy();
       setUi(null);
@@ -62,12 +67,15 @@ export function CanvasStage() {
     <>
       <div ref={containerRef} className="h-full w-full" />
       {ui && (
-        <Toolbar
-          manager={ui.manager}
-          history={ui.history}
-          store={ui.store}
-          exportPng={ui.exportPng}
-        />
+        <>
+          <Toolbar
+            manager={ui.manager}
+            history={ui.history}
+            store={ui.store}
+            exportPng={ui.exportPng}
+          />
+          <RoomList store={ui.store} history={ui.history} />
+        </>
       )}
     </>
   );

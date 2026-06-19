@@ -21,9 +21,19 @@ export interface Wall extends EntityBase {
 }
 
 /**
- * Faz 1 entity birliği (discriminated union). İleride Door/Window/Space/Dimension... eklenecek.
+ * Mahal (oda) — duvarlardan türetilen kapalı bölge (ENGINEERING-NOTES §1).
+ * `name` Türkçe olabilir; `boundary` CCW poligon (cm). Alan boundary'den hesaplanır (canlı m²).
+ */
+export interface Space extends EntityBase {
+  readonly type: 'space';
+  readonly name: string;
+  readonly boundary: readonly Vec2[];
+}
+
+/**
+ * Faz 1 entity birliği (discriminated union). İleride Door/Window/Dimension... eklenecek.
  * `type` alanı ayırıcıdır.
  */
-export type Entity = Wall;
+export type Entity = Wall | Space;
 
 export type EntityType = Entity['type'];

@@ -5,6 +5,7 @@ import { type Camera, DEFAULT_CAMERA, screenToWorld, zoomAt, clamp } from './tra
 import { EntityLayer } from './entity-layer';
 import type { AABB, SpatialIndex } from './spatial-index';
 import type { SceneTool, ScenePointer } from './tool';
+import { installRoomFont } from './room-font';
 
 /** `createCanvasApp` tarafından döndürülen kontrol kolu. */
 export interface CanvasHandle {
@@ -46,6 +47,8 @@ export async function createCanvasApp(
     resolution: window.devicePixelRatio || 1,
   });
   container.appendChild(app.canvas);
+
+  installRoomFont(); // mahal etiketleri için TR_CHARSET atlasını hazırla (I18N-TEXT.md)
 
   const world = new Container();
   app.stage.addChild(world);

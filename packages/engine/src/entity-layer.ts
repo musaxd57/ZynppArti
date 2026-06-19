@@ -3,27 +3,31 @@ import type { Entity, EntityId, EntityStore, StoreChange } from '@zynpparti/docu
 import { SpatialIndex, type AABB } from './spatial-index';
 import { entityBounds } from './entity-bounds';
 import { drawWall } from './render-wall';
+import { buildSpaceFill, buildSpaceLabel } from './render-space';
 
 /**
  * Store'a abone olup entity'leri PixiJS'te çizen katman + mekânsal indeks (rbush).
+ * Z-sırası: mahal dolguları (altta) → duvarlar (ortada) → etiketler (üstte).
  *
- * - **Dirty-render:** yalnız değişen entity'leri yeniden çizer (store change olaylarıyla).
+ * - **Dirty-render:** yalnız değişen entity'nin görsellerini yeniden kurar.
  * - **Viewport culling:** yalnız görünür kutuyla kesişenleri `visible` yapar.
- *
- * Model değiştikçe (Command → History → store.emit) bu katman kendini günceller (CLAUDE.md §6.2).
  */
 export class EntityLayer {
   readonly container = new Container();
   readonly index = new SpatialIndex();
-  private readonly graphics = new Map<EntityId, Graphics>();
+  private readonly spaceFill = new Container();
+  private readonly wallLayer = new Container();
+  private readonly labelLayer = new Container();
+  private readonly objects = new Map<EntityId, Container[]>();
   private readonly unsubscribe: () => void;
 
   constructor(private readonly store: EntityStore) {
-    // Var olan entity'leri çiz + indeksi toplu doldur.
+    this.container.addChild(this.spaceFill, this.wallLayer, this.labelLayer);
+
     const entries: { id: EntityId; box: AABB }[] = [];
-    for (const entity of store.all()) {
-      this.draw(entity);
-      entries.push({ id: entity.id, box: entityBounds(entity) });
+    for (const e of store.all()) {
+      this.render(e);
+      entries.push({ id: e.id, box: entityBounds(e) });
     }
     this.index.bulkLoad(entries);
 
@@ -39,47 +43,58 @@ export class EntityLayer {
   private upsert(id: EntityId, isNew: boolean): void {
     const entity = this.store.get(id);
     if (!entity) return;
-    this.draw(entity);
+    this.render(entity);
     const box = entityBounds(entity);
     if (isNew) this.index.insert(id, box);
     else this.index.update(id, box);
   }
 
-  private draw(entity: Entity): void {
-    let g = this.graphics.get(entity.id);
-    if (!g) {
-      g = new Graphics();
-      this.graphics.set(entity.id, g);
-      this.container.addChild(g);
+  /** Entity'nin görsellerini (sil-yeniden kur) ilgili z-katmanlarına yerleştirir. */
+  private render(entity: Entity): void {
+    this.destroyObjects(entity.id);
+    const objs: Container[] = [];
+    if (entity.type === 'wall') {
+      const g = new Graphics();
+      drawWall(g, entity);
+      this.wallLayer.addChild(g);
+      objs.push(g);
+    } else {
+      const fill = buildSpaceFill(entity);
+      this.spaceFill.addChild(fill);
+      objs.push(fill);
+      const label = buildSpaceLabel(entity);
+      this.labelLayer.addChild(label);
+      objs.push(label);
     }
-    if (entity.type === 'wall') drawWall(g, entity);
+    this.objects.set(entity.id, objs);
   }
 
   private removeEntity(id: EntityId): void {
-    const g = this.graphics.get(id);
-    if (g) {
-      g.destroy();
-      this.graphics.delete(id);
-    }
+    this.destroyObjects(id);
     this.index.remove(id);
   }
 
-  /**
-   * Viewport (dünya kutusu) dışındaki entity'leri gizle.
-   * NOT (Faz 1): görünürlüğü her çağrıda tüm grafiklerde günceller (O(n)). 500k için
-   * yalnız değişen görünürlükleri güncelleyen sürüme geçilecek (ENGINEERING-NOTES §2, §9).
-   */
+  private destroyObjects(id: EntityId): void {
+    const objs = this.objects.get(id);
+    if (objs) {
+      for (const o of objs) o.destroy();
+      this.objects.delete(id);
+    }
+  }
+
+  /** Viewport (dünya kutusu) dışındaki entity'leri gizle (Faz 1: O(n); ileride artımlı). */
   cull(viewport: AABB): void {
     const visibleIds = new Set(this.index.search(viewport));
-    for (const [id, g] of this.graphics) {
-      g.visible = visibleIds.has(id);
+    for (const [id, objs] of this.objects) {
+      const visible = visibleIds.has(id);
+      for (const o of objs) o.visible = visible;
     }
   }
 
   destroy(): void {
     this.unsubscribe();
-    for (const g of this.graphics.values()) g.destroy();
-    this.graphics.clear();
+    for (const objs of this.objects.values()) for (const o of objs) o.destroy();
+    this.objects.clear();
     this.index.clear();
     this.container.destroy({ children: true });
   }

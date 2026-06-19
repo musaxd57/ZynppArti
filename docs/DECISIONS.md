@@ -5,6 +5,12 @@
 
 ---
 
+## ADR-0012 — Mahaller türetilmiş veri: Command ile ama History dışı (1E)
+**Tarih:** 2026-06-19 · **Durum:** Kabul (otonom varsayım)
+**Bağlam:** Mahaller (Space) duvarlardan otomatik türetilir (planar graf yüz-bulma, ENGINEERING-NOTES §1). Her duvar düzenlemesinde yeniden hesaplanır. Bunları undo geçmişine koymak undo'yu kirletir (her duvar hamlesi + bir de mahal hamlesi).
+**Karar:** `RoomManager` mahalleri store'a **Command.apply ile doğrudan** uygular (AddEntity/RemoveEntity), **History'ye girmez**. "Model yalnız Command'den değişir" kuralı korunur (değişim yine Command nesneleridir), ama türetilmiş veri geri-alınabilir geçmişe sokulmaz. Yeniden-giriş `recomputing` bayrağıyla, yalnız-duvar tetikleme `knownWalls` izleyiciyle sağlanır. Mahal **adı** kullanıcı eylemidir → o UpdateEntity History'den geçer (geri alınabilir) ve yeniden-hesapta centroid yakınlığıyla korunur.
+**Sonuç:** Temiz undo (yalnız kullanıcı eylemleri) + canlı m². Takas: mahal bulma/silme geri alınamaz (zaten duvarın türevi). Türkçe etiketler için metin atlası `TR_CHARSET` ile baştan yüklenir (I18N-TEXT.md); BitmapText kullanıldığından "ş görünmüyor" tuzağı kapalı.
+
 ## ADR-0011 — DXF import & kalibrasyon kapsam kararları (1D)
 **Tarih:** 2026-06-19 · **Durum:** Kabul (otonom varsayımlar)
 **Bağlam:** 1D'de DXF import + ölçekleme hızlı ve kullanışlı olmalı; mükemmel CAD-uyumu Faz 1 hedefi değil.
