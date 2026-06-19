@@ -24,8 +24,8 @@
 
 **Faz 1 ilerleme (branch `feat/phase-1-drawing`):**
 - ✅ **1A — `packages/document`**: `EntityStore` + `Command` (Add/Remove/Update) + `History` (undo/redo). Saf TS, 13 test. Wall entity (segment+kalınlık, cm). Tüm zincir yeşil.
-- ⬜ **1B — engine entity render**: store'a abone entity katmanı, duvar çizimi.
-- ⬜ **1C — `packages/tools`**: XState select/wall araçları + kısayollar (`docs/UX-INTERACTIONS.md`), snapping. → interaktif çizim/seç/taşı/sil/undo.
+- ✅ **1B — engine entity render + mekânsal indeks**: `EntityLayer` (store aboneliği, dirty-render), `SpatialIndex` (rbush R-tree), `hitTest` (broad→narrow), viewport culling. Geometry: `distanceToSegment`/`closestPointOnSegment`/`pointInPolygon`. Web'de geçici demo duvarlar görünüyor. Test 38, zincir yeşil. (ENGINEERING-NOTES §2.)
+- ⬜ **1C — `packages/tools`**: XState select/wall araçları + kısayollar (`docs/UX-INTERACTIONS.md`), snapping. → interaktif çizim/seç/taşı/sil/undo. (hitTest + index hazır.)
 - ⬜ **1D — `packages/io`**: DXF import + 2-nokta ölçekleme + export. *(dxf-parser bağımlılığı — eklemeden önce Moses'a sor.)*
 - ⬜ **1E — mahal/m²**: kapalı bölge bulma + Space + canlı m² + tablo. *(metin atlasına TR_CHARSET baştan kat — `docs/I18N-TEXT.md`; xlsx eklemeden önce sor.)*
 

@@ -5,7 +5,7 @@ export default function Home() {
     <main className="relative h-screen w-screen overflow-hidden">
       <CanvasStage />
       <div className="pointer-events-none absolute left-4 top-4 select-none rounded-md bg-black/50 px-3 py-2 text-sm text-white">
-        ZynppArti — Faz 0 · <span className="opacity-80">sürükle: pan · tekerlek: zoom</span>
+        ZynppArti — Faz 1 / 1B · <span className="opacity-80">demo duvarlar · sürükle: pan · tekerlek: zoom</span>
       </div>
     </main>
   );

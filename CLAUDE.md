@@ -263,6 +263,7 @@ TARAYICI
 - **Özel shader'lar:** kesik çizgi (dash), tarama (hatch), kalınlık → CPU'da milyon çizgi yerine GPU'da. (Rayon yaklaşımı.)
 - **Metin:** başlangıç MSDF (hızlı), uzun vadede **vektör metin** (çoklu dil/glyph sınırı için). Bkz. `docs/ARCHITECTURE.md`.
 - **Snapping:** uç/orta/dik/kesişim/hizalama + grid. CAD'in ruhu burada.
+- **Mekânsal indeks (zorunlu):** hit-test + viewport culling + snapping için **rbush (R-tree)** — broad phase (rbush AABB ile aday bul) → narrow phase (kesin geometri: `distanceToSegment`/`pointInPolygon`). Saf döngü 500k entity'de donar. Detay: `docs/ENGINEERING-NOTES §2`. Picking/performans yazmadan önce `infinitecanvas.cc` Ders 8'i oku.
 - **KRİTİK TUZAK — koordinat ölçeği:** `getBoundingClientRect`'ten gelen ekran koordinatını CSS scale faktörüne **böl**. (Tasarım uzayı sabit, container ölçekleniyorsa hizalama kayar.)
 - **Float hassasiyeti:** çok küçük sayı karşılaştırmalarında epsilon kullan.
 
@@ -284,7 +285,7 @@ TARAYICI
 - Fallback zinciri **DXF → libredwg-web → ODA**; referans repo `mlightcad/cad-viewer` (mahal-bulma + katman eşleme için oku). Detay: `docs/LANDSCAPE.md §6`.
 
 ### 8.5 Mahal & m² Otomasyonu
-- Duvarlardan **kapalı alanları otomatik bul** (poligon/graf algoritması, `packages/geometry`).
+- Duvarlardan **kapalı alanları otomatik bul**: **planar graf yüz-bulma (face-finding), ML DEĞİL**. Reçete: snap (uçları yapıştır) → kesişimlerden böl → minimal döngüler (half-edge) → kapı/pencere boşluklarını kapat → **Shoelace** alan. Detay: `docs/ENGINEERING-NOTES §1`.
 - Mahale tıkla → ad ver → m² **canlı** hesaplansın, çizim değişince güncellensin.
 - Mahal/zon tablosu → toplam m², Excel export. Metadata ile metraj.
 
@@ -355,7 +356,7 @@ TARAYICI
 - **Bir oturum = bir net hedef.** Başta hedefi tek cümle söyle; sonunda ne yaptığını + `docs/STATE.md` güncellemeni özetle.
 - **Bağımlılık eklemeden önce sor** — yeni paket ciddi karardır, `docs/DECISIONS.md`'ye yaz.
 - **Büyük mimari değişiklik → önce kısa plan, sonra kod.**
-- **Tekerleği yeniden icat etme:** Bir özelliği yazmadan önce `docs/LANDSCAPE.md §8` repo okuma listesinde o işi "en iyi yapan" repo varsa önce yaklaşımını oku, sonra kendi sade versiyonunu yaz (lisansa dikkat — tldraw SDK ticari).
+- **Tekerleği yeniden icat etme:** Bir özelliği yazmadan önce `docs/LANDSCAPE.md §8` repo okuma listesinde o işi "en iyi yapan" repo varsa önce yaklaşımını oku, sonra kendi sade versiyonunu yaz (lisansa dikkat — tldraw SDK ticari). Engine performans/picking için ek olarak `infinitecanvas.cc` Ders 8 (`docs/ENGINEERING-NOTES §3`).
 - **Test/typecheck geçmeden "bitti" deme.**
 
 ---

@@ -3,7 +3,7 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   // Çalışma alanı (workspace) paketleri kaynak TS olarak tüketilir.
-  transpilePackages: ['@zynpparti/engine', '@zynpparti/geometry'],
+  transpilePackages: ['@zynpparti/engine', '@zynpparti/geometry', '@zynpparti/document'],
   // Monorepo kökünü açıkça belirt (home'daki başıboş lockfile'ın yanlış seçilmesini önler).
   outputFileTracingRoot: path.join(import.meta.dirname, '../..'),
 };

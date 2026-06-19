@@ -1,25 +1,33 @@
 import { Application, Container, Graphics } from 'pixi.js';
 import type { Vec2 } from '@zynpparti/geometry';
-import { type Camera, DEFAULT_CAMERA, zoomAt, clamp } from './transform';
+import type { EntityStore } from '@zynpparti/document';
+import { type Camera, DEFAULT_CAMERA, screenToWorld, zoomAt, clamp } from './transform';
+import { EntityLayer } from './entity-layer';
+import type { AABB, SpatialIndex } from './spatial-index';
 
 /** `createCanvasApp` tarafından döndürülen kontrol kolu. */
 export interface CanvasHandle {
+  /** Mekânsal indeks (hit-test/snapping için; 1C araçları kullanır). */
+  readonly index: SpatialIndex;
   destroy: () => void;
 }
 
-const GRID_SPACING = 50; // dünya birimi
+const GRID_SPACING = 50; // dünya birimi (cm)
 const GRID_EXTENT = 5000; // grid bu yarıçapta çizilir (-EXTENT..EXTENT)
 const MIN_ZOOM = 0.05;
 const MAX_ZOOM = 40;
 const ZOOM_SENSITIVITY = 0.0015;
 
 /**
- * Verilen DOM konteynerine PixiJS tabanlı boş bir tuval kurar:
- * sürükle → pan, fare tekerleği → imleç-merkezli zoom, sabit bir ızgara (grid).
+ * Verilen DOM konteynerine PixiJS tabanlı tuval kurar: sürükle → pan, tekerlek → imleç-merkezli
+ * zoom, sabit ızgara, ve `store`'a abone entity katmanı (mekânsal indeks + viewport culling).
  *
  * Bu motor React'e bağımlı DEĞİLDİR (saf DOM/PixiJS) — CLAUDE.md §4/§5.
  */
-export async function createCanvasApp(container: HTMLElement): Promise<CanvasHandle> {
+export async function createCanvasApp(
+  container: HTMLElement,
+  store: EntityStore,
+): Promise<CanvasHandle> {
   const app = new Application();
   await app.init({
     resizeTo: container,
@@ -34,16 +42,30 @@ export async function createCanvasApp(container: HTMLElement): Promise<CanvasHan
   app.stage.addChild(world);
   drawGrid(world);
 
+  const entityLayer = new EntityLayer(store);
+  world.addChild(entityLayer.container);
+
   let camera: Camera = DEFAULT_CAMERA;
+
+  /** Ekranın görünür alanının dünya koordinatındaki sınır kutusu (culling için). */
+  function viewportBounds(): AABB {
+    const tl = screenToWorld({ x: 0, y: 0 }, camera);
+    const br = screenToWorld({ x: app.screen.width, y: app.screen.height }, camera);
+    return { minX: tl.x, minY: tl.y, maxX: br.x, maxY: br.y };
+  }
 
   function applyCamera(): void {
     world.position.set(camera.x, camera.y);
     world.scale.set(camera.zoom);
+    entityLayer.cull(viewportBounds());
   }
 
   // Açılışta dünya orijinini ekranın ortasına yerleştir.
   camera = { x: app.screen.width / 2, y: app.screen.height / 2, zoom: 1 };
   applyCamera();
+
+  // Pencere boyutu değişince yeniden cull et (kamera aynı kalsa da viewport değişir).
+  app.renderer.on('resize', () => entityLayer.cull(viewportBounds()));
 
   const canvas = app.canvas;
 
@@ -106,12 +128,14 @@ export async function createCanvasApp(container: HTMLElement): Promise<CanvasHan
   canvas.addEventListener('wheel', onWheel, { passive: false });
 
   return {
+    index: entityLayer.index,
     destroy(): void {
       canvas.removeEventListener('pointerdown', onPointerDown);
       canvas.removeEventListener('pointermove', onPointerMove);
       canvas.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointerleave', onPointerUp);
       canvas.removeEventListener('wheel', onWheel);
+      entityLayer.destroy();
       app.destroy(true, { children: true });
     },
   };
