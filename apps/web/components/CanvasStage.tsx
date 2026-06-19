@@ -13,7 +13,12 @@ import { Toolbar } from './Toolbar';
  */
 export function CanvasStage() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [ui, setUi] = useState<{ manager: ToolManager; history: History } | null>(null);
+  const [ui, setUi] = useState<{
+    manager: ToolManager;
+    history: History;
+    store: EntityStore;
+    exportPng: () => Promise<string>;
+  } | null>(null);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -42,7 +47,7 @@ export function CanvasStage() {
         snap: createSnapper(store, h.index, h.pixelSize),
       });
       h.setActiveTool(manager);
-      setUi({ manager, history });
+      setUi({ manager, history, store, exportPng: h.exportPng });
     });
 
     return () => {
@@ -56,7 +61,14 @@ export function CanvasStage() {
   return (
     <>
       <div ref={containerRef} className="h-full w-full" />
-      {ui && <Toolbar manager={ui.manager} history={ui.history} />}
+      {ui && (
+        <Toolbar
+          manager={ui.manager}
+          history={ui.history}
+          store={ui.store}
+          exportPng={ui.exportPng}
+        />
+      )}
     </>
   );
 }

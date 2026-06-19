@@ -38,6 +38,9 @@ importers:
       '@zynpparti/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@zynpparti/io':
+        specifier: workspace:*
+        version: link:../../packages/io
       '@zynpparti/tools':
         specifier: workspace:*
         version: link:../../packages/tools
@@ -103,6 +106,22 @@ importers:
         version: 2.1.9(@types/node@22.19.21)(lightningcss@1.32.0)
 
   packages/geometry:
+    devDependencies:
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.19.21)(lightningcss@1.32.0)
+
+  packages/io:
+    dependencies:
+      '@zynpparti/document':
+        specifier: workspace:*
+        version: link:../document
+      '@zynpparti/geometry':
+        specifier: workspace:*
+        version: link:../geometry
+      dxf-parser:
+        specifier: ^1.1.2
+        version: 1.1.2
     devDependencies:
       vitest:
         specifier: ^2.1.8
@@ -1044,6 +1063,9 @@ packages:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
 
+  dxf-parser@1.1.2:
+    resolution: {integrity: sha512-GPTumUvRkounlIazLIyJMmTWt+nlg+ksS0Hdm8jWvejmZKBTz6gvHTam76wRm4PQMma5sgKLThblQyeIJcH79Q==}
+
   earcut@3.0.2:
     resolution: {integrity: sha512-X7hshQbLyMJ/3RPhyObLARM2sNxxmRALLKx1+NVFFnQ9gKzmCrxm9+uLIAdBcvc8FNLpctqlQ2V6AE92Ol9UDQ==}
 
@@ -1316,6 +1338,10 @@ packages:
 
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
+
+  loglevel@1.9.2:
+    resolution: {integrity: sha512-HgMmCqIJSAKqo68l0rS2AanEWfkxaZ5wNiEFb5ggm08lDs9Xl2KxBlX3PTcaD2chBM1gXAYf491/M2Rv8Jwayg==}
+    engines: {node: '>= 0.6.0'}
 
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
@@ -2343,6 +2369,10 @@ snapshots:
 
   detect-libc@2.1.2: {}
 
+  dxf-parser@1.1.2:
+    dependencies:
+      loglevel: 1.9.2
+
   earcut@3.0.2: {}
 
   enhanced-resolve@5.21.6:
@@ -2601,6 +2631,8 @@ snapshots:
       p-locate: 5.0.0
 
   lodash.merge@4.6.2: {}
+
+  loglevel@1.9.2: {}
 
   loupe@3.2.1: {}
 

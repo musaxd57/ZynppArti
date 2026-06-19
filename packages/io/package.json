@@ -1,0 +1,25 @@
+{
+  "name": "@zynpparti/io",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest run",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zynpparti/document": "workspace:*",
+    "@zynpparti/geometry": "workspace:*",
+    "dxf-parser": "^1.1.2"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.8"
+  }
+}

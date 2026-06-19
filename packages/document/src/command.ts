@@ -62,3 +62,34 @@ export class UpdateEntity implements Command {
     return new UpdateEntity(prev);
   }
 }
+
+/**
+ * Birden çok komutu tek bir undo/redo adımı olarak uygular (ör. DXF import, ölçek kalibrasyonu).
+ *
+ * KISIT: Alt komutlar **bağımsız** olmalı (her biri farklı bir entity'ye dokunmalı). Bu sayede
+ * tersler ön-durumdan toplu yakalanabilir. Aynı entity'yi iki kez değiştiren batch desteklenmez.
+ */
+export class BatchCommand implements Command {
+  constructor(
+    readonly label: string,
+    private readonly commands: readonly Command[],
+  ) {}
+
+  apply(store: EntityStore): StoreChange {
+    const added: EntityId[] = [];
+    const updated: EntityId[] = [];
+    const removed: EntityId[] = [];
+    for (const c of this.commands) {
+      const ch = c.apply(store);
+      added.push(...ch.added);
+      updated.push(...ch.updated);
+      removed.push(...ch.removed);
+    }
+    return { added, updated, removed };
+  }
+
+  invert(store: EntityStore): Command {
+    const inverses = this.commands.map((c) => c.invert(store)).reverse();
+    return new BatchCommand(this.label, inverses);
+  }
+}

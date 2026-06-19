@@ -5,6 +5,17 @@
 
 ---
 
+## ADR-0011 — DXF import & kalibrasyon kapsam kararları (1D)
+**Tarih:** 2026-06-19 · **Durum:** Kabul (otonom varsayımlar)
+**Bağlam:** 1D'de DXF import + ölçekleme hızlı ve kullanışlı olmalı; mükemmel CAD-uyumu Faz 1 hedefi değil.
+**Karar:**
+- DXF entity eşlemesi: yalnız **LINE / LWPOLYLINE / POLYLINE → Wall** (kapalı polyline son kenarı da). Diğerleri (ARC, CIRCLE, INSERT, TEXT…) şimdilik atlanır.
+- DXF çizgilerinde kalınlık yok → duvarlara **varsayılan 15 cm** kalınlık atanır.
+- Birim: `$INSUNITS` → cm (in/ft/mm/cm/m); bilinmiyorsa 1 (cm) kabul + **2-nokta kalibrasyon** düzeltir.
+- Kalibrasyon: gerçek mesafe Faz 1'de **`window.prompt`** ile alınır (basit; ileride uygun UI). Ölçek **tüm dokümana**, ilk seçilen nokta merkez alınarak uygulanır; tek undo (`BatchCommand`).
+- Export: minimal R12-tarzı DXF (LINE) + PNG (Pixi extract). PDF/IFC ertelendi.
+**Sonuç:** Hızlı, çalışan import/scale/export. Takas: ARC/blok/temizleme (kopuk uç, çift çizgi) yok → gerçek karışık DXF'lerde 1E öncesi temizleme adımı gerekebilir (ENGINEERING-NOTES §4). `docs/FILE-FORMATS.md` ileride detaylandırır.
+
 ## ADR-0010 — Araç FSM deseni: xstate makine (durum) + sınıf (efekt)
 **Tarih:** 2026-06-19 · **Durum:** Kabul (otonom çalışmada alınan varsayım)
 **Bağlam:** CLAUDE.md §5/§8.3 araçların XState FSM olmasını ister. xstate v5 aksiyonlarına servis (store/history/pixi) enjekte etmek boilerplate yükü getiriyor; ama saf makine de side-effect içermemeli.

@@ -13,6 +13,7 @@
   "dependencies": {
     "@zynpparti/document": "workspace:*",
     "@zynpparti/engine": "workspace:*",
+    "@zynpparti/io": "workspace:*",
     "@zynpparti/tools": "workspace:*",
     "next": "^15.1.3",
     "react": "^19.0.0",

@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     '@zynpparti/geometry',
     '@zynpparti/document',
     '@zynpparti/tools',
+    '@zynpparti/io',
   ],
   // Monorepo kökünü açıkça belirt (home'daki başıboş lockfile'ın yanlış seçilmesini önler).
   outputFileTracingRoot: path.join(import.meta.dirname, '../..'),

@@ -17,6 +17,8 @@ export interface CanvasHandle {
   pixelSize(): number;
   /** Aktif aracı ayarla (null = araç yok, yalnız gezinme). */
   setActiveTool(tool: SceneTool | null): void;
+  /** Mevcut sahneyi PNG data-URL olarak dışa aktarır. */
+  exportPng(): Promise<string>;
   destroy: () => void;
 }
 
@@ -179,6 +181,7 @@ export async function createCanvasApp(
     index: entityLayer.index,
     overlay,
     pixelSize: () => 1 / camera.zoom,
+    exportPng: () => app.renderer.extract.base64({ target: app.stage, format: 'png' }),
     setActiveTool(tool: SceneTool | null): void {
       if (activeTool === tool) return;
       activeTool?.onDeactivate?.();
