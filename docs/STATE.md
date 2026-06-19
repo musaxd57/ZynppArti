@@ -7,20 +7,31 @@
 
 ## ŞU AN
 
-**Faz:** 0 — İskelet
-**Durum:** Planlama tamamlandı. Repo henüz boş (sadece `.git` + `CLAUDE.md` + `docs/`).
+**Faz:** 0 — İskelet → **TAMAMLANDI** ✅
+**Branch:** `feat/phase-0-scaffold`
+**Durum:** Monorepo iskeleti + pan/zoom yapan boş canvas + yeşil doğrulama zinciri kuruldu.
 
-**Tamamlanan:**
-- Proje vizyonu, mimari ve teknoloji yığını kararlaştırıldı (bkz. `CLAUDE.md`, `docs/DECISIONS.md`).
-- Yol haritası 6 faza bölündü (bkz. `docs/ROADMAP.md`).
+**Faz 0 kabul kriteri karşılandı:**
+- `pnpm dev` → tarayıcıda pan (sürükle) + zoom (tekerlek, imleç-merkezli) + grid. Dev sunucusu HTTP 200, sayfa içeriği doğrulandı.
+- `pnpm typecheck` (3/3) · `pnpm test` (geometry 3 + engine 4) · `pnpm lint` (3/3) · `pnpm build` → **hepsi yeşil**.
+- GitHub Actions CI workflow eklendi (`.github/workflows/ci.yml`).
 
-**Sıradaki adım (Faz 0 ilk iş):**
-1. Monorepo iskeleti: pnpm workspaces + Turborepo, root `package.json`, `tsconfig` base, ESLint+Prettier.
-2. `apps/web` — Next.js + React + Tailwind iskeleti.
-3. `packages/engine` — PixiJS canvas, pan/zoom çalışan boş tuval.
-4. `packages/geometry` — ilk saf fonksiyon + Vitest kurulumu.
-5. GitHub Actions CI (lint + typecheck + test).
-6. `CLAUDE.md §3`'teki komutları gerçek hale getir.
+**Kurulan yapı:**
+- `apps/web` — Next.js 15 + React 19 + Tailwind v4; `CanvasStage` client component engine'i mount eder.
+- `packages/engine` — PixiJS v8 `createCanvasApp` (pan/zoom/grid) + saf `Camera` transform util'leri (test'li).
+- `packages/geometry` — saf TS `Vec2` + `polygonArea` (Shoelace, test'li).
+- Tooling: TS strict base, ESLint flat config, Prettier, Turborepo, pnpm workspaces.
+
+**Sıradaki adım (Faz 1 — Çizim + Import + Mahal):**
+1. `packages/document` — entity store + Command + undo/redo (CLAUDE.md §6.3).
+2. `packages/tools` — XState ile çizim araçları (duvar/seç/taşı), snapping.
+3. `packages/io` — DXF import (sonra libredwg-web), 2-nokta ölçekleme.
+4. Mahal otomatik bulma + isim + canlı m².
+> Faz 1'e geçmeden Moses onayı beklenir.
+
+**Notlar / kararlar:**
+- AI çağrıları için sağlayıcı-bağımsız adapter kararı eklendi (ADR-0006); Faz 0'da kurulmadı, Faz 2'de.
+- pnpm 11 build-script bloklaması: `esbuild` + `sharp` `pnpm-workspace.yaml`'de izinli.
 
 **Açık sorular / Moses'a sorulacak:** (yok)
 
@@ -29,6 +40,8 @@
 ## GÜNLÜK
 
 ### 2026-06-19
-- Proje başlatıldı. Rayon.design + AI render + tarayıcıda DWG/DXF + CRDT işbirliği araştırıldı.
+- **Faz 0 tamamlandı:** monorepo (pnpm+turbo), Next.js+PixiJS pan/zoom canvas, geometry/engine testleri, CI. Branch `feat/phase-0-scaffold`. Doğrulama zinciri yeşil; dev HTTP 200.
+- AI adapter tasarımı ADR-0006 olarak `docs/DECISIONS.md`'ye not düşüldü (provider-agnostic: Anthropic+OpenAI, statik + router/fallback).
+- Proje başlatıldı. Rayon.design + AI render + tarayıcıda DWG/DXF + CRDT işbirliği araştırıldı (`docs/LANDSCAPE.md`).
 - `CLAUDE.md` (anayasa) ve `docs/` iskeleti yazıldı.
 - Kararlar: TypeScript-first stack, PixiJS render, Yjs-first collab, aşamalı AI render (görsel → 3D). Detay `docs/DECISIONS.md`.

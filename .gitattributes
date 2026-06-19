@@ -1,0 +1,15 @@
+# Tüm metin dosyalarını LF olarak normalize et (Windows CRLF gürültüsünü önler)
+* text=auto eol=lf
+
+# Binary dosyalar dokunulmaz
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.glb binary
+*.gltf binary
+*.dwg binary

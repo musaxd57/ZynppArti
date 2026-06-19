@@ -52,7 +52,7 @@ Rayon'un kanıtlanmış formülünü koruyoruz (2D öncelikli, tarayıcı öncel
 
 > Bu bölüm sadece **tek satır** özet içerir; gerçek durum `docs/STATE.md`'de.
 
-**Faz 0 — İskelet.** (Repo kuruluyor / ilk canvas. Detay: `docs/STATE.md`.)
+**Faz 0 — İskelet TAMAM.** (Monorepo + pan/zoom canvas + yeşil CI. Sıradaki: Faz 1. Detay: `docs/STATE.md`.)
 
 ---
 
@@ -157,6 +157,7 @@ zynpparti/
 - **Animasyon (Faz 5):** kamera fly-through + video generation API (ör. Runway/Higgsfield türü).
 
 > **Model notu:** AI uçlarında **en güncel ve yetenekli Claude modelini** kullan — şu an varsayılan `claude-opus-4-8`. Anthropic API ile çalışırken model id, fiyat, tool-use ve caching için `/claude-api` referansını kontrol et; ezbere yazma.
+> **Sağlayıcı bağımsızlığı:** Tüm AI çağrıları `packages/ai` içinde sağlayıcı-bağımsız bir adapter arkasına konur (Anthropic + OpenAI; statik `.env` seçimi → ileride task-router + fallback). Karar: `docs/DECISIONS.md` ADR-0006. Faz 2'de kurulur.
 
 **Altyapı:** Turborepo, Vitest, Playwright, ESLint+Prettier, GitHub Actions (CI: lint+typecheck+test zorunlu).
 
