@@ -26,12 +26,14 @@
 **✅ Kabul:** AutoCAD'den DXF gelip ölçekleniyor, mahaller isimlenip m²'leniyor, tablo dışa aktarılıyor.
 
 ## Faz 2 — AI Render + Copilot
-**Hedef:** Plandan görsel üret, kullanıcıya öneri ver.
+**Hedef:** Plandan görsel üret, kullanıcıya atıflı öneri + canlı metrik ver. (Detay: `docs/FAZ2-NOTES.md`.)
 - [ ] `services/ai-render` + BullMQ/Redis kuyruğu
-- [ ] Plan/kesit → görsel (ControlNet + diffusion), stil/malzeme seçimi, varyant
+- [ ] **Uygulama içi canlı render paneli** (export-yükle değil; ADR-0013): plan/kesit → ControlNet + diffusion; "yaratıcı" + "geometriyi koru" modu; stil/malzeme; varyant
 - [ ] Render geçmişi + S3/R2 depolama + önbellek + kota
-- [ ] AI Copilot (öneri): geometrik kural motoru + Claude API
-**✅ Kabul:** Tek tıkla render + ilk akıllı öneriler.
+- [ ] **Copilot (1) — kaynak-gösteren öneri:** geometri kuralı + Claude API; her öneri atıflı (ADR-0014)
+- [ ] **Copilot (2) — canlı metrik paneli:** RoomList'i büyüt — toplam/net/brüt m², oda tipi dağılımı
+- [ ] **Türkçe yönetmelik tohumu:** çekme/kat/koridor/otopark temel kuralları (ADR-0015)
+**✅ Kabul:** Canlı render paneli görsel üretiyor + öneriler atıflı + metrikler çizdikçe güncelleniyor. (NOT: foto-gerçekçi otomatik KESİT burada YOK — bkz. Faz 3/5.)
 
 ## Faz 3 — Gerçek Zamanlı İşbirliği
 **Hedef:** Birden çok kişi aynı çizimde eş zamanlı.
@@ -39,7 +41,8 @@
 - [ ] `apps/sync` WebSocket sunucusu, presence (imleç/seçim)
 - [ ] Yorum/markup, paylaşım linki, rol (editor/viewer) + izin
 - [ ] Çevrimdışı + senkron
-**✅ Kabul:** İki kişi aynı anda çiziyor, değişiklikler anında birleşiyor.
+- [ ] **Hafif şematik kesit (ADR-0016):** duvarlara yükseklik özelliği + plana kesit çizgisi → ekstrüzyonla düzenlenebilir şematik kesit (gerçek kesitin ara yolu; tam 3B kesit Faz 5)
+**✅ Kabul:** İki kişi aynı anda çiziyor; ayrıca duvar yüksekliğinden şematik kesit alınabiliyor.
 
 ## Faz 4 — Boş Plandan Üretim
 **Hedef:** AI'nın kendisi tasarım üretmesi.
@@ -50,11 +53,12 @@
 **✅ Kabul:** Boş plan + istekten otomatik yerleşim ve kesit.
 
 ## Faz 5 — Gerçek 3D + Animasyon
-**Hedef:** Plandan 3D, klasik render, animasyon.
+**Hedef:** Plandan 3D, klasik render, animasyon, **tam 3B kesit**.
 - [ ] 2D'den hacim (duvar yüksekliği, boşluklar, döşeme/tavan)
 - [ ] Three.js / react-three-fiber görüntüleme, malzeme/ışık
+- [ ] **Tam 3B kesit/cephe:** hacmi bir düzlemle keserek gerçek kesit (ADR-0016 yol A)
 - [ ] Kamera keyframe animasyonu + AI video; glTF/GLB export
-**✅ Kabul:** Plandan 3B model + animasyonlu sunum.
+**✅ Kabul:** Plandan 3B model + animasyonlu sunum + düzlemle kesilmiş gerçek kesit.
 
 ## Faz 6 — Ölçek & Kurumsal
 **Hedef:** Üretim ölçeğinde performans ve çok kiracılılık.

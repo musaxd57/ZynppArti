@@ -36,8 +36,8 @@ Rayon'un kanıtlanmış formülünü koruyoruz (2D öncelikli, tarayıcı öncel
 | 3 | Mahal isimlendirme + m² | Var (zone/SQM) | **Duvarlardan otomatik mahal bulma** + canlı m² + tablo/Excel |
 | 4 | Plandan görsel | Sınırlı | **AI render** (ControlNet + diffusion) — plan **ve kesit** için |
 | 5 | Sunum/animasyon | Var | **Kamera keyframe zaman çizelgesi** + paper/pafta düzeni |
-| 6 | Kesit (section) | Var | **Plandan yarı-otomatik kesit türetme** |
-| 7 | Öneri / asistan | Yok | **AI copilot:** "bu koridor dar", "ıslak hacimleri grupla" |
+| 6 | Kesit (section) | Var | **Şematik kesit** (duvar yüksekliği, Faz 3) → **tam 3B kesit** (Faz 5). Gerçek kesit 3B işidir, ADR-0016 |
+| 7 | Öneri / asistan | Yok | **AI copilot:** kaynak-gösteren öneri + canlı metrik + **Türkçe yönetmelik** (İmar/TBDY/TS 9111) — ADR-0014/0015 |
 | 8 | Boş plandan tasarım | Yok | **AI üretici:** sınır + program (oda/m²) → tam yerleşim planı |
 
 **Ölçeklenebilirlik hedefi (Rayon'un kendi açıkladığı sınırlar baz alınarak):**
@@ -294,13 +294,17 @@ TARAYICI
 - **Kamera keyframe zaman çizelgesi:** kayıtlı görünümler arası animasyonlu geçiş (plan→kesit→detay). Link ile sunum paylaşımı (görüntüle/yorum izinleri).
 
 ### 8.7 AI Render — `services/ai-render`
+- **Uygulama içi canlı panel** (export-yükle akışı DEĞİL): prompt paneliyle atmosfer/malzeme/ışık tarif et → görsel canlı güncellenir (ADR-0013, `docs/FAZ2-NOTES.md §1`).
 - Plan/kesit kenar çizgileri → **ControlNet koşulu** → diffusion ile fotogerçekçi görsel. **Hem plan hem kesit** girişi desteklenir.
 - İki mod: **"yaratıcı mod"** (serbest) ve **"geometriyi koru modu"** (kompozisyon sabit — bina kat sayısı değişmez). Sonraki adım: image→video walkthrough.
 - Asenkron: BullMQ kuyruğunda çalışır; bitince istemciye push.
 - Malzeme/stil swatch'ları, varyant üretimi. Rakip analizi + prompt şablonları + maliyet: `docs/RENDER.md`, `docs/LANDSCAPE.md §4`.
 
 ### 8.8 AI Üretici & Copilot — `services/ai-layout`
-- **Copilot (önce bu):** geometrik kurallar (oran, geçiş genişliği, ıslak hacim grupları) + LLM ile **öneri** ("bu koridor dar, şu duvarı 20 cm kaydır").
+- **Copilot (önce bu) — iki ayaklı (ADR-0014, `docs/FAZ2-NOTES.md §2`):**
+  - **(1) Kaynak-gösteren öneri:** geometrik kural + LLM; her öneri **hangi kurala/ölçüye dayandığını** gösterir (ör. "TS 9111: koridor min 120 cm; seninki 90"). Palavra değil, atıflı.
+  - **(2) Canlı metrik paneli:** mahal/m² özelliğinin üstüne — toplam/net/brüt m², oda tipi dağılımı, ileride verim/gün ışığı (RoomList paneli çekirdek).
+  - **Türkçe yönetmelik bilgisi** premium farklılaştırıcı (İmar/TBDY/Otopark/TS 9111); Faz 2 tohum, ileride genişler (ADR-0015).
 - **Üretici (uzun vade):** girdi = `{sınır poligonu, oda listesi+m², komşuluk grafiği (bubble diagram), kurallar (setback/kat/imar)}` → çıktı **vektör** plan (raster değil). Önce retrieval+kural (Graph2Plan tarzı, kontrollü), sonra difüzyon. **İmar/yönetmelik uyumunu üretime gömmek en büyük ticari değer** (Maket/ArkDesign dersi). Plan + literatür + rakipler: `docs/AI-GENERATE.md`, `docs/LANDSCAPE.md §3`.
 - **IMPORTANT:** Üretici en zor parça. **Faz 4'e kadar dokunma**; önce sağlam çizim motoru + domain modeli şart.
 

@@ -5,6 +5,30 @@
 
 ---
 
+## ADR-0016 — Kesit gerçeği: hafif şematik kesit (Faz 3) → tam 3B kesit (Faz 5)
+**Tarih:** 2026-06-19 · **Durum:** Kabul (beklenti düzeltmesi)
+**Bağlam:** "Plandan otomatik kesit" istendi; ama gerçek kesit dikey bilgi (duvar yüksekliği, döşeme, çatı) gerektirir — saf 2B planda yok. Otomatik kesit özünde bir 3B/BIM işidir (BricsCAD BIM/OrthoGen/Revit: 3B modeli düzlemle keser). Bkz. `docs/FAZ2-NOTES.md §4`.
+**Karar:** "Faz 2'de tek tıkla foto-kesit" sözü VERİLMEZ. (B) **hafif şematik kesit** — duvarlara yükseklik özelliği + plana kesit çizgisi → ekstrüzyonla düzenlenebilir şematik kesit — **~Faz 3**. (A) **tam 3B kesit** (hacmi düzlemle kes) **Faz 5**. AI render kesite de uygulanır ama bu temelin üstüne biner.
+**Sonuç:** Dürüst yol haritası, hayal kırıklığı yok. Takas: erken fazda gerçek kesit yok; şematikle başlanır.
+
+## ADR-0015 — Türkçe yönetmelik bilinci = premium farklılaştırıcı
+**Tarih:** 2026-06-19 · **Durum:** Kabul (ürün stratejisi)
+**Bağlam:** Piyasadaki kod/uyum copilot'ları (UpCodes vb.) ABD odaklı; diğer ülke kodları çoğunlukla desteklenmiyor. Türkiye için İmar/TBDY/Otopark/TS 9111 farkında bir copilot neredeyse yok (FAZ2-NOTES §3).
+**Karar:** Copilot'un **Türkçe yönetmelik bilgisi** uzun vadeli farklılaştırıcı olarak işaretlenir. Faz 2 tohum: çekme mesafesi/kat/koridor/otopark gibi temel kurallar; ileride genişler. Fiyatlandırmada premium özellik (BUSINESS-PRICING.md).
+**Sonuç:** Türk mimar için "olmazsa olmaz" değer — Rayon'da da, ABD araçlarında da yok. Takas: yönetmelik verisi bakımı gerektirir (güncel tutma).
+
+## ADR-0014 — Copilot iki ayaklı: kaynak-gösteren öneri + canlı metrik paneli
+**Tarih:** 2026-06-19 · **Durum:** Kabul
+**Bağlam:** "Öneri" tek başına yetmez. (a) Yapı/yönetmelik can güvenliğidir → öneri **atıflı** olmalı (palavra değil; UpCodes dersi). (b) En iyi araçlar (Architechtures/Finch/Blueprints AI) çizerken **canlı metrik** verir. Bkz. FAZ2-NOTES §2.
+**Karar:** Copilot = (1) **kaynak-gösteren öneri motoru** (geometri kuralı + LLM; her öneri hangi kurala/ölçüye dayandığını gösterir, ör. "TS 9111: koridor min 120 cm; seninki 90"), (2) **canlı metrik paneli** (mahal/m² özelliğinin üstüne: toplam/net/brüt m², oda tipi dağılımı, ileride verim/gün ışığı).
+**Sonuç:** Güvenilir + sürekli geri bildirim. Mevcut RoomList paneli bu metrik panelinin çekirdeğidir.
+
+## ADR-0013 — AI render: uygulama içi canlı panel (export-yükle değil)
+**Tarih:** 2026-06-19 · **Durum:** Kabul
+**Bağlam:** Eski akış "dışa aktar → ayrı AI aracına yükle → bekle" zayıf. Modern araçlar (Veras, Archicad AI Visualizer) uygulama içi prompt paneliyle canlı modele uygular; plan/kesit değişince görsel güncellenir (FAZ2-NOTES §1).
+**Karar:** `services/ai-render` **uygulama içi canlı render paneli** (export-yükle akışı değil). Girdi: plan **ve kesit**. İki mod: "yaratıcı" + "geometriyi koru" (ControlNet, LANDSCAPE §4). Sonraki adım: image→video. ADR-0005'i (aşamalı render) somutlaştırır.
+**Sonuç:** Akıcı UX, hızlı iterasyon. Takas: canlı panel + kuyruk + önbellek mimarisi gerektirir (BullMQ; maliyet kotası).
+
 ## ADR-0012 — Mahaller türetilmiş veri: Command ile ama History dışı (1E)
 **Tarih:** 2026-06-19 · **Durum:** Kabul (otonom varsayım)
 **Bağlam:** Mahaller (Space) duvarlardan otomatik türetilir (planar graf yüz-bulma, ENGINEERING-NOTES §1). Her duvar düzenlemesinde yeniden hesaplanır. Bunları undo geçmişine koymak undo'yu kirletir (her duvar hamlesi + bir de mahal hamlesi).
