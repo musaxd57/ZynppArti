@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createCanvasApp, type CanvasHandle } from '@zynpparti/engine';
 import { EntityStore, History, RoomManager } from '@zynpparti/document';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
@@ -20,6 +20,8 @@ export function CanvasStage() {
     store: EntityStore;
     exportPng: () => Promise<string>;
   } | null>(null);
+  const [renameId, setRenameId] = useState<string | null>(null);
+  const clearRename = useCallback(() => setRenameId(null), []);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -51,6 +53,11 @@ export function CanvasStage() {
         snap: createSnapper(store, h.index, h.pixelSize),
       });
       h.setActiveTool(manager);
+      // Mahal içine çift tık → Seç moduna geç + o mahalin adını düzenlemeye odaklan.
+      h.setSpaceActivateHandler((id) => {
+        manager?.setTool('select');
+        setRenameId(id);
+      });
       setUi({ manager, history, store, exportPng: h.exportPng });
     });
 
@@ -74,7 +81,12 @@ export function CanvasStage() {
             store={ui.store}
             exportPng={ui.exportPng}
           />
-          <RoomList store={ui.store} history={ui.history} />
+          <RoomList
+            store={ui.store}
+            history={ui.history}
+            renameId={renameId}
+            onRenameConsumed={clearRename}
+          />
         </>
       )}
     </>

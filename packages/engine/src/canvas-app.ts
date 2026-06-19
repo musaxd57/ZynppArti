@@ -1,6 +1,7 @@
 import { Application, Container, Graphics } from 'pixi.js';
 import type { Vec2 } from '@zynpparti/geometry';
-import type { EntityStore } from '@zynpparti/document';
+import { pointInPolygon } from '@zynpparti/geometry';
+import type { EntityId, EntityStore } from '@zynpparti/document';
 import { type Camera, DEFAULT_CAMERA, screenToWorld, zoomAt, clamp } from './transform';
 import { EntityLayer } from './entity-layer';
 import type { AABB, SpatialIndex } from './spatial-index';
@@ -18,6 +19,8 @@ export interface CanvasHandle {
   pixelSize(): number;
   /** Aktif aracı ayarla (null = araç yok, yalnız gezinme). */
   setActiveTool(tool: SceneTool | null): void;
+  /** Bir mahal içine çift tıklanınca çağrılacak handler (ör. isim düzenleme). */
+  setSpaceActivateHandler(cb: (id: EntityId) => void): void;
   /** Mevcut sahneyi PNG data-URL olarak dışa aktarır. */
   exportPng(): Promise<string>;
   destroy: () => void;
@@ -62,6 +65,7 @@ export async function createCanvasApp(
 
   let camera: Camera = DEFAULT_CAMERA;
   let activeTool: SceneTool | null = null;
+  let spaceActivate: ((id: EntityId) => void) | null = null;
 
   function viewportBounds(): AABB {
     const tl = screenToWorld({ x: 0, y: 0 }, camera);
@@ -81,7 +85,7 @@ export async function createCanvasApp(
 
   const canvas = app.canvas;
 
-  function pointerPos(e: PointerEvent | WheelEvent): Vec2 {
+  function pointerPos(e: MouseEvent): Vec2 {
     const rect = canvas.getBoundingClientRect();
     const sx = app.screen.width / rect.width;
     const sy = app.screen.height / rect.height;
@@ -144,6 +148,26 @@ export async function createCanvasApp(
     activeTool?.onPointerUp?.(scenePointer(e));
   }
 
+  // Mahal içine çift tık → isim düzenleme (aktif araçtan bağımsız; CLAUDE.md UX cilası).
+  function onDblClick(e: MouseEvent): void {
+    if (!spaceActivate) return;
+    const world = screenToWorld(pointerPos(e), camera);
+    const ids = entityLayer.index.search({
+      minX: world.x,
+      minY: world.y,
+      maxX: world.x,
+      maxY: world.y,
+    });
+    for (const id of ids) {
+      const ent = store.get(id);
+      if (ent?.type === 'space' && pointInPolygon(world, ent.boundary)) {
+        e.preventDefault();
+        spaceActivate(id);
+        return;
+      }
+    }
+  }
+
   function onWheel(e: WheelEvent): void {
     e.preventDefault();
     const pivot = pointerPos(e);
@@ -176,6 +200,7 @@ export async function createCanvasApp(
   canvas.addEventListener('pointerup', onPointerUp);
   canvas.addEventListener('pointerleave', onPointerUp);
   canvas.addEventListener('wheel', onWheel, { passive: false });
+  canvas.addEventListener('dblclick', onDblClick);
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
 
@@ -185,6 +210,9 @@ export async function createCanvasApp(
     overlay,
     pixelSize: () => 1 / camera.zoom,
     exportPng: () => app.renderer.extract.base64({ target: app.stage, format: 'png' }),
+    setSpaceActivateHandler(cb: (id: EntityId) => void): void {
+      spaceActivate = cb;
+    },
     setActiveTool(tool: SceneTool | null): void {
       if (activeTool === tool) return;
       activeTool?.onDeactivate?.();
@@ -197,6 +225,7 @@ export async function createCanvasApp(
       canvas.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointerleave', onPointerUp);
       canvas.removeEventListener('wheel', onWheel);
+      canvas.removeEventListener('dblclick', onDblClick);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       activeTool?.onDeactivate?.();

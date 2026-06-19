@@ -78,14 +78,25 @@ export class ToolManager implements SceneTool {
       e.preventDefault();
       return;
     }
+    // Esc her zaman Seç'e döner; zaten Seç'teyse seçimi temizler.
+    if (e.key === 'Escape') {
+      if (this.current !== 'select') this.setTool('select');
+      else this.active.onKeyDown?.(e);
+      return;
+    }
     if (!ctrl) {
       const k = e.key.toLowerCase();
       if (k === 'v' || k === '1' || k === 'm') return this.setTool('select');
-      if (k === 'l') return this.setTool('wall');
-      if (k === 'e') return this.setTool('erase');
-      if (k === 'k') return this.setTool('calibrate');
+      if (k === 'l') return this.toggleTool('wall'); // tekrar L → kapat, Seç'e dön
+      if (k === 'e') return this.toggleTool('erase');
+      if (k === 'k') return this.toggleTool('calibrate');
     }
     this.active.onKeyDown?.(e);
+  }
+
+  /** Araç zaten aktifse Seç'e döner, değilse o aracı açar (toggle). */
+  private toggleTool(name: ToolName): void {
+    this.setTool(this.current === name ? 'select' : name);
   }
 
   destroy(): void {

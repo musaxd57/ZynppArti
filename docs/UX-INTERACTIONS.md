@@ -11,7 +11,9 @@
 ## 1. Tasarım ilkeleri
 - **AutoCAD'e yakın ol:** Moses ve mimarlar AutoCAD'den geliyor; tek-harf araç kısayolları tanıdık olmalı.
 - **Tek kaynak:** Tüm kısayollar bu tabloda + uygulama içinde `?` ile açılan yardım kartında. Kod, kısayolu buradan okur (dağıtık string'ler değil, merkezi bir `keymap`).
-- **Esc her zaman iptal, Enter her zaman onayla.** İstisna yok.
+- **Esc her zaman iptal, Enter her zaman onayla.** İstisna yok. **Esc ayrıca her zaman Seç (V) moduna döner.** *(Faz 1'de uygulandı.)*
+- **Araç toggle:** Aktif araç tuşuna tekrar basmak aracı kapatır ve Seç'e döner (L→aç, L→kapat). *(Faz 1.)*
+- **Mahal içine çift tık → ad düzenle:** Hangi araç açık olursa olsun, bir mahalin içine çift tıklamak doğrudan o mahalin isim kutusunu açar (duvar çizmeye geçmez). *(Faz 1.)*
 - **Mod yok sürprizi yok:** Aktif araç ekranda her zaman görünür; imleç aracın durumunu yansıtır.
 
 ## 2. Araç kısayolları (tek harf)

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { UpdateEntity, type EntityStore, type History, type Space } from '@zynpparti/document';
 import { polygonArea } from '@zynpparti/geometry';
@@ -17,11 +17,31 @@ function fmt(m2: number): string {
   return m2.toFixed(1).replace('.', ',');
 }
 
+interface RoomListProps {
+  store: EntityStore;
+  history: History;
+  /** Çift tıkla düzenlenmek istenen mahalin id'si (engine'den). */
+  renameId?: string | null;
+  onRenameConsumed?: () => void;
+}
+
 /** Mahal listesi paneli: otomatik bulunan odalar, düzenlenebilir ad + canlı m². */
-export function RoomList({ store, history }: { store: EntityStore; history: History }) {
+export function RoomList({ store, history, renameId, onRenameConsumed }: RoomListProps) {
   const [spaces, setSpaces] = useState<Space[]>(() => getSpaces(store));
+  const inputs = useRef(new Map<string, HTMLInputElement | null>());
 
   useEffect(() => store.subscribe(() => setSpaces(getSpaces(store))), [store]);
+
+  // Çift tık isteği gelince ilgili mahalin input'una odaklan + metni seç.
+  useEffect(() => {
+    if (!renameId) return;
+    const el = inputs.current.get(renameId);
+    if (el) {
+      el.focus();
+      el.select();
+    }
+    onRenameConsumed?.();
+  }, [renameId, spaces, onRenameConsumed]);
 
   if (spaces.length === 0) return null;
 
@@ -53,6 +73,9 @@ export function RoomList({ store, history }: { store: EntityStore; history: Hist
         {spaces.map((s) => (
           <div key={s.id} className="flex items-center gap-2">
             <input
+              ref={(el) => {
+                inputs.current.set(s.id, el);
+              }}
               defaultValue={s.name}
               onBlur={(e) => rename(s, e.target.value)}
               className="min-w-0 flex-1 rounded bg-white/10 px-2 py-1 outline-none focus:bg-white/20"
