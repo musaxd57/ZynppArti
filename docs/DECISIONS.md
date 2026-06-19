@@ -5,6 +5,24 @@
 
 ---
 
+## ADR-0009 — Faz 1 inşa sırası: önce saf doküman çekirdeği (1A)
+**Tarih:** 2026-06-19 · **Durum:** Kabul
+**Bağlam:** İnteraktif duvar düzenleme üç parçaya bağlı: doküman modeli (entity+Command+undo/redo), engine'in çizmesi, araçların input→Command çevirmesi. Hangisiyle başlamalı?
+**Karar:** Faz 1, **1A = `packages/document`** (saf TS: store + Command + history) ile başlar; sonra 1B (engine render), 1C (tools+kısayol), 1D (DXF), 1E (mahal/m²).
+**Sonuç:** En test edilebilir, UI'siz çekirdek önce sağlamlaşır (TDD); interaktif çizim onun üstüne güvenle oturur. Sıralama `docs/STATE.md` ve `docs/ROADMAP.md`'de izlenir.
+
+## ADR-0008 — İç birim: 1 birim = 1 cm
+**Tarih:** 2026-06-19 · **Durum:** Kabul
+**Bağlam:** m² hesabı (mahal) ve ölçeklendirme için iç koordinat birimi sabitlenmeli. DXF dosyaları mm/m/inch olabilir.
+**Karar:** İç koordinat birimi **1 = 1 santimetre**. 100 birim = 1 m; alan / 10.000 = m². DXF import'taki 2-nokta kalibrasyonu gelen çizimi bu birime ölçekler. Gösterim (m²/ft², ondalık) yereldir ve iç birimden bağımsızdır (bkz. `docs/I18N-TEXT.md`).
+**Sonuç:** Alan/ölçü hesapları net ve tek tip. Risk: çok büyük projelerde float hassasiyeti → epsilon kullan (CLAUDE.md §8.1). Birim gösterimi katmanı ayrı tutulur.
+
+## ADR-0007 — Duvar temsili: segment + kalınlık
+**Tarih:** 2026-06-19 · **Durum:** Kabul
+**Bağlam:** Faz 1 duvar nasıl modellenecek? Tek segment mi, birleşik polyline mı?
+**Karar:** Faz 1'de **duvar = tek segment** (`start`/`end` Vec2) **+ kalınlık** + layerId. Duvar zincirleri, uçları snap'le bağlı ayrı segmentler olarak kurulur.
+**Sonuç:** Basit, test edilebilir; mahal bulma segment grafiği üzerinde çalışır (kapalı bölge = döngü). Takas: birleşik/parametrik duvar, T-kesişim temizliği, otomatik köşe birleştirme ileriye (Faz 1 sonu / sonrası) bırakıldı.
+
 ## ADR-0006 — AI çağrıları için sağlayıcı-bağımsız (provider-agnostic) adapter
 **Tarih:** 2026-06-19 · **Durum:** Önerildi (Faz 0'da KURULMAZ — yalnızca tasarım notu)
 **Bağlam:** AI özellikleri (render prompt'ları, copilot önerileri, layout üretimi) farklı sağlayıcılara gidebilir. Tek sağlayıcıya kilitlenmek risklidir; maliyet, performans, model yetenekleri ve erişilebilirlik zamanla değişir.
