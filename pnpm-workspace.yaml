@@ -1,0 +1,13 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+allowBuilds:
+  esbuild: true
+  sharp: true
+
+# Bu paketlerin kurulum (build) script'lerine izin ver (pnpm 11 varsayılan olarak bloklar).
+# esbuild → vitest/next derleyici; sharp → Next.js görsel optimizasyonu.
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
