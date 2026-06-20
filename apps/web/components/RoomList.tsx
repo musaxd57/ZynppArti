@@ -31,7 +31,9 @@ function fmt(m2: number): string {
 /** Tip → renk (engine ROOM_TYPE_FILL ile aynı; tuvaldeki mahal rengiyle eşleşir). */
 const TYPE_COLOR: Record<RoomType, string> = {
   living: '#d9a14a',
-  wet: '#4ec9d9',
+  kitchen: '#e0773f',
+  bathroom: '#4ec9d9',
+  wet: '#3fa9b8',
   sleeping: '#9a7fd9',
   circulation: '#8a8a8a',
   service: '#6fbf73',

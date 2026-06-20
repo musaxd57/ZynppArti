@@ -52,23 +52,44 @@ function checkCorridorWidth(spaces: readonly Space[]): Finding[] {
   return out;
 }
 
-/** Yatma/yaşam mahalleri İmar Yönetmeliği asgari alanını sağlıyor mu? */
+/** Oda tipine göre İmar asgari alan kuralı (yatak/oturma/mutfak). */
+const MIN_AREA_BY_TYPE = {
+  sleeping: REGULATIONS.bedroomMinArea,
+  living: REGULATIONS.livingMinArea,
+  kitchen: REGULATIONS.kitchenMinArea,
+} as const;
+
+/** Yatma/yaşam/mutfak mahalleri İmar Yönetmeliği asgari alanını sağlıyor mu? */
 function checkRoomMinArea(spaces: readonly Space[]): Finding[] {
   const out: Finding[] = [];
   for (const s of spaces) {
-    const type = roomTypeOf(s);
-    const reg =
-      type === 'sleeping'
-        ? REGULATIONS.bedroomMinArea
-        : type === 'living'
-          ? REGULATIONS.livingMinArea
-          : null;
+    const reg = MIN_AREA_BY_TYPE[roomTypeOf(s) as keyof typeof MIN_AREA_BY_TYPE];
     if (!reg) continue;
     const area = centerlineAreaM2(s);
     if (area < reg.min) {
       out.push({
         severity: 'warning',
         message: `"${s.name}" alanı ${fmtM2(area)}; asgari ${fmtM2(reg.min)} bekleniyor.`,
+        citation: citationOf(reg),
+        entityId: s.id,
+      });
+    }
+  }
+  return out;
+}
+
+/** Banyo/WC/ıslak hacimde erişilebilir dönüş alanı (TS 9111, ~150 cm) — bilgi (advisory). */
+function checkBathroomAccess(spaces: readonly Space[]): Finding[] {
+  const reg = REGULATIONS.bathroomTurning;
+  const out: Finding[] = [];
+  for (const s of spaces) {
+    const t = roomTypeOf(s);
+    if (t !== 'bathroom' && t !== 'wet') continue;
+    const widthCm = polygonMinWidth(s.boundary);
+    if (widthCm > 0 && widthCm < reg.min) {
+      out.push({
+        severity: 'info',
+        message: `"${s.name}" en dar ~${Math.round(widthCm)} cm; erişilebilir WC için ~${reg.min} cm dönüş alanı önerilir.`,
         citation: citationOf(reg),
         entityId: s.id,
       });
@@ -182,6 +203,7 @@ export function runCopilotChecks(
   return [
     ...checkCorridorWidth(spaces),
     ...checkRoomMinArea(spaces),
+    ...checkBathroomAccess(spaces),
     ...checkDoorWidth(openings),
     ...checkDaylight(spaces, openings),
     ...checkSetback(walls, parcels),

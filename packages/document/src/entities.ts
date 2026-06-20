@@ -25,7 +25,15 @@ export interface Wall extends EntityBase {
  * tip sınıflandırma için ayrı alandır). Metrikler bu tipe göre gruplanır (Faz 2A).
  * `undefined`/atanmamış = 'other'.
  */
-export type RoomType = 'wet' | 'living' | 'sleeping' | 'circulation' | 'service' | 'other';
+export type RoomType =
+  | 'living'
+  | 'kitchen'
+  | 'bathroom'
+  | 'wet'
+  | 'sleeping'
+  | 'circulation'
+  | 'service'
+  | 'other';
 
 /**
  * Mahal (oda) — duvarlardan türetilen kapalı bölge (ENGINEERING-NOTES §1).
