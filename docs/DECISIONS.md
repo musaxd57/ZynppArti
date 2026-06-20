@@ -5,6 +5,12 @@
 
 ---
 
+## ADR-0020 — Opening (kapı/pencere) entity'si: duvara parametrik binding
+**Tarih:** 2026-06-20 · **Durum:** Kabul
+**Bağlam:** Yönetmelik denetimini derinleştirmek için kapı genişliği (TS 9111) kuralını aktifleştirmek gerekti; bu da kapı/pencere veri modeli ister (Faz 1 roadmap'inde vardı). Kapı bir duvarın üstünde yaşar; duvar değişince uyumlu kalmalı (CLAUDE.md §7 binding).
+**Karar:** `Opening` entity = `{ wallId, t∈[0,1], width, kind: 'door'|'window' }`. Konum **duvardan türetilir** (orta-çizgi üzerinde `t`); gerçek koordinat saklanmaz → duvar taşınınca/uzayınca kapı otomatik takip eder (binding). Render: duvarı boşluk kadar "keser" (zemin rengi) + mimari sembol (kapı kanadı + açılış yayı; pencere cam çizgisi), ekran-sabit ince çizgi (VISUAL-CRAFT). Bağ tutarlılığı: duvar silinince bağlı boşluklar **tek BatchCommand** ile birlikte silinir (öksüz kalmaz, tek undo). Bounds/hit-test duvar çözülerek hesaplanır (EntityLayer).
+**Sonuç:** TS 9111 kapı genişliği denetimi aktif (copilot). DoorTool ile duvara tıklayıp kapı eklenir (90 cm varsayılan, uyumlu). Takas: pencere ayrı araç yok (şimdilik veri modeli + render hazır); T-kesişimde boşluk-köşe temizliği yok (ADR-0007 ile uyumlu, ileride).
+
 ## ADR-0019 — Yön ilkesi: kalite tavanı yok + maliyetli AI'ı sona ertele
 **Tarih:** 2026-06-20 · **Durum:** Kabul (Moses direktifi) · **Yansıma:** CLAUDE.md §0 kural 11-12
 **Bağlam:** Proje uzun; AI render + LLM copilot para gerektirir. İki şey net olmalı ki Claude her oturum hatırlasın.

@@ -40,9 +40,23 @@ export interface Space extends EntityBase {
 }
 
 /**
- * Faz 1 entity birliği (discriminated union). İleride Door/Window/Dimension... eklenecek.
- * `type` alanı ayırıcıdır.
+ * Boşluk (kapı/pencere) — bir duvarın üstüne oturur (binding ile bağlı; CLAUDE.md §7).
+ * Konum `wallId` duvarı boyunca `t∈[0,1]` ile parametriktir → duvar değişince boşluk uyumlu kalır.
+ * `width` net geçiş (cm); kapı genişliği yönetmelik denetimine girer (TS 9111, ADR-0018).
  */
-export type Entity = Wall | Space;
+export interface Opening extends EntityBase {
+  readonly type: 'opening';
+  readonly wallId: EntityId;
+  /** Duvar orta-çizgisi boyunca konum (0 = start, 1 = end). */
+  readonly t: number;
+  readonly width: number;
+  readonly kind: 'door' | 'window';
+}
+
+/**
+ * Entity birliği (discriminated union). `type` alanı ayırıcıdır.
+ * İleride Dimension/Annotation/Block... eklenecek.
+ */
+export type Entity = Wall | Space | Opening;
 
 export type EntityType = Entity['type'];

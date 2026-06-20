@@ -1,5 +1,11 @@
 import { polygonMinWidth } from '@zynpparti/geometry';
-import { centerlineAreaM2, roomTypeOf, type Space, type Wall } from '@zynpparti/document';
+import {
+  centerlineAreaM2,
+  roomTypeOf,
+  type Opening,
+  type Space,
+  type Wall,
+} from '@zynpparti/document';
 import { PARKING_REGULATION, REGULATIONS, citationOf } from './regulations';
 
 /**
@@ -70,6 +76,24 @@ function checkRoomMinArea(spaces: readonly Space[]): Finding[] {
   return out;
 }
 
+/** Kapı net geçiş genişliği TS 9111 erişilebilirlik asgarisini sağlıyor mu? */
+function checkDoorWidth(openings: readonly Opening[]): Finding[] {
+  const reg = REGULATIONS.doorClearWidth;
+  const out: Finding[] = [];
+  for (const o of openings) {
+    if (o.kind !== 'door') continue;
+    if (o.width < reg.min) {
+      out.push({
+        severity: 'warning',
+        message: `Kapı net geçişi ${Math.round(o.width)} cm; erişilebilirlik için en az ${reg.min} cm önerilir.`,
+        citation: citationOf(reg),
+        entityId: o.id,
+      });
+    }
+  }
+  return out;
+}
+
 /**
  * Otopark ihtiyacı (Otopark Yönetmeliği) — toplam alandan KABA tahmin (info).
  * Gerçek ihtiyaç kullanım/bölge/nüfusa göredir; bu basitleştirilmiş bir tohumdur.
@@ -92,9 +116,18 @@ function checkParking(spaces: readonly Space[]): Finding[] {
  * Tüm copilot denetimlerini çalıştırır. Saf fonksiyon — model + duvarlar girer, bulgular çıkar.
  * Çizim değişince yeniden çağrılır (canlı öneri). Sıra: hata/uyarı önce, bilgi (otopark) sonda.
  *
- * NOT: Çekme mesafesi (parsel sınırı) ve kapı genişliği (Opening entity) kuralları bilgi tabanında
- * hazır ama denetimleri ilgili entity'ler eklenince aktifleşir (ADR-0018; regulations.ts status).
+ * NOT: Çekme mesafesi (parsel sınırı) kuralı bilgi tabanında hazır ama denetimi parsel/ada
+ * sınırı entity'si eklenince aktifleşir (ADR-0018; regulations.ts status: pending).
  */
-export function runCopilotChecks(spaces: readonly Space[], _walls: readonly Wall[]): Finding[] {
-  return [...checkCorridorWidth(spaces), ...checkRoomMinArea(spaces), ...checkParking(spaces)];
+export function runCopilotChecks(
+  spaces: readonly Space[],
+  _walls: readonly Wall[],
+  openings: readonly Opening[] = [],
+): Finding[] {
+  return [
+    ...checkCorridorWidth(spaces),
+    ...checkRoomMinArea(spaces),
+    ...checkDoorWidth(openings),
+    ...checkParking(spaces),
+  ];
 }

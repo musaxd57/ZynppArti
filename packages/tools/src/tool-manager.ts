@@ -4,8 +4,9 @@ import { WallTool } from './wall-tool';
 import { SelectTool } from './select-tool';
 import { EraseTool } from './erase-tool';
 import { CalibrateTool } from './calibrate-tool';
+import { DoorTool } from './door-tool';
 
-export type ToolName = 'select' | 'wall' | 'erase' | 'calibrate';
+export type ToolName = 'select' | 'wall' | 'door' | 'erase' | 'calibrate';
 
 interface DisposableTool extends SceneTool {
   dispose(): void;
@@ -26,6 +27,7 @@ export class ToolManager implements SceneTool {
     this.tools = {
       select: new SelectTool(ctx),
       wall: new WallTool(ctx),
+      door: new DoorTool(ctx),
       erase: new EraseTool(ctx),
       calibrate: new CalibrateTool(ctx),
     };
@@ -88,6 +90,7 @@ export class ToolManager implements SceneTool {
       const k = e.key.toLowerCase();
       if (k === 'v' || k === '1' || k === 'm') return this.setTool('select');
       if (k === 'l') return this.toggleTool('wall'); // tekrar L → kapat, Seç'e dön
+      if (k === 'd') return this.toggleTool('door');
       if (k === 'e') return this.toggleTool('erase');
       if (k === 'k') return this.toggleTool('calibrate');
     }

@@ -1,9 +1,10 @@
 import { Container, Graphics } from 'pixi.js';
 import type { Entity, EntityId, EntityStore, StoreChange } from '@zynpparti/document';
 import { SpatialIndex, type AABB } from './spatial-index';
-import { entityBounds } from './entity-bounds';
+import { entityBounds, openingBounds } from './entity-bounds';
 import { drawWall } from './render-wall';
 import { buildSpaceFill, buildSpaceLabel, drawSpacePerimeter } from './render-space';
+import { drawOpening } from './render-opening';
 
 /**
  * Store'a abone olup entity'leri PixiJS'te çizen katman + mekânsal indeks (rbush).
@@ -17,6 +18,7 @@ export class EntityLayer {
   readonly index = new SpatialIndex();
   private readonly spaceFill = new Container();
   private readonly wallLayer = new Container();
+  private readonly openingLayer = new Container();
   private readonly labelLayer = new Container();
   private readonly objects = new Map<EntityId, Container[]>();
   /** Ekran-sabit konturları zoom değişince yeniden çizen kapamalar (lineweight hiyerarşisi). */
@@ -26,29 +28,49 @@ export class EntityLayer {
   private readonly unsubscribe: () => void;
 
   constructor(private readonly store: EntityStore) {
-    this.container.addChild(this.spaceFill, this.wallLayer, this.labelLayer);
+    this.container.addChild(this.spaceFill, this.wallLayer, this.openingLayer, this.labelLayer);
 
     const entries: { id: EntityId; box: AABB }[] = [];
     for (const e of store.all()) {
       this.render(e);
-      entries.push({ id: e.id, box: entityBounds(e) });
+      entries.push({ id: e.id, box: this.boundsOf(e) });
     }
     this.index.bulkLoad(entries);
 
     this.unsubscribe = store.subscribe((change) => this.onChange(change));
   }
 
+  /** Entity'nin AABB'si. Boşluk (opening) duvara bağlı → duvar çözülerek hesaplanır. */
+  private boundsOf(e: Entity): AABB {
+    if (e.type === 'opening') {
+      const wall = this.store.get(e.wallId);
+      if (wall?.type === 'wall') return openingBounds(e, wall);
+      return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+    }
+    return entityBounds(e);
+  }
+
   private onChange(change: StoreChange): void {
     for (const id of change.removed) this.removeEntity(id);
     for (const id of change.added) this.upsert(id, true);
     for (const id of change.updated) this.upsert(id, false);
+
+    // Binding: duvar eklendi/değişti → bağlı boşlukları yeniden çiz + indeksle (konum duvardan türer).
+    const walls = new Set(
+      [...change.added, ...change.updated].filter((id) => this.store.get(id)?.type === 'wall'),
+    );
+    if (walls.size > 0) {
+      for (const e of this.store.all()) {
+        if (e.type === 'opening' && walls.has(e.wallId)) this.upsert(e.id, false);
+      }
+    }
   }
 
   private upsert(id: EntityId, isNew: boolean): void {
     const entity = this.store.get(id);
     if (!entity) return;
     this.render(entity);
-    const box = entityBounds(entity);
+    const box = this.boundsOf(entity);
     if (isNew) this.index.insert(id, box);
     else this.index.update(id, box);
   }
@@ -64,6 +86,16 @@ export class EntityLayer {
       this.wallLayer.addChild(g);
       objs.push(g);
       this.redrawables.set(entity.id, (p) => drawWall(g, entity, p));
+    } else if (entity.type === 'opening') {
+      const g = new Graphics();
+      const wall = this.store.get(entity.wallId);
+      if (wall?.type === 'wall') drawOpening(g, entity, wall, px);
+      this.openingLayer.addChild(g);
+      objs.push(g);
+      this.redrawables.set(entity.id, (p) => {
+        const w = this.store.get(entity.wallId);
+        if (w?.type === 'wall') drawOpening(g, entity, w, p);
+      });
     } else {
       const fill = buildSpaceFill(entity);
       this.spaceFill.addChild(fill);

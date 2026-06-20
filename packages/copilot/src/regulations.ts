@@ -63,15 +63,16 @@ export const REGULATIONS = {
     status: 'active',
   },
 
-  // ---- Tohum: atıflı bilgi tabanı; denetim veri (yeni entity) bekliyor ----
   doorClearWidth: {
     id: 'ts9111-door-clear-width',
     source: 'TS 9111',
     rule: 'Erişilebilir kapı net geçiş genişliği en az 90 cm olmalı.',
     min: 90,
     unit: 'cm',
-    status: 'pending', // Opening (kapı) entity gelince aktifleşir
+    status: 'active', // Opening (kapı) entity eklendi → denetim aktif
   },
+
+  // ---- Tohum: atıflı bilgi tabanı; denetim veri (yeni entity) bekliyor ----
   setbackFront: {
     id: 'imar-setback-front',
     source: 'Planlı Alanlar İmar Yönetmeliği',
