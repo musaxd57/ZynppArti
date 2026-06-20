@@ -34,6 +34,8 @@ export function createSnapper(
   store: EntityStore,
   index: SpatialIndex,
   pixelSize: () => number,
+  /** Snap bir uç noktaya oturduğunda o nokta (gösterge için); ızgaraya düşerse null. */
+  onSnap?: (target: Vec2 | null) => void,
 ): (world: Vec2) => Vec2 {
   return (world: Vec2): Vec2 => {
     const r = SNAP_PX * pixelSize();
@@ -57,7 +59,11 @@ export function createSnapper(
         }
       }
     }
-    if (best) return { x: best.x, y: best.y };
+    if (best) {
+      onSnap?.(best);
+      return { x: best.x, y: best.y };
+    }
+    onSnap?.(null);
     return {
       x: Math.round(world.x / SNAP_GRID) * SNAP_GRID,
       y: Math.round(world.y / SNAP_GRID) * SNAP_GRID,
