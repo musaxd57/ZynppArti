@@ -59,7 +59,7 @@ export class SelectTool implements SceneTool {
   }
 
   onPointerDown(p: ScenePointer): void {
-    const id = hitTest(this.ctx.store, this.ctx.index, p.world, HIT_PX * this.ctx.pixelSize());
+    const id = hitTest(this.ctx.store, this.ctx.index, p.world, HIT_PX * this.ctx.pixelSize(), this.ctx.isLayerHidden);
     this.renderHover(null);
     this.select(id);
     if (id) {
@@ -83,7 +83,7 @@ export class SelectTool implements SceneTool {
     }
     // Boştayken imleç altındaki entity'yi soluk vurgula (micro-interaction; VISUAL-CRAFT §5/§6).
     if (this.state === 'idle') {
-      const id = hitTest(this.ctx.store, this.ctx.index, p.world, HIT_PX * this.ctx.pixelSize());
+      const id = hitTest(this.ctx.store, this.ctx.index, p.world, HIT_PX * this.ctx.pixelSize(), this.ctx.isLayerHidden);
       this.renderHover(id === this.selectedId ? null : id);
     }
   }

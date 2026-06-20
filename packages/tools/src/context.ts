@@ -17,6 +17,8 @@ export interface ToolContext {
   pixelSize(): number;
   /** Dünya noktasını en yakın uç noktaya, yoksa ızgaraya yakalar. */
   snap(world: Vec2): Vec2;
+  /** Katman gizliyse o entity seçilemez/silinemez (hit-test atlar). İsteğe bağlı. */
+  isLayerHidden?(layerId: string): boolean;
 }
 
 const SNAP_PX = 12; // ekran pikseli yarıçapı

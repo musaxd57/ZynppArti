@@ -7,6 +7,7 @@ import { buildSpaceFill, buildSpaceLabel, drawSpacePerimeter } from './render-sp
 import { drawOpening } from './render-opening';
 import { drawDimension, buildDimensionLabel } from './render-dimension';
 import { drawParcel } from './render-parcel';
+import { LayerState } from './layer-state';
 
 /**
  * Store'a abone olup entity'leri PixiJS'te çizen katman + mekânsal indeks (rbush).
@@ -29,9 +30,15 @@ export class EntityLayer {
   private readonly redrawables = new Map<EntityId, (pixelSize: number) => void>();
   /** Son uygulanan pixelSize (= 1/zoom); yalnız değişince konturlar yenilenir. */
   private lineweightPx = 1;
+  /** Son uygulanan viewport — katman görünürlüğü değişince yeniden uygulamak için saklanır. */
+  private lastViewport: AABB | null = null;
   private readonly unsubscribe: () => void;
+  private readonly unsubscribeLayers: () => void;
 
-  constructor(private readonly store: EntityStore) {
+  constructor(
+    private readonly store: EntityStore,
+    private readonly layers: LayerState = new LayerState(),
+  ) {
     this.container.addChild(
       this.parcelLayer,
       this.spaceFill,
@@ -49,6 +56,10 @@ export class EntityLayer {
     this.index.bulkLoad(entries);
 
     this.unsubscribe = store.subscribe((change) => this.onChange(change));
+    // Katman görünürlüğü değişince görünürlüğü yeniden uygula (son viewport ile).
+    this.unsubscribeLayers = this.layers.subscribe(() => {
+      if (this.lastViewport) this.cull(this.lastViewport);
+    });
   }
 
   /** Entity'nin AABB'si. Boşluk (opening) duvara bağlı → duvar çözülerek hesaplanır. */
@@ -162,17 +173,22 @@ export class EntityLayer {
     this.redrawables.delete(id);
   }
 
-  /** Viewport (dünya kutusu) dışındaki entity'leri gizle (Faz 1: O(n); ileride artımlı). */
+  /**
+   * Görünürlüğü uygular: viewport içinde VE katmanı gizli değilse görünür (Faz 1: O(n); ileride artımlı).
+   */
   cull(viewport: AABB): void {
-    const visibleIds = new Set(this.index.search(viewport));
+    this.lastViewport = viewport;
+    const inView = new Set(this.index.search(viewport));
     for (const [id, objs] of this.objects) {
-      const visible = visibleIds.has(id);
+      const layerHidden = this.layers.isHidden(this.store.get(id)?.layerId ?? '');
+      const visible = inView.has(id) && !layerHidden;
       for (const o of objs) o.visible = visible;
     }
   }
 
   destroy(): void {
     this.unsubscribe();
+    this.unsubscribeLayers();
     for (const objs of this.objects.values()) for (const o of objs) o.destroy();
     this.objects.clear();
     this.index.clear();

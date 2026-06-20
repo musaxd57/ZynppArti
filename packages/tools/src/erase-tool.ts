@@ -16,12 +16,12 @@ export class EraseTool implements SceneTool {
   }
 
   onPointerMove(p: ScenePointer): void {
-    this.hoveredId = hitTest(this.ctx.store, this.ctx.index, p.world, HIT_PX * this.ctx.pixelSize());
+    this.hoveredId = hitTest(this.ctx.store, this.ctx.index, p.world, HIT_PX * this.ctx.pixelSize(), this.ctx.isLayerHidden);
     this.renderHover();
   }
 
   onPointerDown(p: ScenePointer): void {
-    const id = hitTest(this.ctx.store, this.ctx.index, p.world, HIT_PX * this.ctx.pixelSize());
+    const id = hitTest(this.ctx.store, this.ctx.index, p.world, HIT_PX * this.ctx.pixelSize(), this.ctx.isLayerHidden);
     if (!id) return;
     this.hoveredId = null;
     this.hoverGfx.clear();
