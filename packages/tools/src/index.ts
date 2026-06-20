@@ -5,4 +5,5 @@ export { SelectTool } from './select-tool';
 export { EraseTool } from './erase-tool';
 export { CalibrateTool } from './calibrate-tool';
 export { OpeningTool, DOOR_WIDTH, WINDOW_WIDTH } from './opening-tool';
+export { DimensionTool, DIMENSION_OFFSET } from './dimension-tool';
 export { ToolManager, type ToolName } from './tool-manager';
