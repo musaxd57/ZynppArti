@@ -55,6 +55,7 @@
 ## GÜNLÜK
 
 ### 2026-06-20
+- **Düzenlenebilir tutamaçlar (SelectTool):** seçili entity'de tutamaç kareleri + sürükleme — duvar uçları, ölçü uçları + offset, parsel köşeleri (snap'li, canlı ghost, UpdateEntity). Parsel highlight de eklendi. Tarayıcıda doğrulandı (duvar seç → uç tutamaçları).
 - **Daha çok yönetmelik + oda tipleri:** RoomType'a **Mutfak** + **Banyo/WC** eklendi (renk + dropdown + metrik gruplama). copilot: mutfak asgari alan (İmar 3,3 m²), banyo/ıslak hacim erişilebilir dönüş alanı (TS 9111 ~150 cm, info). copilot 19 test. (Merdiven ertelendi — stair entity gerekiyor.)
 - **Katman kilitleme:** LayerState'e `locked` (isLocked/toggleLock) eklendi; kilitli katman görünür kalır ama hit-test atlar (seçilemez/silinemez/taşınamaz). hit-test param `skipLayer` = gizli||kilitli. LayerPanel'e 🔒/🔓 toggle.
 - **Katman (layer) paneli + görünürlük:** engine `LayerState` (paylaşılan view-state, undo dışı) — EntityLayer cull'da gizli katmanı çizmez, hit-test gizli katmanı atlar (ToolContext.isLayerHidden). `CanvasHandle.layers` ile yayınlanır. web `LayerPanel` (Mimari/Mahaller/Parsel, göz aç-kapa + sayım). Tarayıcıda doğrulandı (Mahaller gizle → oda+etiket kaybolur, duvarlar kalır).
