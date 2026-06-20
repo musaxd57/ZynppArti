@@ -24,6 +24,18 @@ interface DisposableTool extends SceneTool {
 
 type ToolListener = (active: ToolName) => void;
 
+/** Araç başına tuval imleci (CSS cursor). Seç dışındaki yerleştirme/ölçü araçları artı imleç. */
+const CURSOR_BY_TOOL: Record<ToolName, string> = {
+  select: 'default',
+  wall: 'crosshair',
+  door: 'crosshair',
+  window: 'crosshair',
+  dimension: 'crosshair',
+  parcel: 'crosshair',
+  erase: 'crosshair',
+  calibrate: 'crosshair',
+};
+
 /**
  * Aktif aracı yöneten ve klavye kısayollarını işleyen üst katman. Engine'in tek "aktif aracı"
  * budur; içeride alt-araçlar arası geçiş yapar (CLAUDE.md §8.3, kısayollar `docs/UX-INTERACTIONS.md`).
@@ -45,6 +57,7 @@ export class ToolManager implements SceneTool {
       calibrate: new CalibrateTool(ctx),
     };
     this.active.onActivate?.();
+    this.ctx.setCursor?.(CURSOR_BY_TOOL[this.current]);
   }
 
   private get active(): DisposableTool {
@@ -60,6 +73,7 @@ export class ToolManager implements SceneTool {
     this.active.onDeactivate?.();
     this.current = name;
     this.active.onActivate?.();
+    this.ctx.setCursor?.(CURSOR_BY_TOOL[name]);
     for (const fn of this.listeners) fn(name);
   }
 

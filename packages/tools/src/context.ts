@@ -21,6 +21,8 @@ export interface ToolContext {
   isLayerHidden?(layerId: string): boolean;
   /** Katman kilitliyse seçilemez/düzenlenemez (görünür kalır). İsteğe bağlı. */
   isLayerLocked?(layerId: string): boolean;
+  /** Tuval imlecini ayarla (araç başına). İsteğe bağlı. */
+  setCursor?(cursor: string): void;
 }
 
 const SNAP_PX = 12; // ekran pikseli yarıçapı

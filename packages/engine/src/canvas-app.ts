@@ -23,6 +23,8 @@ export interface CanvasHandle {
   pixelSize(): number;
   /** Aktif aracı ayarla (null = araç yok, yalnız gezinme). */
   setActiveTool(tool: SceneTool | null): void;
+  /** Tuval imlecini ayarla (araç başına; pan/space geçici olarak geçersiz kılar). */
+  setCursor(cursor: string): void;
   /** Bir mahal içine çift tıklanınca çağrılacak handler (ör. isim düzenleme). */
   setSpaceActivateHandler(cb: (id: EntityId) => void): void;
   /** Mevcut sahneyi PNG data-URL olarak dışa aktarır. */
@@ -114,6 +116,7 @@ export async function createCanvasApp(
   let panning = false;
   let panStart: Vec2 = { x: 0, y: 0 };
   let cameraStart: Camera = camera;
+  let toolCursor = 'default'; // aktif aracın imleci (pan bittiğinde geri yüklenir)
 
   function beginPan(e: PointerEvent): void {
     panning = true;
@@ -150,7 +153,7 @@ export async function createCanvasApp(
     if (panning) {
       panning = false;
       if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
-      canvas.style.cursor = spaceHeld ? 'grab' : 'default';
+      canvas.style.cursor = spaceHeld ? 'grab' : toolCursor;
       return;
     }
     activeTool?.onPointerUp?.(scenePointer(e));
@@ -198,7 +201,7 @@ export async function createCanvasApp(
   function onKeyUp(e: KeyboardEvent): void {
     if (e.code === 'Space') {
       spaceHeld = false;
-      if (!panning) canvas.style.cursor = 'default';
+      if (!panning) canvas.style.cursor = toolCursor;
     }
   }
 
@@ -227,6 +230,10 @@ export async function createCanvasApp(
       activeTool?.onDeactivate?.();
       activeTool = tool;
       activeTool?.onActivate?.();
+    },
+    setCursor(cursor: string): void {
+      toolCursor = cursor;
+      if (!panning && !spaceHeld) canvas.style.cursor = cursor;
     },
     destroy(): void {
       canvas.removeEventListener('pointerdown', onPointerDown);

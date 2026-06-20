@@ -60,6 +60,7 @@ export function CanvasStage() {
         ),
         isLayerHidden: (id) => h.layers.isHidden(id),
         isLayerLocked: (id) => h.layers.isLocked(id),
+        setCursor: (c) => h.setCursor(c),
       });
       h.setActiveTool(manager);
       // Mahal içine çift tık → Seç moduna geç + o mahalin adını düzenlemeye odaklan.
