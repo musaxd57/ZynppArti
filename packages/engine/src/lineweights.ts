@@ -38,6 +38,8 @@ export const PALETTE = {
   roomPerimeter: 0x7fb0e0,
   /** Ölçülendirme çizgisi/metni — ince, nötr açık. */
   dimension: 0xc8c8d0,
+  /** Parsel (arsa) sınırı — mülk sınırı geleneği: belirgin yeşil, zincir çizgi. */
+  parcel: 0x6fbf73,
   /** Izgara ince çizgileri (en ince, geri planda). */
   grid: 0x2a2a2a,
   /** Izgara ana çizgileri (her 1 m) — incelerden biraz belirgin. */

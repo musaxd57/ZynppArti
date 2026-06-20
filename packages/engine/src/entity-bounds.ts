@@ -45,7 +45,8 @@ export function entityBounds(entity: Entity): AABB {
         maxY: Math.max(entity.start.y, entity.end.y) + half,
       };
     }
-    case 'space': {
+    case 'space':
+    case 'parcel': {
       let minX = Infinity;
       let minY = Infinity;
       let maxX = -Infinity;

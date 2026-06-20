@@ -88,6 +88,45 @@ describe('runCopilotChecks — kapı genişliği (TS 9111)', () => {
   });
 });
 
+describe('runCopilotChecks — çekme mesafesi (İmar, parsel)', () => {
+  const parcel = (half: number): import('@zynpparti/document').Parcel => ({
+    id: 'P',
+    type: 'parcel',
+    layerId: 'site',
+    boundary: [
+      { x: -half, y: -half },
+      { x: half, y: -half },
+      { x: half, y: half },
+      { x: -half, y: half },
+    ],
+  });
+  const wall = (x1: number, y1: number, x2: number, y2: number): import('@zynpparti/document').Wall => ({
+    id: 'w',
+    type: 'wall',
+    layerId: 'default',
+    start: { x: x1, y: y1 },
+    end: { x: x2, y: y2 },
+    thickness: 15,
+  });
+
+  it('yapı sınıra çok yakın → atıflı uyarı', () => {
+    // parsel ±500; duvar x=400 → sınıra 100 cm < 300 → uyarı
+    const f = nonInfo(runCopilotChecks([], [wall(400, -100, 400, 100)], [], [parcel(500)]));
+    expect(f).toHaveLength(1);
+    expect(f[0]!.severity).toBe('warning');
+    expect(f[0]!.citation).toContain('İmar');
+  });
+
+  it('yeterli çekme → uygunsuzluk yok', () => {
+    // duvar x=100 → sınıra 400 cm > 300
+    expect(nonInfo(runCopilotChecks([], [wall(100, -100, 100, 100)], [], [parcel(500)]))).toHaveLength(0);
+  });
+
+  it('parsel yoksa çekme denetlenmez', () => {
+    expect(nonInfo(runCopilotChecks([], [wall(490, -100, 490, 100)], [], []))).toHaveLength(0);
+  });
+});
+
 describe('runCopilotChecks — doğal aydınlatma (İmar)', () => {
   const win = (id: string, width: number): import('@zynpparti/document').Opening => ({
     id,

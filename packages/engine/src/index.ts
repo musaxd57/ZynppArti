@@ -5,6 +5,7 @@ export * from './hit-test';
 export { drawWall } from './render-wall';
 export { drawOpening } from './render-opening';
 export { drawDimension, buildDimensionLabel } from './render-dimension';
+export { drawParcel } from './render-parcel';
 export * from './linetypes';
 export { EntityLayer } from './entity-layer';
 export { createCanvasApp } from './canvas-app';

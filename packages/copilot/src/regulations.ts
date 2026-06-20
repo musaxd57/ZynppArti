@@ -84,10 +84,10 @@ export const REGULATIONS = {
   setbackSide: {
     id: 'imar-setback-side',
     source: 'Planlı Alanlar İmar Yönetmeliği',
-    rule: 'Yan bahçe çekme mesafesi genelde en az 3,0 m (imar planına göre değişir).',
+    rule: 'Yapının parsel sınırına çekme mesafesi genelde en az 3,0 m (ön/arka için plana göre daha fazla).',
     min: 300,
     unit: 'cm',
-    status: 'pending',
+    status: 'active', // Parcel entity eklendi → çekme denetimi aktif (asgari/yan ölçütü)
   },
 } satisfies Record<string, ThresholdRegulation>;
 

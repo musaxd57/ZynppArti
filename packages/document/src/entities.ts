@@ -65,9 +65,18 @@ export interface Dimension extends EntityBase {
 }
 
 /**
+ * Parsel (arsa) sınırı — imar/çekme denetimi için arsa poligonu (CLAUDE.md §7 site). Tek parsel
+ * tipik; `boundary` kapalı poligon (cm). Çekme (setback) = yapının bu sınıra uzaklığı.
+ */
+export interface Parcel extends EntityBase {
+  readonly type: 'parcel';
+  readonly boundary: readonly Vec2[];
+}
+
+/**
  * Entity birliği (discriminated union). `type` alanı ayırıcıdır.
  * İleride Annotation/Block... eklenecek.
  */
-export type Entity = Wall | Space | Opening | Dimension;
+export type Entity = Wall | Space | Opening | Dimension | Parcel;
 
 export type EntityType = Entity['type'];

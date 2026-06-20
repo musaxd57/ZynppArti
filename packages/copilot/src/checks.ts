@@ -1,8 +1,9 @@
-import { polygonMinWidth } from '@zynpparti/geometry';
+import { polygonMinWidth, distanceToPolygonBoundary } from '@zynpparti/geometry';
 import {
   centerlineAreaM2,
   roomTypeOf,
   type Opening,
+  type Parcel,
   type Space,
   type Wall,
 } from '@zynpparti/document';
@@ -95,6 +96,35 @@ function checkDoorWidth(openings: readonly Opening[]): Finding[] {
 }
 
 /**
+ * Çekme mesafesi (İmar) — yapının parsel sınırına en yakın mesafesi asgari çekmeyi sağlıyor mu?
+ * Bina düzeyi yaklaşım: ön/arka/yan ayrımı yapılmaz (plan gerektirir), en küçük mesafe yan-asgariyle
+ * (3 m) kıyaslanır. Parsel yoksa denetlenmez.
+ */
+function checkSetback(walls: readonly Wall[], parcels: readonly Parcel[]): Finding[] {
+  if (parcels.length === 0 || walls.length === 0) return [];
+  const reg = REGULATIONS.setbackSide;
+  let minDist = Infinity;
+  for (const parcel of parcels) {
+    if (parcel.boundary.length < 3) continue;
+    for (const w of walls) {
+      minDist = Math.min(
+        minDist,
+        distanceToPolygonBoundary(w.start, parcel.boundary),
+        distanceToPolygonBoundary(w.end, parcel.boundary),
+      );
+    }
+  }
+  if (!Number.isFinite(minDist) || minDist >= reg.min) return [];
+  return [
+    {
+      severity: 'warning',
+      message: `Yapı parsel sınırına ~${Math.round(minDist)} cm; asgari çekme ~${reg.min} cm (ön/arka daha fazla olabilir).`,
+      citation: citationOf(reg),
+    },
+  ];
+}
+
+/**
  * Doğal aydınlatma (İmar) — bina düzeyinde pencere alanı / taban alanı oranı (KABA).
  * Pencere yoksa nag etmez (kullanıcı henüz pencere koymamış olabilir).
  */
@@ -140,19 +170,21 @@ function checkParking(spaces: readonly Space[]): Finding[] {
  * Tüm copilot denetimlerini çalıştırır. Saf fonksiyon — model + duvarlar girer, bulgular çıkar.
  * Çizim değişince yeniden çağrılır (canlı öneri). Sıra: hata/uyarı önce, bilgi (otopark) sonda.
  *
- * NOT: Çekme mesafesi (parsel sınırı) kuralı bilgi tabanında hazır ama denetimi parsel/ada
- * sınırı entity'si eklenince aktifleşir (ADR-0018; regulations.ts status: pending).
+ * NOT: Ön bahçe çekmesi (setbackFront) hâlâ tohum — ön/arka kenar ayrımı imar planı/cephe yönü
+ * gerektirir; setbackSide (asgari) parsel ile aktiftir (ADR-0018).
  */
 export function runCopilotChecks(
   spaces: readonly Space[],
-  _walls: readonly Wall[],
+  walls: readonly Wall[],
   openings: readonly Opening[] = [],
+  parcels: readonly Parcel[] = [],
 ): Finding[] {
   return [
     ...checkCorridorWidth(spaces),
     ...checkRoomMinArea(spaces),
     ...checkDoorWidth(openings),
     ...checkDaylight(spaces, openings),
+    ...checkSetback(walls, parcels),
     ...checkParking(spaces),
   ];
 }

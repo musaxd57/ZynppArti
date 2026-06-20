@@ -6,6 +6,7 @@ import { drawWall } from './render-wall';
 import { buildSpaceFill, buildSpaceLabel, drawSpacePerimeter } from './render-space';
 import { drawOpening } from './render-opening';
 import { drawDimension, buildDimensionLabel } from './render-dimension';
+import { drawParcel } from './render-parcel';
 
 /**
  * Store'a abone olup entity'leri PixiJS'te çizen katman + mekânsal indeks (rbush).
@@ -17,6 +18,7 @@ import { drawDimension, buildDimensionLabel } from './render-dimension';
 export class EntityLayer {
   readonly container = new Container();
   readonly index = new SpatialIndex();
+  private readonly parcelLayer = new Container();
   private readonly spaceFill = new Container();
   private readonly wallLayer = new Container();
   private readonly openingLayer = new Container();
@@ -31,6 +33,7 @@ export class EntityLayer {
 
   constructor(private readonly store: EntityStore) {
     this.container.addChild(
+      this.parcelLayer,
       this.spaceFill,
       this.wallLayer,
       this.openingLayer,
@@ -113,6 +116,12 @@ export class EntityLayer {
       const label = buildDimensionLabel(entity);
       this.labelLayer.addChild(label);
       objs.push(label);
+    } else if (entity.type === 'parcel') {
+      const g = new Graphics();
+      drawParcel(g, entity, px);
+      this.parcelLayer.addChild(g);
+      objs.push(g);
+      this.redrawables.set(entity.id, (p) => drawParcel(g, entity, p));
     } else {
       const fill = buildSpaceFill(entity);
       this.spaceFill.addChild(fill);
