@@ -9,6 +9,7 @@ const TOOLS: { name: ToolName; label: string; hotkey: string }[] = [
   { name: 'select', label: 'Seç', hotkey: 'V' },
   { name: 'wall', label: 'Duvar', hotkey: 'L' },
   { name: 'door', label: 'Kapı', hotkey: 'D' },
+  { name: 'window', label: 'Pencere', hotkey: 'P' },
   { name: 'erase', label: 'Sil', hotkey: 'E' },
   { name: 'calibrate', label: 'Ölçekle', hotkey: 'K' },
 ];

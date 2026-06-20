@@ -103,6 +103,20 @@ export const PARKING_REGULATION = {
   areaPerSpaceM2: 100,
 } as const;
 
+/**
+ * Doğal aydınlatma (Planlı Alanlar İmar Yönetmeliği) — yaşam mahallerinde pencere alanı taban
+ * alanının ~1/10'undan az olmamalı. Pencere yüksekliği planda saklanmadığından KABA tahmindir;
+ * bina düzeyinde toplam oran bakılır (mahal-pencere eşleşmesi yok). Bilgi/uyarı amaçlı.
+ */
+export const DAYLIGHT_REGULATION = {
+  id: 'imar-daylight-ratio',
+  source: 'Planlı Alanlar İmar Yönetmeliği',
+  rule: "Yaşam mahallerinde pencere alanı taban alanının ~1/10'undan az olmamalı (doğal aydınlatma).",
+  minRatio: 0.1,
+  /** Pencere yükseklik varsayımı (cm) — alan tahmini için. */
+  windowHeightCm: 140,
+} as const;
+
 /** Bir kuralın "Kaynak — kural" biçiminde atıf metni. */
 export function citationOf(reg: Regulation): string {
   return `${reg.source} — ${reg.rule}`;

@@ -6,7 +6,7 @@ import {
   type Space,
   type Wall,
 } from '@zynpparti/document';
-import { PARKING_REGULATION, REGULATIONS, citationOf } from './regulations';
+import { DAYLIGHT_REGULATION, PARKING_REGULATION, REGULATIONS, citationOf } from './regulations';
 
 /**
  * Kaynak-gösteren öneri motoru (Faz 2, ADR-0014 ayak 1). Deterministik geometrik kurallar
@@ -95,6 +95,30 @@ function checkDoorWidth(openings: readonly Opening[]): Finding[] {
 }
 
 /**
+ * Doğal aydınlatma (İmar) — bina düzeyinde pencere alanı / taban alanı oranı (KABA).
+ * Pencere yoksa nag etmez (kullanıcı henüz pencere koymamış olabilir).
+ */
+function checkDaylight(spaces: readonly Space[], openings: readonly Opening[]): Finding[] {
+  const reg = DAYLIGHT_REGULATION;
+  const windows = openings.filter((o) => o.kind === 'window');
+  if (windows.length === 0) return [];
+  const floorM2 = spaces.reduce((s, sp) => s + centerlineAreaM2(sp), 0);
+  if (floorM2 <= 0) return [];
+  const winM2 = windows.reduce((s, w) => s + (w.width / 100) * (reg.windowHeightCm / 100), 0);
+  const ratio = winM2 / floorM2;
+  if (ratio < reg.minRatio) {
+    return [
+      {
+        severity: 'warning',
+        message: `Doğal aydınlatma (kaba): pencere/taban ≈ %${Math.round(ratio * 100)}; en az ~%${Math.round(reg.minRatio * 100)} beklenir.`,
+        citation: `${reg.source} — ${reg.rule}`,
+      },
+    ];
+  }
+  return [];
+}
+
+/**
  * Otopark ihtiyacı (Otopark Yönetmeliği) — toplam alandan KABA tahmin (info).
  * Gerçek ihtiyaç kullanım/bölge/nüfusa göredir; bu basitleştirilmiş bir tohumdur.
  */
@@ -128,6 +152,7 @@ export function runCopilotChecks(
     ...checkCorridorWidth(spaces),
     ...checkRoomMinArea(spaces),
     ...checkDoorWidth(openings),
+    ...checkDaylight(spaces, openings),
     ...checkParking(spaces),
   ];
 }

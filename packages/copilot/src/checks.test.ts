@@ -88,6 +88,31 @@ describe('runCopilotChecks — kapı genişliği (TS 9111)', () => {
   });
 });
 
+describe('runCopilotChecks — doğal aydınlatma (İmar)', () => {
+  const win = (id: string, width: number): import('@zynpparti/document').Opening => ({
+    id,
+    type: 'opening',
+    layerId: 'default',
+    wallId: 'w',
+    t: 0.5,
+    width,
+    kind: 'window',
+  });
+
+  it('yetersiz pencere → atıflı uyarı', () => {
+    // 16 m² oda, 1 pencere 120cm×140cm = 1,68 m² → %10,5? -> aslında 1.68/16=%10.5 yeterli.
+    // Daha küçük pencere: 80cm → 0.8×1.4=1.12 m² / 16 = %7 < %10 → uyarı
+    const findings = nonInfo(runCopilotChecks([rect('Oda', 'living', 400, 400)], [], [win('P', 80)]));
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.severity).toBe('warning');
+    expect(findings[0]!.citation).toContain('İmar');
+  });
+
+  it('pencere yokken aydınlatma uyarısı verilmez', () => {
+    expect(nonInfo(runCopilotChecks([rect('Oda', 'living', 400, 400)], [], []))).toHaveLength(0);
+  });
+});
+
 describe('runCopilotChecks — otopark (Otopark Yönetmeliği, info)', () => {
   it('toplam alandan kaba otopark tahmini verir', () => {
     // 1000×1000 cm = 100 m² → 100/100 = 1 araç

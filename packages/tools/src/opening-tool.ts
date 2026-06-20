@@ -10,18 +10,24 @@ import {
 import { drawOpening, type SceneTool, type ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
 
-export const DOOR_WIDTH = 90; // cm — TS 9111 uyumlu varsayılan net geçiş
-const SNAP_PX = 14; // ekran pikseli — bu kadar yakındaki duvara kapı oturur
+export const DOOR_WIDTH = 90; // cm — TS 9111 uyumlu varsayılan kapı net geçişi
+export const WINDOW_WIDTH = 120; // cm — varsayılan pencere genişliği
+const SNAP_PX = 14; // ekran pikseli — bu kadar yakındaki duvara boşluk oturur
 
 /**
- * Kapı yerleştirme aracı: imleç bir duvara yaklaşınca o duvar üzerinde önizleme gösterir,
- * tıklayınca duvara bağlı (binding) bir kapı boşluğu ekler. Konum duvar boyunca `t` ile parametrik.
+ * Boşluk (kapı/pencere) yerleştirme aracı: imleç bir duvara yaklaşınca o duvar üzerinde önizleme
+ * gösterir, tıklayınca duvara bağlı (binding) boşluk ekler. Konum duvar boyunca `t` ile parametrik.
+ * Kapı ve pencere aynı mantık → tek sınıf, `kind`/`width` ile parametrize.
  */
-export class DoorTool implements SceneTool {
+export class OpeningTool implements SceneTool {
   private readonly preview = new Graphics();
   private candidate: { wall: Wall; t: number } | null = null;
 
-  constructor(private readonly ctx: ToolContext) {
+  constructor(
+    private readonly ctx: ToolContext,
+    private readonly kind: Opening['kind'],
+    private readonly width: number,
+  ) {
     this.ctx.overlay.addChild(this.preview);
   }
 
@@ -49,6 +55,10 @@ export class DoorTool implements SceneTool {
     return best;
   }
 
+  private makeOpening(wall: Wall, t: number, id: string): Opening {
+    return { id, type: 'opening', layerId: 'default', wallId: wall.id, t, width: this.width, kind: this.kind };
+  }
+
   onPointerMove(p: ScenePointer): void {
     this.candidate = this.findWall(p.world);
     this.render();
@@ -57,16 +67,7 @@ export class DoorTool implements SceneTool {
   onPointerDown(p: ScenePointer): void {
     const hit = this.findWall(p.world);
     if (!hit) return;
-    const opening: Opening = {
-      id: createEntityId(),
-      type: 'opening',
-      layerId: 'default',
-      wallId: hit.wall.id,
-      t: hit.t,
-      width: DOOR_WIDTH,
-      kind: 'door',
-    };
-    this.ctx.history.dispatch(new AddEntity(opening));
+    this.ctx.history.dispatch(new AddEntity(this.makeOpening(hit.wall, hit.t, createEntityId())));
   }
 
   onDeactivate(): void {
@@ -77,16 +78,12 @@ export class DoorTool implements SceneTool {
   private render(): void {
     this.preview.clear();
     if (!this.candidate) return;
-    const preview: Opening = {
-      id: 'preview',
-      type: 'opening',
-      layerId: 'default',
-      wallId: this.candidate.wall.id,
-      t: this.candidate.t,
-      width: DOOR_WIDTH,
-      kind: 'door',
-    };
-    drawOpening(this.preview, preview, this.candidate.wall, this.ctx.pixelSize());
+    drawOpening(
+      this.preview,
+      this.makeOpening(this.candidate.wall, this.candidate.t, 'preview'),
+      this.candidate.wall,
+      this.ctx.pixelSize(),
+    );
     this.preview.alpha = 0.6;
   }
 
