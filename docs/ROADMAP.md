@@ -27,7 +27,7 @@
 
 ## Faz 2 — AI Render + Copilot
 **Hedef:** Plandan görsel üret, kullanıcıya atıflı öneri + canlı metrik ver. (Detay: `docs/FAZ2-NOTES.md`.)
-- [ ] `services/ai-render` + BullMQ/Redis kuyruğu
+- [ ] `services/ai-render` — izole render servisi; **doğrudan API başlangıç, kuyruk yük artınca** (ADR-0017). Sağlayıcı (Replicate/Fal) + bütçe 2D'de test edilip seçilir, önce ücretsiz krediler
 - [ ] **Uygulama içi canlı render paneli** (export-yükle değil; ADR-0013): plan/kesit → ControlNet + diffusion; "yaratıcı" + "geometriyi koru" modu; stil/malzeme; varyant
 - [ ] Render geçmişi + S3/R2 depolama + önbellek + kota
 - [ ] **Copilot (1) — kaynak-gösteren öneri:** geometri kuralı + Claude API; her öneri atıflı (ADR-0014)
@@ -42,7 +42,10 @@
 - [ ] Yorum/markup, paylaşım linki, rol (editor/viewer) + izin
 - [ ] Çevrimdışı + senkron
 - [ ] **Hafif şematik kesit (ADR-0016):** duvarlara yükseklik özelliği + plana kesit çizgisi → ekstrüzyonla düzenlenebilir şematik kesit (gerçek kesitin ara yolu; tam 3B kesit Faz 5)
-**✅ Kabul:** İki kişi aynı anda çiziyor; ayrıca duvar yüksekliğinden şematik kesit alınabiliyor.
+- [ ] **Metraj paneli (`PRO-FEATURES.md §1`):** duvar/mahal/kapı-pencereden otomatik miktar çıkarımı (sıva/boya m², döşeme m², door/window schedule) → canlı tablo + Excel. Türkçe **poz/birim fiyat** entegrasyonu premium tohum (Türk pazarı farklılaştırıcısı)
+- [ ] **Çizelge (schedule) motoru (`PRO-FEATURES.md §3`):** entity özelliği (malzeme/tip/maliyet) → otomatik güncellenen canlı tablolar; mahal listesi (Faz 1) bunun ilk örneği
+- [ ] **Canlı yaklaşık maliyet tohumu (`PRO-FEATURES.md §2`):** metraj × birim fiyat → TL bazında kaba canlı maliyet (detaylı hesap Faz 4)
+**✅ Kabul:** İki kişi aynı anda çiziyor; duvar yüksekliğinden şematik kesit alınabiliyor; metraj/çizelge canlı üretiliyor.
 
 ## Faz 4 — Boş Plandan Üretim
 **Hedef:** AI'nın kendisi tasarım üretmesi.

@@ -5,6 +5,16 @@
 
 ---
 
+## ADR-0017 — AI render altyapısı: basit/doğrudan API başlangıç, kuyruk yük artınca eklenir
+**Tarih:** 2026-06-20 · **Durum:** Kabul (Moses kararı, Faz 2 planı)
+**Bağlam:** ADR-0013 "uygulama içi canlı render paneli" diyor; CLAUDE.md §8.7 asenkron BullMQ kuyruğu öngörüyor. Ama Faz 2'nin render ayağına (2D) henüz gelmedik; sağlayıcı seçimi ertelendi, maliyet için önce ücretsiz krediler kullanılacak. Bu aşamada Redis+BullMQ kurmak gereğinden ağır ve kurulumu yavaşlatır.
+**Karar:**
+- Render MVP'si **doğrudan API** ile çalışır: `apps/web` route'undan sağlayıcıya senkron çağrı, **kuyruk yok**.
+- Ama mantık **`services/ai-render` içinde baştan izole** kurulur (render isteği → sağlayıcı adapteri → sonuç). Web yalnızca bu servisi çağırır; render mantığını web'e gömmek YOK.
+- Böylece **yük artınca Redis + BullMQ kuyruğu**, çağrı yerini (sync→queue) değiştirerek eklenir; hiçbir şey söküp atılmaz. İzolasyon sınırı bugünden korunur.
+- Sağlayıcı (Replicate/Fal) ve gerçek bütçe **2D'ye gelince** birlikte test edilip seçilir; başlangıçta sağlayıcıların ücretsiz kredileri kullanılır. İlişkili: [ADR-0006] (provider-agnostic adapter), [ADR-0013].
+**Sonuç:** Hızlı MVP + temiz büyüme yolu. Takas: ilk sürümde uzun render'larda istek bloklayabilir (kullanıcıya "üretiliyor" durumu gösterilir); kuyruk gelince çözülür.
+
 ## ADR-0016 — Kesit gerçeği: hafif şematik kesit (Faz 3) → tam 3B kesit (Faz 5)
 **Tarih:** 2026-06-19 · **Durum:** Kabul (beklenti düzeltmesi)
 **Bağlam:** "Plandan otomatik kesit" istendi; ama gerçek kesit dikey bilgi (duvar yüksekliği, döşeme, çatı) gerektirir — saf 2B planda yok. Otomatik kesit özünde bir 3B/BIM işidir (BricsCAD BIM/OrthoGen/Revit: 3B modeli düzlemle keser). Bkz. `docs/FAZ2-NOTES.md §4`.
