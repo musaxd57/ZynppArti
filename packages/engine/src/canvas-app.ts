@@ -240,28 +240,36 @@ export async function createCanvasApp(
 }
 
 /**
- * Izgara + eksenleri kurar ve zoom'da yeniden çizen fonksiyonu döndürür. Izgara en ince
- * (hairline) ve ekran-sabittir → zoom'la şişmez, geri planda kalır (VISUAL-CRAFT §1/§6).
+ * Izgara + eksenleri kurar ve zoom'da yeniden çizen fonksiyonu döndürür. Hiyerarşi (VISUAL-CRAFT
+ * §1/§6): ince çizgiler (her 50 cm, hairline) + ana çizgiler (her 1 m, biraz belirgin) + eksenler.
+ * Hepsi ekran-sabit → zoom'la şişmez, geri planda kalır.
  */
+const GRID_MAJOR_EVERY = 2; // her 2. çizgi (= 1 m) ana çizgi
+
 function buildGrid(target: Container): (pixelSize: number) => void {
-  const grid = new Graphics();
+  const minor = new Graphics();
+  const major = new Graphics();
   const axes = new Graphics();
-  target.addChild(grid);
-  target.addChild(axes);
+  target.addChild(minor, major, axes);
 
   let lastPx = -1;
   return (pixelSize: number): void => {
     if (Math.abs(pixelSize - lastPx) < 1e-9) return;
     lastPx = pixelSize;
+    const step = GRID_SPACING * GRID_MAJOR_EVERY;
 
-    grid.clear();
+    minor.clear();
+    major.clear();
     for (let x = -GRID_EXTENT; x <= GRID_EXTENT; x += GRID_SPACING) {
-      grid.moveTo(x, -GRID_EXTENT).lineTo(x, GRID_EXTENT);
+      const g = x % step === 0 ? major : minor;
+      g.moveTo(x, -GRID_EXTENT).lineTo(x, GRID_EXTENT);
     }
     for (let y = -GRID_EXTENT; y <= GRID_EXTENT; y += GRID_SPACING) {
-      grid.moveTo(-GRID_EXTENT, y).lineTo(GRID_EXTENT, y);
+      const g = y % step === 0 ? major : minor;
+      g.moveTo(-GRID_EXTENT, y).lineTo(GRID_EXTENT, y);
     }
-    grid.stroke({ width: LINEWEIGHTS.hairline * pixelSize, color: PALETTE.grid });
+    minor.stroke({ width: LINEWEIGHTS.hairline * pixelSize, color: PALETTE.grid });
+    major.stroke({ width: LINEWEIGHTS.hairline * pixelSize, color: PALETTE.gridMajor });
 
     axes.clear();
     axes.moveTo(-GRID_EXTENT, 0).lineTo(GRID_EXTENT, 0);

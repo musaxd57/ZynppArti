@@ -4,6 +4,7 @@ export * from './entity-bounds';
 export * from './hit-test';
 export { drawWall } from './render-wall';
 export { drawOpening } from './render-opening';
+export * from './linetypes';
 export { EntityLayer } from './entity-layer';
 export { createCanvasApp } from './canvas-app';
 export type { CanvasHandle } from './canvas-app';
