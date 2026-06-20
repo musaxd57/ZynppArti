@@ -22,6 +22,8 @@
 8. **`packages/geometry` ve `packages/document` saf TypeScript'tir.** İçlerine React/DOM/PixiJS/`window` sızdırma. (Neden: bu paketler hem tarayıcıda hem sunucuda — AI üretici için — çalışacak.)
 9. **Gizli anahtar (API key/token) commit'leme.** `.env` kullan, `.env.example` paylaş.
 10. **Moses hızlı iterasyon sever, açıklama yükü istemez, sert ve net geri bildirim verir.** Alınma; düzelt, devam et.
+11. **IMPORTANT — KALİTE TAVANI YOK (en iyi hedefi):** Her parçayı **mümkün olan en iyi, en gelişmiş** haliyle yap — kod, mimari, **görsel zanaat** (`docs/VISUAL-CRAFT.md`: çizgi kalınlığı hiyerarşisi/hatch/poché), **Türkçe yönetmelik**, metraj. Hiçbir yerde "yeter bu kadar" deme. Hedef: Rayon'u **hem özellik hem his** olarak geçmek. (Karar: ADR-0019.)
+12. **IMPORTANT — MALİYET ZAMANLAMASI:** Para gerektiren AI parçalarını (**AI render + LLM copilot**) **en sona**, ürün neredeyse bitince yap. Sebep kalite değil: en iyi sağlayıcıyı **bedava kredilerle gerçek projeyle test edip** seçebilmek. Yani kalitede tavan yok; sadece maliyetli AI'ı doğru ana erteliyoruz. Bedava/deterministik her şey (geometri, yönetmelik kuralları, metraj, görsel zanaat, çizim) **şimdi ve en iyi** halinde. (Karar: ADR-0019.)
 
 ---
 

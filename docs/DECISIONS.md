@@ -5,6 +5,14 @@
 
 ---
 
+## ADR-0019 — Yön ilkesi: kalite tavanı yok + maliyetli AI'ı sona ertele
+**Tarih:** 2026-06-20 · **Durum:** Kabul (Moses direktifi) · **Yansıma:** CLAUDE.md §0 kural 11-12
+**Bağlam:** Proje uzun; AI render + LLM copilot para gerektirir. İki şey net olmalı ki Claude her oturum hatırlasın.
+**Karar — iki ayaklı:**
+1. **Kalite tavanı (en iyi hedefi):** Her parça mümkün olan **en iyi, en gelişmiş** haliyle yapılır — kod, mimari, görsel zanaat (`docs/VISUAL-CRAFT.md`), Türkçe yönetmelik, metraj. Hiçbir yerde "yeter bu kadar" yok. Hedef: Rayon'u **hem özellik hem his** olarak geçmek.
+2. **Maliyet zamanlaması:** Para gerektiren AI parçaları (**AI render + LLM copilot**) **en sona**, ürün neredeyse bitince yapılır. Sebep kalite değil — en iyi sağlayıcıyı **bedava kredilerle gerçek projeyle test edip** seçmek. Bedava/deterministik her şey (geometri, yönetmelik kuralları, metraj, görsel zanaat) **şimdi ve en iyi** halinde.
+**Sonuç:** Kalitede tavan yok; sadece maliyetli AI doğru ana ertelenir. Pratik etki: deterministik yönetmelik/metraj/görsel-zanaat fazları LLM/render'dan önce gelir; copilot LLM katmanı (ADR-0006) ve AI render (ADR-0013/0017) sona kalır. Faz sırası bu ilkeye göre okunur (ROADMAP).
+
 ## ADR-0018 — Copilot önce deterministik kural motoru (LLM'siz), `packages/copilot` (2B)
 **Tarih:** 2026-06-20 · **Durum:** Kabul
 **Bağlam:** Copilot iki ayaklı (ADR-0014): (1) kaynak-gösteren öneri, (2) canlı metrik (2A'da yapıldı). Öneri ayağı "geometri kuralı + LLM" olarak tanımlı. Ama LLM katmanı API key + sağlayıcı/maliyet kararı ister (ADR-0006/0017, Moses onayı). Asıl farklılaştırıcı değer ise **atıflı, doğru madde** (FAZ2-NOTES §2a) — bu deterministik kuralla, LLM olmadan üretilebilir.
