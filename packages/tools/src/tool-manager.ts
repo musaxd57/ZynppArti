@@ -7,6 +7,8 @@ import { CalibrateTool } from './calibrate-tool';
 import { OpeningTool, DOOR_WIDTH, WINDOW_WIDTH } from './opening-tool';
 import { DimensionTool } from './dimension-tool';
 import { ParcelTool } from './parcel-tool';
+import { BlockTool } from './block-tool';
+import type { BlockKind } from '@zynpparti/document';
 
 export type ToolName =
   | 'select'
@@ -15,6 +17,7 @@ export type ToolName =
   | 'window'
   | 'dimension'
   | 'parcel'
+  | 'block'
   | 'erase'
   | 'calibrate';
 
@@ -32,6 +35,7 @@ const CURSOR_BY_TOOL: Record<ToolName, string> = {
   window: 'crosshair',
   dimension: 'crosshair',
   parcel: 'crosshair',
+  block: 'crosshair',
   erase: 'crosshair',
   calibrate: 'crosshair',
 };
@@ -42,10 +46,12 @@ const CURSOR_BY_TOOL: Record<ToolName, string> = {
  */
 export class ToolManager implements SceneTool {
   private readonly tools: Record<ToolName, DisposableTool>;
+  private readonly blockTool: BlockTool;
   private current: ToolName = 'select';
   private readonly listeners = new Set<ToolListener>();
 
   constructor(private readonly ctx: ToolContext) {
+    this.blockTool = new BlockTool(ctx);
     this.tools = {
       select: new SelectTool(ctx),
       wall: new WallTool(ctx),
@@ -53,6 +59,7 @@ export class ToolManager implements SceneTool {
       window: new OpeningTool(ctx, 'window', WINDOW_WIDTH),
       dimension: new DimensionTool(ctx),
       parcel: new ParcelTool(ctx),
+      block: this.blockTool,
       erase: new EraseTool(ctx),
       calibrate: new CalibrateTool(ctx),
     };
@@ -82,6 +89,12 @@ export class ToolManager implements SceneTool {
     return () => {
       this.listeners.delete(fn);
     };
+  }
+
+  /** Blok tipini seç ve blok aracına geç (palet). */
+  setBlockKind(kind: BlockKind): void {
+    this.blockTool.setKind(kind);
+    this.setTool('block');
   }
 
   onPointerDown(p: ScenePointer): void {
@@ -121,6 +134,7 @@ export class ToolManager implements SceneTool {
       if (k === 'p') return this.toggleTool('window'); // pencere
       if (k === 'o') return this.toggleTool('dimension'); // ölçü
       if (k === 'r') return this.toggleTool('parcel'); // arsa/parsel
+      if (k === 'b') return this.toggleTool('block'); // blok/mobilya
       if (k === 'e') return this.toggleTool('erase');
       if (k === 'k') return this.toggleTool('calibrate');
     }

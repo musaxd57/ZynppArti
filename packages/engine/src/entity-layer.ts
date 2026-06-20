@@ -7,6 +7,7 @@ import { buildSpaceFill, buildSpaceLabel, drawSpacePerimeter } from './render-sp
 import { drawOpening } from './render-opening';
 import { drawDimension, buildDimensionLabel } from './render-dimension';
 import { drawParcel } from './render-parcel';
+import { drawBlock } from './render-block';
 import { LayerState } from './layer-state';
 
 /**
@@ -21,6 +22,7 @@ export class EntityLayer {
   readonly index = new SpatialIndex();
   private readonly parcelLayer = new Container();
   private readonly spaceFill = new Container();
+  private readonly blockLayer = new Container();
   private readonly wallLayer = new Container();
   private readonly openingLayer = new Container();
   private readonly dimensionLayer = new Container();
@@ -42,6 +44,7 @@ export class EntityLayer {
     this.container.addChild(
       this.parcelLayer,
       this.spaceFill,
+      this.blockLayer,
       this.wallLayer,
       this.openingLayer,
       this.dimensionLayer,
@@ -133,6 +136,12 @@ export class EntityLayer {
       this.parcelLayer.addChild(g);
       objs.push(g);
       this.redrawables.set(entity.id, (p) => drawParcel(g, entity, p));
+    } else if (entity.type === 'block') {
+      const g = new Graphics();
+      drawBlock(g, entity, px);
+      this.blockLayer.addChild(g);
+      objs.push(g);
+      this.redrawables.set(entity.id, (p) => drawBlock(g, entity, p));
     } else {
       const fill = buildSpaceFill(entity);
       this.spaceFill.addChild(fill);

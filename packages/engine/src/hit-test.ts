@@ -1,6 +1,12 @@
 import type { Vec2 } from '@zynpparti/geometry';
 import { distanceToSegment, distanceToPolygonBoundary } from '@zynpparti/geometry';
-import { dimensionGeometry, openingFrame, type EntityId, type EntityStore } from '@zynpparti/document';
+import {
+  dimensionGeometry,
+  openingFrame,
+  pointInBlock,
+  type EntityId,
+  type EntityStore,
+} from '@zynpparti/document';
 import type { SpatialIndex } from './spatial-index';
 
 /**
@@ -59,6 +65,15 @@ export function hitTest(
       if (d <= tolerance && d < bestDist) {
         bestDist = d;
         bestId = id;
+      }
+    } else if (entity.type === 'block') {
+      // Ayak izinin içindeyse seç (dolu nesne); en küçük alanlı blok önceliği için merkez uzaklığı.
+      if (pointInBlock(entity, point)) {
+        const d = Math.hypot(point.x - entity.position.x, point.y - entity.position.y);
+        if (d < bestDist) {
+          bestDist = d;
+          bestId = id;
+        }
       }
     }
   }

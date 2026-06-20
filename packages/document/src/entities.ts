@@ -82,9 +82,21 @@ export interface Parcel extends EntityBase {
 }
 
 /**
- * Entity birliği (discriminated union). `type` alanı ayırıcıdır.
- * İleride Annotation/Block... eklenecek.
+ * Blok (mobilya/sembol) — kütüphaneden yerleştirilen tip-üstü görünüş nesnesi (CLAUDE.md §7).
+ * `kind` sembolü, `position`/`rotation` yerleşimi belirler. Boyut `BLOCK_DEFS` (block.ts) içinde.
  */
-export type Entity = Wall | Space | Opening | Dimension | Parcel;
+export interface Block extends EntityBase {
+  readonly type: 'block';
+  readonly kind: import('./block').BlockKind;
+  readonly position: Vec2;
+  /** Dönüş açısı (radyan). */
+  readonly rotation: number;
+}
+
+/**
+ * Entity birliği (discriminated union). `type` alanı ayırıcıdır.
+ * İleride Annotation... eklenecek.
+ */
+export type Entity = Wall | Space | Opening | Dimension | Parcel | Block;
 
 export type EntityType = Entity['type'];
