@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createCanvasApp, type CanvasHandle } from '@zynpparti/engine';
+import { createCanvasApp, createSnapIndicator, type CanvasHandle } from '@zynpparti/engine';
 import { EntityStore, History, RoomManager } from '@zynpparti/document';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
 import { seedDemo } from '@/lib/demo-seed';
@@ -48,13 +48,16 @@ export function CanvasStage() {
       const history = new History(store);
       // Mahalleri otomatik bul (engine entity katmanı abone olduktan sonra).
       rooms = new RoomManager(store);
+      const snapIndicator = createSnapIndicator(h.overlay);
       manager = new ToolManager({
         store,
         history,
         index: h.index,
         overlay: h.overlay,
         pixelSize: h.pixelSize,
-        snap: createSnapper(store, h.index, h.pixelSize),
+        snap: createSnapper(store, h.index, h.pixelSize, (t) =>
+          t ? snapIndicator.show(t, h.pixelSize()) : snapIndicator.hide(),
+        ),
         isLayerHidden: (id) => h.layers.isHidden(id),
         isLayerLocked: (id) => h.layers.isLocked(id),
       });
