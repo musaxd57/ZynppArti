@@ -31,6 +31,8 @@ export const PALETTE = {
   wallBody: 0xdedede,
   /** Duvar kesit konturu — gövdeyi tanımlayan kenar. */
   wallEdge: 0xb0b0b0,
+  /** Duvar poché taraması — gövde üstünde soluk 45° çizgiler. */
+  wallHatch: 0x9a9a9a,
   /** Mahal dolgusu (yarı saydam). */
   roomFill: 0x4a90d9,
   roomFillAlpha: 0.16,
