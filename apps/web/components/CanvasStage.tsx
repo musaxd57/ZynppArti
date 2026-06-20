@@ -56,6 +56,7 @@ export function CanvasStage() {
         pixelSize: h.pixelSize,
         snap: createSnapper(store, h.index, h.pixelSize),
         isLayerHidden: (id) => h.layers.isHidden(id),
+        isLayerLocked: (id) => h.layers.isLocked(id),
       });
       h.setActiveTool(manager);
       // Mahal içine çift tık → Seç moduna geç + o mahalin adını düzenlemeye odaklan.
