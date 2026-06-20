@@ -60,20 +60,30 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
       <div className="flex flex-col gap-0.5">
         {rows.map(({ id, count }) => {
           const hidden = layers.isHidden(id);
+          const locked = layers.isLocked(id);
           return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => layers.toggle(id)}
-              className="flex items-center gap-2 rounded px-1 py-1 text-left hover:bg-white/10"
-              title={hidden ? 'Göster' : 'Gizle'}
-            >
-              <span className="w-4 text-center opacity-80">{hidden ? '🚫' : '👁'}</span>
+            <div key={id} className="flex items-center gap-1 rounded px-1 py-1 hover:bg-white/10">
+              <button
+                type="button"
+                onClick={() => layers.toggle(id)}
+                className="w-5 text-center opacity-80 hover:opacity-100"
+                title={hidden ? 'Göster' : 'Gizle'}
+              >
+                {hidden ? '🚫' : '👁'}
+              </button>
+              <button
+                type="button"
+                onClick={() => layers.toggleLock(id)}
+                className="w-5 text-center opacity-80 hover:opacity-100"
+                title={locked ? 'Kilidi aç' : 'Kilitle'}
+              >
+                {locked ? '🔒' : '🔓'}
+              </button>
               <span className={`flex-1 ${hidden ? 'opacity-40 line-through' : ''}`}>
                 {layerName(id)}
               </span>
               <span className="tabular-nums opacity-50">{count}</span>
-            </button>
+            </div>
           );
         })}
       </div>

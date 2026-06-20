@@ -7,6 +7,7 @@
  */
 export class LayerState {
   private readonly hidden = new Set<string>();
+  private readonly locked = new Set<string>();
   private readonly listeners = new Set<() => void>();
 
   isHidden(layerId: string): boolean {
@@ -21,6 +22,21 @@ export class LayerState {
 
   toggle(layerId: string): void {
     this.setHidden(layerId, !this.isHidden(layerId));
+  }
+
+  /** Kilitli katman seçilemez/silinemez/taşınamaz (hit-test atlar); görünür kalır. */
+  isLocked(layerId: string): boolean {
+    return this.locked.has(layerId);
+  }
+
+  setLocked(layerId: string, locked: boolean): void {
+    if (locked) this.locked.add(layerId);
+    else this.locked.delete(layerId);
+    this.emit();
+  }
+
+  toggleLock(layerId: string): void {
+    this.setLocked(layerId, !this.isLocked(layerId));
   }
 
   subscribe(fn: () => void): () => void {

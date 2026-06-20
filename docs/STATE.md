@@ -55,6 +55,7 @@
 ## GÜNLÜK
 
 ### 2026-06-20
+- **Katman kilitleme:** LayerState'e `locked` (isLocked/toggleLock) eklendi; kilitli katman görünür kalır ama hit-test atlar (seçilemez/silinemez/taşınamaz). hit-test param `skipLayer` = gizli||kilitli. LayerPanel'e 🔒/🔓 toggle.
 - **Katman (layer) paneli + görünürlük:** engine `LayerState` (paylaşılan view-state, undo dışı) — EntityLayer cull'da gizli katmanı çizmez, hit-test gizli katmanı atlar (ToolContext.isLayerHidden). `CanvasHandle.layers` ile yayınlanır. web `LayerPanel` (Mimari/Mahaller/Parsel, göz aç-kapa + sayım). Tarayıcıda doğrulandı (Mahaller gizle → oda+etiket kaybolur, duvarlar kalır).
 - **Hatch/poché malzeme dolgusu (VISUAL-CRAFT §3):** geometry `hatchLines` (paralel çizgileri poligona kırp, saf, 24 test). engine duvar render'ına 45° poché tarama (hairline, soluk, dünya-ölçekli aralık) — kesilen duvar hissi. Yeniden kullanılabilir (ileride malzeme hatch/section). Tarayıcıda doğrulandı.
 - **Parsel sınırı + çekme (setback) denetimi (İmar):** document `Parcel` entity + geometry `distanceToPolygonBoundary`. engine `render-parcel` (zincir/dash-dot çizgi = mülk sınırı, en alt katman), bounds/hit-test. tools `ParcelTool` (R kısayolu, poligon: tıkla-tıkla-kapat). copilot `checkSetback` (yapı↔parsel min mesafe < ~3m → atıflı uyarı; setbackSide aktif, setbackFront hâlâ tohum). Toolbar "Parsel". geometry 21 + copilot 16 test. Tarayıcıda doğrulandı (~70cm çekme uyarısı + zincir parsel çizgisi).

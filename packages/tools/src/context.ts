@@ -19,6 +19,8 @@ export interface ToolContext {
   snap(world: Vec2): Vec2;
   /** Katman gizliyse o entity seçilemez/silinemez (hit-test atlar). İsteğe bağlı. */
   isLayerHidden?(layerId: string): boolean;
+  /** Katman kilitliyse seçilemez/düzenlenemez (görünür kalır). İsteğe bağlı. */
+  isLayerLocked?(layerId: string): boolean;
 }
 
 const SNAP_PX = 12; // ekran pikseli yarıçapı

@@ -13,7 +13,7 @@ export function hitTest(
   index: SpatialIndex,
   point: Vec2,
   tolerance = 5,
-  isLayerHidden?: (layerId: string) => boolean,
+  skipLayer?: (layerId: string) => boolean,
 ): EntityId | null {
   const candidates = index.search({
     minX: point.x - tolerance,
@@ -28,7 +28,7 @@ export function hitTest(
   for (const id of candidates) {
     const entity = store.get(id);
     if (!entity) continue;
-    if (isLayerHidden?.(entity.layerId)) continue; // gizli katman seçilemez
+    if (skipLayer?.(entity.layerId)) continue; // gizli/kilitli katman seçilemez
     if (entity.type === 'wall') {
       const d = distanceToSegment(point, entity.start, entity.end);
       const reach = entity.thickness / 2 + tolerance;
