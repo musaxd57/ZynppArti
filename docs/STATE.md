@@ -55,6 +55,7 @@
 ## GÜNLÜK
 
 ### 2026-06-20
+- **Mahalleri tipe göre renklendirme (zoning/imar diyagramı, VISUAL-CRAFT §5):** mahal dolgusu `roomType`'a göre tint (yaşam/ıslak/yatma/sirkülasyon/servis/diğer); tip değişince canlı yeniden renklenir. RoomList'e eşleşen renk noktası (lejant). Dolgu opaklığı 0.16.
 - **Seçim/hover cilası (VISUAL-CRAFT §5/§6 mikro-etkileşim):** SelectTool artık tüm tiplere (duvar/kapı/pencere/ölçü) vurgu çiziyor + boştayken imleç altında soluk **hover** vurgusu. Duvar Delete edilince bağlı boşluklar tek BatchCommand (SelectTool'da da). Genel `highlight()` ortak.
 - **Ölçülendirme (Dimension) aracı:** document `Dimension` entity + `dimension.ts` (geometri + `formatLength`, 4 test). engine `render-dimension` (uzatma çizgileri + ölçü çizgisi + 45° mimari tikler, ekran-sabit ince + BitmapText değer), dimensionLayer, bounds + hit-test. tools `DimensionTool` (O kısayolu, 2 tık, snap). Toolbar "Ölçü". Tarayıcıda doğrulandı (5,00 m).
 - **Görsel zanaat + yönetmelik turu 2:** (1) **çizgi tipleri** (`linetypes.ts`: DASH/DOT/CHAIN, ekran-sabit) + ızgara **major/minor** hiyerarşisi + duvar önizleme kesik çizgi. (2) **Pencere aracı** (DoorTool → genel `OpeningTool`, kapı+pencere; P kısayolu) + **İmar doğal aydınlatma denetimi** (pencere alanı/taban ~1/10, kaba bina-düzeyi, copilot 13 test). Tarayıcıda doğrulandı (pencere sembolü + aydınlatma uyarısı).

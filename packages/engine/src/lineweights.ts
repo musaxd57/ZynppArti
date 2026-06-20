@@ -33,7 +33,7 @@ export const PALETTE = {
   wallEdge: 0xb0b0b0,
   /** Mahal dolgusu (yarı saydam). */
   roomFill: 0x4a90d9,
-  roomFillAlpha: 0.1,
+  roomFillAlpha: 0.16,
   /** Mahal çevre çizgisi — orta kalınlık. */
   roomPerimeter: 0x7fb0e0,
   /** Ölçülendirme çizgisi/metni — ince, nötr açık. */
