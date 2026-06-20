@@ -8,6 +8,7 @@ import { seedDemo } from '@/lib/demo-seed';
 import { Toolbar } from './Toolbar';
 import { RoomList } from './RoomList';
 import { CopilotPanel } from './CopilotPanel';
+import { TakeoffPanel } from './TakeoffPanel';
 
 /**
  * Engine canvas + araç yöneticisini DOM'a bağlayan React sarmalı.
@@ -89,6 +90,7 @@ export function CanvasStage() {
             onRenameConsumed={clearRename}
           />
           <CopilotPanel store={ui.store} />
+          <TakeoffPanel store={ui.store} />
         </>
       )}
     </>
