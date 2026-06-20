@@ -6,6 +6,8 @@ export { drawWall } from './render-wall';
 export { drawOpening } from './render-opening';
 export { drawDimension, buildDimensionLabel } from './render-dimension';
 export { drawParcel } from './render-parcel';
+export { drawBlock } from './render-block';
+export { drawBlockSymbol } from './block-symbols';
 export * from './linetypes';
 export { EntityLayer } from './entity-layer';
 export { LayerState } from './layer-state';

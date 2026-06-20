@@ -10,6 +10,7 @@ import { RoomList } from './RoomList';
 import { CopilotPanel } from './CopilotPanel';
 import { TakeoffPanel } from './TakeoffPanel';
 import { LayerPanel } from './LayerPanel';
+import { BlockPalette } from './BlockPalette';
 
 /**
  * Engine canvas + araç yöneticisini DOM'a bağlayan React sarmalı.
@@ -95,6 +96,7 @@ export function CanvasStage() {
           <div className="pointer-events-none absolute bottom-4 left-4 top-28 flex flex-col items-start gap-3 overflow-y-auto">
             <div className="pointer-events-auto flex flex-col gap-3">
               <LayerPanel store={ui.store} layers={ui.layers} />
+              <BlockPalette manager={ui.manager} />
               <CopilotPanel store={ui.store} />
             </div>
           </div>

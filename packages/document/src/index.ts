@@ -8,3 +8,4 @@ export * from './metrics';
 export * from './opening';
 export * from './dimension';
 export * from './takeoff';
+export * from './block';

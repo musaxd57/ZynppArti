@@ -1,4 +1,5 @@
 import {
+  blockCorners,
   dimensionGeometry,
   openingFrame,
   type Entity,
@@ -59,6 +60,11 @@ export function entityBounds(entity: Entity): AABB {
       }
       if (!Number.isFinite(minX)) return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
       return { minX, minY, maxX, maxY };
+    }
+    case 'block': {
+      const xs = blockCorners(entity).map((p) => p.x);
+      const ys = blockCorners(entity).map((p) => p.y);
+      return { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
     }
   }
 }
