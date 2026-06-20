@@ -84,6 +84,8 @@ describe('roomTypeOf / roomTypeLabel', () => {
   it('ROOM_TYPES tüm tipleri kapsar', () => {
     expect(ROOM_TYPES.map((t) => t.key)).toEqual([
       'living',
+      'kitchen',
+      'bathroom',
       'wet',
       'sleeping',
       'circulation',

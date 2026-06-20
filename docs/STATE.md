@@ -55,6 +55,7 @@
 ## GÜNLÜK
 
 ### 2026-06-20
+- **Daha çok yönetmelik + oda tipleri:** RoomType'a **Mutfak** + **Banyo/WC** eklendi (renk + dropdown + metrik gruplama). copilot: mutfak asgari alan (İmar 3,3 m²), banyo/ıslak hacim erişilebilir dönüş alanı (TS 9111 ~150 cm, info). copilot 19 test. (Merdiven ertelendi — stair entity gerekiyor.)
 - **Katman kilitleme:** LayerState'e `locked` (isLocked/toggleLock) eklendi; kilitli katman görünür kalır ama hit-test atlar (seçilemez/silinemez/taşınamaz). hit-test param `skipLayer` = gizli||kilitli. LayerPanel'e 🔒/🔓 toggle.
 - **Katman (layer) paneli + görünürlük:** engine `LayerState` (paylaşılan view-state, undo dışı) — EntityLayer cull'da gizli katmanı çizmez, hit-test gizli katmanı atlar (ToolContext.isLayerHidden). `CanvasHandle.layers` ile yayınlanır. web `LayerPanel` (Mimari/Mahaller/Parsel, göz aç-kapa + sayım). Tarayıcıda doğrulandı (Mahaller gizle → oda+etiket kaybolur, duvarlar kalır).
 - **Hatch/poché malzeme dolgusu (VISUAL-CRAFT §3):** geometry `hatchLines` (paralel çizgileri poligona kırp, saf, 24 test). engine duvar render'ına 45° poché tarama (hairline, soluk, dünya-ölçekli aralık) — kesilen duvar hissi. Yeniden kullanılabilir (ileride malzeme hatch/section). Tarayıcıda doğrulandı.

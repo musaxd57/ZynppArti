@@ -62,6 +62,22 @@ export const REGULATIONS = {
     unit: 'm2',
     status: 'active',
   },
+  kitchenMinArea: {
+    id: 'imar-kitchen-min-area',
+    source: 'Planlı Alanlar İmar Yönetmeliği',
+    rule: 'Mutfak (yemek pişirme yeri) net alanı en az 3,3 m² olmalı.',
+    min: 3.3,
+    unit: 'm2',
+    status: 'active',
+  },
+  bathroomTurning: {
+    id: 'ts9111-bathroom-turning',
+    source: 'TS 9111',
+    rule: 'Erişilebilir ıslak hacimde en az 150 cm çapında dönüş alanı bulunmalı.',
+    min: 150,
+    unit: 'cm',
+    status: 'active',
+  },
 
   doorClearWidth: {
     id: 'ts9111-door-clear-width',

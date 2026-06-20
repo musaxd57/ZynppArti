@@ -12,7 +12,9 @@ const LABEL_SIZE = 28; // cm (dünya birimi)
  */
 const ROOM_TYPE_FILL: Record<RoomType, number> = {
   living: 0xd9a14a, // yaşam — sıcak amber
-  wet: 0x4ec9d9, // ıslak hacim — camgöbeği
+  kitchen: 0xe0773f, // mutfak — turuncu
+  bathroom: 0x4ec9d9, // banyo/wc — camgöbeği
+  wet: 0x3fa9b8, // ıslak hacim (genel) — koyu camgöbeği
   sleeping: 0x9a7fd9, // yatma — mor
   circulation: 0x8a8a8a, // sirkülasyon — nötr gri
   service: 0x6fbf73, // servis — yeşil

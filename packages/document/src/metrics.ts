@@ -12,6 +12,8 @@ import type { RoomType, Space, Wall } from './entities';
 /** Mahal tipi → Türkçe etiket (panelde ve Excel'de gösterilir). Sıralı: panelde bu sırayla çıkar. */
 export const ROOM_TYPES: ReadonlyArray<{ key: RoomType; label: string }> = [
   { key: 'living', label: 'Yaşam' },
+  { key: 'kitchen', label: 'Mutfak' },
+  { key: 'bathroom', label: 'Banyo/WC' },
   { key: 'wet', label: 'Islak hacim' },
   { key: 'sleeping', label: 'Yatma' },
   { key: 'circulation', label: 'Sirkülasyon' },

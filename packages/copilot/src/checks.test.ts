@@ -57,6 +57,30 @@ describe('runCopilotChecks — asgari alan (İmar)', () => {
     // 400×400 = 16 m² > 12 m²
     expect(nonInfo(runCopilotChecks([rect('Salon', 'living', 400, 400)], []))).toHaveLength(0);
   });
+
+  it('küçük mutfak → uyarı (İmar 3,3 m²)', () => {
+    // 150×200 = 3,0 m² < 3,3
+    const f = nonInfo(runCopilotChecks([rect('Mutfak', 'kitchen', 150, 200)], []));
+    expect(f).toHaveLength(1);
+    expect(f[0]!.citation).toContain('İmar');
+  });
+});
+
+describe('runCopilotChecks — banyo erişilebilirlik (TS 9111, info)', () => {
+  it('dar banyo → info dönüş alanı', () => {
+    const info = runCopilotChecks([rect('Banyo', 'bathroom', 120, 300)], []).filter(
+      (x) => x.severity === 'info' && x.citation.includes('TS 9111'),
+    );
+    expect(info).toHaveLength(1);
+    expect(info[0]!.message).toContain('150 cm');
+  });
+
+  it('geniş banyo → dönüş uyarısı yok', () => {
+    const info = runCopilotChecks([rect('Banyo', 'bathroom', 200, 300)], []).filter(
+      (x) => x.severity === 'info' && x.citation.includes('TS 9111'),
+    );
+    expect(info).toHaveLength(0);
+  });
 });
 
 describe('runCopilotChecks — kapı genişliği (TS 9111)', () => {
