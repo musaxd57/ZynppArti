@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { polygonArea } from './polygon';
+import { polygonArea, distanceToPolygonBoundary } from './polygon';
 import { vec2 } from './vec2';
 
 describe('polygonArea', () => {
@@ -18,5 +18,20 @@ describe('polygonArea', () => {
     const cw = [vec2(0, 0), vec2(0, 2), vec2(2, 2), vec2(2, 0)];
     expect(polygonArea(ccw)).toBeCloseTo(4);
     expect(polygonArea(cw)).toBeCloseTo(4);
+  });
+});
+
+describe('distanceToPolygonBoundary', () => {
+  const sq = [
+    { x: 0, y: 0 },
+    { x: 100, y: 0 },
+    { x: 100, y: 100 },
+    { x: 0, y: 100 },
+  ];
+  it('içteki noktanın en yakın kenara uzaklığı', () => {
+    expect(distanceToPolygonBoundary({ x: 20, y: 50 }, sq)).toBeCloseTo(20, 6);
+  });
+  it('dıştaki noktanın kenara uzaklığı', () => {
+    expect(distanceToPolygonBoundary({ x: -10, y: 50 }, sq)).toBeCloseTo(10, 6);
   });
 });

@@ -1,5 +1,5 @@
 import type { Vec2 } from '@zynpparti/geometry';
-import { distanceToSegment } from '@zynpparti/geometry';
+import { distanceToSegment, distanceToPolygonBoundary } from '@zynpparti/geometry';
 import { dimensionGeometry, openingFrame, type EntityId, type EntityStore } from '@zynpparti/document';
 import type { SpatialIndex } from './spatial-index';
 
@@ -48,6 +48,12 @@ export function hitTest(
     } else if (entity.type === 'dimension') {
       const g = dimensionGeometry(entity);
       const d = distanceToSegment(point, g.da, g.db);
+      if (d <= tolerance && d < bestDist) {
+        bestDist = d;
+        bestId = id;
+      }
+    } else if (entity.type === 'parcel') {
+      const d = distanceToPolygonBoundary(point, entity.boundary);
       if (d <= tolerance && d < bestDist) {
         bestDist = d;
         bestId = id;

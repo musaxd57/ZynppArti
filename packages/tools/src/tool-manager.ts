@@ -6,6 +6,7 @@ import { EraseTool } from './erase-tool';
 import { CalibrateTool } from './calibrate-tool';
 import { OpeningTool, DOOR_WIDTH, WINDOW_WIDTH } from './opening-tool';
 import { DimensionTool } from './dimension-tool';
+import { ParcelTool } from './parcel-tool';
 
 export type ToolName =
   | 'select'
@@ -13,6 +14,7 @@ export type ToolName =
   | 'door'
   | 'window'
   | 'dimension'
+  | 'parcel'
   | 'erase'
   | 'calibrate';
 
@@ -38,6 +40,7 @@ export class ToolManager implements SceneTool {
       door: new OpeningTool(ctx, 'door', DOOR_WIDTH),
       window: new OpeningTool(ctx, 'window', WINDOW_WIDTH),
       dimension: new DimensionTool(ctx),
+      parcel: new ParcelTool(ctx),
       erase: new EraseTool(ctx),
       calibrate: new CalibrateTool(ctx),
     };
@@ -103,6 +106,7 @@ export class ToolManager implements SceneTool {
       if (k === 'd') return this.toggleTool('door');
       if (k === 'p') return this.toggleTool('window'); // pencere
       if (k === 'o') return this.toggleTool('dimension'); // ölçü
+      if (k === 'r') return this.toggleTool('parcel'); // arsa/parsel
       if (k === 'e') return this.toggleTool('erase');
       if (k === 'k') return this.toggleTool('calibrate');
     }

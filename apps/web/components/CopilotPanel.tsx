@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { runCopilotChecks, type Finding, type Severity } from '@zynpparti/copilot';
-import type { EntityStore, Opening, Space, Wall } from '@zynpparti/document';
+import type { EntityStore, Opening, Parcel, Space, Wall } from '@zynpparti/document';
 
 function getSpaces(store: EntityStore): Space[] {
   return store.all().filter((e): e is Space => e.type === 'space');
@@ -13,8 +13,11 @@ function getWalls(store: EntityStore): Wall[] {
 function getOpenings(store: EntityStore): Opening[] {
   return store.all().filter((e): e is Opening => e.type === 'opening');
 }
+function getParcels(store: EntityStore): Parcel[] {
+  return store.all().filter((e): e is Parcel => e.type === 'parcel');
+}
 function runChecks(store: EntityStore): Finding[] {
-  return runCopilotChecks(getSpaces(store), getWalls(store), getOpenings(store));
+  return runCopilotChecks(getSpaces(store), getWalls(store), getOpenings(store), getParcels(store));
 }
 
 const SEVERITY_STYLE: Record<Severity, { dot: string; label: string }> = {
