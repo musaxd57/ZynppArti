@@ -7,11 +7,16 @@
 
 ## ŞU AN
 
-**Faz:** 1 — Çizim + Import + Mahal → **TAMAMLANDI** ✅ (Faz 0 da bitti)
-**Branch:** `feat/phase-1-drawing` → **main'e fast-forward + push edildi**
-**Durum:** İnteraktif duvar çizimi/seç/taşı/sil/undo, DXF import + ölçekleme + DXF/PNG export, otomatik mahal bulma + canlı m² + Türkçe etiketler + **Excel (xlsx) export çalışıyor**.
+**Faz:** 2 — AI Render + Copilot → **BAŞLADI**. **2A (canlı metrik paneli) TAMAMLANDI** ✅ (Faz 0+1 bitti)
+**Branch:** `feat/phase-2a-metrics`
+**Durum:** Faz 1'in tüm özellikleri + **2A: mahal paneli canlı metrik paneline büyütüldü** — her mahale **tip atama** (Yaşam/Islak hacim/Yatma/Sirkülasyon/Servis/Diğer), **toplam/net/brüt m²**, **tipe göre m² dağılımı**, Excel'e Tip kolonu + Özet sayfası.
 
-**Son doğrulama (1E sonu):** typecheck 6/6 · test ~71 · lint 6/6 · build 1/1 · dev HTTP 200, temiz derlendi.
+**Son doğrulama (2A sonu):** typecheck 6/6 · test 5 dosya (document 23) yeşil · lint 6/6 · build 1/1.
+
+**2A kararları:**
+- **Oda tipi isimden TAHMİN EDİLMEZ** (Moses kararı): kullanıcı her mahale tip atar; metrikler ona göre gruplanır. Ad serbest, tip ayrı alan (`Space.roomType`).
+- Net/brüt: centerline alanından duvar yarı-kalınlığı çıkarma/ekleme — birinci-derece yaklaşım (`ΔA = Σ kenar×kalınlık/2`), Clipper offset değil ama hızlı + dürüst. (`packages/document/src/metrics.ts`)
+- Tip, ad gibi recompute boyunca centroid eşleştirmeyle korunur (RoomManager).
 
 **Net özellik durumu (çalışıyor mu?):**
 - Duvar çiz (L) / seç-taşı (V) / sil (E) / undo-redo (Ctrl+Z/Y) → **ÇALIŞIYOR**
@@ -42,6 +47,10 @@
 ---
 
 ## GÜNLÜK
+
+### 2026-06-20
+- **Faz 2A — canlı metrik paneli TAMAM:** `packages/document` → yeni `metrics.ts` (saf TS: `computeMetrics`/`netGrossAreaM2`/`ROOM_TYPES`, 8 test) + `Space.roomType` alanı + RoomManager tip korur. `apps/web` RoomList → tip seçici (dropdown) + toplam/net/brüt + tipe göre dağılım + Excel'e Tip kolonu & Özet sayfası. Zincir yeşil. Oda tipi kullanıcı tarafından atanır (isimden tahmin YOK — Moses kararı).
+- Faz 2 araştırma dokümanları ingest edildi: `PRO-FEATURES.md` + `AI-AGENT-VISION.md` (commit dc86420).
 
 ### 2026-06-19
 - **Faz 1 RESMEN KAPANDI:** 1A (doküman çekirdeği) → 1B (engine+rbush) → 1C (xstate araçlar) → 1D (DXF io) → 1E (mahal/m²+Türkçe atlas) + UX cilası (çift-tık ad düzenle, araç toggle, Esc→Seç). Test ~71; zincir yeşil; main güncel. Faz 2 araştırması (FAZ2-NOTES, ADR-0013..0016) hazır.
