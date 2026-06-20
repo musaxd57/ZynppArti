@@ -55,6 +55,7 @@
 ## GÜNLÜK
 
 ### 2026-06-20
+- **Panel UX cilası:** ortak katlanabilir `Panel` bileşeni (başlık + ▾ katla/aç; kapalıyken ince sekme). Paneller sol/sağ **dikey kolonlarda** (CanvasStage, pointer-events-none kolon + auto içerik) → üst üste binmiyor (Metraj artık Mahal Listesi'nin altında, gap'li). RoomList/Takeoff/Copilot/LayerPanel hepsi Panel kullanıyor. Tarayıcıda doğrulandı (katlama + temiz tuval).
 - **Düzenlenebilir tutamaçlar (SelectTool):** seçili entity'de tutamaç kareleri + sürükleme — duvar uçları, ölçü uçları + offset, parsel köşeleri (snap'li, canlı ghost, UpdateEntity). Parsel highlight de eklendi. Tarayıcıda doğrulandı (duvar seç → uç tutamaçları).
 - **Daha çok yönetmelik + oda tipleri:** RoomType'a **Mutfak** + **Banyo/WC** eklendi (renk + dropdown + metrik gruplama). copilot: mutfak asgari alan (İmar 3,3 m²), banyo/ıslak hacim erişilebilir dönüş alanı (TS 9111 ~150 cm, info). copilot 19 test. (Merdiven ertelendi — stair entity gerekiyor.)
 - **Katman kilitleme:** LayerState'e `locked` (isLocked/toggleLock) eklendi; kilitli katman görünür kalır ama hit-test atlar (seçilemez/silinemez/taşınamaz). hit-test param `skipLayer` = gizli||kilitli. LayerPanel'e 🔒/🔓 toggle.

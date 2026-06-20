@@ -15,6 +15,7 @@ import {
   type Space,
   type Wall,
 } from '@zynpparti/document';
+import { Panel } from './Panel';
 
 function getSpaces(store: EntityStore): Space[] {
   return store.all().filter((e): e is Space => e.type === 'space');
@@ -123,9 +124,8 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
   }
 
   return (
-    <div className="absolute right-4 top-16 max-h-[80vh] w-72 overflow-y-auto rounded-lg bg-black/60 p-2 text-sm text-white backdrop-blur">
-      <div className="mb-1 px-1 font-semibold opacity-80">Mahal Listesi ({spaces.length})</div>
-      <div className="flex flex-col gap-1">
+    <Panel title="Mahal Listesi" badge={spaces.length} widthClass="w-72">
+      <div className="flex max-h-[40vh] flex-col gap-1 overflow-y-auto">
         {spaces.map((s) => (
           <div key={s.id} className="flex items-center gap-1">
             <span
@@ -198,6 +198,6 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
       >
         Excel İndir
       </button>
-    </div>
+    </Panel>
   );
 }

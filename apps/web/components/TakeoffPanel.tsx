@@ -11,6 +11,7 @@ import {
   type Takeoff,
   type Wall,
 } from '@zynpparti/document';
+import { Panel } from './Panel';
 
 function getWalls(store: EntityStore): Wall[] {
   return store.all().filter((e): e is Wall => e.type === 'wall');
@@ -38,7 +39,6 @@ interface TakeoffPanelProps {
 export function TakeoffPanel({ store }: TakeoffPanelProps) {
   const [version, setVersion] = useState(0);
   const [storeyHeightCm, setStoreyHeightCm] = useState(DEFAULT_STOREY_HEIGHT_CM);
-  const [open, setOpen] = useState(true);
 
   useEffect(() => store.subscribe(() => setVersion((v) => v + 1)), [store]);
 
@@ -80,51 +80,38 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
   );
 
   return (
-    <div className="absolute bottom-4 right-4 w-64 rounded-lg bg-black/60 p-2 text-sm text-white backdrop-blur">
+    <Panel title="Metraj">
+      <div className="flex flex-col gap-0.5 px-1">
+        <Row label="Duvar uzunluğu" value={`${num(t.wallLengthM)} m`} />
+        <Row label="Sıva/boya" value={`${num(t.plasterAreaM2)} m²`} />
+        <Row label="Döşeme/şap" value={`${num(t.floorAreaM2)} m²`} />
+        <Row label="Süpürgelik" value={`${num(t.skirtingM)} m`} />
+        <Row label="Kapı / Pencere" value={`${t.doorCount} / ${t.windowCount}`} />
+      </div>
+
+      <label className="mt-2 flex items-center justify-between gap-2 px-1 text-xs opacity-70">
+        <span>Kat yüksekliği (cm)</span>
+        <input
+          type="number"
+          value={storeyHeightCm}
+          min={200}
+          max={600}
+          onChange={(e) => setStoreyHeightCm(Number(e.target.value) || DEFAULT_STOREY_HEIGHT_CM)}
+          className="w-16 rounded bg-white/10 px-1 py-0.5 text-right tabular-nums outline-none focus:bg-white/20"
+        />
+      </label>
+
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="mb-1 flex w-full items-center justify-between px-1 font-semibold opacity-80"
+        onClick={exportExcel}
+        className="mt-2 w-full rounded bg-emerald-700 px-2 py-1 hover:bg-emerald-600"
       >
-        <span>Metraj</span>
-        <span className="text-xs opacity-50">{open ? '−' : '+'}</span>
+        Excel İndir
       </button>
 
-      {open && (
-        <>
-          <div className="flex flex-col gap-0.5 px-1">
-            <Row label="Duvar uzunluğu" value={`${num(t.wallLengthM)} m`} />
-            <Row label="Sıva/boya" value={`${num(t.plasterAreaM2)} m²`} />
-            <Row label="Döşeme/şap" value={`${num(t.floorAreaM2)} m²`} />
-            <Row label="Süpürgelik" value={`${num(t.skirtingM)} m`} />
-            <Row label="Kapı / Pencere" value={`${t.doorCount} / ${t.windowCount}`} />
-          </div>
-
-          <label className="mt-2 flex items-center justify-between gap-2 px-1 text-xs opacity-70">
-            <span>Kat yüksekliği (cm)</span>
-            <input
-              type="number"
-              value={storeyHeightCm}
-              min={200}
-              max={600}
-              onChange={(e) => setStoreyHeightCm(Number(e.target.value) || DEFAULT_STOREY_HEIGHT_CM)}
-              className="w-16 rounded bg-white/10 px-1 py-0.5 text-right tabular-nums outline-none focus:bg-white/20"
-            />
-          </label>
-
-          <button
-            type="button"
-            onClick={exportExcel}
-            className="mt-2 w-full rounded bg-emerald-700 px-2 py-1 hover:bg-emerald-600"
-          >
-            Excel İndir
-          </button>
-
-          <div className="mt-1 px-1 text-[10px] leading-tight opacity-40">
-            Kat/boşluk yükseklikleri varsayımdır; resmî metrajda doğrulayın.
-          </div>
-        </>
-      )}
-    </div>
+      <div className="mt-1 px-1 text-[10px] leading-tight opacity-40">
+        Kat/boşluk yükseklikleri varsayımdır; resmî metrajda doğrulayın.
+      </div>
+    </Panel>
   );
 }

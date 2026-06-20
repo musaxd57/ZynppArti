@@ -87,15 +87,25 @@ export function CanvasStage() {
             store={ui.store}
             exportPng={ui.exportPng}
           />
-          <RoomList
-            store={ui.store}
-            history={ui.history}
-            renameId={renameId}
-            onRenameConsumed={clearRename}
-          />
-          <CopilotPanel store={ui.store} />
-          <TakeoffPanel store={ui.store} />
-          <LayerPanel store={ui.store} layers={ui.layers} />
+          {/* Sol kolon: katmanlar + copilot (üstten dizilir, gap'li → üst üste binmez). */}
+          <div className="pointer-events-none absolute bottom-4 left-4 top-28 flex flex-col items-start gap-3 overflow-y-auto">
+            <div className="pointer-events-auto flex flex-col gap-3">
+              <LayerPanel store={ui.store} layers={ui.layers} />
+              <CopilotPanel store={ui.store} />
+            </div>
+          </div>
+          {/* Sağ kolon: mahal listesi/metrik + metraj. */}
+          <div className="pointer-events-none absolute bottom-4 right-4 top-16 flex flex-col items-end gap-3 overflow-y-auto">
+            <div className="pointer-events-auto flex flex-col items-end gap-3">
+              <RoomList
+                store={ui.store}
+                history={ui.history}
+                renameId={renameId}
+                onRenameConsumed={clearRename}
+              />
+              <TakeoffPanel store={ui.store} />
+            </div>
+          </div>
         </>
       )}
     </>

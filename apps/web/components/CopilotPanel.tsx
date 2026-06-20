@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { runCopilotChecks, type Finding, type Severity } from '@zynpparti/copilot';
 import type { EntityStore, Opening, Parcel, Space, Wall } from '@zynpparti/document';
+import { Panel } from './Panel';
 
 function getSpaces(store: EntityStore): Space[] {
   return store.all().filter((e): e is Space => e.type === 'space');
@@ -51,21 +52,18 @@ export function CopilotPanel({ store }: CopilotPanelProps) {
   if (!hasRooms) return null;
 
   return (
-    <div className="absolute bottom-4 left-4 w-80 rounded-lg bg-black/60 p-2 text-sm text-white backdrop-blur">
-      <div className="mb-1 flex items-center justify-between px-1">
-        <span className="font-semibold opacity-80">Copilot — Yönetmelik</span>
-        <span className="text-xs opacity-50">
-          {findings.length > 0 ? `${findings.length} bulgu` : 'temiz'}
-        </span>
-      </div>
-
+    <Panel
+      title="Copilot — Yönetmelik"
+      badge={findings.length > 0 ? `${findings.length} bulgu` : 'temiz'}
+      widthClass="w-80"
+    >
       {findings.length === 0 ? (
         <div className="flex items-center gap-2 px-1 py-1 opacity-70">
           <span className="h-2 w-2 rounded-full bg-emerald-400" />
           Tohum kurallarına uygunsuz bulgu yok.
         </div>
       ) : (
-        <ul className="flex flex-col gap-1.5">
+        <ul className="flex max-h-[45vh] flex-col gap-1.5 overflow-y-auto">
           {findings.map((f, i) => {
             const st = SEVERITY_STYLE[f.severity];
             return (
@@ -86,6 +84,6 @@ export function CopilotPanel({ store }: CopilotPanelProps) {
       <div className="mt-2 px-1 text-[10px] leading-tight opacity-40">
         Bilgilendirme amaçlıdır; yürürlükteki mevzuattan doğrulayın.
       </div>
-    </div>
+    </Panel>
   );
 }
