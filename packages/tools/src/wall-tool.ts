@@ -2,7 +2,7 @@ import { setup, assign, createActor, type ActorRefFrom } from 'xstate';
 import { Graphics } from 'pixi.js';
 import type { Vec2 } from '@zynpparti/geometry';
 import { AddEntity, createEntityId, type Wall } from '@zynpparti/document';
-import type { SceneTool, ScenePointer } from '@zynpparti/engine';
+import { DASH, strokeDashedLine, type SceneTool, type ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
 
 export const WALL_THICKNESS = 15; // cm
@@ -99,16 +99,25 @@ export class WallTool implements SceneTool {
 
   private render(): void {
     const { start, cursor } = this.actor.getSnapshot().context;
-    const r = 4 * this.ctx.pixelSize();
+    const px = this.ctx.pixelSize();
     this.preview.clear();
-    if (cursor) {
-      this.preview.circle(cursor.x, cursor.y, r).fill({ color: PREVIEW_COLOR, alpha: 0.9 });
-    }
     if (start && cursor) {
+      // Kalınlık önizlemesi (soluk dolu bant) + provisional kesik orta-çizgi (çizgi tipi).
       this.preview
         .moveTo(start.x, start.y)
         .lineTo(cursor.x, cursor.y)
-        .stroke({ width: WALL_THICKNESS, color: PREVIEW_COLOR, alpha: 0.5, cap: 'butt' });
+        .stroke({ width: WALL_THICKNESS, color: PREVIEW_COLOR, alpha: 0.25, cap: 'butt' });
+      strokeDashedLine(
+        this.preview,
+        start,
+        cursor,
+        DASH,
+        { width: 1.1 * px, color: PREVIEW_COLOR, alpha: 0.95 },
+        px,
+      );
+    }
+    if (cursor) {
+      this.preview.circle(cursor.x, cursor.y, 4 * px).fill({ color: PREVIEW_COLOR, alpha: 0.9 });
     }
   }
 

@@ -36,8 +36,10 @@ export const PALETTE = {
   roomFillAlpha: 0.1,
   /** Mahal çevre çizgisi — orta kalınlık. */
   roomPerimeter: 0x7fb0e0,
-  /** Izgara çizgileri (en ince, geri planda). */
-  grid: 0x2c2c2c,
+  /** Izgara ince çizgileri (en ince, geri planda). */
+  grid: 0x2a2a2a,
+  /** Izgara ana çizgileri (her 1 m) — incelerden biraz belirgin. */
+  gridMajor: 0x383838,
   /** Eksen (x/y) — ızgaradan biraz belirgin. */
   axis: 0x3b5168,
 } as const;
