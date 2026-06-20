@@ -21,13 +21,22 @@ export interface Wall extends EntityBase {
 }
 
 /**
+ * Mahal tipi — kullanıcı her mahale elle atar (isimden TAHMİN EDİLMEZ; ad serbesttir,
+ * tip sınıflandırma için ayrı alandır). Metrikler bu tipe göre gruplanır (Faz 2A).
+ * `undefined`/atanmamış = 'other'.
+ */
+export type RoomType = 'wet' | 'living' | 'sleeping' | 'circulation' | 'service' | 'other';
+
+/**
  * Mahal (oda) — duvarlardan türetilen kapalı bölge (ENGINEERING-NOTES §1).
  * `name` Türkçe olabilir; `boundary` CCW poligon (cm). Alan boundary'den hesaplanır (canlı m²).
+ * `roomType` kullanıcı tarafından atanır (Faz 2A canlı metrik paneli); atanmazsa 'other' sayılır.
  */
 export interface Space extends EntityBase {
   readonly type: 'space';
   readonly name: string;
   readonly boundary: readonly Vec2[];
+  readonly roomType?: RoomType;
 }
 
 /**

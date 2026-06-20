@@ -48,6 +48,8 @@ export class RoomManager {
         type: 'space',
         layerId: 'rooms',
         name: match?.name ?? 'Mahal',
+        // Ad gibi tip de eski yüzden yeni yüze taşınır (kullanıcı atadığı tip kaybolmasın).
+        roomType: match?.roomType,
         boundary,
       };
     });

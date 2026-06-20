@@ -2,15 +2,26 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
-import { UpdateEntity, type EntityStore, type History, type Space } from '@zynpparti/document';
-import { polygonArea } from '@zynpparti/geometry';
+import {
+  ROOM_TYPES,
+  UpdateEntity,
+  centerlineAreaM2,
+  computeMetrics,
+  roomTypeOf,
+  roomTypeLabel,
+  type EntityStore,
+  type History,
+  type RoomType,
+  type Space,
+  type Wall,
+} from '@zynpparti/document';
 
 function getSpaces(store: EntityStore): Space[] {
   return store.all().filter((e): e is Space => e.type === 'space');
 }
 
-function areaM2(space: Space): number {
-  return polygonArea(space.boundary) / 10000;
+function getWalls(store: EntityStore): Wall[] {
+  return store.all().filter((e): e is Wall => e.type === 'wall');
 }
 
 function fmt(m2: number): string {
@@ -25,12 +36,23 @@ interface RoomListProps {
   onRenameConsumed?: () => void;
 }
 
-/** Mahal listesi paneli: otomatik bulunan odalar, düzenlenebilir ad + canlı m². */
+/**
+ * Canlı metrik paneli (Faz 2A): otomatik bulunan mahaller — düzenlenebilir ad + tip seçimi +
+ * canlı m²; altta toplam/net/brüt + tipe göre dağılım. Çizim değişince canlı güncellenir.
+ */
 export function RoomList({ store, history, renameId, onRenameConsumed }: RoomListProps) {
   const [spaces, setSpaces] = useState<Space[]>(() => getSpaces(store));
+  const [walls, setWalls] = useState<Wall[]>(() => getWalls(store));
   const inputs = useRef(new Map<string, HTMLInputElement | null>());
 
-  useEffect(() => store.subscribe(() => setSpaces(getSpaces(store))), [store]);
+  useEffect(
+    () =>
+      store.subscribe(() => {
+        setSpaces(getSpaces(store));
+        setWalls(getWalls(store));
+      }),
+    [store],
+  );
 
   // Çift tık isteği gelince ilgili mahalin input'una odaklan + metni seç.
   useEffect(() => {
@@ -45,7 +67,7 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
 
   if (spaces.length === 0) return null;
 
-  const total = spaces.reduce((sum, s) => sum + areaM2(s), 0);
+  const metrics = computeMetrics(spaces, walls);
 
   function rename(space: Space, name: string): void {
     const trimmed = name.trim();
@@ -54,24 +76,46 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
     }
   }
 
+  function setType(space: Space, roomType: RoomType): void {
+    if (roomType !== roomTypeOf(space)) {
+      history.dispatch(new UpdateEntity({ ...space, roomType }));
+    }
+  }
+
   function exportExcel(): void {
     const rows: Record<string, string | number>[] = spaces.map((s) => ({
       Mahal: s.name,
-      'Alan (m²)': Number(areaM2(s).toFixed(2)),
+      Tip: roomTypeLabel(roomTypeOf(s)),
+      'Alan (m²)': Number(centerlineAreaM2(s).toFixed(2)),
     }));
-    rows.push({ Mahal: 'Toplam', 'Alan (m²)': Number(total.toFixed(2)) });
+    rows.push({ Mahal: 'Toplam', Tip: '', 'Alan (m²)': Number(metrics.totalM2.toFixed(2)) });
     const ws = XLSX.utils.json_to_sheet(rows);
+
+    // İkinci sayfa: özet metrikler + tipe göre dağılım.
+    const summary: Record<string, string | number>[] = [
+      { Metrik: 'Mahal sayısı', Değer: metrics.roomCount },
+      { Metrik: 'Toplam (m²)', Değer: Number(metrics.totalM2.toFixed(2)) },
+      { Metrik: 'Net (m²)', Değer: Number(metrics.netM2.toFixed(2)) },
+      { Metrik: 'Brüt (m²)', Değer: Number(metrics.grossM2.toFixed(2)) },
+      ...metrics.byType.map((b) => ({
+        Metrik: `${b.label} (${b.count})`,
+        Değer: Number(b.areaM2.toFixed(2)),
+      })),
+    ];
+    const summaryWs = XLSX.utils.json_to_sheet(summary);
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Mahaller');
+    XLSX.utils.book_append_sheet(wb, summaryWs, 'Özet');
     XLSX.writeFile(wb, 'mahal-listesi.xlsx');
   }
 
   return (
-    <div className="absolute right-4 top-16 w-60 rounded-lg bg-black/60 p-2 text-sm text-white backdrop-blur">
+    <div className="absolute right-4 top-16 max-h-[80vh] w-72 overflow-y-auto rounded-lg bg-black/60 p-2 text-sm text-white backdrop-blur">
       <div className="mb-1 px-1 font-semibold opacity-80">Mahal Listesi ({spaces.length})</div>
       <div className="flex flex-col gap-1">
         {spaces.map((s) => (
-          <div key={s.id} className="flex items-center gap-2">
+          <div key={s.id} className="flex items-center gap-1">
             <input
               ref={(el) => {
                 inputs.current.set(s.id, el);
@@ -80,14 +124,56 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
               onBlur={(e) => rename(s, e.target.value)}
               className="min-w-0 flex-1 rounded bg-white/10 px-2 py-1 outline-none focus:bg-white/20"
             />
-            <span className="tabular-nums opacity-80">{fmt(areaM2(s))} m²</span>
+            <select
+              value={roomTypeOf(s)}
+              onChange={(e) => setType(s, e.target.value as RoomType)}
+              className="rounded bg-white/10 px-1 py-1 text-xs outline-none focus:bg-white/20"
+              title="Mahal tipi"
+            >
+              {ROOM_TYPES.map((t) => (
+                <option key={t.key} value={t.key} className="bg-neutral-800">
+                  {t.label}
+                </option>
+              ))}
+            </select>
+            <span className="w-16 shrink-0 text-right tabular-nums opacity-80">
+              {fmt(centerlineAreaM2(s))} m²
+            </span>
           </div>
         ))}
       </div>
-      <div className="mt-2 flex justify-between border-t border-white/20 px-1 pt-1 opacity-80">
-        <span>Toplam</span>
-        <span className="tabular-nums">{fmt(total)} m²</span>
+
+      {/* Canlı metrik özeti (FAZ2-NOTES §2b) */}
+      <div className="mt-2 flex flex-col gap-0.5 border-t border-white/20 px-1 pt-1">
+        <div className="flex justify-between font-semibold">
+          <span>Toplam</span>
+          <span className="tabular-nums">{fmt(metrics.totalM2)} m²</span>
+        </div>
+        <div className="flex justify-between opacity-70">
+          <span>Net (iç)</span>
+          <span className="tabular-nums">{fmt(metrics.netM2)} m²</span>
+        </div>
+        <div className="flex justify-between opacity-70">
+          <span>Brüt</span>
+          <span className="tabular-nums">{fmt(metrics.grossM2)} m²</span>
+        </div>
       </div>
+
+      {/* Tipe göre dağılım */}
+      {metrics.byType.length > 0 && (
+        <div className="mt-1 flex flex-col gap-0.5 border-t border-white/20 px-1 pt-1">
+          <div className="opacity-50">Tipe göre</div>
+          {metrics.byType.map((b) => (
+            <div key={b.type} className="flex justify-between opacity-70">
+              <span>
+                {b.label} <span className="opacity-50">×{b.count}</span>
+              </span>
+              <span className="tabular-nums">{fmt(b.areaM2)} m²</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <button
         type="button"
         onClick={exportExcel}

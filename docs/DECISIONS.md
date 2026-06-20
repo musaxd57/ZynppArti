@@ -5,6 +5,30 @@
 
 ---
 
+## ADR-0019 — Yön ilkesi: kalite tavanı yok + maliyetli AI'ı sona ertele
+**Tarih:** 2026-06-20 · **Durum:** Kabul (Moses direktifi) · **Yansıma:** CLAUDE.md §0 kural 11-12
+**Bağlam:** Proje uzun; AI render + LLM copilot para gerektirir. İki şey net olmalı ki Claude her oturum hatırlasın.
+**Karar — iki ayaklı:**
+1. **Kalite tavanı (en iyi hedefi):** Her parça mümkün olan **en iyi, en gelişmiş** haliyle yapılır — kod, mimari, görsel zanaat (`docs/VISUAL-CRAFT.md`), Türkçe yönetmelik, metraj. Hiçbir yerde "yeter bu kadar" yok. Hedef: Rayon'u **hem özellik hem his** olarak geçmek.
+2. **Maliyet zamanlaması:** Para gerektiren AI parçaları (**AI render + LLM copilot**) **en sona**, ürün neredeyse bitince yapılır. Sebep kalite değil — en iyi sağlayıcıyı **bedava kredilerle gerçek projeyle test edip** seçmek. Bedava/deterministik her şey (geometri, yönetmelik kuralları, metraj, görsel zanaat) **şimdi ve en iyi** halinde.
+**Sonuç:** Kalitede tavan yok; sadece maliyetli AI doğru ana ertelenir. Pratik etki: deterministik yönetmelik/metraj/görsel-zanaat fazları LLM/render'dan önce gelir; copilot LLM katmanı (ADR-0006) ve AI render (ADR-0013/0017) sona kalır. Faz sırası bu ilkeye göre okunur (ROADMAP).
+
+## ADR-0018 — Copilot önce deterministik kural motoru (LLM'siz), `packages/copilot` (2B)
+**Tarih:** 2026-06-20 · **Durum:** Kabul
+**Bağlam:** Copilot iki ayaklı (ADR-0014): (1) kaynak-gösteren öneri, (2) canlı metrik (2A'da yapıldı). Öneri ayağı "geometri kuralı + LLM" olarak tanımlı. Ama LLM katmanı API key + sağlayıcı/maliyet kararı ister (ADR-0006/0017, Moses onayı). Asıl farklılaştırıcı değer ise **atıflı, doğru madde** (FAZ2-NOTES §2a) — bu deterministik kuralla, LLM olmadan üretilebilir.
+**Karar:** Copilot öneri ayağı **önce saf TS deterministik kural motoru** olarak kurulur: yeni `packages/copilot` (geometri + document'e bağlı, UI yok, test edilebilir). `runCopilotChecks(spaces, walls) → Finding[]`; her bulgu **atıflı** (ör. TS 9111 koridor ≥120 cm; İmar yatak odası ≥9 m², oturma ≥12 m²). **Seviye 1 (salt-okunur)** — modeli değiştirmez (AI-AGENT-VISION §2). LLM doğal-dil katmanı bunun üstüne, sağlayıcı/maliyet kararından sonra (ADR-0006) biner.
+**Sonuç:** API key/maliyet olmadan hemen görünür, doğrulanabilir değer; testle garanti (geometri `polygonMinWidth` koridor genişliği + alan kontrolleri). Web'de `CopilotPanel` canlı çalışır. Takas: doğal-dil soru-cevap ve serbest öneri yok (sıradaki adım); koridor genişliği konveks-kabuk yaklaşımı (L/T planda kapsayıcı genişlik, ileride medial-axis ile sıkışır).
+
+## ADR-0017 — AI render altyapısı: basit/doğrudan API başlangıç, kuyruk yük artınca eklenir
+**Tarih:** 2026-06-20 · **Durum:** Kabul (Moses kararı, Faz 2 planı)
+**Bağlam:** ADR-0013 "uygulama içi canlı render paneli" diyor; CLAUDE.md §8.7 asenkron BullMQ kuyruğu öngörüyor. Ama Faz 2'nin render ayağına (2D) henüz gelmedik; sağlayıcı seçimi ertelendi, maliyet için önce ücretsiz krediler kullanılacak. Bu aşamada Redis+BullMQ kurmak gereğinden ağır ve kurulumu yavaşlatır.
+**Karar:**
+- Render MVP'si **doğrudan API** ile çalışır: `apps/web` route'undan sağlayıcıya senkron çağrı, **kuyruk yok**.
+- Ama mantık **`services/ai-render` içinde baştan izole** kurulur (render isteği → sağlayıcı adapteri → sonuç). Web yalnızca bu servisi çağırır; render mantığını web'e gömmek YOK.
+- Böylece **yük artınca Redis + BullMQ kuyruğu**, çağrı yerini (sync→queue) değiştirerek eklenir; hiçbir şey söküp atılmaz. İzolasyon sınırı bugünden korunur.
+- Sağlayıcı (Replicate/Fal) ve gerçek bütçe **2D'ye gelince** birlikte test edilip seçilir; başlangıçta sağlayıcıların ücretsiz kredileri kullanılır. İlişkili: [ADR-0006] (provider-agnostic adapter), [ADR-0013].
+**Sonuç:** Hızlı MVP + temiz büyüme yolu. Takas: ilk sürümde uzun render'larda istek bloklayabilir (kullanıcıya "üretiliyor" durumu gösterilir); kuyruk gelince çözülür.
+
 ## ADR-0016 — Kesit gerçeği: hafif şematik kesit (Faz 3) → tam 3B kesit (Faz 5)
 **Tarih:** 2026-06-19 · **Durum:** Kabul (beklenti düzeltmesi)
 **Bağlam:** "Plandan otomatik kesit" istendi; ama gerçek kesit dikey bilgi (duvar yüksekliği, döşeme, çatı) gerektirir — saf 2B planda yok. Otomatik kesit özünde bir 3B/BIM işidir (BricsCAD BIM/OrthoGen/Revit: 3B modeli düzlemle keser). Bkz. `docs/FAZ2-NOTES.md §4`.
