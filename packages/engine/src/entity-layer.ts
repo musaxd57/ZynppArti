@@ -3,7 +3,7 @@ import type { Entity, EntityId, EntityStore, StoreChange } from '@zynpparti/docu
 import { SpatialIndex, type AABB } from './spatial-index';
 import { entityBounds } from './entity-bounds';
 import { drawWall } from './render-wall';
-import { buildSpaceFill, buildSpaceLabel } from './render-space';
+import { buildSpaceFill, buildSpaceLabel, drawSpacePerimeter } from './render-space';
 
 /**
  * Store'a abone olup entity'leri PixiJS'te çizen katman + mekânsal indeks (rbush).
@@ -19,6 +19,10 @@ export class EntityLayer {
   private readonly wallLayer = new Container();
   private readonly labelLayer = new Container();
   private readonly objects = new Map<EntityId, Container[]>();
+  /** Ekran-sabit konturları zoom değişince yeniden çizen kapamalar (lineweight hiyerarşisi). */
+  private readonly redrawables = new Map<EntityId, (pixelSize: number) => void>();
+  /** Son uygulanan pixelSize (= 1/zoom); yalnız değişince konturlar yenilenir. */
+  private lineweightPx = 1;
   private readonly unsubscribe: () => void;
 
   constructor(private readonly store: EntityStore) {
@@ -53,20 +57,37 @@ export class EntityLayer {
   private render(entity: Entity): void {
     this.destroyObjects(entity.id);
     const objs: Container[] = [];
+    const px = this.lineweightPx;
     if (entity.type === 'wall') {
       const g = new Graphics();
-      drawWall(g, entity);
+      drawWall(g, entity, px);
       this.wallLayer.addChild(g);
       objs.push(g);
+      this.redrawables.set(entity.id, (p) => drawWall(g, entity, p));
     } else {
       const fill = buildSpaceFill(entity);
       this.spaceFill.addChild(fill);
       objs.push(fill);
+      const perimeter = new Graphics();
+      drawSpacePerimeter(perimeter, entity, px);
+      this.spaceFill.addChild(perimeter); // dolgunun üstünde, duvarların altında
+      objs.push(perimeter);
+      this.redrawables.set(entity.id, (p) => drawSpacePerimeter(perimeter, entity, p));
       const label = buildSpaceLabel(entity);
       this.labelLayer.addChild(label);
       objs.push(label);
     }
     this.objects.set(entity.id, objs);
+  }
+
+  /**
+   * Zoom değişince ekran-sabit konturları yeniden çizer (lineweight hiyerarşisi).
+   * pixelSize aynıysa (yalnız pan) hiçbir şey yapmaz → ucuz.
+   */
+  updateLineweights(pixelSize: number): void {
+    if (Math.abs(pixelSize - this.lineweightPx) < 1e-9) return;
+    this.lineweightPx = pixelSize;
+    for (const redraw of this.redrawables.values()) redraw(pixelSize);
   }
 
   private removeEntity(id: EntityId): void {
@@ -80,6 +101,7 @@ export class EntityLayer {
       for (const o of objs) o.destroy();
       this.objects.delete(id);
     }
+    this.redrawables.delete(id);
   }
 
   /** Viewport (dünya kutusu) dışındaki entity'leri gizle (Faz 1: O(n); ileride artımlı). */
