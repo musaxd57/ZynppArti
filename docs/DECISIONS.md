@@ -5,6 +5,12 @@
 
 ---
 
+## ADR-0018 — Copilot önce deterministik kural motoru (LLM'siz), `packages/copilot` (2B)
+**Tarih:** 2026-06-20 · **Durum:** Kabul
+**Bağlam:** Copilot iki ayaklı (ADR-0014): (1) kaynak-gösteren öneri, (2) canlı metrik (2A'da yapıldı). Öneri ayağı "geometri kuralı + LLM" olarak tanımlı. Ama LLM katmanı API key + sağlayıcı/maliyet kararı ister (ADR-0006/0017, Moses onayı). Asıl farklılaştırıcı değer ise **atıflı, doğru madde** (FAZ2-NOTES §2a) — bu deterministik kuralla, LLM olmadan üretilebilir.
+**Karar:** Copilot öneri ayağı **önce saf TS deterministik kural motoru** olarak kurulur: yeni `packages/copilot` (geometri + document'e bağlı, UI yok, test edilebilir). `runCopilotChecks(spaces, walls) → Finding[]`; her bulgu **atıflı** (ör. TS 9111 koridor ≥120 cm; İmar yatak odası ≥9 m², oturma ≥12 m²). **Seviye 1 (salt-okunur)** — modeli değiştirmez (AI-AGENT-VISION §2). LLM doğal-dil katmanı bunun üstüne, sağlayıcı/maliyet kararından sonra (ADR-0006) biner.
+**Sonuç:** API key/maliyet olmadan hemen görünür, doğrulanabilir değer; testle garanti (geometri `polygonMinWidth` koridor genişliği + alan kontrolleri). Web'de `CopilotPanel` canlı çalışır. Takas: doğal-dil soru-cevap ve serbest öneri yok (sıradaki adım); koridor genişliği konveks-kabuk yaklaşımı (L/T planda kapsayıcı genişlik, ileride medial-axis ile sıkışır).
+
 ## ADR-0017 — AI render altyapısı: basit/doğrudan API başlangıç, kuyruk yük artınca eklenir
 **Tarih:** 2026-06-20 · **Durum:** Kabul (Moses kararı, Faz 2 planı)
 **Bağlam:** ADR-0013 "uygulama içi canlı render paneli" diyor; CLAUDE.md §8.7 asenkron BullMQ kuyruğu öngörüyor. Ama Faz 2'nin render ayağına (2D) henüz gelmedik; sağlayıcı seçimi ertelendi, maliyet için önce ücretsiz krediler kullanılacak. Bu aşamada Redis+BullMQ kurmak gereğinden ağır ve kurulumu yavaşlatır.

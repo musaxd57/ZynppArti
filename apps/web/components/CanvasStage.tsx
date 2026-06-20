@@ -7,6 +7,7 @@ import { ToolManager, createSnapper } from '@zynpparti/tools';
 import { seedDemo } from '@/lib/demo-seed';
 import { Toolbar } from './Toolbar';
 import { RoomList } from './RoomList';
+import { CopilotPanel } from './CopilotPanel';
 
 /**
  * Engine canvas + araç yöneticisini DOM'a bağlayan React sarmalı.
@@ -87,6 +88,7 @@ export function CanvasStage() {
             renameId={renameId}
             onRenameConsumed={clearRename}
           />
+          <CopilotPanel store={ui.store} />
         </>
       )}
     </>

@@ -32,6 +32,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@zynpparti/copilot':
+        specifier: workspace:*
+        version: link:../../packages/copilot
       '@zynpparti/document':
         specifier: workspace:*
         version: link:../../packages/document
@@ -78,6 +81,19 @@ importers:
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
+
+  packages/copilot:
+    dependencies:
+      '@zynpparti/document':
+        specifier: workspace:*
+        version: link:../document
+      '@zynpparti/geometry':
+        specifier: workspace:*
+        version: link:../geometry
+    devDependencies:
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.19.21)(lightningcss@1.32.0)
 
   packages/document:
     dependencies:
