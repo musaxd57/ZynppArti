@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { EntityStore } from '@zynpparti/document';
 import type { LayerState } from '@zynpparti/engine';
+import { Panel } from './Panel';
 
 /** layerId → Türkçe görünen ad. Bilinmeyen id'ler olduğu gibi gösterilir. */
 const LAYER_NAMES: Record<string, string> = {
@@ -55,8 +56,7 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
   if (rows.length === 0) return null;
 
   return (
-    <div className="absolute left-4 top-28 w-48 rounded-lg bg-black/60 p-2 text-sm text-white backdrop-blur">
-      <div className="mb-1 px-1 font-semibold opacity-80">Katmanlar</div>
+    <Panel title="Katmanlar" widthClass="w-52">
       <div className="flex flex-col gap-0.5">
         {rows.map(({ id, count }) => {
           const hidden = layers.isHidden(id);
@@ -87,6 +87,6 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
           );
         })}
       </div>
-    </div>
+    </Panel>
   );
 }
