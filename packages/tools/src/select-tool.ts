@@ -1,7 +1,16 @@
 import { setup, createActor, type ActorRefFrom } from 'xstate';
 import { Graphics } from 'pixi.js';
 import type { Vec2 } from '@zynpparti/geometry';
-import { RemoveEntity, UpdateEntity, type EntityId, type Wall } from '@zynpparti/document';
+import {
+  BatchCommand,
+  RemoveEntity,
+  UpdateEntity,
+  dimensionGeometry,
+  openingFrame,
+  type Entity,
+  type EntityId,
+  type Wall,
+} from '@zynpparti/document';
 import { hitTest, type SceneTool, type ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
 
@@ -28,14 +37,17 @@ export const selectPhaseMachine = setup({
 /** Seç (tıkla), taşı (sürükle), sil (Delete). */
 export class SelectTool implements SceneTool {
   private readonly phase: ActorRefFrom<typeof selectPhaseMachine>;
+  private readonly hoverGfx = new Graphics();
   private readonly selectionGfx = new Graphics();
   private readonly ghostGfx = new Graphics();
 
   private selectedId: EntityId | null = null;
+  private hoveredId: EntityId | null = null;
   private downWorld: Vec2 | null = null;
   private original: Wall | null = null;
 
   constructor(private readonly ctx: ToolContext) {
+    this.ctx.overlay.addChild(this.hoverGfx);
     this.ctx.overlay.addChild(this.selectionGfx);
     this.ctx.overlay.addChild(this.ghostGfx);
     this.phase = createActor(selectPhaseMachine);
@@ -48,6 +60,7 @@ export class SelectTool implements SceneTool {
 
   onPointerDown(p: ScenePointer): void {
     const id = hitTest(this.ctx.store, this.ctx.index, p.world, HIT_PX * this.ctx.pixelSize());
+    this.renderHover(null);
     this.select(id);
     if (id) {
       const e = this.ctx.store.get(id);
@@ -66,6 +79,12 @@ export class SelectTool implements SceneTool {
       const dx = p.world.x - this.downWorld.x;
       const dy = p.world.y - this.downWorld.y;
       this.drawGhost(this.translate(this.original, dx, dy));
+      return;
+    }
+    // Boştayken imleç altındaki entity'yi soluk vurgula (micro-interaction; VISUAL-CRAFT §5/§6).
+    if (this.state === 'idle') {
+      const id = hitTest(this.ctx.store, this.ctx.index, p.world, HIT_PX * this.ctx.pixelSize());
+      this.renderHover(id === this.selectedId ? null : id);
     }
   }
 
@@ -86,14 +105,33 @@ export class SelectTool implements SceneTool {
     if ((e.key === 'Delete' || e.key === 'Backspace') && this.selectedId) {
       const id = this.selectedId;
       this.select(null);
-      this.ctx.history.dispatch(new RemoveEntity(id));
+      this.deleteEntity(id);
     } else if (e.key === 'Escape') {
       this.select(null);
     }
   }
 
+  /** Entity'yi siler; duvarsa bağlı boşlukları (kapı/pencere) tek undo'da birlikte siler. */
+  private deleteEntity(id: EntityId): void {
+    const entity = this.ctx.store.get(id);
+    if (entity?.type === 'wall') {
+      const bound = this.ctx.store
+        .all()
+        .filter((e) => e.type === 'opening' && e.wallId === id)
+        .map((e) => new RemoveEntity(e.id));
+      if (bound.length > 0) {
+        this.ctx.history.dispatch(
+          new BatchCommand('Duvar + boşlukları sil', [new RemoveEntity(id), ...bound]),
+        );
+        return;
+      }
+    }
+    this.ctx.history.dispatch(new RemoveEntity(id));
+  }
+
   onDeactivate(): void {
     this.select(null);
+    this.renderHover(null);
     this.ghostGfx.clear();
     this.phase.send({ type: 'RESET' });
   }
@@ -115,22 +153,59 @@ export class SelectTool implements SceneTool {
     this.selectionGfx.clear();
     if (!this.selectedId) return;
     const e = this.ctx.store.get(this.selectedId);
-    if (e?.type === 'wall') this.strokeWall(this.selectionGfx, e, 0.9);
+    if (e) this.highlight(this.selectionGfx, e, 0.9);
+  }
+
+  private renderHover(id: EntityId | null): void {
+    if (id === this.hoveredId) return;
+    this.hoveredId = id;
+    this.hoverGfx.clear();
+    if (!id) return;
+    const e = this.ctx.store.get(id);
+    if (e) this.highlight(this.hoverGfx, e, 0.35);
+  }
+
+  /** Bir entity'yi vurgu rengiyle çizer (seçim ve hover ortak; tüm tipler). */
+  private highlight(g: Graphics, entity: Entity, alpha: number): void {
+    const px = this.ctx.pixelSize();
+    switch (entity.type) {
+      case 'wall':
+        g.moveTo(entity.start.x, entity.start.y)
+          .lineTo(entity.end.x, entity.end.y)
+          .stroke({ width: entity.thickness + 4 * px, color: SELECT_COLOR, alpha, cap: 'round' });
+        break;
+      case 'opening': {
+        const w = this.ctx.store.get(entity.wallId);
+        if (w?.type !== 'wall') break;
+        const f = openingFrame(entity, w);
+        const hx = f.normal.x * (f.thickness / 2);
+        const hy = f.normal.y * (f.thickness / 2);
+        g.poly([
+          f.a.x + hx, f.a.y + hy, f.b.x + hx, f.b.y + hy,
+          f.b.x - hx, f.b.y - hy, f.a.x - hx, f.a.y - hy,
+        ]).stroke({ width: 2.5 * px, color: SELECT_COLOR, alpha });
+        break;
+      }
+      case 'dimension': {
+        const d = dimensionGeometry(entity);
+        g.moveTo(d.da.x, d.da.y)
+          .lineTo(d.db.x, d.db.y)
+          .stroke({ width: 3 * px, color: SELECT_COLOR, alpha, cap: 'round' });
+        break;
+      }
+      case 'space':
+        break; // mahaller tıkla-seçilmez (çift tık = ad düzenle)
+    }
   }
 
   private drawGhost(wall: Wall): void {
     this.ghostGfx.clear();
-    this.strokeWall(this.ghostGfx, wall, 0.5);
-  }
-
-  private strokeWall(g: Graphics, wall: Wall, alpha: number): void {
-    g.moveTo(wall.start.x, wall.start.y)
-      .lineTo(wall.end.x, wall.end.y)
-      .stroke({ width: wall.thickness + 4 * this.ctx.pixelSize(), color: SELECT_COLOR, alpha, cap: 'round' });
+    this.highlight(this.ghostGfx, wall, 0.5);
   }
 
   dispose(): void {
     this.phase.stop();
+    this.hoverGfx.destroy();
     this.selectionGfx.destroy();
     this.ghostGfx.destroy();
   }
