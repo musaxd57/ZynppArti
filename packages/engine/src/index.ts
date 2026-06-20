@@ -8,6 +8,7 @@ export { drawDimension, buildDimensionLabel } from './render-dimension';
 export { drawParcel } from './render-parcel';
 export * from './linetypes';
 export { EntityLayer } from './entity-layer';
+export { LayerState } from './layer-state';
 export { createCanvasApp } from './canvas-app';
 export type { CanvasHandle } from './canvas-app';
 export type { SceneTool, ScenePointer } from './tool';

@@ -8,6 +8,7 @@ import type { AABB, SpatialIndex } from './spatial-index';
 import type { SceneTool, ScenePointer } from './tool';
 import { installRoomFont } from './room-font';
 import { LINEWEIGHTS, PALETTE } from './lineweights';
+import { LayerState } from './layer-state';
 
 /** `createCanvasApp` tarafından döndürülen kontrol kolu. */
 export interface CanvasHandle {
@@ -16,6 +17,8 @@ export interface CanvasHandle {
   readonly index: SpatialIndex;
   /** Araçların geçici (rubber-band/seçim) çizim yaptığı dünya-uzayı katmanı. */
   readonly overlay: Container;
+  /** Katman görünürlük durumu (panel + hit-test paylaşır). */
+  readonly layers: LayerState;
   /** Bir ekran pikselinin kaç dünya birimi olduğu (zoom'a göre tolerans ölçekleme). */
   pixelSize(): number;
   /** Aktif aracı ayarla (null = araç yok, yalnız gezinme). */
@@ -58,7 +61,8 @@ export async function createCanvasApp(
   app.stage.addChild(world);
   const redrawGrid = buildGrid(world);
 
-  const entityLayer = new EntityLayer(store);
+  const layers = new LayerState();
+  const entityLayer = new EntityLayer(store, layers);
   world.addChild(entityLayer.container);
 
   const overlay = new Container();
@@ -212,6 +216,7 @@ export async function createCanvasApp(
     store,
     index: entityLayer.index,
     overlay,
+    layers,
     pixelSize: () => 1 / camera.zoom,
     exportPng: () => app.renderer.extract.base64({ target: app.stage, format: 'png' }),
     setSpaceActivateHandler(cb: (id: EntityId) => void): void {

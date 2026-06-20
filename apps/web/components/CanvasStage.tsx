@@ -9,6 +9,7 @@ import { Toolbar } from './Toolbar';
 import { RoomList } from './RoomList';
 import { CopilotPanel } from './CopilotPanel';
 import { TakeoffPanel } from './TakeoffPanel';
+import { LayerPanel } from './LayerPanel';
 
 /**
  * Engine canvas + araç yöneticisini DOM'a bağlayan React sarmalı.
@@ -20,6 +21,7 @@ export function CanvasStage() {
     manager: ToolManager;
     history: History;
     store: EntityStore;
+    layers: CanvasHandle['layers'];
     exportPng: () => Promise<string>;
   } | null>(null);
   const [renameId, setRenameId] = useState<string | null>(null);
@@ -53,6 +55,7 @@ export function CanvasStage() {
         overlay: h.overlay,
         pixelSize: h.pixelSize,
         snap: createSnapper(store, h.index, h.pixelSize),
+        isLayerHidden: (id) => h.layers.isHidden(id),
       });
       h.setActiveTool(manager);
       // Mahal içine çift tık → Seç moduna geç + o mahalin adını düzenlemeye odaklan.
@@ -60,7 +63,7 @@ export function CanvasStage() {
         manager?.setTool('select');
         setRenameId(id);
       });
-      setUi({ manager, history, store, exportPng: h.exportPng });
+      setUi({ manager, history, store, layers: h.layers, exportPng: h.exportPng });
     });
 
     return () => {
@@ -91,6 +94,7 @@ export function CanvasStage() {
           />
           <CopilotPanel store={ui.store} />
           <TakeoffPanel store={ui.store} />
+          <LayerPanel store={ui.store} layers={ui.layers} />
         </>
       )}
     </>
