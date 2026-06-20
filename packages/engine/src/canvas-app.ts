@@ -7,6 +7,7 @@ import { EntityLayer } from './entity-layer';
 import type { AABB, SpatialIndex } from './spatial-index';
 import type { SceneTool, ScenePointer } from './tool';
 import { installRoomFont } from './room-font';
+import { LINEWEIGHTS, PALETTE } from './lineweights';
 
 /** `createCanvasApp` tarafından döndürülen kontrol kolu. */
 export interface CanvasHandle {
@@ -45,7 +46,7 @@ export async function createCanvasApp(
   await app.init({
     resizeTo: container,
     antialias: true,
-    background: '#1e1e1e',
+    background: PALETTE.background,
     autoDensity: true,
     resolution: window.devicePixelRatio || 1,
   });
@@ -55,7 +56,7 @@ export async function createCanvasApp(
 
   const world = new Container();
   app.stage.addChild(world);
-  drawGrid(world);
+  const redrawGrid = buildGrid(world);
 
   const entityLayer = new EntityLayer(store);
   world.addChild(entityLayer.container);
@@ -76,6 +77,9 @@ export async function createCanvasApp(
   function applyCamera(): void {
     world.position.set(camera.x, camera.y);
     world.scale.set(camera.zoom);
+    const pixelSize = 1 / camera.zoom;
+    entityLayer.updateLineweights(pixelSize); // ekran-sabit konturlar (yalnız zoom değişince)
+    redrawGrid(pixelSize);
     entityLayer.cull(viewportBounds());
   }
 
@@ -235,21 +239,33 @@ export async function createCanvasApp(
   };
 }
 
-function drawGrid(target: Container): void {
+/**
+ * Izgara + eksenleri kurar ve zoom'da yeniden çizen fonksiyonu döndürür. Izgara en ince
+ * (hairline) ve ekran-sabittir → zoom'la şişmez, geri planda kalır (VISUAL-CRAFT §1/§6).
+ */
+function buildGrid(target: Container): (pixelSize: number) => void {
   const grid = new Graphics();
-  for (let x = -GRID_EXTENT; x <= GRID_EXTENT; x += GRID_SPACING) {
-    grid.moveTo(x, -GRID_EXTENT).lineTo(x, GRID_EXTENT);
-  }
-  for (let y = -GRID_EXTENT; y <= GRID_EXTENT; y += GRID_SPACING) {
-    grid.moveTo(-GRID_EXTENT, y).lineTo(GRID_EXTENT, y);
-  }
-  grid.stroke({ width: 1, color: 0x333333, alpha: 1 });
-
   const axes = new Graphics();
-  axes.moveTo(-GRID_EXTENT, 0).lineTo(GRID_EXTENT, 0);
-  axes.moveTo(0, -GRID_EXTENT).lineTo(0, GRID_EXTENT);
-  axes.stroke({ width: 2, color: 0x4a90d9, alpha: 0.8 });
-
   target.addChild(grid);
   target.addChild(axes);
+
+  let lastPx = -1;
+  return (pixelSize: number): void => {
+    if (Math.abs(pixelSize - lastPx) < 1e-9) return;
+    lastPx = pixelSize;
+
+    grid.clear();
+    for (let x = -GRID_EXTENT; x <= GRID_EXTENT; x += GRID_SPACING) {
+      grid.moveTo(x, -GRID_EXTENT).lineTo(x, GRID_EXTENT);
+    }
+    for (let y = -GRID_EXTENT; y <= GRID_EXTENT; y += GRID_SPACING) {
+      grid.moveTo(-GRID_EXTENT, y).lineTo(GRID_EXTENT, y);
+    }
+    grid.stroke({ width: LINEWEIGHTS.hairline * pixelSize, color: PALETTE.grid });
+
+    axes.clear();
+    axes.moveTo(-GRID_EXTENT, 0).lineTo(GRID_EXTENT, 0);
+    axes.moveTo(0, -GRID_EXTENT).lineTo(0, GRID_EXTENT);
+    axes.stroke({ width: LINEWEIGHTS.thin * pixelSize, color: PALETTE.axis });
+  };
 }
