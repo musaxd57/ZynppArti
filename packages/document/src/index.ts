@@ -5,3 +5,4 @@ export * from './history';
 export { createEntityId } from './id';
 export { RoomManager } from './rooms';
 export * from './metrics';
+export * from './opening';

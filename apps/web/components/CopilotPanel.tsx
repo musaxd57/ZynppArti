@@ -2,13 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { runCopilotChecks, type Finding, type Severity } from '@zynpparti/copilot';
-import type { EntityStore, Space, Wall } from '@zynpparti/document';
+import type { EntityStore, Opening, Space, Wall } from '@zynpparti/document';
 
 function getSpaces(store: EntityStore): Space[] {
   return store.all().filter((e): e is Space => e.type === 'space');
 }
 function getWalls(store: EntityStore): Wall[] {
   return store.all().filter((e): e is Wall => e.type === 'wall');
+}
+function getOpenings(store: EntityStore): Opening[] {
+  return store.all().filter((e): e is Opening => e.type === 'opening');
+}
+function runChecks(store: EntityStore): Finding[] {
+  return runCopilotChecks(getSpaces(store), getWalls(store), getOpenings(store));
 }
 
 const SEVERITY_STYLE: Record<Severity, { dot: string; label: string }> = {
@@ -27,17 +33,14 @@ interface CopilotPanelProps {
  * Seviye 1: salt-okunur, modeli değiştirmez (AI-AGENT-VISION §2).
  */
 export function CopilotPanel({ store }: CopilotPanelProps) {
-  const [findings, setFindings] = useState<Finding[]>(() =>
-    runCopilotChecks(getSpaces(store), getWalls(store)),
-  );
+  const [findings, setFindings] = useState<Finding[]>(() => runChecks(store));
   const [hasRooms, setHasRooms] = useState<boolean>(() => getSpaces(store).length > 0);
 
   useEffect(
     () =>
       store.subscribe(() => {
-        const spaces = getSpaces(store);
-        setHasRooms(spaces.length > 0);
-        setFindings(runCopilotChecks(spaces, getWalls(store)));
+        setHasRooms(getSpaces(store).length > 0);
+        setFindings(runChecks(store));
       }),
     [store],
   );

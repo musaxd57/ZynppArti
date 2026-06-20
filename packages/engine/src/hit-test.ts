@@ -1,6 +1,6 @@
 import type { Vec2 } from '@zynpparti/geometry';
 import { distanceToSegment } from '@zynpparti/geometry';
-import type { EntityId, EntityStore } from '@zynpparti/document';
+import { openingFrame, type EntityId, type EntityStore } from '@zynpparti/document';
 import type { SpatialIndex } from './spatial-index';
 
 /**
@@ -33,6 +33,17 @@ export function hitTest(
       if (d <= reach && d < bestDist) {
         bestDist = d;
         bestId = id;
+      }
+    } else if (entity.type === 'opening') {
+      const wall = store.get(entity.wallId);
+      if (wall?.type === 'wall') {
+        const f = openingFrame(entity, wall);
+        const d = Math.hypot(point.x - f.center.x, point.y - f.center.y);
+        const reach = entity.width / 2 + tolerance;
+        if (d <= reach && d < bestDist) {
+          bestDist = d;
+          bestId = id;
+        }
       }
     }
   }

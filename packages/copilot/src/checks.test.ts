@@ -59,6 +59,35 @@ describe('runCopilotChecks — asgari alan (İmar)', () => {
   });
 });
 
+describe('runCopilotChecks — kapı genişliği (TS 9111)', () => {
+  const door = (id: string, width: number): import('@zynpparti/document').Opening => ({
+    id,
+    type: 'opening',
+    layerId: 'default',
+    wallId: 'w',
+    t: 0.5,
+    width,
+    kind: 'door',
+  });
+
+  it('dar kapı → atıflı uyarı', () => {
+    const findings = nonInfo(runCopilotChecks([], [], [door('K1', 75)]));
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.severity).toBe('warning');
+    expect(findings[0]!.citation).toContain('TS 9111');
+    expect(findings[0]!.entityId).toBe('K1');
+  });
+
+  it('yeterli kapı (90) → uygunsuzluk yok', () => {
+    expect(nonInfo(runCopilotChecks([], [], [door('K1', 90)]))).toHaveLength(0);
+  });
+
+  it('pencere kapı kuralına girmez', () => {
+    const win = { ...door('P1', 60), kind: 'window' as const };
+    expect(nonInfo(runCopilotChecks([], [], [win]))).toHaveLength(0);
+  });
+});
+
 describe('runCopilotChecks — otopark (Otopark Yönetmeliği, info)', () => {
   it('toplam alandan kaba otopark tahmini verir', () => {
     // 1000×1000 cm = 100 m² → 100/100 = 1 araç

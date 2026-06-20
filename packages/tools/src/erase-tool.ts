@@ -1,5 +1,5 @@
 import { Graphics } from 'pixi.js';
-import { RemoveEntity, type EntityId, type Wall } from '@zynpparti/document';
+import { BatchCommand, RemoveEntity, type EntityId, type Wall } from '@zynpparti/document';
 import { hitTest, type SceneTool, type ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
 
@@ -22,11 +22,25 @@ export class EraseTool implements SceneTool {
 
   onPointerDown(p: ScenePointer): void {
     const id = hitTest(this.ctx.store, this.ctx.index, p.world, HIT_PX * this.ctx.pixelSize());
-    if (id) {
-      this.hoveredId = null;
-      this.hoverGfx.clear();
-      this.ctx.history.dispatch(new RemoveEntity(id));
+    if (!id) return;
+    this.hoveredId = null;
+    this.hoverGfx.clear();
+
+    const entity = this.ctx.store.get(id);
+    // Duvar silinince üstündeki boşluklar (kapı/pencere) öksüz kalmasın → tek undo'da birlikte sil.
+    if (entity?.type === 'wall') {
+      const bound = this.ctx.store
+        .all()
+        .filter((e) => e.type === 'opening' && e.wallId === id)
+        .map((e) => new RemoveEntity(e.id));
+      if (bound.length > 0) {
+        this.ctx.history.dispatch(
+          new BatchCommand('Duvar + boşlukları sil', [new RemoveEntity(id), ...bound]),
+        );
+        return;
+      }
     }
+    this.ctx.history.dispatch(new RemoveEntity(id));
   }
 
   onDeactivate(): void {

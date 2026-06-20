@@ -8,6 +8,7 @@ import { importDxf, exportDxf } from '@zynpparti/io';
 const TOOLS: { name: ToolName; label: string; hotkey: string }[] = [
   { name: 'select', label: 'Seç', hotkey: 'V' },
   { name: 'wall', label: 'Duvar', hotkey: 'L' },
+  { name: 'door', label: 'Kapı', hotkey: 'D' },
   { name: 'erase', label: 'Sil', hotkey: 'E' },
   { name: 'calibrate', label: 'Ölçekle', hotkey: 'K' },
 ];
