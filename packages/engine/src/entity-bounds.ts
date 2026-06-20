@@ -1,4 +1,10 @@
-import { openingFrame, type Entity, type Opening, type Wall } from '@zynpparti/document';
+import {
+  dimensionGeometry,
+  openingFrame,
+  type Entity,
+  type Opening,
+  type Wall,
+} from '@zynpparti/document';
 import type { AABB } from './spatial-index';
 
 /** Boşluğun (kapı/pencere) duvardan türetilmiş AABB'si. Duvar çözümü gerektiğinden ayrı. */
@@ -24,6 +30,12 @@ export function entityBounds(entity: Entity): AABB {
   switch (entity.type) {
     case 'opening':
       return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+    case 'dimension': {
+      const g = dimensionGeometry(entity);
+      const xs = [g.a.x, g.b.x, g.da.x, g.db.x];
+      const ys = [g.a.y, g.b.y, g.da.y, g.db.y];
+      return { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
+    }
     case 'wall': {
       const half = entity.thickness / 2;
       return {

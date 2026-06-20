@@ -5,8 +5,16 @@ import { SelectTool } from './select-tool';
 import { EraseTool } from './erase-tool';
 import { CalibrateTool } from './calibrate-tool';
 import { OpeningTool, DOOR_WIDTH, WINDOW_WIDTH } from './opening-tool';
+import { DimensionTool } from './dimension-tool';
 
-export type ToolName = 'select' | 'wall' | 'door' | 'window' | 'erase' | 'calibrate';
+export type ToolName =
+  | 'select'
+  | 'wall'
+  | 'door'
+  | 'window'
+  | 'dimension'
+  | 'erase'
+  | 'calibrate';
 
 interface DisposableTool extends SceneTool {
   dispose(): void;
@@ -29,6 +37,7 @@ export class ToolManager implements SceneTool {
       wall: new WallTool(ctx),
       door: new OpeningTool(ctx, 'door', DOOR_WIDTH),
       window: new OpeningTool(ctx, 'window', WINDOW_WIDTH),
+      dimension: new DimensionTool(ctx),
       erase: new EraseTool(ctx),
       calibrate: new CalibrateTool(ctx),
     };
@@ -93,6 +102,7 @@ export class ToolManager implements SceneTool {
       if (k === 'l') return this.toggleTool('wall'); // tekrar L → kapat, Seç'e dön
       if (k === 'd') return this.toggleTool('door');
       if (k === 'p') return this.toggleTool('window'); // pencere
+      if (k === 'o') return this.toggleTool('dimension'); // ölçü
       if (k === 'e') return this.toggleTool('erase');
       if (k === 'k') return this.toggleTool('calibrate');
     }

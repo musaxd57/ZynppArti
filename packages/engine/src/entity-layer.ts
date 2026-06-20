@@ -5,6 +5,7 @@ import { entityBounds, openingBounds } from './entity-bounds';
 import { drawWall } from './render-wall';
 import { buildSpaceFill, buildSpaceLabel, drawSpacePerimeter } from './render-space';
 import { drawOpening } from './render-opening';
+import { drawDimension, buildDimensionLabel } from './render-dimension';
 
 /**
  * Store'a abone olup entity'leri PixiJS'te çizen katman + mekânsal indeks (rbush).
@@ -19,6 +20,7 @@ export class EntityLayer {
   private readonly spaceFill = new Container();
   private readonly wallLayer = new Container();
   private readonly openingLayer = new Container();
+  private readonly dimensionLayer = new Container();
   private readonly labelLayer = new Container();
   private readonly objects = new Map<EntityId, Container[]>();
   /** Ekran-sabit konturları zoom değişince yeniden çizen kapamalar (lineweight hiyerarşisi). */
@@ -28,7 +30,13 @@ export class EntityLayer {
   private readonly unsubscribe: () => void;
 
   constructor(private readonly store: EntityStore) {
-    this.container.addChild(this.spaceFill, this.wallLayer, this.openingLayer, this.labelLayer);
+    this.container.addChild(
+      this.spaceFill,
+      this.wallLayer,
+      this.openingLayer,
+      this.dimensionLayer,
+      this.labelLayer,
+    );
 
     const entries: { id: EntityId; box: AABB }[] = [];
     for (const e of store.all()) {
@@ -96,6 +104,15 @@ export class EntityLayer {
         const w = this.store.get(entity.wallId);
         if (w?.type === 'wall') drawOpening(g, entity, w, p);
       });
+    } else if (entity.type === 'dimension') {
+      const g = new Graphics();
+      drawDimension(g, entity, px);
+      this.dimensionLayer.addChild(g);
+      objs.push(g);
+      this.redrawables.set(entity.id, (p) => drawDimension(g, entity, p));
+      const label = buildDimensionLabel(entity);
+      this.labelLayer.addChild(label);
+      objs.push(label);
     } else {
       const fill = buildSpaceFill(entity);
       this.spaceFill.addChild(fill);

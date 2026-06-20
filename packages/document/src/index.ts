@@ -6,4 +6,5 @@ export { createEntityId } from './id';
 export { RoomManager } from './rooms';
 export * from './metrics';
 export * from './opening';
+export * from './dimension';
 export * from './takeoff';

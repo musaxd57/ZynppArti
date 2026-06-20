@@ -54,9 +54,20 @@ export interface Opening extends EntityBase {
 }
 
 /**
- * Entity birliği (discriminated union). `type` alanı ayırıcıdır.
- * İleride Dimension/Annotation/Block... eklenecek.
+ * Ölçülendirme (dimension) — iki nokta arası lineer ölçü. `offset` ölçü çizgisinin ölçülen
+ * doğrudan dik uzaklığıdır (cm; işaret hangi tarafta olduğunu belirler). Uzunluk a/b'den türetilir.
  */
-export type Entity = Wall | Space | Opening;
+export interface Dimension extends EntityBase {
+  readonly type: 'dimension';
+  readonly a: Vec2;
+  readonly b: Vec2;
+  readonly offset: number;
+}
+
+/**
+ * Entity birliği (discriminated union). `type` alanı ayırıcıdır.
+ * İleride Annotation/Block... eklenecek.
+ */
+export type Entity = Wall | Space | Opening | Dimension;
 
 export type EntityType = Entity['type'];
