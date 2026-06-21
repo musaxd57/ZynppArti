@@ -10,3 +10,4 @@ export * from './dimension';
 export * from './takeoff';
 export * from './block';
 export * from './annotation';
+export * from './clone';
