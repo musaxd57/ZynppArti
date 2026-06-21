@@ -116,17 +116,18 @@ export function CanvasStage() {
             exportPng={ui.exportPng}
             zoomToFit={ui.zoomToFit}
           />
-          {/* Sol kolon: katmanlar + copilot (üstten dizilir, gap'li → üst üste binmez). */}
-          <div className="pointer-events-none absolute bottom-4 left-4 top-28 flex flex-col items-start gap-3 overflow-y-auto">
-            <div className="pointer-events-auto flex flex-col gap-3">
+          {/* Sol kolon: katmanlar + copilot. Kaydırma, ETKİLEŞİMLİ iç sarmalayıcıda olmalı
+              (dış kolon pointer-events-none → tekerlek/çubuk oraya ulaşmaz). */}
+          <div className="pointer-events-none absolute bottom-4 left-4 top-28 flex flex-col items-start">
+            <div className="pointer-events-auto flex max-h-full flex-col gap-3 overflow-y-auto pr-1">
               <LayerPanel store={ui.store} layers={ui.layers} />
               <BlockPalette manager={ui.manager} />
               <CopilotPanel store={ui.store} />
             </div>
           </div>
-          {/* Sağ kolon: mahal listesi/metrik + metraj. */}
-          <div className="pointer-events-none absolute bottom-4 right-4 top-16 flex flex-col items-end gap-3 overflow-y-auto">
-            <div className="pointer-events-auto flex flex-col items-end gap-3">
+          {/* Sağ kolon: mahal listesi/metrik + metraj + pafta. */}
+          <div className="pointer-events-none absolute bottom-4 right-4 top-16 flex flex-col items-end">
+            <div className="pointer-events-auto flex max-h-full flex-col items-end gap-3 overflow-y-auto pl-1">
               <RoomList
                 store={ui.store}
                 history={ui.history}

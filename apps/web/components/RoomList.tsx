@@ -125,50 +125,56 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
     <Panel title="Mahal Listesi" badge={spaces.length} widthClass="w-72">
       <div className="flex max-h-[40vh] flex-col gap-1 overflow-y-auto">
         {spaces.map((s) => (
-          <div key={s.id} className="flex items-center gap-1">
-            <span
-              className="h-3 w-3 shrink-0 rounded-sm"
-              style={{ backgroundColor: toHexColor(roomTypeColor(roomTypeOf(s))) }}
-              title="Tip rengi (tuvaldeki mahal ile aynı)"
-            />
-            <input
-              ref={(el) => {
-                inputs.current.set(s.id, el);
-              }}
-              defaultValue={s.name}
-              onBlur={(e) => rename(s, e.target.value)}
-              className="min-w-0 flex-1 rounded bg-white/10 px-2 py-1 outline-none focus:bg-white/20"
-            />
-            <select
-              value={roomTypeOf(s)}
-              onChange={(e) => setType(s, e.target.value as RoomType)}
-              className="rounded bg-white/10 px-1 py-1 text-xs outline-none focus:bg-white/20"
-              title="Mahal tipi"
-            >
-              {ROOM_TYPES.map((t) => (
-                <option key={t.key} value={t.key} className="bg-neutral-800">
-                  {t.label}
+          <div key={s.id} className="flex flex-col gap-1 rounded px-1 py-1 odd:bg-white/[0.03]">
+            {/* Satır 1: tip rengi + ad + alan */}
+            <div className="flex items-center gap-1">
+              <span
+                className="h-3 w-3 shrink-0 rounded-sm"
+                style={{ backgroundColor: toHexColor(roomTypeColor(roomTypeOf(s))) }}
+                title="Tip rengi (tuvaldeki mahal ile aynı)"
+              />
+              <input
+                ref={(el) => {
+                  inputs.current.set(s.id, el);
+                }}
+                defaultValue={s.name}
+                onBlur={(e) => rename(s, e.target.value)}
+                className="min-w-0 flex-1 rounded bg-white/10 px-2 py-1 outline-none focus:bg-white/20"
+              />
+              <span className="w-16 shrink-0 text-right tabular-nums opacity-80">
+                {fmt(centerlineAreaM2(s))} m²
+              </span>
+            </div>
+            {/* Satır 2: tip + malzeme (eşit paylaşımlı, taşmaz) */}
+            <div className="flex items-center gap-1 pl-4">
+              <select
+                value={roomTypeOf(s)}
+                onChange={(e) => setType(s, e.target.value as RoomType)}
+                className="min-w-0 flex-1 rounded bg-white/10 px-1 py-1 text-xs outline-none focus:bg-white/20"
+                title="Mahal tipi"
+              >
+                {ROOM_TYPES.map((t) => (
+                  <option key={t.key} value={t.key} className="bg-neutral-800">
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={s.material ?? ''}
+                onChange={(e) => setMaterial(s, e.target.value)}
+                className="min-w-0 flex-1 rounded bg-white/10 px-1 py-1 text-xs outline-none focus:bg-white/20"
+                title="Zemin malzemesi (tarama deseni)"
+              >
+                <option value="" className="bg-neutral-800">
+                  Malzeme —
                 </option>
-              ))}
-            </select>
-            <select
-              value={s.material ?? ''}
-              onChange={(e) => setMaterial(s, e.target.value)}
-              className="rounded bg-white/10 px-1 py-1 text-xs outline-none focus:bg-white/20"
-              title="Zemin malzemesi (tarama deseni)"
-            >
-              <option value="" className="bg-neutral-800">
-                Malzeme —
-              </option>
-              {MATERIALS.map((m) => (
-                <option key={m.id} value={m.id} className="bg-neutral-800">
-                  {m.label}
-                </option>
-              ))}
-            </select>
-            <span className="w-16 shrink-0 text-right tabular-nums opacity-80">
-              {fmt(centerlineAreaM2(s))} m²
-            </span>
+                {MATERIALS.map((m) => (
+                  <option key={m.id} value={m.id} className="bg-neutral-800">
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         ))}
       </div>
