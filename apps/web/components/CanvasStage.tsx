@@ -12,6 +12,7 @@ import { TakeoffPanel } from './TakeoffPanel';
 import { SheetPanel } from './SheetPanel';
 import { LayerPanel } from './LayerPanel';
 import { BlockPalette } from './BlockPalette';
+import { StatusBar } from './StatusBar';
 
 /**
  * Engine canvas + araç yöneticisini DOM'a bağlayan React sarmalı.
@@ -25,6 +26,7 @@ export function CanvasStage() {
     store: EntityStore;
     layers: CanvasHandle['layers'];
     exportPng: () => Promise<string>;
+    setHoverHandler: CanvasHandle['setHoverHandler'];
   } | null>(null);
   const [renameId, setRenameId] = useState<string | null>(null);
   const clearRename = useCallback(() => setRenameId(null), []);
@@ -80,7 +82,14 @@ export function CanvasStage() {
         if (!trimmed || trimmed === ent.text) return;
         history.dispatch(new UpdateEntity({ ...ent, text: trimmed }));
       });
-      setUi({ manager, history, store, layers: h.layers, exportPng: h.exportPng });
+      setUi({
+        manager,
+        history,
+        store,
+        layers: h.layers,
+        exportPng: h.exportPng,
+        setHoverHandler: h.setHoverHandler,
+      });
     });
 
     return () => {
@@ -124,6 +133,7 @@ export function CanvasStage() {
               <SheetPanel store={ui.store} history={ui.history} />
             </div>
           </div>
+          <StatusBar manager={ui.manager} registerHover={ui.setHoverHandler} />
         </>
       )}
     </>
