@@ -192,6 +192,57 @@ describe('runCopilotChecks — otopark (Otopark Yönetmeliği, info)', () => {
   });
 });
 
+describe('runCopilotChecks — banyo asgari alanı (İmar, info)', () => {
+  it('küçük banyo → İmar info', () => {
+    // 100×200 = 2,0 m² < 3,0
+    const info = runCopilotChecks([rect('Banyo', 'bathroom', 100, 200)], []).filter(
+      (x) => x.severity === 'info' && x.message.includes('banyo'),
+    );
+    expect(info).toHaveLength(1);
+    expect(info[0]!.citation).toContain('İmar');
+  });
+
+  it('yeterli banyo → İmar alanı bulgusu yok', () => {
+    // 200×200 = 4,0 m² > 3,0
+    const info = runCopilotChecks([rect('Banyo', 'bathroom', 200, 200)], []).filter(
+      (x) => x.severity === 'info' && x.message.includes('banyo'),
+    );
+    expect(info).toHaveLength(0);
+  });
+});
+
+describe('runCopilotChecks — TAKS (İmar, info)', () => {
+  const parcel = (side: number): import('@zynpparti/document').Parcel => ({
+    id: 'P',
+    type: 'parcel',
+    layerId: 'site',
+    boundary: [
+      { x: 0, y: 0 },
+      { x: side, y: 0 },
+      { x: side, y: side },
+      { x: 0, y: side },
+    ],
+  });
+
+  it('tipik üst sınırı aşan TAKS → uyarı içerikli info', () => {
+    // parsel 1000×1000 = 100 m²; mahal 700×700 = 49 m² → %49 > %40
+    const taks = runCopilotChecks([rect('Salon', 'living', 700, 700)], [], [], [parcel(1000)]).filter(
+      (x) => x.citation.includes('TAKS'),
+    );
+    expect(taks).toHaveLength(1);
+    expect(taks[0]!.severity).toBe('info');
+    expect(taks[0]!.message).toContain('%49');
+    expect(taks[0]!.message).toContain('üst sınır');
+  });
+
+  it('parsel yoksa TAKS hesaplanmaz', () => {
+    const taks = runCopilotChecks([rect('Salon', 'living', 700, 700)], []).filter((x) =>
+      x.citation.includes('TAKS'),
+    );
+    expect(taks).toHaveLength(0);
+  });
+});
+
 it('boş model → bulgu yok', () => {
   expect(runCopilotChecks([], [])).toEqual([]);
 });

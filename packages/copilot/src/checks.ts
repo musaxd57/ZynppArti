@@ -1,4 +1,4 @@
-import { polygonMinWidth, distanceToPolygonBoundary } from '@zynpparti/geometry';
+import { polygonArea, polygonMinWidth, distanceToPolygonBoundary } from '@zynpparti/geometry';
 import {
   centerlineAreaM2,
   roomTypeOf,
@@ -7,7 +7,13 @@ import {
   type Space,
   type Wall,
 } from '@zynpparti/document';
-import { DAYLIGHT_REGULATION, PARKING_REGULATION, REGULATIONS, citationOf } from './regulations';
+import {
+  DAYLIGHT_REGULATION,
+  PARKING_REGULATION,
+  REGULATIONS,
+  TAKS_REGULATION,
+  citationOf,
+} from './regulations';
 
 /**
  * Kaynak-gösteren öneri motoru (Faz 2, ADR-0014 ayak 1). Deterministik geometrik kurallar
@@ -96,6 +102,49 @@ function checkBathroomAccess(spaces: readonly Space[]): Finding[] {
     }
   }
   return out;
+}
+
+/** Banyo net alanı İmar asgarisini sağlıyor mu? (değer sürüme göre değişebilir → info, ADR-0021). */
+function checkBathroomMinArea(spaces: readonly Space[]): Finding[] {
+  const reg = REGULATIONS.bathroomMinArea;
+  const out: Finding[] = [];
+  for (const s of spaces) {
+    if (roomTypeOf(s) !== 'bathroom') continue;
+    const area = centerlineAreaM2(s);
+    if (area > 0 && area < reg.min) {
+      out.push({
+        severity: 'info',
+        message: `"${s.name}" banyo alanı ${fmtM2(area)}; İmar'da tipik asgari ~${fmtM2(reg.min)}.`,
+        citation: citationOf(reg),
+        entityId: s.id,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * TAKS (taban alanı / parsel) — parsel varsa kaba oranı bilgi olarak verir; tipik üst sınırı
+ * (~%40) aşıyorsa hatırlatır. Taban alanı = mahal alanları toplamı (tek kat varsayımı, kaba).
+ */
+function checkTaks(spaces: readonly Space[], parcels: readonly Parcel[]): Finding[] {
+  if (parcels.length === 0 || spaces.length === 0) return [];
+  const parcelM2 = parcels.reduce((sum, p) => sum + polygonArea(p.boundary) / 10000, 0);
+  if (parcelM2 <= 0) return [];
+  const footprintM2 = spaces.reduce((sum, s) => sum + centerlineAreaM2(s), 0);
+  if (footprintM2 <= 0) return [];
+  const ratio = footprintM2 / parcelM2;
+  const pct = Math.round(ratio * 100);
+  const overTypical = ratio > TAKS_REGULATION.typicalMax;
+  return [
+    {
+      severity: 'info',
+      message: overTypical
+        ? `TAKS (kaba) ≈ %${pct}; konutta tipik üst sınır ~%${Math.round(TAKS_REGULATION.typicalMax * 100)} — imar planı notunuzu kontrol edin.`
+        : `TAKS (kaba) ≈ %${pct} (taban/parsel; tek kat varsayımı).`,
+      citation: `${TAKS_REGULATION.source} — ${TAKS_REGULATION.rule}`,
+    },
+  ];
 }
 
 /** Kapı net geçiş genişliği TS 9111 erişilebilirlik asgarisini sağlıyor mu? */
@@ -203,10 +252,12 @@ export function runCopilotChecks(
   return [
     ...checkCorridorWidth(spaces),
     ...checkRoomMinArea(spaces),
+    ...checkBathroomMinArea(spaces),
     ...checkBathroomAccess(spaces),
     ...checkDoorWidth(openings),
     ...checkDaylight(spaces, openings),
     ...checkSetback(walls, parcels),
+    ...checkTaks(spaces, parcels),
     ...checkParking(spaces),
   ];
 }

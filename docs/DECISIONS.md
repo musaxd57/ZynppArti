@@ -5,6 +5,14 @@
 
 ---
 
+## ADR-0021 — Yönetmelik turu 3: TAKS (hesaplanan) + banyo asgari alanı (hedge'li)
+**Tarih:** 2026-06-21 · **Durum:** Kabul (otonom tur, makul varsayım)
+**Bağlam:** Copilot kural tabanını mevcut veriyle (parsel + mahal) denetlenebilir, **doğru** kalan kurallarla genişletmek istendi. CLAUDE.md: Türkçe yönetmelik doğruluğu premium farklılaştırıcı — uydurma sayı yasak.
+**Karar:**
+1. **TAKS (taban alanı katsayısı)** = bina taban alanı / parsel alanı. Taban alanı, tek kat varsayımıyla **mahal alanları toplamı** (kaba; duvar kalınlığı hariç) olarak yaklaşılır. Parsel varsa **info** bulgusu üretilir; tek hukuki ifade "plan notuna göre tipik üst sınır ~%40" (gerçekten yaygın varsayılan, plana bağlı olduğu açıkça yazılır). Hesaplanan oran olduğu için sabit yanlış sayı riski yok.
+2. **Banyo asgari net alanı** = İmar'da yaygın anılan **~3,0 m²**; tam değer Planlı Alanlar İmar Yön. sürümüne/plana göre değişebildiğinden **severity 'info'** (advisory) + "değişebilir" ibaresiyle eklendi (hard 'warning' değil). Yatak/oturma/mutfak asgarileri zaten 'warning' (daha kesin maddeler).
+**Sonuç:** İki yeni atıflı bulgu, ek entity gerekmeden. Takas: TAKS taban alanı kaba (gerçek dış outline + duvar kalınlığı ileride); banyo değeri tam madde doğrulaması gerektirir (bu yüzden info). Çok katlı emsal/KAKS denetimi kat sayısı veri modeli gelince eklenecek (şimdilik yok).
+
 ## ADR-0020 — Opening (kapı/pencere) entity'si: duvara parametrik binding
 **Tarih:** 2026-06-20 · **Durum:** Kabul
 **Bağlam:** Yönetmelik denetimini derinleştirmek için kapı genişliği (TS 9111) kuralını aktifleştirmek gerekti; bu da kapı/pencere veri modeli ister (Faz 1 roadmap'inde vardı). Kapı bir duvarın üstünde yaşar; duvar değişince uyumlu kalmalı (CLAUDE.md §7 binding).
