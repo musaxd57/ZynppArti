@@ -1,5 +1,6 @@
 import { polygonArea } from '@zynpparti/geometry';
-import type { Opening, Space, Wall } from './entities';
+import { BLOCK_DEFS, type BlockKind } from './block';
+import type { Block, Opening, Space, Wall } from './entities';
 
 /**
  * Metraj / miktar çıkarımı (PRO-FEATURES §1) — saf TS, canlı. Duvar/mahal/boşluktan otomatik
@@ -21,6 +22,13 @@ export interface ScheduleRow {
   readonly count: number;
 }
 
+export interface BlockScheduleRow {
+  readonly kind: BlockKind;
+  /** Türkçe etiket (BLOCK_DEFS). */
+  readonly label: string;
+  readonly count: number;
+}
+
 export interface Takeoff {
   /** Toplam duvar uzunluğu (m) — segmentlerin toplamı (köşe örtüşmesi hariç tutulmaz). */
   readonly wallLengthM: number;
@@ -35,6 +43,8 @@ export interface Takeoff {
   /** Kapı dökümü — genişliğe göre gruplanmış (door/window schedule). */
   readonly doorSchedule: ScheduleRow[];
   readonly windowSchedule: ScheduleRow[];
+  /** Mobilya/blok çizelgesi — tipe göre gruplanmış adet. */
+  readonly blockSchedule: BlockScheduleRow[];
 }
 
 export interface TakeoffOptions {
@@ -57,11 +67,21 @@ function schedule(openings: readonly Opening[], kind: Opening['kind']): Schedule
   return [...byWidth.entries()].sort((a, b) => a[0] - b[0]).map(([width, count]) => ({ width, count }));
 }
 
+/** Blok çizelgesi — tipe göre adet, sabit görünüm sırası (BLOCK_DEFS) korunur. */
+function blockSchedule(blocks: readonly Block[]): BlockScheduleRow[] {
+  const counts = new Map<BlockKind, number>();
+  for (const b of blocks) counts.set(b.kind, (counts.get(b.kind) ?? 0) + 1);
+  return (Object.keys(BLOCK_DEFS) as BlockKind[])
+    .filter((k) => counts.has(k))
+    .map((kind) => ({ kind, label: BLOCK_DEFS[kind].label, count: counts.get(kind)! }));
+}
+
 /** Tüm metrajı hesaplar (canlı; çizim değişince yeniden çağrılır). */
 export function computeTakeoff(
   walls: readonly Wall[],
   spaces: readonly Space[],
   openings: readonly Opening[],
+  blocks: readonly Block[] = [],
   opts: TakeoffOptions = { storeyHeightCm: DEFAULT_STOREY_HEIGHT_CM },
 ): Takeoff {
   const h = opts.storeyHeightCm;
@@ -100,5 +120,6 @@ export function computeTakeoff(
     windowCount: openings.filter((o) => o.kind === 'window').length,
     doorSchedule: schedule(openings, 'door'),
     windowSchedule: schedule(openings, 'window'),
+    blockSchedule: blockSchedule(blocks),
   };
 }
