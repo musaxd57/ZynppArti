@@ -57,6 +57,7 @@
 ## GÜNLÜK
 
 ### 2026-06-21
+- **Test kapsamı turu 3:** document `materials.test` (materialById + katalog bütünlüğü: benzersiz id, geçerli alanlar, 4) + copilot `regulations.test` (citationOf biçimi + allRegulations bütünlüğü, 3). document 69, copilot 26. Zincir yeşil.
 - **Cila + refactor: ortak `highlightEntity` (engine):** entity vurgu çizimi SelectTool'da private/büyük switch'ti; engine'e `highlightEntity` olarak çıkarıldı. SelectTool ona devrediyor (~50 satır + 4 import temizlendi); **EraseTool artık tüm tipleri** (blok/kapı/ölçü/parsel/metin/pafta) silmeden önce kırmızı vurguluyor (eskiden yalnız duvar — UX boşluğu kapandı). Zincir yeşil (typecheck 7/7 · tools 11 · lint 7/7 · build 1/1).
 - **Test kapsamı turu 2:** engine `LayerState` (görünürlük/kilit/abonelik, 4) + `linetypes` dashSegment (sahte Graphics ile kısa-çizgi sayımı, 5) + `entityBounds` yeni tipler (parsel/blok/annotation/sheet, +4) + `hitTest` pafta-yalnız-çerçeve edge-case (+1). engine 30 test (eskiden 16). Zincir yeşil.
 - **Test kapsamı turu 1:** boşluk (opening) binding geometrisi `opening.ts` (openingFrame/projectToWall) testsizdi → 7 test (yatay/dikey/dejenere duvar, jamb kenarları, dik uzaklık, t kırpma). io `dxf-export.ts` testsizdi → 4 test (ENTITIES/EOF sarmalama, duvar başına LINE, cm 4-ondalık + katman, boş girdi). document 65, io 11. Zincir yeşil.
