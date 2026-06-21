@@ -13,6 +13,7 @@ import { SheetPanel } from './SheetPanel';
 import { LayerPanel } from './LayerPanel';
 import { BlockPalette } from './BlockPalette';
 import { StatusBar } from './StatusBar';
+import { ShortcutsHelp } from './ShortcutsHelp';
 
 /**
  * Engine canvas + araç yöneticisini DOM'a bağlayan React sarmalı.
@@ -137,6 +138,7 @@ export function CanvasStage() {
             </div>
           </div>
           <StatusBar manager={ui.manager} registerHover={ui.setHoverHandler} />
+          <ShortcutsHelp />
         </>
       )}
     </>
