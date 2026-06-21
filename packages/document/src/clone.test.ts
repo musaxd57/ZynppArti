@@ -1,6 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { isClonable, offsetEntity } from './clone';
-import type { Annotation, Block, Dimension, Opening, Parcel, Space, Wall } from './entities';
+import type { Annotation, Block, Dimension, Opening, Parcel, Sheet, Space, Wall } from './entities';
+
+const sheet: Sheet = {
+  id: 'sh',
+  type: 'sheet',
+  layerId: 'sheet',
+  position: { x: 10, y: 20 },
+  size: 'A3',
+  orientation: 'landscape',
+  scale: 50,
+  title: 'P',
+};
 
 const wall: Wall = {
   id: 'w',
@@ -67,7 +78,7 @@ const opening: Opening = {
 
 describe('isClonable', () => {
   it('serbest tipler kopyalanabilir', () => {
-    for (const e of [wall, block, annotation, dimension, parcel]) {
+    for (const e of [wall, block, annotation, dimension, parcel, sheet]) {
       expect(isClonable(e)).toBe(true);
     }
   });
@@ -85,9 +96,10 @@ describe('offsetEntity', () => {
     expect(w.thickness).toBe(15); // geometri dışı alan korunur
   });
 
-  it('blok/metin konumunu kaydırır', () => {
+  it('blok/metin/pafta konumunu kaydırır', () => {
     expect((offsetEntity(block, 5, 5) as Block).position).toEqual({ x: 15, y: 25 });
     expect((offsetEntity(annotation, -5, 0) as Annotation).position).toEqual({ x: 0, y: 5 });
+    expect((offsetEntity(sheet, 10, 10) as Sheet).position).toEqual({ x: 20, y: 30 });
   });
 
   it('ölçünün a/b uçlarını kaydırır, offset değişmez', () => {
