@@ -3,59 +3,62 @@
 > Kaynak tohum: `docs/DOCS-BACKLOG.md §1`. CAD aracı klavyeyle yaşar; kısayol şeması **bir kez**
 > tasarlanır, her araç ona uyar. Sonradan değiştirmek acı verir → baştan sabitliyoruz.
 >
-> **Uygulama durumu:** Şema burada tanımlı. Araçlara bağlama **Faz 1 / 1C**'de (duvar + seç/taşı/sil)
-> başlar; her yeni araç bu tabloya uymak ZORUNDA.
+> **Uygulama durumu (güncel):** Aşağıdaki tablolar **kodla birebir** tutulur — kaynak: `packages/tools/src/tool-manager.ts` (araç + global kısayollar) ve `select-tool.ts` (seçim/itme/döndür). Uygulama içi yardım: `?` (apps/web `ShortcutsHelp`). Yeni araç eklerken bu tabloyu güncelle.
 
 ---
 
 ## 1. Tasarım ilkeleri
-- **AutoCAD'e yakın ol:** Moses ve mimarlar AutoCAD'den geliyor; tek-harf araç kısayolları tanıdık olmalı.
-- **Tek kaynak:** Tüm kısayollar bu tabloda + uygulama içinde `?` ile açılan yardım kartında. Kod, kısayolu buradan okur (dağıtık string'ler değil, merkezi bir `keymap`).
-- **Esc her zaman iptal, Enter her zaman onayla.** İstisna yok. **Esc ayrıca her zaman Seç (V) moduna döner.** *(Faz 1'de uygulandı.)*
-- **Araç toggle:** Aktif araç tuşuna tekrar basmak aracı kapatır ve Seç'e döner (L→aç, L→kapat). *(Faz 1.)*
-- **Mahal içine çift tık → ad düzenle:** Hangi araç açık olursa olsun, bir mahalin içine çift tıklamak doğrudan o mahalin isim kutusunu açar (duvar çizmeye geçmez). *(Faz 1.)*
-- **Mod yok sürprizi yok:** Aktif araç ekranda her zaman görünür; imleç aracın durumunu yansıtır.
+- **AutoCAD'e yakın ol:** mimarlar AutoCAD'den geliyor; tek-harf araç kısayolları tanıdık olmalı.
+- **Tek kaynak:** kısayollar `tool-manager.ts`'te + uygulama içi `?` yardım kartında (`ShortcutsHelp.tsx`). Bu doküman ikisini yansıtır.
+- **Esc her zaman Seç'e döner; zaten Seç'teyse seçimi temizler.** ✅ uygulandı.
+- **Araç toggle:** aktif araç tuşuna tekrar basmak Seç'e döner (L→aç, L→kapat). ✅
+- **Mahal içine çift tık → ad düzenle; metne çift tık → metni düzenle.** Hangi araç açık olursa olsun. ✅
+- **Mod yok sürprizi yok:** aktif araç durum çubuğunda görünür; imleç araca göre değişir (yerleştirmede artı). ✅
 
-## 2. Araç kısayolları (tek harf)
+## 2. Araç kısayolları (tek harf) — `tool-manager.ts` ile birebir
 
-| Tuş | Araç | Faz |
-|-----|------|-----|
-| `L` | Line / Wall (duvar çiz) | **1C** |
-| `M` | Move (taşı) | **1C** |
-| `E` | Erase (sil) | **1C** (ayrıca `Delete`) |
-| `Esc` | İptal (aracı/işlemi bırak) | **1C** |
-| `Enter` | Onayla / bitir | **1C** |
-| `C` | Copy (kopyala) | Faz 1 sonu |
-| `R` | Rotate (döndür) | Faz 1 sonu |
-| `S` | Scale (ölçekle) | Faz 1 sonu |
-| `D` | Dimension (ölçü) | Faz 1 |
-| `T` | Text (metin) | Faz 1 |
-| `Z` | Zoom aracı | Faz 1 |
-| `Spacebar` (basılı) | Geçici pan | **1C** |
+| Tuş | Araç | Durum |
+|-----|------|-------|
+| `V` / `1` / `M` | Seç (select) | ✅ |
+| `L` | Duvar (wall) | ✅ |
+| `D` | Kapı (door) | ✅ |
+| `P` | Pencere (window) | ✅ |
+| `O` | Ölçü (dimension) | ✅ |
+| `R` | Parsel (parcel) | ✅ |
+| `B` | Blok (block) | ✅ (palet tipi seçer) |
+| `T` | Metin (annotation) | ✅ |
+| `F` | Pafta (sheet) | ✅ |
+| `E` | Sil (erase) | ✅ (ayrıca `Delete`) |
+| `K` | Ölçekle (calibrate) | ✅ |
+| `Esc` | Seç'e dön / temizle | ✅ |
+| `Space` (basılı) | Geçici pan | ✅ |
+| `x` | Seçili bloğu 90° döndür | ✅ (SelectTool/BlockTool) |
 
 ## 3. Evrensel kısayollar
 
-| Tuş | İşlem | Faz |
-|-----|-------|-----|
-| `Ctrl+Z` | Undo | **1A/1C** |
-| `Ctrl+Shift+Z` / `Ctrl+Y` | Redo | **1A/1C** |
-| `Delete` / `Backspace` | Seçili sil | **1C** |
-| `Ctrl+A` | Tümünü seç | 1C |
-| `Ctrl+C` / `Ctrl+V` / `Ctrl+X` | Kopyala / yapıştır / kes | Faz 1 sonu |
-| `Ctrl+G` | Grupla | Faz 1+ |
-| `Ctrl+S` | Kaydet | Faz 1–2 (format gelince) |
+| Tuş | İşlem | Durum |
+|-----|-------|-------|
+| `Ctrl+Z` | Geri al | ✅ |
+| `Ctrl+Shift+Z` / `Ctrl+Y` | İleri al | ✅ |
+| `Delete` / `Backspace` | Seçiliyi sil (toplu) | ✅ |
+| `Ctrl+A` | Tümünü seç (mahaller hariç) | ✅ |
+| `Ctrl+C` / `Ctrl+V` | Kopyala / yapıştır | ✅ |
+| `Ctrl+D` | Çoğalt | ✅ |
+| `Ok tuşları` | Seçiliyi it (10 cm; `Shift` 100 cm) | ✅ |
+| `Home` | İçeriğe sığdır (zoom extents) | ✅ |
+| `Tekerlek` | Yakınlaş/uzaklaş | ✅ |
+| `?` | Kısayol yardımı aç/kapa | ✅ |
+| `Ctrl+X` (kes) · `Ctrl+G` (grupla) · `Ctrl+S` (kaydet) | — | ☐ henüz yok |
 
-## 4. Seçim mantığı (AutoCAD davranışı)
-- **Tek tık:** altındaki entity'yi seç.
-- **Soldan-sağa pencere (mavi, dolu):** yalnızca **tamamen içinde** olanları seç.
-- **Sağdan-sola pencere (yeşil, kesik):** pencereye **dokunan** her şeyi seç.
-- `Shift`+tık: seçime ekle/çıkar.
+## 4. Seçim mantığı
+- **Tek tık:** altındaki entity'yi seç. ✅
+- **Boş alanda sürükle → kutu (marquee) seçim:** kutuyla **kesişen** seçilebilir entity'ler seçilir (mahaller hariç; gizli/kilitli katman atlanır). ✅ *(Şu an tek-mod kesişim; AutoCAD'in mavi=içeride / yeşil=dokunan çift-modu ☐ ileride.)*
+- `Shift`+tık: seçime ekle/çıkar; `Shift`+kutu: mevcut seçime ekler. ✅
+- Tek seçimde düzenleme **tutamaçları** (uç/offset/köşe) çıkar. ✅
 
 ## 5. Snapping (yakalama)
-Her biri **aç/kapa** edilebilir ve aktifken ekranda gösterge (marker) çıkar:
-- Uç nokta (endpoint) · Orta nokta (midpoint) · Kesişim (intersection) · Dik (perpendicular) · Paralel · Grid.
-- Snap önceliği ve toleransı `packages/tools` içinde merkezi; çizim sırasında en yakın geçerli snap vurgulanır.
-- 1C'de en az **uç nokta + grid** snap'i devreye girer; diğerleri Faz 1 boyunca eklenir.
+- ✅ Şu an: **anahtar nokta** (duvar ucu, blok merkezi, ölçü ucu, metin/parsel köşesi) → **eksen hizalama** (yatay/dikey kılavuz çizgisi) → **ızgara**; öncelik bu sıradadır (`tools/context.ts createSnapper`). Snap noktasında elmas, hizalamada pembe kılavuz gösterilir.
+- ☐ Henüz yok: orta nokta (midpoint), kesişim (intersection), dik (perpendicular), paralel; ayrıca snap aç/kapa anahtarı.
 
 ## 6. İleride
 - **Kullanıcı kısayolu özelleştirme** (keymap'i kullanıcı override eder).
