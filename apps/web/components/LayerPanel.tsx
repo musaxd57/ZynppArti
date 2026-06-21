@@ -9,10 +9,11 @@ import { Panel } from './Panel';
 const LAYER_NAMES: Record<string, string> = {
   default: 'Mimari',
   rooms: 'Mahaller',
+  furniture: 'Mobilya',
   site: 'Parsel',
 };
 /** Sabit gösterim sırası (bilinenler önce). */
-const ORDER = ['default', 'rooms', 'site'];
+const ORDER = ['default', 'rooms', 'furniture', 'site'];
 
 function layerName(id: string): string {
   return LAYER_NAMES[id] ?? id;

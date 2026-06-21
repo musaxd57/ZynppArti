@@ -24,7 +24,8 @@ export class BlockTool implements SceneTool {
   }
 
   private make(position: Vec2, id: string): Block {
-    return { id, type: 'block', layerId: 'default', kind: this.kind, position, rotation: this.rotation };
+    // Mobilya kendi katmanında → LayerPanel'den toplu gizlenip kilitlenebilir.
+    return { id, type: 'block', layerId: 'furniture', kind: this.kind, position, rotation: this.rotation };
   }
 
   onPointerMove(p: ScenePointer): void {

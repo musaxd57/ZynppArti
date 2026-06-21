@@ -55,6 +55,7 @@
 ## GÜNLÜK
 
 ### 2026-06-21
+- **Mobilya kendi katmanında ("Mobilya"):** bloklar artık `layerId: 'furniture'` (eskiden 'default'). engine `cull()` ve hit-test katman görünürlüğünü/kilidini zaten `layerId`'ye göre genel uyguladığından, bloklar LayerPanel'den **toplu gizlenip kilitlenebilir** oluyor (ek motor kodu yok). LayerPanel'e "Mobilya" adı + sıra eklendi. Zincir yeşil (typecheck/lint/build).
 - **Mobilya çizelgesi (metraj):** `takeoff.ts` → `blockSchedule` (tipe göre adet, BLOCK_DEFS sırasıyla); `computeTakeoff`'a `blocks` parametresi (opts'tan önce). web TakeoffPanel: "Mobilya" bölümü (canlı adet) + Excel'e **Mobilya** sayfası. takeoff testleri imzaya uyarlandı + mobilya çizelgesi testi (document 39 test). Zincir yeşil (typecheck 7/7 · lint 7/7 · build 1/1).
 - **Blok seç/taşı/döndür (SelectTool entegrasyonu):** gece eklenen blok kütüphanesi yerleştiriyordu ama yerleştirilen blok düzenlenemiyordu. SelectTool artık blokları **sürükleyerek taşıyor** (translate wall+block'a genelleştirildi), seçili bloku **`x` ile 90° döndürüyor** (BlockTool ile tutarlı), ve dönmüş ayak izinde **seçim/hover vurgusu** çiziyor. Mobilya gerçek ölçülü kaldığı için köşe tutamacıyla yeniden boyutlandırma yok (kasıtlı). Ayrıca blok geometrisinin (`blockCorners`/`pointInBlock`) **hiç testi yoktu** → `document/block.test.ts` eklendi (dönüş + konum, 6 test). Zincir yeşil (typecheck 7/7 · document 38 test · lint 7/7 · build 1/1). main'e merge + push (43f52ab). **Blok sembollerinin tarayıcı görsel doğrulaması Moses'ta.**
 
