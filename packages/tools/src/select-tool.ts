@@ -5,17 +5,13 @@ import {
   BatchCommand,
   RemoveEntity,
   UpdateEntity,
-  annotationSize,
-  blockCorners,
   dimensionGeometry,
   isClonable,
   offsetEntity,
-  openingFrame,
-  sheetModelSize,
   type Entity,
   type EntityId,
 } from '@zynpparti/document';
-import { hitTest, type SceneTool, type ScenePointer } from '@zynpparti/engine';
+import { hitTest, highlightEntity, type SceneTool, type ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
 
 const HIT_PX = 8;
@@ -374,70 +370,9 @@ export class SelectTool implements SceneTool {
     if (e) this.highlight(this.hoverGfx, e, 0.35);
   }
 
-  /** Bir entity'yi vurgu rengiyle çizer (seçim/hover/ghost ortak; tüm tipler). */
+  /** Bir entity'yi seçim rengiyle vurgular (engine ortak highlightEntity'ye devreder). */
   private highlight(g: Graphics, entity: Entity, alpha: number): void {
-    const px = this.ctx.pixelSize();
-    switch (entity.type) {
-      case 'wall':
-        g.moveTo(entity.start.x, entity.start.y)
-          .lineTo(entity.end.x, entity.end.y)
-          .stroke({ width: entity.thickness + 4 * px, color: SELECT_COLOR, alpha, cap: 'round' });
-        break;
-      case 'opening': {
-        const w = this.ctx.store.get(entity.wallId);
-        if (w?.type !== 'wall') break;
-        const f = openingFrame(entity, w);
-        const hx = f.normal.x * (f.thickness / 2);
-        const hy = f.normal.y * (f.thickness / 2);
-        g.poly([
-          f.a.x + hx, f.a.y + hy, f.b.x + hx, f.b.y + hy,
-          f.b.x - hx, f.b.y - hy, f.a.x - hx, f.a.y - hy,
-        ]).stroke({ width: 2.5 * px, color: SELECT_COLOR, alpha });
-        break;
-      }
-      case 'dimension': {
-        const d = dimensionGeometry(entity);
-        g.moveTo(d.da.x, d.da.y)
-          .lineTo(d.db.x, d.db.y)
-          .stroke({ width: 3 * px, color: SELECT_COLOR, alpha, cap: 'round' });
-        break;
-      }
-      case 'parcel': {
-        const b = entity.boundary;
-        if (b.length >= 2) {
-          g.moveTo(b[0]!.x, b[0]!.y);
-          for (let i = 1; i < b.length; i++) g.lineTo(b[i]!.x, b[i]!.y);
-          g.closePath();
-          g.stroke({ width: 2 * px, color: SELECT_COLOR, alpha });
-        }
-        break;
-      }
-      case 'block': {
-        const c = blockCorners(entity);
-        g.poly(c.flatMap((p) => [p.x, p.y])).stroke({ width: 2 * px, color: SELECT_COLOR, alpha });
-        break;
-      }
-      case 'annotation': {
-        const { w, h } = annotationSize(entity);
-        g.rect(entity.position.x, entity.position.y, w, h).stroke({
-          width: 1.5 * px,
-          color: SELECT_COLOR,
-          alpha,
-        });
-        break;
-      }
-      case 'sheet': {
-        const { w, h } = sheetModelSize(entity);
-        g.rect(entity.position.x, entity.position.y, w, h).stroke({
-          width: 2 * px,
-          color: SELECT_COLOR,
-          alpha,
-        });
-        break;
-      }
-      case 'space':
-        break; // mahaller tıkla-seçilmez (çift tık = ad düzenle)
-    }
+    highlightEntity(g, entity, this.ctx.store, SELECT_COLOR, alpha, this.ctx.pixelSize());
   }
 
   private drawGhosts(entities: Entity[]): void {

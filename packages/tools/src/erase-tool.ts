@@ -1,6 +1,6 @@
 import { Graphics } from 'pixi.js';
-import { BatchCommand, RemoveEntity, type EntityId, type Wall } from '@zynpparti/document';
-import { hitTest, type SceneTool, type ScenePointer } from '@zynpparti/engine';
+import { BatchCommand, RemoveEntity, type EntityId } from '@zynpparti/document';
+import { hitTest, highlightEntity, type SceneTool, type ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
 
 const HIT_PX = 8;
@@ -52,14 +52,8 @@ export class EraseTool implements SceneTool {
     this.hoverGfx.clear();
     if (!this.hoveredId) return;
     const e = this.ctx.store.get(this.hoveredId);
-    if (e?.type === 'wall') this.strokeWall(e);
-  }
-
-  private strokeWall(wall: Wall): void {
-    this.hoverGfx
-      .moveTo(wall.start.x, wall.start.y)
-      .lineTo(wall.end.x, wall.end.y)
-      .stroke({ width: wall.thickness + 4 * this.ctx.pixelSize(), color: ERASE_COLOR, alpha: 0.7, cap: 'round' });
+    // Tüm silinebilir tipler için kırmızı önizleme (ortak highlightEntity; eskiden yalnız duvar).
+    if (e) highlightEntity(this.hoverGfx, e, this.ctx.store, ERASE_COLOR, 0.7, this.ctx.pixelSize());
   }
 
   dispose(): void {
