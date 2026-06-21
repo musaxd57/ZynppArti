@@ -11,6 +11,7 @@ import {
   isClonable,
   offsetEntity,
   openingFrame,
+  sheetModelSize,
   type Entity,
   type EntityId,
 } from '@zynpparti/document';
@@ -420,6 +421,15 @@ export class SelectTool implements SceneTool {
         const { w, h } = annotationSize(entity);
         g.rect(entity.position.x, entity.position.y, w, h).stroke({
           width: 1.5 * px,
+          color: SELECT_COLOR,
+          alpha,
+        });
+        break;
+      }
+      case 'sheet': {
+        const { w, h } = sheetModelSize(entity);
+        g.rect(entity.position.x, entity.position.y, w, h).stroke({
+          width: 2 * px,
           color: SELECT_COLOR,
           alpha,
         });

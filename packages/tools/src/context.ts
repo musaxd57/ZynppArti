@@ -37,6 +37,7 @@ function keyPoints(e: Entity): readonly Vec2[] {
       return [e.start, e.end];
     case 'block':
     case 'annotation':
+    case 'sheet':
       return [e.position];
     case 'dimension':
       return [e.a, e.b];

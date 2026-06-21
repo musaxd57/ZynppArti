@@ -8,4 +8,5 @@ export { OpeningTool, DOOR_WIDTH, WINDOW_WIDTH } from './opening-tool';
 export { DimensionTool, DIMENSION_OFFSET } from './dimension-tool';
 export { ParcelTool } from './parcel-tool';
 export { AnnotationTool } from './annotation-tool';
+export { SheetTool } from './sheet-tool';
 export { ToolManager, type ToolName } from './tool-manager';

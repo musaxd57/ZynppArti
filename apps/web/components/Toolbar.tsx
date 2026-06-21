@@ -13,6 +13,7 @@ const TOOLS: { name: ToolName; label: string; hotkey: string }[] = [
   { name: 'dimension', label: 'Ölçü', hotkey: 'O' },
   { name: 'parcel', label: 'Parsel', hotkey: 'R' },
   { name: 'annotation', label: 'Metin', hotkey: 'T' },
+  { name: 'sheet', label: 'Pafta', hotkey: 'F' },
   { name: 'erase', label: 'Sil', hotkey: 'E' },
   { name: 'calibrate', label: 'Ölçekle', hotkey: 'K' },
 ];

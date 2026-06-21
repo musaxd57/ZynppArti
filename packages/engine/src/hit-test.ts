@@ -5,6 +5,7 @@ import {
   openingFrame,
   pointInAnnotation,
   pointInBlock,
+  sheetModelSize,
   type EntityId,
   type EntityStore,
 } from '@zynpparti/document';
@@ -84,6 +85,21 @@ export function hitTest(
           bestDist = d;
           bestId = id;
         }
+      }
+    } else if (entity.type === 'sheet') {
+      // Pafta yalnız ÇERÇEVESİNDEN seçilir (iç alana tıklamak çizimi seçmeyi engellemesin).
+      const { w, h } = sheetModelSize(entity);
+      const o = entity.position;
+      const corners = [
+        o,
+        { x: o.x + w, y: o.y },
+        { x: o.x + w, y: o.y + h },
+        { x: o.x, y: o.y + h },
+      ];
+      const d = distanceToPolygonBoundary(point, corners);
+      if (d <= tolerance && d < bestDist) {
+        bestDist = d;
+        bestId = id;
       }
     }
   }
