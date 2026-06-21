@@ -5,11 +5,11 @@ import {
   BatchCommand,
   RemoveEntity,
   UpdateEntity,
+  blockCorners,
   dimensionGeometry,
   openingFrame,
   type Entity,
   type EntityId,
-  type Wall,
 } from '@zynpparti/document';
 import { hitTest, type SceneTool, type ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
@@ -46,7 +46,8 @@ export class SelectTool implements SceneTool {
   private selectedId: EntityId | null = null;
   private hoveredId: EntityId | null = null;
   private downWorld: Vec2 | null = null;
-  private original: Wall | null = null;
+  /** Sürükleyerek taşınan entity'nin başlangıç anlık görüntüsü (duvar/blok taşınabilir). */
+  private original: Entity | null = null;
   /** Aktif tutamaç sürüklemesi (entity anlık görüntüsü + tutamaç indeksi). */
   private dragHandle: { entity: Entity; index: number } | null = null;
 
@@ -85,7 +86,8 @@ export class SelectTool implements SceneTool {
     this.select(id);
     if (id) {
       const e = this.ctx.store.get(id);
-      this.original = e?.type === 'wall' ? e : null;
+      // Yalnız doğrudan kütlesel taşınanlar sürüklenir (duvar/blok); ölçü/parsel tutamaçla, boşluk duvara bağlı.
+      this.original = e && (e.type === 'wall' || e.type === 'block') ? e : null;
       this.downWorld = p.world;
       this.phase.send({ type: 'DOWN' });
     }
@@ -143,6 +145,15 @@ export class SelectTool implements SceneTool {
       const id = this.selectedId;
       this.select(null);
       this.deleteEntity(id);
+    } else if ((e.key === 'x' || e.key === 'X') && this.selectedId) {
+      // Seçili bloku 90° döndür (BlockTool yerleştirmesindeki 'x' ile tutarlı).
+      const sel = this.ctx.store.get(this.selectedId);
+      if (sel?.type === 'block') {
+        this.ctx.history.dispatch(
+          new UpdateEntity({ ...sel, rotation: (sel.rotation + Math.PI / 2) % (Math.PI * 2) }),
+        );
+        this.renderSelection();
+      }
     } else if (e.key === 'Escape') {
       this.select(null);
     }
@@ -179,12 +190,19 @@ export class SelectTool implements SceneTool {
     this.renderSelection();
   }
 
-  private translate(wall: Wall, dx: number, dy: number): Wall {
-    return {
-      ...wall,
-      start: { x: wall.start.x + dx, y: wall.start.y + dy },
-      end: { x: wall.end.x + dx, y: wall.end.y + dy },
-    };
+  /** Taşınabilir bir entity'yi (dx,dy) kadar kaydırır. */
+  private translate(entity: Entity, dx: number, dy: number): Entity {
+    if (entity.type === 'wall') {
+      return {
+        ...entity,
+        start: { x: entity.start.x + dx, y: entity.start.y + dy },
+        end: { x: entity.end.x + dx, y: entity.end.y + dy },
+      };
+    }
+    if (entity.type === 'block') {
+      return { ...entity, position: { x: entity.position.x + dx, y: entity.position.y + dy } };
+    }
+    return entity;
   }
 
   // --- Tutamaçlar (düzenlenebilir noktalar) ---
@@ -309,6 +327,11 @@ export class SelectTool implements SceneTool {
           g.closePath();
           g.stroke({ width: 2 * px, color: SELECT_COLOR, alpha });
         }
+        break;
+      }
+      case 'block': {
+        const c = blockCorners(entity);
+        g.poly(c.flatMap((p) => [p.x, p.y])).stroke({ width: 2 * px, color: SELECT_COLOR, alpha });
         break;
       }
       case 'space':
