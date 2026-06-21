@@ -57,6 +57,7 @@
 ## GÜNLÜK
 
 ### 2026-06-21
+- **Seçim UX: Ctrl+A + ok tuşuyla itme:** ToolManager **Ctrl+A** → tüm seçilebilir entity'leri (mahaller hariç) seç. SelectTool **ok tuşları** → seçili taşınabilirleri 10 cm (Shift ile 100 cm) it (tek BatchCommand undo). Çoklu seçim + offsetEntity üstüne. Zincir yeşil.
 - **İçeriğe sığdır (zoom extents):** SpatialIndex `bounds()` (birleşik AABB, +1 test) → canvas-app `zoomToFit` (tüm entity'leri %10 boşlukla çerçeveler) + **Home** kısayolu + Toolbar "⊡ Sığdır" butonu. engine 31 test. Zincir yeşil.
 - **Durum çubuğu (status bar):** alt-orta çubuk: imleç **dünya koordinatı (m)** + aktif araç adı. canvas-app `setHoverHandler` (pointermove'da dünya koordinatı, leave'de null). web `StatusBar` kendi state'ini tutar → her fare hareketinde yalnız o re-render olur (paneller etkilenmez). Zincir yeşil (typecheck/lint/build).
 - **Test kapsamı turu 3:** document `materials.test` (materialById + katalog bütünlüğü: benzersiz id, geçerli alanlar, 4) + copilot `regulations.test` (citationOf biçimi + allRegulations bütünlüğü, 3). document 69, copilot 26. Zincir yeşil.
