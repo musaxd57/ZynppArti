@@ -3,6 +3,8 @@ packages:
   - "packages/*"
 
 allowBuilds:
+  # core-js postinstall yalnız funding mesajıdır → build gerekmez (açıkça reddet, install hatasını önler).
+  core-js: false
   esbuild: true
   sharp: true
 
