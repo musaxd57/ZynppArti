@@ -78,6 +78,15 @@ export const REGULATIONS = {
     unit: 'cm',
     status: 'active',
   },
+  bathroomMinArea: {
+    id: 'imar-bathroom-min-area',
+    source: 'Planlı Alanlar İmar Yönetmeliği',
+    // Yaygın anılan değer ~3,0 m²; tam değer sürüme/plana göre değişebilir → info (ADR-0021).
+    rule: 'Banyo net alanı yaklaşık 3,0 m² (sürüm/plana göre değişebilir).',
+    min: 3,
+    unit: 'm2',
+    status: 'active',
+  },
 
   doorClearWidth: {
     id: 'ts9111-door-clear-width',
@@ -117,6 +126,18 @@ export const PARKING_REGULATION = {
   rule: 'Otopark ihtiyacı kullanım/bölgeye göre belirlenir; kaba tahmin: her ~100 m² için 1 otopark.',
   /** Bir otopark başına yaklaşık yapı alanı (m²). */
   areaPerSpaceM2: 100,
+} as const;
+
+/**
+ * TAKS (taban alanı katsayısı) — bina taban alanı / parsel alanı (İmar). Gerçek üst sınır imar
+ * planı/bölgeye göre değişir; tipik konut değeri ~0,40. Taban alanı tek-kat varsayımıyla mahal
+ * alanları toplamından KABA tahmin edilir (duvar kalınlığı hariç). Bilgi amaçlı (ADR-0021).
+ */
+export const TAKS_REGULATION = {
+  id: 'imar-taks',
+  source: 'Planlı Alanlar İmar Yönetmeliği',
+  rule: 'TAKS (taban/parsel) üst sınırı imar planına göredir; konutta tipik üst sınır ~%40.',
+  typicalMax: 0.4,
 } as const;
 
 /**
