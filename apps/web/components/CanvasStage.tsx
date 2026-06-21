@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createCanvasApp, createSnapIndicator, type CanvasHandle } from '@zynpparti/engine';
-import { EntityStore, History, RoomManager } from '@zynpparti/document';
+import { EntityStore, History, RoomManager, UpdateEntity } from '@zynpparti/document';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
 import { seedDemo } from '@/lib/demo-seed';
 import { Toolbar } from './Toolbar';
@@ -68,6 +68,16 @@ export function CanvasStage() {
       h.setSpaceActivateHandler((id) => {
         manager?.setTool('select');
         setRenameId(id);
+      });
+      // Açıklama metnine çift tık → mevcut metinle düzenle (basit prompt; AnnotationTool ile tutarlı).
+      h.setAnnotationActivateHandler((id) => {
+        const ent = store.get(id);
+        if (ent?.type !== 'annotation') return;
+        const next = window.prompt('Metin:', ent.text);
+        if (next == null) return;
+        const trimmed = next.trim();
+        if (!trimmed || trimmed === ent.text) return;
+        history.dispatch(new UpdateEntity({ ...ent, text: trimmed }));
       });
       setUi({ manager, history, store, layers: h.layers, exportPng: h.exportPng });
     });

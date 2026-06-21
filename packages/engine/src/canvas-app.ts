@@ -1,7 +1,7 @@
 import { Application, Container, Graphics } from 'pixi.js';
 import type { Vec2 } from '@zynpparti/geometry';
 import { pointInPolygon } from '@zynpparti/geometry';
-import type { EntityId, EntityStore } from '@zynpparti/document';
+import { pointInAnnotation, type EntityId, type EntityStore } from '@zynpparti/document';
 import { type Camera, DEFAULT_CAMERA, screenToWorld, zoomAt, clamp } from './transform';
 import { EntityLayer } from './entity-layer';
 import type { AABB, SpatialIndex } from './spatial-index';
@@ -27,6 +27,8 @@ export interface CanvasHandle {
   setCursor(cursor: string): void;
   /** Bir mahal içine çift tıklanınca çağrılacak handler (ör. isim düzenleme). */
   setSpaceActivateHandler(cb: (id: EntityId) => void): void;
+  /** Bir açıklama metnine çift tıklanınca çağrılacak handler (ör. metin düzenleme). */
+  setAnnotationActivateHandler(cb: (id: EntityId) => void): void;
   /** Mevcut sahneyi PNG data-URL olarak dışa aktarır. */
   exportPng(): Promise<string>;
   destroy: () => void;
@@ -73,6 +75,7 @@ export async function createCanvasApp(
   let camera: Camera = DEFAULT_CAMERA;
   let activeTool: SceneTool | null = null;
   let spaceActivate: ((id: EntityId) => void) | null = null;
+  let annotationActivate: ((id: EntityId) => void) | null = null;
 
   function viewportBounds(): AABB {
     const tl = screenToWorld({ x: 0, y: 0 }, camera);
@@ -159,9 +162,10 @@ export async function createCanvasApp(
     activeTool?.onPointerUp?.(scenePointer(e));
   }
 
-  // Mahal içine çift tık → isim düzenleme (aktif araçtan bağımsız; CLAUDE.md UX cilası).
+  // Çift tık → yerinde düzenleme (aktif araçtan bağımsız; CLAUDE.md UX cilası):
+  // mahal içinde → ad düzenle; açıklama metninde → metin düzenle.
   function onDblClick(e: MouseEvent): void {
-    if (!spaceActivate) return;
+    if (!spaceActivate && !annotationActivate) return;
     const world = screenToWorld(pointerPos(e), camera);
     const ids = entityLayer.index.search({
       minX: world.x,
@@ -171,9 +175,14 @@ export async function createCanvasApp(
     });
     for (const id of ids) {
       const ent = store.get(id);
-      if (ent?.type === 'space' && pointInPolygon(world, ent.boundary)) {
+      if (spaceActivate && ent?.type === 'space' && pointInPolygon(world, ent.boundary)) {
         e.preventDefault();
         spaceActivate(id);
+        return;
+      }
+      if (annotationActivate && ent?.type === 'annotation' && pointInAnnotation(ent, world)) {
+        e.preventDefault();
+        annotationActivate(id);
         return;
       }
     }
@@ -224,6 +233,9 @@ export async function createCanvasApp(
     exportPng: () => app.renderer.extract.base64({ target: app.stage, format: 'png' }),
     setSpaceActivateHandler(cb: (id: EntityId) => void): void {
       spaceActivate = cb;
+    },
+    setAnnotationActivateHandler(cb: (id: EntityId) => void): void {
+      annotationActivate = cb;
     },
     setActiveTool(tool: SceneTool | null): void {
       if (activeTool === tool) return;
