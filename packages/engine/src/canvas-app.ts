@@ -33,6 +33,8 @@ export interface CanvasHandle {
   setHoverHandler(cb: (world: Vec2 | null) => void): void;
   /** Mevcut sahneyi PNG data-URL olarak dışa aktarır. */
   exportPng(): Promise<string>;
+  /** Tüm entity'leri ekrana sığacak şekilde kamerayı ayarlar (zoom extents). */
+  zoomToFit(): void;
   destroy: () => void;
 }
 
@@ -192,6 +194,23 @@ export async function createCanvasApp(
     }
   }
 
+  function zoomToFit(): void {
+    const b = entityLayer.index.bounds();
+    if (!b) return;
+    const bw = Math.max(b.maxX - b.minX, 1);
+    const bh = Math.max(b.maxY - b.minY, 1);
+    const pad = 0.1; // her kenarda %10 boşluk
+    const zoom = clamp(
+      Math.min((app.screen.width * (1 - 2 * pad)) / bw, (app.screen.height * (1 - 2 * pad)) / bh),
+      MIN_ZOOM,
+      MAX_ZOOM,
+    );
+    const cx = (b.minX + b.maxX) / 2;
+    const cy = (b.minY + b.maxY) / 2;
+    camera = { zoom, x: app.screen.width / 2 - cx * zoom, y: app.screen.height / 2 - cy * zoom };
+    applyCamera();
+  }
+
   function onWheel(e: WheelEvent): void {
     e.preventDefault();
     const pivot = pointerPos(e);
@@ -205,6 +224,11 @@ export async function createCanvasApp(
     if (e.code === 'Space' && !spaceHeld) {
       spaceHeld = true;
       if (!panning) canvas.style.cursor = 'grab';
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'Home') {
+      zoomToFit();
       e.preventDefault();
       return;
     }
@@ -237,6 +261,7 @@ export async function createCanvasApp(
     layers,
     pixelSize: () => 1 / camera.zoom,
     exportPng: () => app.renderer.extract.base64({ target: app.stage, format: 'png' }),
+    zoomToFit,
     setSpaceActivateHandler(cb: (id: EntityId) => void): void {
       spaceActivate = cb;
     },

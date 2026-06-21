@@ -57,6 +57,7 @@
 ## GÜNLÜK
 
 ### 2026-06-21
+- **İçeriğe sığdır (zoom extents):** SpatialIndex `bounds()` (birleşik AABB, +1 test) → canvas-app `zoomToFit` (tüm entity'leri %10 boşlukla çerçeveler) + **Home** kısayolu + Toolbar "⊡ Sığdır" butonu. engine 31 test. Zincir yeşil.
 - **Durum çubuğu (status bar):** alt-orta çubuk: imleç **dünya koordinatı (m)** + aktif araç adı. canvas-app `setHoverHandler` (pointermove'da dünya koordinatı, leave'de null). web `StatusBar` kendi state'ini tutar → her fare hareketinde yalnız o re-render olur (paneller etkilenmez). Zincir yeşil (typecheck/lint/build).
 - **Test kapsamı turu 3:** document `materials.test` (materialById + katalog bütünlüğü: benzersiz id, geçerli alanlar, 4) + copilot `regulations.test` (citationOf biçimi + allRegulations bütünlüğü, 3). document 69, copilot 26. Zincir yeşil.
 - **Cila + refactor: ortak `highlightEntity` (engine):** entity vurgu çizimi SelectTool'da private/büyük switch'ti; engine'e `highlightEntity` olarak çıkarıldı. SelectTool ona devrediyor (~50 satır + 4 import temizlendi); **EraseTool artık tüm tipleri** (blok/kapı/ölçü/parsel/metin/pafta) silmeden önce kırmızı vurguluyor (eskiden yalnız duvar — UX boşluğu kapandı). Zincir yeşil (typecheck 7/7 · tools 11 · lint 7/7 · build 1/1).

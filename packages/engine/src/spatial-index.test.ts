@@ -48,4 +48,12 @@ describe('SpatialIndex', () => {
     expect(idx.size).toBe(0);
     expect(idx.search(box(0, 0, 3, 3))).toEqual([]);
   });
+
+  it('bounds() tüm öğeleri kapsayan birleşik kutuyu döndürür', () => {
+    const idx = new SpatialIndex();
+    expect(idx.bounds()).toBeNull(); // boş
+    idx.insert('a', box(0, 0, 10, 10));
+    idx.insert('b', box(-5, 20, 5, 30));
+    expect(idx.bounds()).toEqual({ minX: -5, minY: 0, maxX: 10, maxY: 30 });
+  });
 });
