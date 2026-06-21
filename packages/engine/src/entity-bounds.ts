@@ -3,6 +3,7 @@ import {
   blockCorners,
   dimensionGeometry,
   openingFrame,
+  sheetModelSize,
   type Entity,
   type Opening,
   type Wall,
@@ -69,6 +70,15 @@ export function entityBounds(entity: Entity): AABB {
     }
     case 'annotation': {
       const { w, h } = annotationSize(entity);
+      return {
+        minX: entity.position.x,
+        minY: entity.position.y,
+        maxX: entity.position.x + w,
+        maxY: entity.position.y + h,
+      };
+    }
+    case 'sheet': {
+      const { w, h } = sheetModelSize(entity);
       return {
         minX: entity.position.x,
         minY: entity.position.y,

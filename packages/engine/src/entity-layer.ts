@@ -9,6 +9,7 @@ import { drawDimension, buildDimensionLabel } from './render-dimension';
 import { drawParcel } from './render-parcel';
 import { drawBlock } from './render-block';
 import { buildAnnotation } from './render-annotation';
+import { buildSheet } from './render-sheet';
 import { LayerState } from './layer-state';
 
 /**
@@ -21,6 +22,7 @@ import { LayerState } from './layer-state';
 export class EntityLayer {
   readonly container = new Container();
   readonly index = new SpatialIndex();
+  private readonly sheetLayer = new Container();
   private readonly parcelLayer = new Container();
   private readonly spaceFill = new Container();
   private readonly blockLayer = new Container();
@@ -43,6 +45,7 @@ export class EntityLayer {
     private readonly layers: LayerState = new LayerState(),
   ) {
     this.container.addChild(
+      this.sheetLayer, // en altta: pafta çerçevesi (kağıt) → çizimi kapatmaz
       this.parcelLayer,
       this.spaceFill,
       this.blockLayer,
@@ -147,6 +150,16 @@ export class EntityLayer {
       const label = buildAnnotation(entity);
       this.labelLayer.addChild(label);
       objs.push(label);
+    } else if (entity.type === 'sheet') {
+      const sheet = buildSheet(entity, px);
+      this.sheetLayer.addChild(sheet);
+      objs.push(sheet);
+      this.redrawables.set(entity.id, (p) => {
+        const rebuilt = buildSheet(entity, p);
+        sheet.removeChildren().forEach((ch) => ch.destroy());
+        sheet.addChild(...rebuilt.removeChildren());
+        rebuilt.destroy();
+      });
     } else {
       const fill = buildSpaceFill(entity);
       this.spaceFill.addChild(fill);

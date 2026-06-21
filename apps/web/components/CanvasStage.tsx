@@ -9,6 +9,7 @@ import { Toolbar } from './Toolbar';
 import { RoomList } from './RoomList';
 import { CopilotPanel } from './CopilotPanel';
 import { TakeoffPanel } from './TakeoffPanel';
+import { SheetPanel } from './SheetPanel';
 import { LayerPanel } from './LayerPanel';
 import { BlockPalette } from './BlockPalette';
 
@@ -120,6 +121,7 @@ export function CanvasStage() {
                 onRenameConsumed={clearRename}
               />
               <TakeoffPanel store={ui.store} />
+              <SheetPanel store={ui.store} history={ui.history} />
             </div>
           </div>
         </>

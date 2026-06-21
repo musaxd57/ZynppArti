@@ -96,6 +96,22 @@ export interface Block extends EntityBase {
 }
 
 /**
+ * Pafta (sheet) — kağıt/sayfa baskı çerçevesi + antet (CLAUDE.md §7 paper canvas). Model uzayına
+ * `position` (sol-üst, cm) ile oturur; boyutu kağıt boyutu × yönelim × ölçekten türetilir (sheet.ts).
+ */
+export interface Sheet extends EntityBase {
+  readonly type: 'sheet';
+  readonly position: Vec2;
+  readonly size: import('./sheet').SheetSize;
+  readonly orientation: import('./sheet').SheetOrientation;
+  /** Ölçek paydası (1:scale). */
+  readonly scale: number;
+  /** Antet alanları. */
+  readonly title: string;
+  readonly project?: string;
+}
+
+/**
  * Açıklama/etiket (annotation) — tuvale serbest metin notu (CLAUDE.md §7 "annotation").
  * `position` metnin sol-üst köşesi (cm); `height` satır yüksekliği (cm, dünya birimi → zoom'la ölçeklenir).
  * Çok satırlı metin `\n` ile. Duvar/mahale bağlı değildir (serbest yerleşim).
@@ -110,6 +126,6 @@ export interface Annotation extends EntityBase {
 /**
  * Entity birliği (discriminated union). `type` alanı ayırıcıdır.
  */
-export type Entity = Wall | Space | Opening | Dimension | Parcel | Block | Annotation;
+export type Entity = Wall | Space | Opening | Dimension | Parcel | Block | Annotation | Sheet;
 
 export type EntityType = Entity['type'];

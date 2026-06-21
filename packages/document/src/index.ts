@@ -12,3 +12,4 @@ export * from './block';
 export * from './annotation';
 export * from './clone';
 export * from './materials';
+export * from './sheet';

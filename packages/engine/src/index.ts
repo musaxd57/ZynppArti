@@ -8,6 +8,7 @@ export { drawDimension, buildDimensionLabel } from './render-dimension';
 export { drawParcel } from './render-parcel';
 export { drawBlock } from './render-block';
 export { buildAnnotation } from './render-annotation';
+export { buildSheet } from './render-sheet';
 export { drawBlockSymbol } from './block-symbols';
 export * from './linetypes';
 export { EntityLayer } from './entity-layer';
