@@ -4,8 +4,10 @@ import {
   centerlineAreaM2,
   computeMetrics,
   netGrossAreaM2,
+  roomTypeColor,
   roomTypeLabel,
   roomTypeOf,
+  toHexColor,
 } from './metrics';
 import type { Space, Wall } from './entities';
 
@@ -116,5 +118,19 @@ describe('computeMetrics', () => {
     const wet = m.byType.find((b) => b.type === 'wet')!;
     expect(wet.count).toBe(2);
     expect(wet.areaM2).toBeCloseTo(2, 6);
+  });
+});
+
+describe('roomTypeColor / toHexColor (tek renk kaynağı)', () => {
+  it('her tip için ROOM_TYPES kanonik rengini döndürür', () => {
+    for (const t of ROOM_TYPES) {
+      expect(roomTypeColor(t.key)).toBe(t.color);
+    }
+  });
+
+  it('toHexColor 0xRRGGBB → #rrggbb (baştaki sıfırlar korunur)', () => {
+    expect(toHexColor(0x4a90d9)).toBe('#4a90d9');
+    expect(toHexColor(0x00ff00)).toBe('#00ff00');
+    expect(toHexColor(0x000001)).toBe('#000001');
   });
 });
