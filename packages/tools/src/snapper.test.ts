@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EntityStore, type Wall } from '@zynpparti/document';
+import { EntityStore, type Block, type Wall } from '@zynpparti/document';
 import { SpatialIndex, entityBounds, type SnapHint } from '@zynpparti/engine';
 import { createSnapper } from './context';
 
@@ -61,6 +61,23 @@ describe('createSnapper', () => {
     expect(hint!.point).toBeNull();
     expect(hint!.vGuide).not.toBeNull();
     expect(hint!.hGuide).toBeNull();
+  });
+
+  it('blok merkezine tam yakalama (anahtar nokta duvar dışı tipleri de kapsar)', () => {
+    const store = new EntityStore();
+    const index = new SpatialIndex();
+    const block: Block = {
+      id: 'b1',
+      type: 'block',
+      layerId: 'furniture',
+      kind: 'table',
+      position: { x: 100, y: 100 },
+      rotation: 0,
+    };
+    store.put(block);
+    index.insert(block.id, entityBounds(block));
+    const snap = createSnapper(store, index, () => 1);
+    expect(snap({ x: 103, y: 98 })).toEqual({ x: 100, y: 100 }); // merkeze yakalar
   });
 
   it('exact endpoint snap reports a point hint (no guides)', () => {
