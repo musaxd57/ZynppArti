@@ -29,6 +29,8 @@ export interface CanvasHandle {
   setSpaceActivateHandler(cb: (id: EntityId) => void): void;
   /** Bir açıklama metnine çift tıklanınca çağrılacak handler (ör. metin düzenleme). */
   setAnnotationActivateHandler(cb: (id: EntityId) => void): void;
+  /** İmleç hareket ettikçe dünya koordinatını (cm), tuvalden çıkınca null bildirir (durum çubuğu). */
+  setHoverHandler(cb: (world: Vec2 | null) => void): void;
   /** Mevcut sahneyi PNG data-URL olarak dışa aktarır. */
   exportPng(): Promise<string>;
   destroy: () => void;
@@ -76,6 +78,7 @@ export async function createCanvasApp(
   let activeTool: SceneTool | null = null;
   let spaceActivate: ((id: EntityId) => void) | null = null;
   let annotationActivate: ((id: EntityId) => void) | null = null;
+  let hoverCb: ((world: Vec2 | null) => void) | null = null;
 
   function viewportBounds(): AABB {
     const tl = screenToWorld({ x: 0, y: 0 }, camera);
@@ -139,6 +142,7 @@ export async function createCanvasApp(
   }
 
   function onPointerMove(e: PointerEvent): void {
+    hoverCb?.(screenToWorld(pointerPos(e), camera)); // durum çubuğu koordinatı (pan sırasında da geçerli)
     if (panning) {
       const p = pointerPos(e);
       camera = {
@@ -219,6 +223,8 @@ export async function createCanvasApp(
   canvas.addEventListener('pointermove', onPointerMove);
   canvas.addEventListener('pointerup', onPointerUp);
   canvas.addEventListener('pointerleave', onPointerUp);
+  const onPointerLeaveHover = (): void => hoverCb?.(null);
+  canvas.addEventListener('pointerleave', onPointerLeaveHover);
   canvas.addEventListener('wheel', onWheel, { passive: false });
   canvas.addEventListener('dblclick', onDblClick);
   window.addEventListener('keydown', onKeyDown);
@@ -237,6 +243,9 @@ export async function createCanvasApp(
     setAnnotationActivateHandler(cb: (id: EntityId) => void): void {
       annotationActivate = cb;
     },
+    setHoverHandler(cb: (world: Vec2 | null) => void): void {
+      hoverCb = cb;
+    },
     setActiveTool(tool: SceneTool | null): void {
       if (activeTool === tool) return;
       activeTool?.onDeactivate?.();
@@ -252,6 +261,7 @@ export async function createCanvasApp(
       canvas.removeEventListener('pointermove', onPointerMove);
       canvas.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointerleave', onPointerUp);
+      canvas.removeEventListener('pointerleave', onPointerLeaveHover);
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('dblclick', onDblClick);
       window.removeEventListener('keydown', onKeyDown);
