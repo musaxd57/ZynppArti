@@ -8,6 +8,7 @@ import {
   annotationSize,
   blockCorners,
   dimensionGeometry,
+  isClonable,
   offsetEntity,
   openingFrame,
   type Entity,
@@ -24,7 +25,7 @@ const SELECT_COLOR = 0xffb454;
 /**
  * Pointer faz FSM'i (CLAUDE.md §8.3): idle → pressed → dragging. Makine yalnız fazı tutar;
  * hit-test/komut gibi efektler sınıfta yapılır (faz makineden okunur). Tek-tık = seçim,
- * eşik aşılınca = sürükleyerek taşıma. Tutamaç (handle) sürüklemesi ayrı moddur.
+ * eşik aşılınca = sürükleme (entity üstündeyse taşıma, boşluktaysa kutu/marquee seçim).
  */
 export const selectPhaseMachine = setup({
   types: {} as { events: { type: 'DOWN' } | { type: 'DRAG' } | { type: 'UP' } | { type: 'RESET' } },
@@ -37,20 +38,30 @@ export const selectPhaseMachine = setup({
   },
 });
 
-/** Seç (tıkla), taşı (sürükle), tutamaçla düzenle, sil (Delete). */
+/**
+ * Seç (tıkla / Shift-tıkla çoklu / boşlukta kutu-seçim), taşı (sürükle — çoklu), tutamaçla düzenle
+ * (yalnız tek seçimde), sil/kopyala (çoklu). Seçim bir kümedir (`selectedIds`).
+ */
 export class SelectTool implements SceneTool {
   private readonly phase: ActorRefFrom<typeof selectPhaseMachine>;
   private readonly hoverGfx = new Graphics();
   private readonly selectionGfx = new Graphics();
   private readonly handleGfx = new Graphics();
   private readonly ghostGfx = new Graphics();
+  private readonly marqueeGfx = new Graphics();
 
-  private selectedId: EntityId | null = null;
+  private selectedIds = new Set<EntityId>();
   private hoveredId: EntityId | null = null;
   private downWorld: Vec2 | null = null;
-  /** Sürükleyerek taşınan entity'nin başlangıç anlık görüntüsü (duvar/blok taşınabilir). */
-  private original: Entity | null = null;
-  /** Aktif tutamaç sürüklemesi (entity anlık görüntüsü + tutamaç indeksi). */
+  /** Down anında tıklanan entity (yoksa boşluk → kutu-seçim). */
+  private downHitId: EntityId | null = null;
+  /** Down anındaki Shift durumu (çoklu seçim ekle/çıkar). */
+  private shiftDown = false;
+  /** Çoklu taşıma için seçili taşınabilir entity'lerin anlık görüntüsü. */
+  private moveOriginals: Entity[] = [];
+  /** Kutu-seçim başlangıcı (dünya). */
+  private marqueeStart: Vec2 | null = null;
+  /** Aktif tutamaç sürüklemesi (yalnız tek seçimde). */
   private dragHandle: { entity: Entity; index: number } | null = null;
 
   constructor(private readonly ctx: ToolContext) {
@@ -58,6 +69,7 @@ export class SelectTool implements SceneTool {
     this.ctx.overlay.addChild(this.selectionGfx);
     this.ctx.overlay.addChild(this.handleGfx);
     this.ctx.overlay.addChild(this.ghostGfx);
+    this.ctx.overlay.addChild(this.marqueeGfx);
     this.phase = createActor(selectPhaseMachine);
     this.phase.start();
   }
@@ -70,9 +82,11 @@ export class SelectTool implements SceneTool {
     !!this.ctx.isLayerHidden?.(lid) || !!this.ctx.isLayerLocked?.(lid);
 
   onPointerDown(p: ScenePointer): void {
-    // 1) Seçili entity'nin bir tutamacına basıldıysa → tutamaç sürüklemesi başlat.
-    if (this.selectedId) {
-      const sel = this.ctx.store.get(this.selectedId);
+    this.shiftDown = !!p.shiftKey;
+
+    // 1) Tek seçimde, seçili entity'nin tutamacına basıldıysa → tutamaç sürüklemesi.
+    if (this.selectedIds.size === 1) {
+      const sel = this.firstSelectedEntity();
       if (sel) {
         const idx = this.hitHandle(sel, p.world);
         if (idx >= 0) {
@@ -82,45 +96,53 @@ export class SelectTool implements SceneTool {
         }
       }
     }
-    // 2) Normal seçim / taşıma.
+
+    // 2) Hit-test → entity seçimi/taşıma; boşluk → kutu-seçim.
     const id = hitTest(this.ctx.store, this.ctx.index, p.world, HIT_PX * this.ctx.pixelSize(), this.skip);
     this.renderHover(null);
-    this.select(id);
+    this.downWorld = p.world;
+    this.downHitId = id;
     if (id) {
-      const e = this.ctx.store.get(id);
-      // Yalnız doğrudan kütlesel taşınanlar sürüklenir (duvar/blok/metin); ölçü/parsel tutamaçla, boşluk duvara bağlı.
-      this.original =
-        e && (e.type === 'wall' || e.type === 'block' || e.type === 'annotation') ? e : null;
-      this.downWorld = p.world;
-      this.phase.send({ type: 'DOWN' });
+      // Shift değilse ve tıklanan henüz seçili değilse → tekil seçime geç (sürükleme bunu taşır).
+      if (!this.shiftDown && !this.selectedIds.has(id)) this.setSelection([id]);
+      // Shift değilse mevcut seçimin taşınabilir anlık görüntüsünü al (çoklu taşıma).
+      if (!this.shiftDown) this.captureMoveOriginals();
+    } else {
+      this.marqueeStart = p.world;
     }
+    this.phase.send({ type: 'DOWN' });
   }
 
   onPointerMove(p: ScenePointer): void {
     // Tutamaç sürüklemesi — canlı önizleme (snap'li).
     if (this.dragHandle) {
       const np = this.ctx.snap(p.world);
-      this.drawGhostEntity(this.applyHandle(this.dragHandle.entity, this.dragHandle.index, np));
+      this.drawGhosts([this.applyHandle(this.dragHandle.entity, this.dragHandle.index, np)]);
       return;
     }
     if (this.state === 'pressed' && this.downWorld) {
       const moved = Math.hypot(p.world.x - this.downWorld.x, p.world.y - this.downWorld.y);
       if (moved > DRAG_PX * this.ctx.pixelSize()) this.phase.send({ type: 'DRAG' });
     }
-    if (this.state === 'dragging' && this.downWorld && this.original) {
-      const dx = p.world.x - this.downWorld.x;
-      const dy = p.world.y - this.downWorld.y;
-      this.drawGhostEntity(offsetEntity(this.original, dx, dy));
+    if (this.state === 'dragging' && this.downWorld) {
+      if (this.downHitId && this.moveOriginals.length > 0) {
+        const dx = p.world.x - this.downWorld.x;
+        const dy = p.world.y - this.downWorld.y;
+        this.drawGhosts(this.moveOriginals.map((e) => offsetEntity(e, dx, dy)));
+      } else if (this.marqueeStart) {
+        this.drawMarquee(this.marqueeStart, p.world);
+      }
       return;
     }
-    // Boştayken imleç altındaki entity'yi soluk vurgula (micro-interaction; VISUAL-CRAFT §5/§6).
+    // Boştayken imleç altındaki (seçili olmayan) entity'yi soluk vurgula (VISUAL-CRAFT §5/§6).
     if (this.state === 'idle') {
       const id = hitTest(this.ctx.store, this.ctx.index, p.world, HIT_PX * this.ctx.pixelSize(), this.skip);
-      this.renderHover(id === this.selectedId ? null : id);
+      this.renderHover(id && this.selectedIds.has(id) ? null : id);
     }
   }
 
   onPointerUp(p: ScenePointer): void {
+    // Tutamaç sürüklemesi commit.
     if (this.dragHandle) {
       const np = this.ctx.snap(p.world);
       this.ctx.history.dispatch(
@@ -131,26 +153,38 @@ export class SelectTool implements SceneTool {
       this.renderSelection();
       return;
     }
-    if (this.state === 'dragging' && this.downWorld && this.original) {
-      const dx = p.world.x - this.downWorld.x;
-      const dy = p.world.y - this.downWorld.y;
-      this.ctx.history.dispatch(new UpdateEntity(offsetEntity(this.original, dx, dy)));
+
+    if (this.state === 'dragging' && this.downWorld) {
+      if (this.downHitId && this.moveOriginals.length > 0) {
+        // Çoklu taşıma commit (tek komut = tek undo).
+        const dx = p.world.x - this.downWorld.x;
+        const dy = p.world.y - this.downWorld.y;
+        const cmds = this.moveOriginals.map((e) => new UpdateEntity(offsetEntity(e, dx, dy)));
+        this.ctx.history.dispatch(cmds.length === 1 ? cmds[0]! : new BatchCommand('Taşı', cmds));
+      } else if (this.marqueeStart) {
+        const hits = this.marqueeHits(this.marqueeStart, p.world);
+        this.setSelection(this.shiftDown ? [...this.selectedIds, ...hits] : hits);
+      }
+    } else {
+      // Sürükleme yok = tık.
+      if (this.downHitId) {
+        if (this.shiftDown) this.toggle(this.downHitId);
+        else this.setSelection([this.downHitId]); // çokluyu tekile indir
+      } else if (!this.shiftDown) {
+        this.setSelection([]); // boşluğa tık → temizle
+      }
     }
-    this.ghostGfx.clear();
-    this.downWorld = null;
-    this.original = null;
-    this.phase.send({ type: 'UP' });
-    this.renderSelection();
+    this.endGesture();
   }
 
   onKeyDown(e: KeyboardEvent): void {
-    if ((e.key === 'Delete' || e.key === 'Backspace') && this.selectedId) {
-      const id = this.selectedId;
-      this.select(null);
-      this.deleteEntity(id);
-    } else if ((e.key === 'x' || e.key === 'X') && this.selectedId) {
-      // Seçili bloku 90° döndür (BlockTool yerleştirmesindeki 'x' ile tutarlı).
-      const sel = this.ctx.store.get(this.selectedId);
+    if ((e.key === 'Delete' || e.key === 'Backspace') && this.selectedIds.size > 0) {
+      const ids = [...this.selectedIds];
+      this.setSelection([]);
+      this.deleteMany(ids);
+    } else if ((e.key === 'x' || e.key === 'X') && this.selectedIds.size === 1) {
+      // Seçili tek bloku 90° döndür (BlockTool yerleştirmesindeki 'x' ile tutarlı).
+      const sel = this.firstSelectedEntity();
       if (sel?.type === 'block') {
         this.ctx.history.dispatch(
           new UpdateEntity({ ...sel, rotation: (sel.rotation + Math.PI / 2) % (Math.PI * 2) }),
@@ -158,52 +192,99 @@ export class SelectTool implements SceneTool {
         this.renderSelection();
       }
     } else if (e.key === 'Escape') {
-      this.select(null);
+      this.setSelection([]);
     }
   }
 
-  /** Entity'yi siler; duvarsa bağlı boşlukları (kapı/pencere) tek undo'da birlikte siler. */
-  private deleteEntity(id: EntityId): void {
-    const entity = this.ctx.store.get(id);
-    if (entity?.type === 'wall') {
-      const bound = this.ctx.store
-        .all()
-        .filter((e) => e.type === 'opening' && e.wallId === id)
-        .map((e) => new RemoveEntity(e.id));
-      if (bound.length > 0) {
-        this.ctx.history.dispatch(
-          new BatchCommand('Duvar + boşlukları sil', [new RemoveEntity(id), ...bound]),
-        );
-        return;
+  /** Seçili entity'leri (id'leri verilen) siler; her duvarın bağlı boşlukları tek undo'da birlikte gider. */
+  private deleteMany(ids: EntityId[]): void {
+    const toRemove = new Set<EntityId>();
+    for (const id of ids) {
+      const e = this.ctx.store.get(id);
+      if (!e) continue;
+      toRemove.add(id);
+      if (e.type === 'wall') {
+        for (const o of this.ctx.store.all()) {
+          if (o.type === 'opening' && o.wallId === id) toRemove.add(o.id);
+        }
       }
     }
-    this.ctx.history.dispatch(new RemoveEntity(id));
+    const cmds = [...toRemove].map((id) => new RemoveEntity(id));
+    if (cmds.length === 0) return;
+    this.ctx.history.dispatch(cmds.length === 1 ? cmds[0]! : new BatchCommand('Sil', cmds));
   }
 
   onDeactivate(): void {
-    this.select(null);
+    this.setSelection([]);
     this.renderHover(null);
     this.dragHandle = null;
-    this.ghostGfx.clear();
+    this.endGesture();
     this.phase.send({ type: 'RESET' });
   }
 
-  private select(id: EntityId | null): void {
-    this.selectedId = id;
+  /** Sürükleme jestini bitirir (geçici durumu ve önizleme grafiklerini temizler). */
+  private endGesture(): void {
+    this.ghostGfx.clear();
+    this.marqueeGfx.clear();
+    this.downWorld = null;
+    this.downHitId = null;
+    this.moveOriginals = [];
+    this.marqueeStart = null;
+    this.phase.send({ type: 'UP' });
     this.renderSelection();
   }
 
-  /** Seçili entity'yi döndürür (kopyala-yapıştır için ToolManager kullanır). */
-  getSelected(): Entity | null {
-    return this.selectedId ? (this.ctx.store.get(this.selectedId) ?? null) : null;
+  // --- Seçim durumu ---
+
+  private setSelection(ids: Iterable<EntityId>): void {
+    this.selectedIds = new Set(ids);
+    this.renderSelection();
   }
 
-  /** Seçimi dışarıdan ayarlar (ör. yapıştırılan entity'yi seçili yapmak için). */
-  selectExternal(id: EntityId | null): void {
-    this.select(id);
+  private toggle(id: EntityId): void {
+    if (this.selectedIds.has(id)) this.selectedIds.delete(id);
+    else this.selectedIds.add(id);
+    this.renderSelection();
   }
 
-  // --- Tutamaçlar (düzenlenebilir noktalar) ---
+  private firstSelectedEntity(): Entity | undefined {
+    for (const id of this.selectedIds) return this.ctx.store.get(id);
+    return undefined;
+  }
+
+  private captureMoveOriginals(): void {
+    this.moveOriginals = [...this.selectedIds]
+      .map((id) => this.ctx.store.get(id))
+      .filter((e): e is Entity => !!e && isClonable(e));
+  }
+
+  /** Kutu içindeki seçilebilir entity'ler (mahaller hariç; gizli/kilitli katman atlanır). */
+  private marqueeHits(a: Vec2, b: Vec2): EntityId[] {
+    const rect = {
+      minX: Math.min(a.x, b.x),
+      minY: Math.min(a.y, b.y),
+      maxX: Math.max(a.x, b.x),
+      maxY: Math.max(a.y, b.y),
+    };
+    return this.ctx.index.search(rect).filter((id) => {
+      const e = this.ctx.store.get(id);
+      return !!e && e.type !== 'space' && !this.skip(e.layerId);
+    });
+  }
+
+  /** Seçili entity'leri döndürür (kopyala-yapıştır için ToolManager kullanır). */
+  getSelectedEntities(): Entity[] {
+    return [...this.selectedIds]
+      .map((id) => this.ctx.store.get(id))
+      .filter((e): e is Entity => !!e);
+  }
+
+  /** Seçimi dışarıdan ayarlar (ör. yapıştırılan entity'leri seçili yapmak için). */
+  selectMany(ids: EntityId[]): void {
+    this.setSelection(ids);
+  }
+
+  // --- Tutamaçlar (düzenlenebilir noktalar; yalnız tek seçimde) ---
 
   /** Bir entity'nin düzenlenebilir tutamaç noktaları (dünya). */
   private handlePoints(entity: Entity): Vec2[] {
@@ -259,18 +340,21 @@ export class SelectTool implements SceneTool {
 
   private renderSelection(): void {
     this.selectionGfx.clear();
-    if (!this.selectedId) {
-      this.handleGfx.clear();
-      return;
+    this.handleGfx.clear();
+    let only: Entity | undefined;
+    for (const id of this.selectedIds) {
+      const e = this.ctx.store.get(id);
+      if (e) {
+        this.highlight(this.selectionGfx, e, 0.9);
+        only = e;
+      }
     }
-    const e = this.ctx.store.get(this.selectedId);
-    if (e) this.highlight(this.selectionGfx, e, 0.9);
-    this.renderHandles(e);
+    // Tutamaçlar yalnız tek seçimde anlamlı (nokta düzenleme).
+    if (this.selectedIds.size === 1 && only) this.renderHandles(only);
   }
 
-  private renderHandles(entity: Entity | undefined): void {
+  private renderHandles(entity: Entity): void {
     this.handleGfx.clear();
-    if (!entity) return;
     const r = HANDLE_PX * this.ctx.pixelSize();
     for (const p of this.handlePoints(entity)) {
       this.handleGfx
@@ -346,9 +430,23 @@ export class SelectTool implements SceneTool {
     }
   }
 
-  private drawGhostEntity(entity: Entity): void {
+  private drawGhosts(entities: Entity[]): void {
     this.ghostGfx.clear();
-    this.highlight(this.ghostGfx, entity, 0.5);
+    for (const e of entities) this.highlight(this.ghostGfx, e, 0.5);
+  }
+
+  /** Kutu-seçim dikdörtgenini çizer (soluk dolgu + ekran-sabit kenar). */
+  private drawMarquee(a: Vec2, b: Vec2): void {
+    const px = this.ctx.pixelSize();
+    const x = Math.min(a.x, b.x);
+    const y = Math.min(a.y, b.y);
+    const w = Math.abs(b.x - a.x);
+    const h = Math.abs(b.y - a.y);
+    this.marqueeGfx.clear();
+    this.marqueeGfx
+      .rect(x, y, w, h)
+      .fill({ color: SELECT_COLOR, alpha: 0.08 })
+      .stroke({ width: 1 * px, color: SELECT_COLOR, alpha: 0.8 });
   }
 
   dispose(): void {
@@ -357,5 +455,6 @@ export class SelectTool implements SceneTool {
     this.selectionGfx.destroy();
     this.handleGfx.destroy();
     this.ghostGfx.destroy();
+    this.marqueeGfx.destroy();
   }
 }
