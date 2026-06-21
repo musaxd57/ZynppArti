@@ -1,9 +1,9 @@
 import { Container, Graphics } from 'pixi.js';
-import type { Entity, EntityId, EntityStore, StoreChange } from '@zynpparti/document';
+import { materialById, type Entity, type EntityId, type EntityStore, type StoreChange } from '@zynpparti/document';
 import { SpatialIndex, type AABB } from './spatial-index';
 import { entityBounds, openingBounds } from './entity-bounds';
 import { drawWall } from './render-wall';
-import { buildSpaceFill, buildSpaceLabel, drawSpacePerimeter } from './render-space';
+import { buildSpaceFill, buildSpaceLabel, drawSpaceMaterial, drawSpacePerimeter } from './render-space';
 import { drawOpening } from './render-opening';
 import { drawDimension, buildDimensionLabel } from './render-dimension';
 import { drawParcel } from './render-parcel';
@@ -151,11 +151,23 @@ export class EntityLayer {
       const fill = buildSpaceFill(entity);
       this.spaceFill.addChild(fill);
       objs.push(fill);
+      // Zemin malzemesi tarama deseni (varsa) — dolgunun üstünde, çevre/duvarın altında.
+      const material = materialById(entity.material);
+      const hatch = material ? new Graphics() : null;
+      if (hatch && material) {
+        drawSpaceMaterial(hatch, entity, material, px);
+        this.spaceFill.addChild(hatch);
+        objs.push(hatch);
+      }
       const perimeter = new Graphics();
       drawSpacePerimeter(perimeter, entity, px);
       this.spaceFill.addChild(perimeter); // dolgunun üstünde, duvarların altında
       objs.push(perimeter);
-      this.redrawables.set(entity.id, (p) => drawSpacePerimeter(perimeter, entity, p));
+      // Tek redrawable: zoom'da çevre + (varsa) malzeme hatch birlikte yenilenir.
+      this.redrawables.set(entity.id, (p) => {
+        drawSpacePerimeter(perimeter, entity, p);
+        if (hatch && material) drawSpaceMaterial(hatch, entity, material, p);
+      });
       const label = buildSpaceLabel(entity);
       this.labelLayer.addChild(label);
       objs.push(label);

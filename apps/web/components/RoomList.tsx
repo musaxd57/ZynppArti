@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import {
+  MATERIALS,
   ROOM_TYPES,
   UpdateEntity,
   centerlineAreaM2,
@@ -95,6 +96,13 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
     }
   }
 
+  function setMaterial(space: Space, material: string): void {
+    const next = material || undefined; // boş seçim = malzeme yok
+    if (next !== space.material) {
+      history.dispatch(new UpdateEntity({ ...space, material: next }));
+    }
+  }
+
   function exportExcel(): void {
     const rows: Record<string, string | number>[] = spaces.map((s) => ({
       Mahal: s.name,
@@ -150,6 +158,21 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
               {ROOM_TYPES.map((t) => (
                 <option key={t.key} value={t.key} className="bg-neutral-800">
                   {t.label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={s.material ?? ''}
+              onChange={(e) => setMaterial(s, e.target.value)}
+              className="rounded bg-white/10 px-1 py-1 text-xs outline-none focus:bg-white/20"
+              title="Zemin malzemesi (tarama deseni)"
+            >
+              <option value="" className="bg-neutral-800">
+                Malzeme —
+              </option>
+              {MATERIALS.map((m) => (
+                <option key={m.id} value={m.id} className="bg-neutral-800">
+                  {m.label}
                 </option>
               ))}
             </select>

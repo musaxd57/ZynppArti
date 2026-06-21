@@ -1,6 +1,6 @@
 import { BitmapText, Graphics } from 'pixi.js';
-import { polygonArea, type Vec2 } from '@zynpparti/geometry';
-import { roomTypeOf, type RoomType, type Space } from '@zynpparti/document';
+import { hatchPattern, polygonArea, type Vec2 } from '@zynpparti/geometry';
+import { roomTypeOf, type Material, type RoomType, type Space } from '@zynpparti/document';
 import { ROOM_FONT } from './charset';
 import { LINEWEIGHTS, PALETTE } from './lineweights';
 
@@ -46,6 +46,24 @@ export function drawSpacePerimeter(g: Graphics, space: Space, pixelSize: number)
   for (let i = 1; i < b.length; i++) g.lineTo(b[i]!.x, b[i]!.y);
   g.closePath();
   g.stroke({ width: LINEWEIGHTS.perimeter * pixelSize, color: PALETTE.roomPerimeter, alignment: 0.5 });
+}
+
+/**
+ * Mahal zemin malzemesini tarama deseniyle çizer (VISUAL-CRAFT §3). Çizgiler dünya-uzaylı (cm
+ * aralık), kalınlık ekran-sabit (hairline × pixelSize) → zoom'da incelir. Dolgunun üstünde,
+ * çevre/duvarın altında durur. Zoom'da `pixelSize` ile yeniden çizilir.
+ */
+export function drawSpaceMaterial(
+  g: Graphics,
+  space: Space,
+  material: Material,
+  pixelSize: number,
+): void {
+  g.clear();
+  if (space.boundary.length < 3) return;
+  const segs = hatchPattern(space.boundary, material.spacing, material.angle, material.kind);
+  for (const s of segs) g.moveTo(s.a.x, s.a.y).lineTo(s.b.x, s.b.y);
+  g.stroke({ width: LINEWEIGHTS.hairline * pixelSize, color: material.color, alpha: 0.55 });
 }
 
 /** Mahal etiketini (ad + canlı m²) merkeze yerleştirir. BitmapText → TR_CHARSET atlası. */

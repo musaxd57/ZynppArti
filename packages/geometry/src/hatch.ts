@@ -11,6 +11,24 @@ export interface HatchSegment {
   readonly b: Vec2;
 }
 
+/** Tarama deseni türü: tek yön (paralel) veya çapraz (iki dik yön = ızgara/cross-hatch). */
+export type HatchKind = 'single' | 'cross';
+
+/**
+ * Malzeme tarama deseni: tek yön veya çapraz. `single` doğrudan `hatchLines`; `cross` ise aynı
+ * desene dik ikinci bir set ekler (fayans/ızgara hissi). Saf; malzeme hatch render'ı bunu kullanır.
+ */
+export function hatchPattern(
+  polygon: readonly Vec2[],
+  spacing: number,
+  angle: number,
+  kind: HatchKind = 'single',
+): HatchSegment[] {
+  const first = hatchLines(polygon, spacing, angle);
+  if (kind !== 'cross') return first;
+  return [...first, ...hatchLines(polygon, spacing, angle + Math.PI / 2)];
+}
+
 export function hatchLines(
   polygon: readonly Vec2[],
   spacing: number,
