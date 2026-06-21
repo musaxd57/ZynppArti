@@ -11,7 +11,10 @@
 **Branch:** `main` güncel + push'lu (son: `c8f1973`).
 **Durum:** Faz 1 + 2A/2B + gece+sabah maliyetsiz tur: görsel zanaat, yönetmelik turu, metraj, blok kütüphanesi ve (21 Haz) **blok düzenleme + mobilya çizelgesi/katmanı + açıklama/metin aracı (çift-tıkla düzenleme)**.
 
-**Son maliyetsiz tur (2026-06-21, hepsi main'de):** blok seç/taşı/döndür (SelectTool) · mobilya çizelgesi (metraj+Excel) · mobilya kendi katmanında · **Annotation entity + Metin aracı (T) + çift-tıkla düzenleme**. Zincir yeşil (typecheck 7/7 · test ~50 · lint 7/7 · build 1/1). **Tarayıcı görsel doğrulaması Moses'ta** (blok sembolleri + metin).
+**Son maliyetsiz tur (2026-06-21, hepsi main'de):** blok seç/taşı/döndür · mobilya çizelgesi · mobilya katmanı · Annotation (metin) aracı + çift-tık düzenleme · kopyala-yapıştır/çoğalt (Ctrl+C/V/D) · **çoklu seçim (kutu/Shift + toplu taşı/sil)** · hizalama kılavuzları (smart snap) · yönetmelik turu 3 (TAKS+banyo) · hatch malzeme kütüphanesi · **pafta/sheet sistemi** · oda-tipi renk token konsolidasyonu · durum çubuğu · içeriğe sığdır (Home) · Ctrl+A + ok-itme · kısayol yardımı (?) · ortak highlightEntity refactor + EraseTool tüm-tip önizleme. **Test: 176 (document 69 · engine 31 · geometry 27 · copilot 26 · tools 12 · io 11).** Zincir yeşil (typecheck 7/7 · lint 7/7 · build 1/1). Son commit `a223c20`.
+
+**Tarayıcı görsel doğrulaması Moses'ta:** blok sembolleri (onaylandı ✓), metin, çoklu seçim/kutu, pafta çerçevesi+antet, malzeme hatch, hizalama kılavuzları, durum çubuğu, kısayol katmanı.
+**NOT (dev):** uzun HMR oturumunda Next devtools "stale manifest" 500 verebiliyor (kod değil) → `.next` silip `pnpm dev` ile temiz başlat.
 
 **Son doğrulama (2B sonu):** typecheck 7/7 · test 6/6 paket (geometry 19, copilot 6, document 23…) · lint 7/7 · build 1/1. **Tarayıcı doğrulaması: ekran görüntüsüyle onaylandı** — metrik paneli (2 oda + tipler) + copilot TS 9111 dar-koridor bulgusu atıfla görünüyor.
 
