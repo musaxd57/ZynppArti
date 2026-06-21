@@ -9,7 +9,14 @@ import { DimensionTool } from './dimension-tool';
 import { ParcelTool } from './parcel-tool';
 import { BlockTool } from './block-tool';
 import { AnnotationTool } from './annotation-tool';
-import type { BlockKind } from '@zynpparti/document';
+import {
+  AddEntity,
+  createEntityId,
+  isClonable,
+  offsetEntity,
+  type BlockKind,
+  type Entity,
+} from '@zynpparti/document';
 
 export type ToolName =
   | 'select'
@@ -28,6 +35,9 @@ interface DisposableTool extends SceneTool {
 }
 
 type ToolListener = (active: ToolName) => void;
+
+/** Yapıştırmada kopyanın orijinalden kayma miktarı (cm; tekrar yapıştırınca üst üste birikir). */
+const PASTE_OFFSET = 50;
 
 /** Araç başına tuval imleci (CSS cursor). Seç dışındaki yerleştirme/ölçü araçları artı imleç. */
 const CURSOR_BY_TOOL: Record<ToolName, string> = {
@@ -50,13 +60,17 @@ const CURSOR_BY_TOOL: Record<ToolName, string> = {
 export class ToolManager implements SceneTool {
   private readonly tools: Record<ToolName, DisposableTool>;
   private readonly blockTool: BlockTool;
+  private readonly selectTool: SelectTool;
   private current: ToolName = 'select';
   private readonly listeners = new Set<ToolListener>();
+  /** Kopyala-yapıştır panosu (tek entity; oturum-içi, kalıcı değil). */
+  private clipboard: Entity | null = null;
 
   constructor(private readonly ctx: ToolContext) {
     this.blockTool = new BlockTool(ctx);
+    this.selectTool = new SelectTool(ctx);
     this.tools = {
-      select: new SelectTool(ctx),
+      select: this.selectTool,
       wall: new WallTool(ctx),
       door: new OpeningTool(ctx, 'door', DOOR_WIDTH),
       window: new OpeningTool(ctx, 'window', WINDOW_WIDTH),
@@ -124,6 +138,22 @@ export class ToolManager implements SceneTool {
       e.preventDefault();
       return;
     }
+    if (ctrl && (e.key === 'c' || e.key === 'C')) {
+      this.copy();
+      e.preventDefault();
+      return;
+    }
+    if (ctrl && (e.key === 'v' || e.key === 'V')) {
+      this.paste();
+      e.preventDefault();
+      return;
+    }
+    if (ctrl && (e.key === 'd' || e.key === 'D')) {
+      this.copy();
+      this.paste();
+      e.preventDefault();
+      return;
+    }
     // Esc her zaman Seç'e döner; zaten Seç'teyse seçimi temizler.
     if (e.key === 'Escape') {
       if (this.current !== 'select') this.setTool('select');
@@ -149,6 +179,25 @@ export class ToolManager implements SceneTool {
   /** Araç zaten aktifse Seç'e döner, değilse o aracı açar (toggle). */
   private toggleTool(name: ToolName): void {
     this.setTool(this.current === name ? 'select' : name);
+  }
+
+  /** Seçili (kopyalanabilir) entity'yi panoya alır. */
+  private copy(): void {
+    const e = this.selectTool.getSelected();
+    if (e && isClonable(e)) this.clipboard = e;
+  }
+
+  /** Panodaki entity'nin kaydırılmış bir kopyasını ekler, seçer ve cascade için panoyu günceller. */
+  private paste(): void {
+    if (!this.clipboard) return;
+    const clone: Entity = {
+      ...offsetEntity(this.clipboard, PASTE_OFFSET, PASTE_OFFSET),
+      id: createEntityId(),
+    };
+    this.ctx.history.dispatch(new AddEntity(clone));
+    this.clipboard = clone; // tekrar Ctrl+V → bir önceki kopyadan kayar (üst üste binmez)
+    this.setTool('select');
+    this.selectTool.selectExternal(clone.id);
   }
 
   destroy(): void {

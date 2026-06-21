@@ -8,6 +8,7 @@ import {
   annotationSize,
   blockCorners,
   dimensionGeometry,
+  offsetEntity,
   openingFrame,
   type Entity,
   type EntityId,
@@ -109,7 +110,7 @@ export class SelectTool implements SceneTool {
     if (this.state === 'dragging' && this.downWorld && this.original) {
       const dx = p.world.x - this.downWorld.x;
       const dy = p.world.y - this.downWorld.y;
-      this.drawGhostEntity(this.translate(this.original, dx, dy));
+      this.drawGhostEntity(offsetEntity(this.original, dx, dy));
       return;
     }
     // Boştayken imleç altındaki entity'yi soluk vurgula (micro-interaction; VISUAL-CRAFT §5/§6).
@@ -133,7 +134,7 @@ export class SelectTool implements SceneTool {
     if (this.state === 'dragging' && this.downWorld && this.original) {
       const dx = p.world.x - this.downWorld.x;
       const dy = p.world.y - this.downWorld.y;
-      this.ctx.history.dispatch(new UpdateEntity(this.translate(this.original, dx, dy)));
+      this.ctx.history.dispatch(new UpdateEntity(offsetEntity(this.original, dx, dy)));
     }
     this.ghostGfx.clear();
     this.downWorld = null;
@@ -192,19 +193,14 @@ export class SelectTool implements SceneTool {
     this.renderSelection();
   }
 
-  /** Taşınabilir bir entity'yi (dx,dy) kadar kaydırır. */
-  private translate(entity: Entity, dx: number, dy: number): Entity {
-    if (entity.type === 'wall') {
-      return {
-        ...entity,
-        start: { x: entity.start.x + dx, y: entity.start.y + dy },
-        end: { x: entity.end.x + dx, y: entity.end.y + dy },
-      };
-    }
-    if (entity.type === 'block' || entity.type === 'annotation') {
-      return { ...entity, position: { x: entity.position.x + dx, y: entity.position.y + dy } };
-    }
-    return entity;
+  /** Seçili entity'yi döndürür (kopyala-yapıştır için ToolManager kullanır). */
+  getSelected(): Entity | null {
+    return this.selectedId ? (this.ctx.store.get(this.selectedId) ?? null) : null;
+  }
+
+  /** Seçimi dışarıdan ayarlar (ör. yapıştırılan entity'yi seçili yapmak için). */
+  selectExternal(id: EntityId | null): void {
+    this.select(id);
   }
 
   // --- Tutamaçlar (düzenlenebilir noktalar) ---
