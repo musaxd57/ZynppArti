@@ -8,6 +8,7 @@ import { OpeningTool, DOOR_WIDTH, WINDOW_WIDTH } from './opening-tool';
 import { DimensionTool } from './dimension-tool';
 import { ParcelTool } from './parcel-tool';
 import { BlockTool } from './block-tool';
+import { AnnotationTool } from './annotation-tool';
 import type { BlockKind } from '@zynpparti/document';
 
 export type ToolName =
@@ -18,6 +19,7 @@ export type ToolName =
   | 'dimension'
   | 'parcel'
   | 'block'
+  | 'annotation'
   | 'erase'
   | 'calibrate';
 
@@ -36,6 +38,7 @@ const CURSOR_BY_TOOL: Record<ToolName, string> = {
   dimension: 'crosshair',
   parcel: 'crosshair',
   block: 'crosshair',
+  annotation: 'crosshair',
   erase: 'crosshair',
   calibrate: 'crosshair',
 };
@@ -60,6 +63,7 @@ export class ToolManager implements SceneTool {
       dimension: new DimensionTool(ctx),
       parcel: new ParcelTool(ctx),
       block: this.blockTool,
+      annotation: new AnnotationTool(ctx),
       erase: new EraseTool(ctx),
       calibrate: new CalibrateTool(ctx),
     };
@@ -135,6 +139,7 @@ export class ToolManager implements SceneTool {
       if (k === 'o') return this.toggleTool('dimension'); // ölçü
       if (k === 'r') return this.toggleTool('parcel'); // arsa/parsel
       if (k === 'b') return this.toggleTool('block'); // blok/mobilya
+      if (k === 't') return this.toggleTool('annotation'); // metin/açıklama
       if (k === 'e') return this.toggleTool('erase');
       if (k === 'k') return this.toggleTool('calibrate');
     }

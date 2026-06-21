@@ -5,6 +5,7 @@ import {
   BatchCommand,
   RemoveEntity,
   UpdateEntity,
+  annotationSize,
   blockCorners,
   dimensionGeometry,
   openingFrame,
@@ -86,8 +87,9 @@ export class SelectTool implements SceneTool {
     this.select(id);
     if (id) {
       const e = this.ctx.store.get(id);
-      // Yalnız doğrudan kütlesel taşınanlar sürüklenir (duvar/blok); ölçü/parsel tutamaçla, boşluk duvara bağlı.
-      this.original = e && (e.type === 'wall' || e.type === 'block') ? e : null;
+      // Yalnız doğrudan kütlesel taşınanlar sürüklenir (duvar/blok/metin); ölçü/parsel tutamaçla, boşluk duvara bağlı.
+      this.original =
+        e && (e.type === 'wall' || e.type === 'block' || e.type === 'annotation') ? e : null;
       this.downWorld = p.world;
       this.phase.send({ type: 'DOWN' });
     }
@@ -199,7 +201,7 @@ export class SelectTool implements SceneTool {
         end: { x: entity.end.x + dx, y: entity.end.y + dy },
       };
     }
-    if (entity.type === 'block') {
+    if (entity.type === 'block' || entity.type === 'annotation') {
       return { ...entity, position: { x: entity.position.x + dx, y: entity.position.y + dy } };
     }
     return entity;
@@ -332,6 +334,15 @@ export class SelectTool implements SceneTool {
       case 'block': {
         const c = blockCorners(entity);
         g.poly(c.flatMap((p) => [p.x, p.y])).stroke({ width: 2 * px, color: SELECT_COLOR, alpha });
+        break;
+      }
+      case 'annotation': {
+        const { w, h } = annotationSize(entity);
+        g.rect(entity.position.x, entity.position.y, w, h).stroke({
+          width: 1.5 * px,
+          color: SELECT_COLOR,
+          alpha,
+        });
         break;
       }
       case 'space':

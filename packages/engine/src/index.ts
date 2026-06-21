@@ -7,6 +7,7 @@ export { drawOpening } from './render-opening';
 export { drawDimension, buildDimensionLabel } from './render-dimension';
 export { drawParcel } from './render-parcel';
 export { drawBlock } from './render-block';
+export { buildAnnotation } from './render-annotation';
 export { drawBlockSymbol } from './block-symbols';
 export * from './linetypes';
 export { EntityLayer } from './entity-layer';

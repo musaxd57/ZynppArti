@@ -8,6 +8,7 @@ import { drawOpening } from './render-opening';
 import { drawDimension, buildDimensionLabel } from './render-dimension';
 import { drawParcel } from './render-parcel';
 import { drawBlock } from './render-block';
+import { buildAnnotation } from './render-annotation';
 import { LayerState } from './layer-state';
 
 /**
@@ -142,6 +143,10 @@ export class EntityLayer {
       this.blockLayer.addChild(g);
       objs.push(g);
       this.redrawables.set(entity.id, (p) => drawBlock(g, entity, p));
+    } else if (entity.type === 'annotation') {
+      const label = buildAnnotation(entity);
+      this.labelLayer.addChild(label);
+      objs.push(label);
     } else {
       const fill = buildSpaceFill(entity);
       this.spaceFill.addChild(fill);

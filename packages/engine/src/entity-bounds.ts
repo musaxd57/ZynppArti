@@ -1,4 +1,5 @@
 import {
+  annotationSize,
   blockCorners,
   dimensionGeometry,
   openingFrame,
@@ -65,6 +66,15 @@ export function entityBounds(entity: Entity): AABB {
       const xs = blockCorners(entity).map((p) => p.x);
       const ys = blockCorners(entity).map((p) => p.y);
       return { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
+    }
+    case 'annotation': {
+      const { w, h } = annotationSize(entity);
+      return {
+        minX: entity.position.x,
+        minY: entity.position.y,
+        maxX: entity.position.x + w,
+        maxY: entity.position.y + h,
+      };
     }
   }
 }

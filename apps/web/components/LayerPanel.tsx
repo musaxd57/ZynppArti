@@ -10,10 +10,11 @@ const LAYER_NAMES: Record<string, string> = {
   default: 'Mimari',
   rooms: 'Mahaller',
   furniture: 'Mobilya',
+  annotation: 'Notlar',
   site: 'Parsel',
 };
 /** Sabit gösterim sırası (bilinenler önce). */
-const ORDER = ['default', 'rooms', 'furniture', 'site'];
+const ORDER = ['default', 'rooms', 'furniture', 'annotation', 'site'];
 
 function layerName(id: string): string {
   return LAYER_NAMES[id] ?? id;
