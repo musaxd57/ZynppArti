@@ -3,6 +3,7 @@ import { distanceToSegment, distanceToPolygonBoundary } from '@zynpparti/geometr
 import {
   dimensionGeometry,
   openingFrame,
+  pointInAnnotation,
   pointInBlock,
   type EntityId,
   type EntityStore,
@@ -69,6 +70,15 @@ export function hitTest(
     } else if (entity.type === 'block') {
       // Ayak izinin içindeyse seç (dolu nesne); en küçük alanlı blok önceliği için merkez uzaklığı.
       if (pointInBlock(entity, point)) {
+        const d = Math.hypot(point.x - entity.position.x, point.y - entity.position.y);
+        if (d < bestDist) {
+          bestDist = d;
+          bestId = id;
+        }
+      }
+    } else if (entity.type === 'annotation') {
+      // Metin kutusunun içindeyse seç; köşe uzaklığını mesafe ölçütü olarak kullan.
+      if (pointInAnnotation(entity, point)) {
         const d = Math.hypot(point.x - entity.position.x, point.y - entity.position.y);
         if (d < bestDist) {
           bestDist = d;

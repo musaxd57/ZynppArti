@@ -94,9 +94,20 @@ export interface Block extends EntityBase {
 }
 
 /**
- * Entity birliği (discriminated union). `type` alanı ayırıcıdır.
- * İleride Annotation... eklenecek.
+ * Açıklama/etiket (annotation) — tuvale serbest metin notu (CLAUDE.md §7 "annotation").
+ * `position` metnin sol-üst köşesi (cm); `height` satır yüksekliği (cm, dünya birimi → zoom'la ölçeklenir).
+ * Çok satırlı metin `\n` ile. Duvar/mahale bağlı değildir (serbest yerleşim).
  */
-export type Entity = Wall | Space | Opening | Dimension | Parcel | Block;
+export interface Annotation extends EntityBase {
+  readonly type: 'annotation';
+  readonly position: Vec2;
+  readonly text: string;
+  readonly height: number;
+}
+
+/**
+ * Entity birliği (discriminated union). `type` alanı ayırıcıdır.
+ */
+export type Entity = Wall | Space | Opening | Dimension | Parcel | Block | Annotation;
 
 export type EntityType = Entity['type'];

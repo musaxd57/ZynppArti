@@ -9,3 +9,4 @@ export * from './opening';
 export * from './dimension';
 export * from './takeoff';
 export * from './block';
+export * from './annotation';
