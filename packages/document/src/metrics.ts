@@ -9,19 +9,24 @@ import type { RoomType, Space, Wall } from './entities';
  * burada sadece atanan tipe göre gruplama yapılır.
  */
 
-/** Mahal tipi → Türkçe etiket (panelde ve Excel'de gösterilir). Sıralı: panelde bu sırayla çıkar. */
-export const ROOM_TYPES: ReadonlyArray<{ key: RoomType; label: string }> = [
-  { key: 'living', label: 'Yaşam' },
-  { key: 'kitchen', label: 'Mutfak' },
-  { key: 'bathroom', label: 'Banyo/WC' },
-  { key: 'wet', label: 'Islak hacim' },
-  { key: 'sleeping', label: 'Yatma' },
-  { key: 'circulation', label: 'Sirkülasyon' },
-  { key: 'service', label: 'Servis' },
-  { key: 'other', label: 'Diğer' },
+/**
+ * Mahal tipi → Türkçe etiket + kanonik renk (0xRRGGBB). **Tek doğruluk kaynağı** (VISUAL-CRAFT §6):
+ * hem engine mahal dolgusu hem web lejantı buradan türetir → renkler asla kaymaz. Sıralı: panelde
+ * bu sırayla çıkar.
+ */
+export const ROOM_TYPES: ReadonlyArray<{ key: RoomType; label: string; color: number }> = [
+  { key: 'living', label: 'Yaşam', color: 0xd9a14a },
+  { key: 'kitchen', label: 'Mutfak', color: 0xe0773f },
+  { key: 'bathroom', label: 'Banyo/WC', color: 0x4ec9d9 },
+  { key: 'wet', label: 'Islak hacim', color: 0x3fa9b8 },
+  { key: 'sleeping', label: 'Yatma', color: 0x9a7fd9 },
+  { key: 'circulation', label: 'Sirkülasyon', color: 0x8a8a8a },
+  { key: 'service', label: 'Servis', color: 0x6fbf73 },
+  { key: 'other', label: 'Diğer', color: 0x4a90d9 },
 ];
 
 const LABEL_BY_KEY = new Map(ROOM_TYPES.map((t) => [t.key, t.label]));
+const COLOR_BY_KEY = new Map(ROOM_TYPES.map((t) => [t.key, t.color]));
 
 /** Mahalin tipi (atanmamışsa 'other'). */
 export function roomTypeOf(space: Space): RoomType {
@@ -31,6 +36,16 @@ export function roomTypeOf(space: Space): RoomType {
 /** Tip anahtarının Türkçe etiketi. */
 export function roomTypeLabel(type: RoomType): string {
   return LABEL_BY_KEY.get(type) ?? 'Diğer';
+}
+
+/** Tip anahtarının kanonik rengi (0xRRGGBB). */
+export function roomTypeColor(type: RoomType): number {
+  return COLOR_BY_KEY.get(type) ?? 0x4a90d9;
+}
+
+/** 0xRRGGBB sayısını CSS hex dizgesine çevirir (#rrggbb). */
+export function toHexColor(n: number): string {
+  return '#' + n.toString(16).padStart(6, '0');
 }
 
 const CM2_PER_M2 = 10000;

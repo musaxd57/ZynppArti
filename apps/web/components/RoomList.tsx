@@ -8,8 +8,10 @@ import {
   UpdateEntity,
   centerlineAreaM2,
   computeMetrics,
+  roomTypeColor,
   roomTypeOf,
   roomTypeLabel,
+  toHexColor,
   type EntityStore,
   type History,
   type RoomType,
@@ -29,18 +31,6 @@ function getWalls(store: EntityStore): Wall[] {
 function fmt(m2: number): string {
   return m2.toFixed(1).replace('.', ',');
 }
-
-/** Tip → renk (engine ROOM_TYPE_FILL ile aynı; tuvaldeki mahal rengiyle eşleşir). */
-const TYPE_COLOR: Record<RoomType, string> = {
-  living: '#d9a14a',
-  kitchen: '#e0773f',
-  bathroom: '#4ec9d9',
-  wet: '#3fa9b8',
-  sleeping: '#9a7fd9',
-  circulation: '#8a8a8a',
-  service: '#6fbf73',
-  other: '#4a90d9',
-};
 
 interface RoomListProps {
   store: EntityStore;
@@ -138,7 +128,7 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
           <div key={s.id} className="flex items-center gap-1">
             <span
               className="h-3 w-3 shrink-0 rounded-sm"
-              style={{ backgroundColor: TYPE_COLOR[roomTypeOf(s)] }}
+              style={{ backgroundColor: toHexColor(roomTypeColor(roomTypeOf(s))) }}
               title="Tip rengi (tuvaldeki mahal ile aynı)"
             />
             <input

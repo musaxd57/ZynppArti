@@ -1,27 +1,15 @@
 import { BitmapText, Graphics } from 'pixi.js';
 import { hatchPattern, polygonArea, type Vec2 } from '@zynpparti/geometry';
-import { roomTypeOf, type Material, type RoomType, type Space } from '@zynpparti/document';
+import { roomTypeColor, roomTypeOf, type Material, type Space } from '@zynpparti/document';
 import { ROOM_FONT } from './charset';
 import { LINEWEIGHTS, PALETTE } from './lineweights';
 
 const LABEL_SIZE = 28; // cm (dünya birimi)
 
 /**
- * Mahal tipine göre dolgu rengi (zoning/imar diyagramı hissi; VISUAL-CRAFT §5 — renkle okunabilirlik).
- * Koyu tuvalde soluk tint. Tip kullanıcı atar (RoomList); değişince mahal yeniden çizilir.
+ * Mahal dolgusunu (tipe göre renkli, yarı saydam poligon) çizer. Renk **document `roomTypeColor`**
+ * tek kaynağından gelir (web lejantıyla aynı; VISUAL-CRAFT §5/§6 — kaymayan zoning renkleri).
  */
-const ROOM_TYPE_FILL: Record<RoomType, number> = {
-  living: 0xd9a14a, // yaşam — sıcak amber
-  kitchen: 0xe0773f, // mutfak — turuncu
-  bathroom: 0x4ec9d9, // banyo/wc — camgöbeği
-  wet: 0x3fa9b8, // ıslak hacim (genel) — koyu camgöbeği
-  sleeping: 0x9a7fd9, // yatma — mor
-  circulation: 0x8a8a8a, // sirkülasyon — nötr gri
-  service: 0x6fbf73, // servis — yeşil
-  other: PALETTE.roomFill, // diğer — varsayılan mavi
-};
-
-/** Mahal dolgusunu (tipe göre renkli, yarı saydam poligon) çizer. */
 export function buildSpaceFill(space: Space): Graphics {
   const g = new Graphics();
   const b = space.boundary;
@@ -29,7 +17,7 @@ export function buildSpaceFill(space: Space): Graphics {
     g.moveTo(b[0]!.x, b[0]!.y);
     for (let i = 1; i < b.length; i++) g.lineTo(b[i]!.x, b[i]!.y);
     g.closePath();
-    g.fill({ color: ROOM_TYPE_FILL[roomTypeOf(space)], alpha: PALETTE.roomFillAlpha });
+    g.fill({ color: roomTypeColor(roomTypeOf(space)), alpha: PALETTE.roomFillAlpha });
   }
   return g;
 }
