@@ -1,7 +1,15 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { AddEntity, BatchCommand, type EntityStore, type History, type Wall } from '@zynpparti/document';
+import { jsPDF } from 'jspdf';
+import {
+  AddEntity,
+  BatchCommand,
+  type EntityStore,
+  type History,
+  type Sheet,
+  type Wall,
+} from '@zynpparti/document';
 import type { ToolManager, ToolName } from '@zynpparti/tools';
 import { importDxf, exportDxf } from '@zynpparti/io';
 
@@ -60,6 +68,35 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit }: Toolb
     download(await exportPng(), 'zynpparti.png');
   }
 
+  /**
+   * Mevcut tuval görüntüsünü PDF'e gömer. Sayfa boyutu/yönelimi varsa ilk paftadan (A4–A0),
+   * yoksa A4 yatay. Görsel sayfaya orantı korunarak, kenar boşluğuyla sığdırılır.
+   */
+  async function onExportPdf(): Promise<void> {
+    const dataUrl = await exportPng();
+    const img = new Image();
+    img.src = dataUrl;
+    await img.decode();
+    const sheet = store.all().find((e): e is Sheet => e.type === 'sheet');
+    const format = sheet ? sheet.size.toLowerCase() : 'a4';
+    const orientation: 'l' | 'p' = sheet && sheet.orientation === 'portrait' ? 'p' : 'l';
+    const pdf = new jsPDF({ orientation, unit: 'mm', format });
+    const pw = pdf.internal.pageSize.getWidth();
+    const ph = pdf.internal.pageSize.getHeight();
+    const margin = 10;
+    const availW = pw - 2 * margin;
+    const availH = ph - 2 * margin;
+    const ar = img.width / img.height || 1;
+    let w = availW;
+    let h = w / ar;
+    if (h > availH) {
+      h = availH;
+      w = h * ar;
+    }
+    pdf.addImage(dataUrl, 'PNG', (pw - w) / 2, (ph - h) / 2, w, h);
+    pdf.save('zynpparti.pdf');
+  }
+
   function onExportDxf(): void {
     const walls = store.all().filter((e): e is Wall => e.type === 'wall');
     const blob = new Blob([exportDxf(walls)], { type: 'application/dxf' });
@@ -68,34 +105,35 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit }: Toolb
     URL.revokeObjectURL(url);
   }
 
-  const btn = 'rounded px-3 py-1.5 transition-colors hover:bg-white/10';
+  const btn = 'shrink-0 rounded px-3 py-1.5 transition-colors hover:bg-white/10';
 
   return (
-    <div className="absolute left-4 top-16 flex items-center gap-1 rounded-lg bg-black/60 p-1 text-sm text-white backdrop-blur">
+    <div className="absolute left-4 top-16 flex max-w-[calc(100vw-20rem)] flex-nowrap items-center gap-1 overflow-x-auto rounded-lg bg-black/60 p-1 text-sm text-white backdrop-blur">
       {TOOLS.map((t) => (
         <button
           key={t.name}
           type="button"
           onClick={() => manager.setTool(t.name)}
-          className={`rounded px-3 py-1.5 transition-colors ${
+          title={`${t.label} (${t.hotkey})`}
+          className={`shrink-0 rounded px-2.5 py-1.5 transition-colors ${
             active === t.name ? 'bg-blue-600' : 'hover:bg-white/10'
           }`}
         >
-          {t.label} <kbd className="ml-1 opacity-60">{t.hotkey}</kbd>
+          {t.label}
         </button>
       ))}
-      <span className="mx-1 h-5 w-px bg-white/20" />
+      <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
       <button type="button" onClick={() => history.undo()} className={btn} title="Geri al (Ctrl+Z)">
         ↶
       </button>
       <button type="button" onClick={() => history.redo()} className={btn} title="İleri al (Ctrl+Shift+Z)">
         ↷
       </button>
-      <span className="mx-1 h-5 w-px bg-white/20" />
+      <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
       <button type="button" onClick={zoomToFit} className={btn} title="İçeriğe sığdır (Home)">
         ⊡ Sığdır
       </button>
-      <span className="mx-1 h-5 w-px bg-white/20" />
+      <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
       <button type="button" onClick={() => fileRef.current?.click()} className={btn}>
         DXF Yükle
       </button>
@@ -104,6 +142,9 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit }: Toolb
       </button>
       <button type="button" onClick={() => void onExportPng()} className={btn}>
         PNG İndir
+      </button>
+      <button type="button" onClick={() => void onExportPdf()} className={btn}>
+        PDF İndir
       </button>
       <input
         ref={fileRef}

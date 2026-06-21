@@ -5,6 +5,12 @@
 
 ---
 
+## ADR-0022 — PDF export: jsPDF (istemci) + bağımlılık + UX scroll/toolbar düzeltmeleri
+**Tarih:** 2026-06-21 · **Durum:** Kabul (Moses onayı: "jspdf ekleyebilirsin")
+**Bağlam:** Faz 1 kabul kriterinde PDF export vardı (CLAUDE.md §8.4); PNG/DXF/Excel zaten vardı. PDF için kütüphane gerekir (CLAUDE.md §12: bağımlılık = ciddi karar, önce sor → Moses onayladı).
+**Karar:** `jspdf` (apps/web bağımlılığı). `exportPng` data-URL'i bir PDF sayfasına orantı korunarak gömülür; sayfa boyutu/yönelimi varsa **ilk paftadan** (A4–A0), yoksa A4 yatay. Toolbar "PDF İndir". pnpm 11 build-script bloğu: `jspdf`'in transitif `core-js` postinstall'ı yalnız funding mesajı → `pnpm-workspace.yaml allowBuilds: core-js: false` (build çalıştırılmaz, install hatası önlenir).
+**Sonuç:** Tek tık PDF. Takas: PDF mevcut tuval görüntüsünü gömer (vektör değil, raster) — gerçek vektör/pafta-viewport gömme ileride. Ek olarak bu turda panel UX düzeltildi: sağ/sol kolon kaydırma kabı `pointer-events-none` dış öğedeydi → tekerlek/çubuk çalışmıyordu; kaydırma etkileşimli iç sarmalayıcıya taşındı (`max-h-full overflow-y-auto`). Mahal satırı iki satıra bölündü (malzeme dropdown'ı eklenince yatay taşıyordu). Toolbar tek satır + genişlik sınırı + kbd ipuçları tooltip'e (panellerin altına girmiyor).
+
 ## ADR-0021 — Yönetmelik turu 3: TAKS (hesaplanan) + banyo asgari alanı (hedge'li)
 **Tarih:** 2026-06-21 · **Durum:** Kabul (otonom tur, makul varsayım)
 **Bağlam:** Copilot kural tabanını mevcut veriyle (parsel + mahal) denetlenebilir, **doğru** kalan kurallarla genişletmek istendi. CLAUDE.md: Türkçe yönetmelik doğruluğu premium farklılaştırıcı — uydurma sayı yasak.

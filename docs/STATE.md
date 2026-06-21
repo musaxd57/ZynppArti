@@ -60,6 +60,8 @@
 ## GÜNLÜK
 
 ### 2026-06-21
+- **Panel kaydırma DÜZELTİLDİ + Mahal satırı iki satır:** sağ/sol kolon kaydırma kabı `pointer-events-none` dış öğedeydi → fare tekerleği ve çubuk sürükleme çalışmıyordu (Moses bildirdi). Kaydırma **etkileşimli iç sarmalayıcıya** taşındı (`max-h-full overflow-y-auto`). Ayrıca Mahal Listesi satırı, malzeme dropdown'ı eklenince yatay taşıyordu → iki satıra bölündü (ad+alan / tip+malzeme). Tarayıcıda (headless screenshot) doğrulandı.
+- **PDF export (jsPDF, ADR-0022):** Toolbar "PDF İndir" — tuval görüntüsünü orantı korunarak PDF sayfasına gömer (boyut/yön varsa ilk paftadan, yoksa A4 yatay). `jspdf` bağımlılığı (Moses onayı); `core-js` build pnpm-workspace'te reddedildi. Toolbar tek satır + genişlik sınırı + kbd→tooltip (paneller altına girmiyor, PDF butonu görünür). Tarayıcıda doğrulandı.
 - **Kısayol yardım katmanı:** `ShortcutsHelp` — **?** ile aç/kapa + sağ-altta "?" düğmesi; araçlar/düzenleme/görünüm kısayollarını gruplu listeler (artan kısayol setini keşfedilebilir kılar, VISUAL-CRAFT §6). Kendi state'i + global keydown (input'ta yazarken yok sayar). Zincir yeşil.
 - **Seçim UX: Ctrl+A + ok tuşuyla itme:** ToolManager **Ctrl+A** → tüm seçilebilir entity'leri (mahaller hariç) seç. SelectTool **ok tuşları** → seçili taşınabilirleri 10 cm (Shift ile 100 cm) it (tek BatchCommand undo). Çoklu seçim + offsetEntity üstüne. Zincir yeşil.
 - **İçeriğe sığdır (zoom extents):** SpatialIndex `bounds()` (birleşik AABB, +1 test) → canvas-app `zoomToFit` (tüm entity'leri %10 boşlukla çerçeveler) + **Home** kısayolu + Toolbar "⊡ Sığdır" butonu. engine 31 test. Zincir yeşil.
