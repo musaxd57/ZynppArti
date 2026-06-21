@@ -54,6 +54,10 @@
 
 ## GÜNLÜK
 
+### 2026-06-21
+- **Mobilya çizelgesi (metraj):** `takeoff.ts` → `blockSchedule` (tipe göre adet, BLOCK_DEFS sırasıyla); `computeTakeoff`'a `blocks` parametresi (opts'tan önce). web TakeoffPanel: "Mobilya" bölümü (canlı adet) + Excel'e **Mobilya** sayfası. takeoff testleri imzaya uyarlandı + mobilya çizelgesi testi (document 39 test). Zincir yeşil (typecheck 7/7 · lint 7/7 · build 1/1).
+- **Blok seç/taşı/döndür (SelectTool entegrasyonu):** gece eklenen blok kütüphanesi yerleştiriyordu ama yerleştirilen blok düzenlenemiyordu. SelectTool artık blokları **sürükleyerek taşıyor** (translate wall+block'a genelleştirildi), seçili bloku **`x` ile 90° döndürüyor** (BlockTool ile tutarlı), ve dönmüş ayak izinde **seçim/hover vurgusu** çiziyor. Mobilya gerçek ölçülü kaldığı için köşe tutamacıyla yeniden boyutlandırma yok (kasıtlı). Ayrıca blok geometrisinin (`blockCorners`/`pointInBlock`) **hiç testi yoktu** → `document/block.test.ts` eklendi (dönüş + konum, 6 test). Zincir yeşil (typecheck 7/7 · document 38 test · lint 7/7 · build 1/1). main'e merge + push (43f52ab). **Blok sembollerinin tarayıcı görsel doğrulaması Moses'ta.**
+
 ### 2026-06-20
 - **Blok/mobilya kütüphanesi:** document `Block` entity + `block.ts` (BLOCK_DEFS: yatak/kanepe/koltuk/masa/klozet/lavabo/duş/küvet/ocak/buzdolabı/merdiven + boyut, blockCorners/pointInBlock). engine block-symbols (tip-üstü semboller) + render-block (konum/dönüş, ekran-sabit ince çizgi) + blockLayer + bounds/hit-test. tools BlockTool ('b' kısayolu, 'x' ile döndür) + ToolManager.setBlockKind. web BlockPalette (sol kolon, katlanabilir). Zincir yeşil; tarayıcı görsel doğrulaması yapılamadı (gece yarıda kesildi — sembolleri yarın gözden geçir).
 - **Panel UX cilası:** ortak katlanabilir `Panel` bileşeni (başlık + ▾ katla/aç; kapalıyken ince sekme). Paneller sol/sağ **dikey kolonlarda** (CanvasStage, pointer-events-none kolon + auto içerik) → üst üste binmiyor (Metraj artık Mahal Listesi'nin altında, gap'li). RoomList/Takeoff/Copilot/LayerPanel hepsi Panel kullanıyor. Tarayıcıda doğrulandı (katlama + temiz tuval).
