@@ -257,12 +257,14 @@ export class SelectTool implements SceneTool {
   private setSelection(ids: Iterable<EntityId>): void {
     this.selectedIds = new Set(ids);
     this.renderSelection();
+    this.ctx.onSelectionChange?.([...this.selectedIds]);
   }
 
   private toggle(id: EntityId): void {
     if (this.selectedIds.has(id)) this.selectedIds.delete(id);
     else this.selectedIds.add(id);
     this.renderSelection();
+    this.ctx.onSelectionChange?.([...this.selectedIds]);
   }
 
   private firstSelectedEntity(): Entity | undefined {

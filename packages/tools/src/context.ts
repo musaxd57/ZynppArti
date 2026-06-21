@@ -1,7 +1,7 @@
 import type { Container } from 'pixi.js';
 import type { Vec2 } from '@zynpparti/geometry';
 import { distance } from '@zynpparti/geometry';
-import type { Entity, EntityStore, History } from '@zynpparti/document';
+import type { Entity, EntityId, EntityStore, History } from '@zynpparti/document';
 import type { SnapHint, SpatialIndex } from '@zynpparti/engine';
 
 /**
@@ -23,6 +23,8 @@ export interface ToolContext {
   isLayerLocked?(layerId: string): boolean;
   /** Tuval imlecini ayarla (araç başına). İsteğe bağlı. */
   setCursor?(cursor: string): void;
+  /** Seçim değişince çağrılır (Özellikler paneli için seçili id'ler). İsteğe bağlı. */
+  onSelectionChange?(ids: EntityId[]): void;
 }
 
 const SNAP_PX = 12; // ekran pikseli yarıçapı (tam nokta yakalama)
