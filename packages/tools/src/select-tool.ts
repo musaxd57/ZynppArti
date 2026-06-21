@@ -188,9 +188,30 @@ export class SelectTool implements SceneTool {
         );
         this.renderSelection();
       }
+    } else if (e.key.startsWith('Arrow') && this.selectedIds.size > 0) {
+      // Ok tuşlarıyla itme: 10 cm, Shift ile 100 cm. (Dünya y aşağı → yukarı = -y.)
+      const step = e.shiftKey ? 100 : 10;
+      const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[
+        e.key
+      ];
+      if (d) {
+        this.nudge(d[0]!, d[1]!);
+        e.preventDefault();
+      }
     } else if (e.key === 'Escape') {
       this.setSelection([]);
     }
+  }
+
+  /** Seçili taşınabilir entity'leri (dx,dy) kadar iter (tek BatchCommand undo). */
+  private nudge(dx: number, dy: number): void {
+    const movable = [...this.selectedIds]
+      .map((id) => this.ctx.store.get(id))
+      .filter((e): e is Entity => !!e && isClonable(e));
+    if (movable.length === 0) return;
+    const cmds = movable.map((e) => new UpdateEntity(offsetEntity(e, dx, dy)));
+    this.ctx.history.dispatch(cmds.length === 1 ? cmds[0]! : new BatchCommand('İt', cmds));
+    this.renderSelection();
   }
 
   /** Seçili entity'leri (id'leri verilen) siler; her duvarın bağlı boşlukları tek undo'da birlikte gider. */

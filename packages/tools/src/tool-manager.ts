@@ -159,6 +159,11 @@ export class ToolManager implements SceneTool {
       e.preventDefault();
       return;
     }
+    if (ctrl && (e.key === 'a' || e.key === 'A')) {
+      this.selectAll();
+      e.preventDefault();
+      return;
+    }
     // Esc her zaman Seç'e döner; zaten Seç'teyse seçimi temizler.
     if (e.key === 'Escape') {
       if (this.current !== 'select') this.setTool('select');
@@ -185,6 +190,17 @@ export class ToolManager implements SceneTool {
   /** Araç zaten aktifse Seç'e döner, değilse o aracı açar (toggle). */
   private toggleTool(name: ToolName): void {
     this.setTool(this.current === name ? 'select' : name);
+  }
+
+  /** Tüm seçilebilir entity'leri (mahaller hariç) seçer; Seç aracına geçer. */
+  private selectAll(): void {
+    const ids = this.ctx.store
+      .all()
+      .filter((e) => e.type !== 'space')
+      .map((e) => e.id);
+    if (ids.length === 0) return;
+    this.setTool('select');
+    this.selectTool.selectMany(ids);
   }
 
   /** Seçili (kopyalanabilir) entity'leri panoya alır. */
