@@ -4,11 +4,11 @@
 > Her madde: **[FAZ]** + tohum + **➤ Türkçe pazar fırsatı** (varsa).
 > Not: Pazar/fiyat bilgisi değişir; özellik kurulurken güncel kaynaktan doğrula.
 >
-> **Durum:** Hepsi **Faz 3+** — şimdilik raf. **Faz 2 önceliklidir** (AI render + copilot). Bu dosya backlog/yön belgesidir.
+> **Durum (güncel):** §1 Metraj ✅ YAPILDI ve §5 Pafta ✅ YAPILDI (ADR-0019 ile öne çekildi); §3 Çizelge motoru ⏳ kısmen. §2 (canlı maliyet), §4 (revizyon), §6 (çakışma) hâlâ ileri faz. Bu dosya backlog/yön belgesidir.
 
 ---
 
-## 1. METRAJ / MİKTAR ÇIKARIMI (quantity takeoff) ★★★ — EN KRİTİK
+## 1. METRAJ / MİKTAR ÇIKARIMI (quantity takeoff) ★★★ — EN KRİTİK · ✅ YAPILDI
 
 Mimar/keşifçi bunun için para öder. Profesyonel araçlar (Revit material takeoff, Navisworks Quantification) modelden **tek işlemde** miktar çıkarır: duvar katmanları (tuğla, sıva, yalıtım), alanlar, hacimler, sayılar, malzeme dökümü.
 
@@ -20,7 +20,7 @@ Mimar/keşifçi bunun için para öder. Profesyonel araçlar (Revit material tak
 
 **➤ Türkçe pazar fırsatı (büyük):** Türkiye'de metraj **poz numaraları + Çevre/Şehircilik Bakanlığı birim fiyatları** ile yapılır. Yerli birim fiyat/poz entegrasyonu → "Türk mimarın metraj + yaklaşık maliyet" aracı. Yabancı araçlarda YOK. (Yönetmelik fırsatıyla aynı mantık — bkz. `FAZ2-NOTES.md §3`.)
 
-**➤ Karar:** Metraj, m² özelliğinin doğal devamı. Faz 3 civarı "Metraj paneli"; Türkçe poz/birim fiyat entegrasyonu premium farklılaştırıcı.
+**✅ YAPILDI (ADR-0019 ile öne çekildi):** `packages/document/src/takeoff.ts` (`computeTakeoff`: duvar uzunluğu, sıva/boya m², döşeme m², süpürgelik, kapı/pencere çizelgesi + **mobilya çizelgesi**) → web `TakeoffPanel` canlı + Excel (Metraj/Çizelge/Mobilya sayfaları), düzenlenebilir kat yüksekliği. **Hâlâ ☐:** Türkçe **poz/birim fiyat** entegrasyonu (premium tohum), tuğla/yalıtım gibi katman-bazlı malzeme dökümü.
 
 ---
 
@@ -45,7 +45,7 @@ BIM zekasının özü: nesneler **veri taşır** ve değişiklik **çizelgelere 
 - Bu özellikler **canlı çizelgeler** üretsin (kapı listesi, mahal listesi, malzeme listesi) — biri değişince hepsi güncellensin.
 - Mahal/m² + metraj + maliyet, hepsi bu çizelge altyapısının üstünde.
 
-**➤ Karar:** "Schedule (çizelge) motoru" — entity özelliği → canlı tablo. Faz 3. Mahal listesi (Faz 1) bunun ilk örneği.
+**Durum:** ⏳ Kısmen yapıldı — mahal listesi (ad/tip/m²/malzeme), kapı/pencere çizelgesi ve mobilya çizelgesi canlı (`takeoff.ts` + RoomList/TakeoffPanel); Excel'e dökülüyor. **Hâlâ ☐:** genel "entity özelliği (marka/maliyet) → otomatik tablo" soyutlaması ve iki-yönlü bağ.
 
 ---
 
@@ -62,16 +62,12 @@ Architizer: BIM yönetim araçlarının en değerli özelliği **revizyonları t
 
 ---
 
-## 5. PAFTA / DOKÜMANTASYON YÖNETİMİ ★
+## 5. PAFTA / DOKÜMANTASYON YÖNETİMİ ★ · ✅ ÇEKİRDEK YAPILDI
 
 Profesyonel araçlar plan/kesit/detay arası **hızlı gezinme + sayfa seti (sheet set)** yönetimi sunar; dokümantasyon hızlanır.
 
-**Bizim için:** Paper canvas / pafta (CLAUDE.md §8.6) bunun temeli. Ekle:
-- Sayfa seti: birden çok pafta, otomatik numaralandırma, antet (title block).
-- Plan↔kesit↔detay arası hızlı geçiş.
-- Toplu PDF export (tüm paftalar).
-
-**➤ Karar:** Pafta yönetimi Faz 5 sunum fazında olgunlaşır.
+**✅ YAPILDI (çekirdek):** `Sheet` entity (A4–A0 + yön + ölçek 1:N + antet alanları; `document/sheet.ts`), `SheetTool` (F) ile yerleştirme, çerçeve + antet render (`engine/render-sheet.ts`), `SheetPanel` (boyut/yön/ölçek/başlık düzenle), **PDF export** (jsPDF, ilk paftadan sayfa boyutu — ADR-0022).
+**Hâlâ ☐:** çoklu pafta **sayfa seti** + otomatik numaralandırma, plan↔kesit↔detay gezinme, paftaya çizim **viewport** gömme, **toplu** PDF (tüm paftalar). Bunlar Faz 5 sunum fazında olgunlaşır.
 
 ---
 
@@ -85,14 +81,14 @@ Farklı disiplinleri (mimari/tesisat/strüktür) karşılaştırıp **mekânsal 
 
 ## ÖZET — CLAUDE.md/ROADMAP'e eklenecekler
 
-| Özellik | Faz | Türkçe fırsat? | Not |
-|---------|-----|----------------|-----|
-| **Metraj (quantity takeoff)** | 3 | ✅ poz/birim fiyat | m²'nin devamı, çok değerli |
-| **Canlı maliyet (5D)** | 3-4 | ✅ TL birim fiyat | metrajın üstüne |
-| **Çizelge motoru (data→tablo)** | 3 | — | mahal listesi ilk örnek |
-| **Revizyon/sürüm takibi** | 5-6 | — | Git-benzeri north-star |
-| **Pafta/sheet set** | 5 | — | paper canvas üstüne |
-| **Çakışma denetimi** | 6+ | — | 3B sonrası |
+| Özellik | Durum | Türkçe fırsat? | Not |
+|---------|-------|----------------|-----|
+| **Metraj (quantity takeoff)** | ✅ yapıldı | ✅ poz/birim fiyat (☐ tohum) | m²'nin devamı, çok değerli |
+| **Canlı maliyet (5D)** | ☐ Faz 3-4 | ✅ TL birim fiyat | metrajın üstüne |
+| **Çizelge motoru (data→tablo)** | ⏳ kısmen | — | mahal/kapı/mobilya çizelgesi canlı |
+| **Revizyon/sürüm takibi** | ☐ Faz 5-6 | — | Git-benzeri north-star |
+| **Pafta/sheet set** | ⏳ çekirdek ✅ | — | Sheet entity+panel+PDF var; sayfa seti ☐ |
+| **Çakışma denetimi** | ☐ Faz 6+ | — | 3B sonrası |
 
 **Stratejik çıkarım:** ZynppArti'nin Türk pazarındaki **üç farklılaştırıcısı** netleşti:
 1. **Türkçe yapı yönetmeliği** copilot'u (`FAZ2-NOTES.md §3`)

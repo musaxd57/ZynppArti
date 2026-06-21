@@ -54,7 +54,7 @@ Rayon'un kanıtlanmış formülünü koruyoruz (2D öncelikli, tarayıcı öncel
 
 > Bu bölüm sadece **tek satır** özet içerir; gerçek durum `docs/STATE.md`'de.
 
-**Faz 0 — İskelet TAMAM.** (Monorepo + pan/zoom canvas + yeşil CI. Sıradaki: Faz 1. Detay: `docs/STATE.md`.)
+**Faz 1 TAMAM + Faz 2A/2B TAMAM.** (Çizim/import/mahal + canlı metrik + deterministik Türkçe yönetmelik copilot'u; ayrıca blok/metin/pafta/metraj/çoklu-seçim vb. maliyetsiz ekstralar — ADR-0019. Sıradaki maliyetli AI (render + LLM) **ertelendi**. Detay: `docs/STATE.md`.)
 
 ---
 
@@ -67,11 +67,11 @@ pnpm install            # bağımlılıklar (paket yöneticisi: pnpm, npm/yarn D
 pnpm dev                # tüm uygulamaları geliştirme modunda çalıştır (turbo)
 pnpm build              # production build
 pnpm test               # birim testleri (Vitest)
-pnpm test:watch         # izleme modunda test
-pnpm test:e2e           # uçtan uca testler (Playwright)
 pnpm lint               # ESLint
-pnpm format             # Prettier
+pnpm format             # Prettier (format:check = yalnız kontrol)
 pnpm typecheck          # tsc --noEmit (TÜM paketlerde tip kontrolü)
+# NOT: test:watch / test:e2e henüz yok (Playwright kurulu değil; tarayıcı doğrulaması
+#      şu an headless Chrome/CDP ekran görüntüsüyle yapılıyor).
 
 # Tek bir paketi hedeflemek için:
 pnpm --filter @zynpparti/geometry test
@@ -98,26 +98,29 @@ zynpparti/
 │   ├── RENDER.md              ← AI render hattı (modeller, prompt, maliyet)
 │   ├── AI-GENERATE.md         ← otomatik plan üretimi (araştırma + plan)
 │   └── PERFORMANCE.md         ← performans bütçeleri ve ölçüm
-├── packages/
-│   ├── geometry/              ← SAF 2D geometri/CAD matematiği (UI yok, %100 test) ★
-│   ├── document/              ← doküman modeli: entity'ler, Command, undo/redo ★
-│   ├── engine/                ← WebGL render motoru (çizim, pan/zoom/snap, hit-test)
-│   ├── tools/                 ← çizim araçları (XState FSM'leri: duvar, ölçü, seçim…)
-│   ├── collab/                ← gerçek zamanlı senkron (Yjs / commit-log)
-│   ├── io/                    ← DWG/DXF/PDF import + export (PDF/PNG/DXF/Excel)
-│   ├── blocks/                ← mobilya/sembol blok kütüphanesi
-│   └── ui/                    ← paylaşılan React bileşenleri + tasarım sistemi
+├── packages/                  ← (✅ = mevcut, ☐ = planlanan/henüz yok)
+│   ├── geometry/    ✅          ← SAF 2D geometri/CAD matematiği (UI yok, bağımlılıksız) ★
+│   ├── document/    ✅          ← doküman modeli: entity'ler, Command, undo/redo, materials ★
+│   ├── engine/      ✅          ← WebGL render motoru (çizim, pan/zoom/snap, hit-test)
+│   ├── tools/       ✅          ← çizim araçları (XState FSM'leri: duvar, ölçü, seçim…)
+│   ├── copilot/     ✅          ← deterministik Türkçe yönetmelik kural motoru (Faz 2B)
+│   ├── io/          ✅          ← DXF import/export (DWG ☐ + PDF web tarafında jsPDF ile)
+│   ├── collab/      ☐          ← gerçek zamanlı senkron (Yjs / commit-log) — Faz 3
+│   ├── blocks/      ☐          ← (blok kütüphanesi şimdilik document+engine içinde; ayrı paket yok)
+│   ├── ai/          ☐          ← sağlayıcı-bağımsız AI adapter (ADR-0006) — Faz 2 AI ayağı
+│   └── ui/          ☐          ← paylaşılan React bileşenleri + tasarım sistemi (şimdilik apps/web içinde)
 ├── apps/
-│   ├── web/                   ← ana uygulama (Next.js + React, canvas burada gömülü)
-│   ├── api/                   ← metadata backend (kullanıcı, proje, yorum, izin)
-│   └── sync/                  ← gerçek zamanlı multiplayer backend (WebSocket)
-└── services/                  ← ağır/asenkron işler (ayrı ölçeklenir, Python olabilir)
-    ├── dwg-convert/           ← sunucu tarafı DWG↔DXF (ODA/LibreDWG yedeği)
-    ├── ai-render/             ← plan/kesit → fotogerçekçi görsel (diffusion)
-    └── ai-layout/             ← boş plandan tasarım üretimi (Faz 4)
+│   ├── web/         ✅          ← ana uygulama (Next.js + React, canvas burada gömülü)
+│   ├── api/         ☐          ← metadata backend (kullanıcı, proje, yorum, izin) — Faz 3
+│   └── sync/        ☐          ← gerçek zamanlı multiplayer backend (WebSocket) — Faz 3
+└── services/        ☐          ← ağır/asenkron işler (HENÜZ YOK; Faz 2 AI / Faz 4)
+    ├── dwg-convert/ ☐          ← sunucu tarafı DWG↔DXF (ODA/LibreDWG yedeği)
+    ├── ai-render/   ☐          ← plan/kesit → fotogerçekçi görsel (diffusion)
+    └── ai-layout/   ☐          ← boş plandan tasarım üretimi (Faz 4)
 ```
 
 ★ = projenin belkemiği. Buralarda hata = her yerde hata. En çok özen burada.
+> **NOT:** Yukarıdaki ağaç hedef yapıdır; ☐ olanlar henüz oluşturulmadı. Bugün kurulu paketler: geometry, document, engine, tools, copilot, io + apps/web.
 
 > **Alt-ağaç CLAUDE.md:** Büyük paketlerin (örn. `packages/engine`) kendi `CLAUDE.md`'si olabilir; Claude o klasördeki dosyaları okurken otomatik yüklenir. Genel kural burada, pakete özel detay orada.
 
@@ -131,28 +134,29 @@ zynpparti/
 - **TypeScript (strict)** — her yerde. `any` yasak; `unknown` + daraltma.
 - **Next.js + React** — uygulama kabuğu, yönlendirme, auth, basit API route'ları.
 - **Render: PixiJS (WebGL)** — canvas motoru. (Canvas2D 500k entity'de çöker; WebGL şart.) İleride performans-kritik parçalar **Rust→WASM** renderer'a taşınabilecek şekilde `packages/engine` izole tutulur.
-- **XState** — çizim araçlarının (CAD komutları) durum makineleri. (Komutlar mouse/klavye olaylarını farklı durumlarda işler; FSM tam buna göredir.)
-- **Zustand** — hafif UI state (panel açık/kapalı, aktif araç vb.). Doküman state'i burada DEĞİL (§6.1).
-- **TailwindCSS** — stil.
+- **XState** ✅ — çizim araçlarının (CAD komutları) durum makineleri. (Kurulu, `packages/tools`.)
+- **Zustand** ☐ — hafif UI state için planlandı; **şu an kurulu değil** (UI state yerel React `useState` ile). Doküman state'i hiçbir zaman burada olmaz (§6.1).
+- **TailwindCSS** ✅ — stil (v4).
 
-**İşbirliği / senkron**
-- **Yjs (CRDT) + Hocuspocus** ile başla (hızlı, olgun, presence + offline). Ölçek/sürüm-kontrolü kritikleşince **Loro (Tree CRDT)** veya Rayon-tarzı **commit-log + invariant doğrulama** north-star olarak açık tutulur (bkz. §6.4, `docs/DECISIONS.md`, `docs/LANDSCAPE.md §5`).
+**İşbirliği / senkron** ☐ (Faz 3 — henüz hiçbiri kurulu değil)
+- **Yjs (CRDT) + Hocuspocus** ile başla (hızlı, olgun, presence + offline). Ölçek/sürüm-kontrolü kritikleşince **Loro (Tree CRDT)** veya Rayon-tarzı **commit-log + invariant doğrulama** north-star (bkz. §6.4, `docs/LANDSCAPE.md §5`).
 
 **Geometri / CAD çekirdeği**
-- `@flatten-js/core` — nokta/çizgi/poligon/kesişim (temel primitive).
-- **Clipper2** — offset/boolean (duvar ofseti + m² + oda birleştirme için tercih). `polygon-clipping` basit alan için yedek; JSTS ağır, sadece gerekirse.
-- DXF: `dxf-parser` veya `@mlightcad/dxf-json` (hafif). DWG: `@mlightcad/libredwg-web` (WASM, tarayıcıda).
+- ⚠️ **Şu an `packages/geometry` BAĞIMLILIKSIZ saf TS** (vec2/segment/polygon/hull/hatch/planar-faces el-yazımı). Aşağıdakiler offset/boolean gerektiğinde eklenecek **planlı** seçimlerdir, henüz kurulu değil:
+- `@flatten-js/core` ☐ — nokta/çizgi/poligon/kesişim primitive.
+- **Clipper2** ☐ — offset/boolean (duvar ofseti + oda birleştirme). `polygon-clipping` yedek; JSTS ağır.
+- DXF: `dxf-parser` ✅ (kurulu, `packages/io`). DWG: `@mlightcad/libredwg-web` ☐ (WASM, tarayıcıda — henüz yok). PDF: `jspdf` ✅ (web, ADR-0022). Excel: `xlsx` ✅.
 
 > Kütüphane karşılaştırması ve gerekçe: `docs/LANDSCAPE.md §6`.
 
-**Backend**
+**Backend** ☐ (Faz 3 — henüz hiçbiri kurulu değil; şu an saf istemci uygulama)
 - **Node.js + Fastify** (büyürse NestJS) — metadata API.
 - **PostgreSQL + Prisma** — kullanıcı, proje, organizasyon, yorum, izin **metadata'sı**. (Entity'ler burada DEĞİL — §6.5.)
 - **Blob storage (S3/R2/MinIO)** — model dosyaları (her model = bir dosya), DWG yüklemeleri, render çıktıları.
 - **Gerçek zamanlı backend** — WebSocket (Hocuspocus/y-websocket veya özel). Oturum-ömürlü, model başına tek otorite.
 - **Redis + BullMQ** — iş kuyruğu (render, dönüştürme, AI).
 
-**AI / ağır işlem (`services/`)**
+**AI / ağır işlem (`services/`)** ☐ (maliyetli → ADR-0019 ile sona ertelendi; henüz yok)
 - **Plandan render:** ControlNet + diffusion (kenar/segment koşullu). Başlangıç: Replicate/Fal API; sonra kendi modeli/host. Yaklaşık maliyet referansı: render başına düşük sentler mertebesi → `docs/RENDER.md`.
 - **Otomatik plan üretimi:** literatür Graph2Plan, House-GAN++, HouseDiffusion, dil-güdümlü (Tell2Design) + LLM-asistanlı yaklaşımlar → `docs/AI-GENERATE.md`. Girdi temsili: **bubble diagram / komşuluk grafiği** + sınır.
 - **Öneri copilot:** geometrik kural motoru + LLM (Claude API).
@@ -161,7 +165,7 @@ zynpparti/
 > **Model notu:** AI uçlarında **en güncel ve yetenekli Claude modelini** kullan — şu an varsayılan `claude-opus-4-8`. Anthropic API ile çalışırken model id, fiyat, tool-use ve caching için `/claude-api` referansını kontrol et; ezbere yazma.
 > **Sağlayıcı bağımsızlığı:** Tüm AI çağrıları `packages/ai` içinde sağlayıcı-bağımsız bir adapter arkasına konur (Anthropic + OpenAI; statik `.env` seçimi → ileride task-router + fallback). Karar: `docs/DECISIONS.md` ADR-0006. Faz 2'de kurulur.
 
-**Altyapı:** Turborepo, Vitest, Playwright, ESLint+Prettier, GitHub Actions (CI: lint+typecheck+test zorunlu).
+**Altyapı:** Turborepo ✅, Vitest ✅, ESLint+Prettier ✅, GitHub Actions ✅ (CI: lint+typecheck+test zorunlu). Playwright ☐ (henüz yok; tarayıcı doğrulaması headless Chrome/CDP ile).
 
 ---
 
@@ -236,14 +240,16 @@ TARAYICI
 - **Model canvas:** Gerçek ölçek (metre/feet). Plan, kesit, görünüş burada. Stroke scale ~1/40, zemin beyaz.
 - **Paper canvas:** Pafta/sayfa düzeni (cm/inch). Export çıktısı burada. Stroke scale 1/1, zemin gri, sayfalar beyaz.
 
-**Entity türleri:**
-- **Wall (duvar):** Kalınlıklı çizgi; oda sınırlarını kurar.
-- **Opening (boşluk):** Kapı/pencere — bir duvarın üstüne oturur (binding ile bağlı).
-- **Room/Zone (mahal):** Kapalı alan; **adı + canlı m²'si var.** ("Locallere isim verme" = bu.)
-- **Block (blok):** Kütüphaneden mobilya/sembol (üst/yan/ön görünüş). DWG blok import + özel blok çizimi.
-- **Dimension (ölçü):** Ölçülendirme.
-- **Annotation:** Metin, ok, etiket.
-- **Image/Reference:** Mood board, referans görsel, import edilmiş PDF/plan.
+**Entity türleri:** (✅ kurulu — `packages/document/src/entities.ts`)
+- **Wall (duvar)** ✅ — kalınlıklı segment; oda sınırlarını kurar.
+- **Opening (boşluk)** ✅ — kapı/pencere; bir duvara `t` ile parametrik binding.
+- **Space (mahal/zone)** ✅ — duvarlardan türetilen kapalı alan; ad + tip + canlı m² + zemin malzemesi.
+- **Block (blok)** ✅ — kütüphaneden mobilya/sembol (üst görünüş). *(DWG blok import ☐.)*
+- **Dimension (ölçü)** ✅ — lineer ölçülendirme.
+- **Annotation (metin)** ✅ — serbest metin notu. *(Ok/lider çizgisi ☐.)*
+- **Parcel (parsel/arsa)** ✅ — arsa sınırı poligonu; çekme (setback) denetimi.
+- **Sheet (pafta)** ✅ — kağıt/sayfa çerçevesi + antet + ölçek (paper canvas çekirdeği).
+- **Image/Reference** ☐ — mood board / referans görsel / import PDF — henüz yok.
 
 **Layer (katman):** Entity grupları; iç içe olabilir (hiyerarşi). Projenin adı buradan: ZynppArti = katman + artı.
 
@@ -328,10 +334,10 @@ TARAYICI
 
 > Detay + kabul kriterleri: `docs/ROADMAP.md`. **Her faz çalışan, gösterilebilir bir ürünle biter.** Önceki faz bitmeden sonrakine geçme.
 
-- **Faz 0 — İskelet:** Monorepo (pnpm+turbo), Next.js+React+PixiJS iskeleti, pan/zoom yapan boş canvas, CI yeşil. **✅ =** zoom'lanabilir boş tuval + testler geçiyor.
-- **Faz 1 — Çizim + Import + Mahal:** Duvar/aç/sil/seç/taşı, undo/redo, snapping, katman, stil; DXF (sonra DWG) import + 2-nokta ölçekleme; otomatik mahal bulma + isim + m² + tablo/Excel. **✅ =** AutoCAD'den DXF gelip ölçekleniyor, mahaller isimlenip m²'leniyor.
-- **Faz 2 — AI Render + Copilot:** Plan/kesit → görsel; ilk öneri copilot'u. **✅ =** tek tıkla render + ilk akıllı öneriler.
-- **Faz 3 — Gerçek Zamanlı İşbirliği:** Yjs multiplayer, presence, link paylaşımı, yorum/markup. **✅ =** iki kişi aynı anda çiziyor.
+- **Faz 0 — İskelet: ✅ TAMAM.** Monorepo (pnpm+turbo), Next.js+React+PixiJS, pan/zoom canvas, CI yeşil.
+- **Faz 1 — Çizim + Import + Mahal: ✅ TAMAM.** Duvar/kapı/pencere/ölçü/parsel/blok/metin, undo/redo, snapping+hizalama, katman (panel+görünürlük+kilit), stil; DXF import + 2-nokta ölçekleme; otomatik mahal + isim/tip + m² + tablo/Excel; DXF/PNG/PDF export. *(DWG import ☐.)*
+- **Faz 2 — AI Render + Copilot: ⏳ KISMEN.** ✅ Canlı metrik (2A) + ✅ deterministik atıflı Türkçe yönetmelik copilot'u (2B). ☐ Plandan AI render + LLM doğal-dil katmanı (maliyetli → ertelendi, ADR-0019).
+- **Faz 3 — Gerçek Zamanlı İşbirliği: ☐** Yjs multiplayer, presence, link paylaşımı, yorum/markup; ayrıca şematik kesit. **✅ =** iki kişi aynı anda çiziyor. *(Metraj/çizelge ADR-0019 ile öne çekildi — yapıldı.)*
 - **Faz 4 — Boş Plandan Üretim:** Sınır + program → plan/kesit üretimi (AI). **✅ =** boş plan + istekten otomatik yerleşim.
 - **Faz 5 — Gerçek 3D + Animasyon:** 2D'den hacim (OCCT-WASM/three.js), kamera animasyonu, sunum modu olgunlaşır; **BIM köprüsü (web-ifc / IFC import-export)** başlar. **✅ =** plandan 3B + animasyonlu sunum.
 - **Faz 6 — Ölçek & Kurumsal:** WASM geçişi (kritik parçalar), commit-log senkron, sürüm geçmişi/branch, **Speckle interop** (Revit/Rhino/AutoCAD), izin/organizasyon, performans sertleştirme. **✅ =** 500k entity'de akıcı + sürüm kontrolü.
