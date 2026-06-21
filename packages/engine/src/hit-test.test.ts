@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EntityStore, type Wall } from '@zynpparti/document';
+import { EntityStore, type Sheet, type Wall } from '@zynpparti/document';
 import { SpatialIndex } from './spatial-index';
 import { entityBounds } from './entity-bounds';
 import { hitTest } from './hit-test';
@@ -38,5 +38,26 @@ describe('hitTest', () => {
     ]);
     expect(hitTest(store, index, { x: 50, y: 16 }, 8)).toBe('w2');
     expect(hitTest(store, index, { x: 50, y: 4 }, 8)).toBe('w1');
+  });
+
+  it('pafta yalnız çerçevesinden seçilir (iç alana tık → null)', () => {
+    const store = new EntityStore();
+    const index = new SpatialIndex();
+    const sheet: Sheet = {
+      id: 's1',
+      type: 'sheet',
+      layerId: 'sheet',
+      position: { x: 0, y: 0 }, // A3 yatay 1:50 → 2100×1485
+      size: 'A3',
+      orientation: 'landscape',
+      scale: 50,
+      title: 'P',
+    };
+    store.put(sheet);
+    index.insert(sheet.id, entityBounds(sheet));
+    // Üst kenara yakın → çerçeveden seçilir.
+    expect(hitTest(store, index, { x: 1000, y: 2 }, 5)).toBe('s1');
+    // İç alan (kenarlardan uzak) → seçilmez.
+    expect(hitTest(store, index, { x: 1000, y: 700 }, 5)).toBeNull();
   });
 });
