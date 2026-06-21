@@ -56,8 +56,8 @@ export function CanvasStage() {
         index: h.index,
         overlay: h.overlay,
         pixelSize: h.pixelSize,
-        snap: createSnapper(store, h.index, h.pixelSize, (t) =>
-          t ? snapIndicator.show(t, h.pixelSize()) : snapIndicator.hide(),
+        snap: createSnapper(store, h.index, h.pixelSize, (hint) =>
+          snapIndicator.show(hint, h.pixelSize()),
         ),
         isLayerHidden: (id) => h.layers.isHidden(id),
         isLayerLocked: (id) => h.layers.isLocked(id),
