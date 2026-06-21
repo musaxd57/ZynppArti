@@ -11,3 +11,4 @@ export * from './takeoff';
 export * from './block';
 export * from './annotation';
 export * from './clone';
+export * from './materials';

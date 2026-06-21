@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hatchLines } from './hatch';
+import { hatchLines, hatchPattern } from './hatch';
 
 const square = [
   { x: 0, y: 0 },
@@ -31,5 +31,22 @@ describe('hatchLines', () => {
   it('dejenere girdi → boş', () => {
     expect(hatchLines([{ x: 0, y: 0 }], 10, 0)).toEqual([]);
     expect(hatchLines(square, 0, 0)).toEqual([]);
+  });
+});
+
+describe('hatchPattern', () => {
+  it('single = hatchLines ile aynı', () => {
+    expect(hatchPattern(square, 20, 0, 'single')).toEqual(hatchLines(square, 20, 0));
+  });
+
+  it('cross = tek yön + dik yön (yaklaşık iki katı çizgi)', () => {
+    const single = hatchPattern(square, 20, 0, 'single').length;
+    const cross = hatchPattern(square, 20, 0, 'cross').length;
+    expect(cross).toBe(single + hatchLines(square, 20, Math.PI / 2).length);
+    expect(cross).toBeGreaterThan(single);
+  });
+
+  it('varsayılan kind = single', () => {
+    expect(hatchPattern(square, 20, 0)).toEqual(hatchLines(square, 20, 0));
   });
 });

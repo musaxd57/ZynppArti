@@ -45,6 +45,8 @@ export interface Space extends EntityBase {
   readonly name: string;
   readonly boundary: readonly Vec2[];
   readonly roomType?: RoomType;
+  /** Zemin kaplaması (materials.ts id'si); atanmazsa düz tip-rengi dolgu. */
+  readonly material?: string;
 }
 
 /**
