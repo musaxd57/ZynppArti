@@ -71,6 +71,22 @@ export class SpatialIndex {
     return this.items.size;
   }
 
+  /** Tüm entity'leri kapsayan birleşik AABB (boşsa null) — zoom-to-fit için. */
+  bounds(): AABB | null {
+    if (this.items.size === 0) return null;
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const it of this.items.values()) {
+      if (it.minX < minX) minX = it.minX;
+      if (it.minY < minY) minY = it.minY;
+      if (it.maxX > maxX) maxX = it.maxX;
+      if (it.maxY > maxY) maxY = it.maxY;
+    }
+    return { minX, minY, maxX, maxY };
+  }
+
   clear(): void {
     this.tree.clear();
     this.items.clear();

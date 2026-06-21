@@ -27,6 +27,7 @@ export function CanvasStage() {
     layers: CanvasHandle['layers'];
     exportPng: () => Promise<string>;
     setHoverHandler: CanvasHandle['setHoverHandler'];
+    zoomToFit: () => void;
   } | null>(null);
   const [renameId, setRenameId] = useState<string | null>(null);
   const clearRename = useCallback(() => setRenameId(null), []);
@@ -89,6 +90,7 @@ export function CanvasStage() {
         layers: h.layers,
         exportPng: h.exportPng,
         setHoverHandler: h.setHoverHandler,
+        zoomToFit: h.zoomToFit,
       });
     });
 
@@ -111,6 +113,7 @@ export function CanvasStage() {
             history={ui.history}
             store={ui.store}
             exportPng={ui.exportPng}
+            zoomToFit={ui.zoomToFit}
           />
           {/* Sol kolon: katmanlar + copilot (üstten dizilir, gap'li → üst üste binmez). */}
           <div className="pointer-events-none absolute bottom-4 left-4 top-28 flex flex-col items-start gap-3 overflow-y-auto">

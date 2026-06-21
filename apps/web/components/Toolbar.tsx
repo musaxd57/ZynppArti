@@ -23,10 +23,11 @@ interface ToolbarProps {
   history: History;
   store: EntityStore;
   exportPng: () => Promise<string>;
+  zoomToFit: () => void;
 }
 
 /** Araç çubuğu: araç seçimi, undo/redo, DXF içe/dışa aktarma, PNG dışa aktarma. */
-export function Toolbar({ manager, history, store, exportPng }: ToolbarProps) {
+export function Toolbar({ manager, history, store, exportPng, zoomToFit }: ToolbarProps) {
   const [active, setActive] = useState<ToolName>(manager.activeTool);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -89,6 +90,10 @@ export function Toolbar({ manager, history, store, exportPng }: ToolbarProps) {
       </button>
       <button type="button" onClick={() => history.redo()} className={btn} title="İleri al (Ctrl+Shift+Z)">
         ↷
+      </button>
+      <span className="mx-1 h-5 w-px bg-white/20" />
+      <button type="button" onClick={zoomToFit} className={btn} title="İçeriğe sığdır (Home)">
+        ⊡ Sığdır
       </button>
       <span className="mx-1 h-5 w-px bg-white/20" />
       <button type="button" onClick={() => fileRef.current?.click()} className={btn}>
