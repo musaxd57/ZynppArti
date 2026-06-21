@@ -60,6 +60,7 @@
 ## GÜNLÜK
 
 ### 2026-06-21
+- **Özellikler paneli (seçili entity düzenleme):** SelectTool seçimi `ToolContext.onSelectionChange` ile React'e yayınlıyor. `PropertiesPanel` tam 1 entity seçiliyken düzenleme sunar: **duvar kalınlığı**, **kapı/pencere genişliği + türü**, **metin içerik + yükseklik**, **blok 90° döndür** — hepsi undo'lanabilir UpdateEntity. Boşluk kapandı: yerleştirilen duvar/kapı ölçüleri artık sonradan değişebiliyor. Zincir yeşil (typecheck/lint/build).
 - **Panel kaydırma DÜZELTİLDİ + Mahal satırı iki satır:** sağ/sol kolon kaydırma kabı `pointer-events-none` dış öğedeydi → fare tekerleği ve çubuk sürükleme çalışmıyordu (Moses bildirdi). Kaydırma **etkileşimli iç sarmalayıcıya** taşındı (`max-h-full overflow-y-auto`). Ayrıca Mahal Listesi satırı, malzeme dropdown'ı eklenince yatay taşıyordu → iki satıra bölündü (ad+alan / tip+malzeme). Tarayıcıda (headless screenshot) doğrulandı.
 - **PDF export (jsPDF, ADR-0022):** Toolbar "PDF İndir" — tuval görüntüsünü orantı korunarak PDF sayfasına gömer (boyut/yön varsa ilk paftadan, yoksa A4 yatay). `jspdf` bağımlılığı (Moses onayı); `core-js` build pnpm-workspace'te reddedildi. Toolbar tek satır + genişlik sınırı + kbd→tooltip (paneller altına girmiyor, PDF butonu görünür). Tarayıcıda doğrulandı.
 - **Kısayol yardım katmanı:** `ShortcutsHelp` — **?** ile aç/kapa + sağ-altta "?" düğmesi; araçlar/düzenleme/görünüm kısayollarını gruplu listeler (artan kısayol setini keşfedilebilir kılar, VISUAL-CRAFT §6). Kendi state'i + global keydown (input'ta yazarken yok sayar). Zincir yeşil.

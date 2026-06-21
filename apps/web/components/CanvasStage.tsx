@@ -10,6 +10,7 @@ import { RoomList } from './RoomList';
 import { CopilotPanel } from './CopilotPanel';
 import { TakeoffPanel } from './TakeoffPanel';
 import { SheetPanel } from './SheetPanel';
+import { PropertiesPanel } from './PropertiesPanel';
 import { LayerPanel } from './LayerPanel';
 import { BlockPalette } from './BlockPalette';
 import { StatusBar } from './StatusBar';
@@ -32,6 +33,7 @@ export function CanvasStage() {
   } | null>(null);
   const [renameId, setRenameId] = useState<string | null>(null);
   const clearRename = useCallback(() => setRenameId(null), []);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -67,6 +69,7 @@ export function CanvasStage() {
         isLayerHidden: (id) => h.layers.isHidden(id),
         isLayerLocked: (id) => h.layers.isLocked(id),
         setCursor: (c) => h.setCursor(c),
+        onSelectionChange: (ids) => setSelectedIds(ids),
       });
       h.setActiveTool(manager);
       // Mahal içine çift tık → Seç moduna geç + o mahalin adını düzenlemeye odaklan.
@@ -128,6 +131,7 @@ export function CanvasStage() {
           {/* Sağ kolon: mahal listesi/metrik + metraj + pafta. */}
           <div className="pointer-events-none absolute bottom-4 right-4 top-16 flex flex-col items-end">
             <div className="pointer-events-auto flex max-h-full flex-col items-end gap-3 overflow-y-auto pl-1">
+              <PropertiesPanel store={ui.store} history={ui.history} selectedIds={selectedIds} />
               <RoomList
                 store={ui.store}
                 history={ui.history}
