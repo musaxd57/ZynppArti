@@ -11,6 +11,7 @@ import { BlockTool } from './block-tool';
 import { AnnotationTool } from './annotation-tool';
 import {
   AddEntity,
+  BatchCommand,
   createEntityId,
   isClonable,
   offsetEntity,
@@ -63,8 +64,8 @@ export class ToolManager implements SceneTool {
   private readonly selectTool: SelectTool;
   private current: ToolName = 'select';
   private readonly listeners = new Set<ToolListener>();
-  /** Kopyala-yapıştır panosu (tek entity; oturum-içi, kalıcı değil). */
-  private clipboard: Entity | null = null;
+  /** Kopyala-yapıştır panosu (çoklu; oturum-içi, kalıcı değil). */
+  private clipboard: Entity[] = [];
 
   constructor(private readonly ctx: ToolContext) {
     this.blockTool = new BlockTool(ctx);
@@ -181,23 +182,24 @@ export class ToolManager implements SceneTool {
     this.setTool(this.current === name ? 'select' : name);
   }
 
-  /** Seçili (kopyalanabilir) entity'yi panoya alır. */
+  /** Seçili (kopyalanabilir) entity'leri panoya alır. */
   private copy(): void {
-    const e = this.selectTool.getSelected();
-    if (e && isClonable(e)) this.clipboard = e;
+    const clonable = this.selectTool.getSelectedEntities().filter(isClonable);
+    if (clonable.length > 0) this.clipboard = clonable;
   }
 
-  /** Panodaki entity'nin kaydırılmış bir kopyasını ekler, seçer ve cascade için panoyu günceller. */
+  /** Panodaki entity'lerin kaydırılmış kopyalarını ekler, seçer ve cascade için panoyu günceller. */
   private paste(): void {
-    if (!this.clipboard) return;
-    const clone: Entity = {
-      ...offsetEntity(this.clipboard, PASTE_OFFSET, PASTE_OFFSET),
+    if (this.clipboard.length === 0) return;
+    const clones: Entity[] = this.clipboard.map((e) => ({
+      ...offsetEntity(e, PASTE_OFFSET, PASTE_OFFSET),
       id: createEntityId(),
-    };
-    this.ctx.history.dispatch(new AddEntity(clone));
-    this.clipboard = clone; // tekrar Ctrl+V → bir önceki kopyadan kayar (üst üste binmez)
+    }));
+    const cmds = clones.map((c) => new AddEntity(c));
+    this.ctx.history.dispatch(cmds.length === 1 ? cmds[0]! : new BatchCommand('Yapıştır', cmds));
+    this.clipboard = clones; // tekrar Ctrl+V → bir önceki kopyalardan kayar (üst üste binmez)
     this.setTool('select');
-    this.selectTool.selectExternal(clone.id);
+    this.selectTool.selectMany(clones.map((c) => c.id));
   }
 
   destroy(): void {
