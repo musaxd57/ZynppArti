@@ -7,9 +7,11 @@
 
 ## ŞU AN
 
-**Faz:** 2 — AI Render + Copilot → **BAŞLADI**. **2A (canlı metrik) + 2B (copilot öneri tohumu) TAMAMLANDI** ✅
-**Branch:** `feat/phase-2a-metrics` (push edildi)
-**Durum:** Faz 1 + **2A canlı metrik paneli** (tip atama, toplam/net/brüt m², tipe göre dağılım, Excel) + **2B copilot kaynak-gösteren öneri** — `packages/copilot` deterministik kural motoru: çizdikçe **atıflı** yönetmelik bulguları (TS 9111 koridor ≥120 cm, İmar yatak ≥9 m² / oturma ≥12 m²) `CopilotPanel`'de canlı.
+**Faz:** 2 — AI Render + Copilot → **BAŞLADI**. **2A (canlı metrik) + 2B (copilot öneri tohumu) TAMAMLANDI** ✅. Maliyetsiz çizim/zanaat özellikleri sürüyor (ADR-0019).
+**Branch:** `main` güncel + push'lu (son: `c8f1973`).
+**Durum:** Faz 1 + 2A/2B + gece+sabah maliyetsiz tur: görsel zanaat, yönetmelik turu, metraj, blok kütüphanesi ve (21 Haz) **blok düzenleme + mobilya çizelgesi/katmanı + açıklama/metin aracı (çift-tıkla düzenleme)**.
+
+**Son maliyetsiz tur (2026-06-21, hepsi main'de):** blok seç/taşı/döndür (SelectTool) · mobilya çizelgesi (metraj+Excel) · mobilya kendi katmanında · **Annotation entity + Metin aracı (T) + çift-tıkla düzenleme**. Zincir yeşil (typecheck 7/7 · test ~50 · lint 7/7 · build 1/1). **Tarayıcı görsel doğrulaması Moses'ta** (blok sembolleri + metin).
 
 **Son doğrulama (2B sonu):** typecheck 7/7 · test 6/6 paket (geometry 19, copilot 6, document 23…) · lint 7/7 · build 1/1. **Tarayıcı doğrulaması: ekran görüntüsüyle onaylandı** — metrik paneli (2 oda + tipler) + copilot TS 9111 dar-koridor bulgusu atıfla görünüyor.
 
