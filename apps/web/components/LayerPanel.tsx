@@ -17,6 +17,16 @@ const LAYER_NAMES: Record<string, string> = {
 /** Sabit gösterim sırası (bilinenler önce). */
 const ORDER = ['default', 'rooms', 'furniture', 'annotation', 'site', 'sheet'];
 
+/** Katman kimlik rengi (sol şerit) — hızlı görsel tanıma (Figma/AutoCAD deseni). */
+const LAYER_COLORS: Record<string, string> = {
+  default: '#94a3b8', // slate
+  rooms: '#3b82f6', // mavi
+  furniture: '#f59e0b', // amber
+  annotation: '#a855f7', // mor
+  site: '#22c55e', // yeşil
+  sheet: '#9ca3af', // gri
+};
+
 function layerName(id: string): string {
   return LAYER_NAMES[id] ?? id;
 }
@@ -103,11 +113,14 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
   const rows = collect(store);
   if (rows.length === 0) return null;
 
+  const hiddenCount = rows.filter((r) => layers.isHidden(r.id)).length;
+  const badge = hiddenCount > 0 ? `${rows.length} · ${hiddenCount} gizli` : `${rows.length}`;
+
   const iconBtn =
     'grid h-6 w-6 place-items-center rounded transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400';
 
   return (
-    <Panel title="Katmanlar" widthClass="w-56">
+    <Panel title="Katmanlar" widthClass="w-56" badge={badge}>
       <div className="flex flex-col gap-0.5">
         {rows.map(({ id, count }) => {
           const hidden = layers.isHidden(id);
@@ -119,6 +132,11 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
               className="flex items-center gap-1.5 rounded px-1 py-1 hover:bg-white/10"
               title={locked ? `${name} kilitli — seçmek için kilidi aç` : name}
             >
+              <span
+                className="h-4 w-1 shrink-0 rounded-full"
+                style={{ backgroundColor: LAYER_COLORS[id] ?? '#6b7280', opacity: hidden ? 0.3 : 1 }}
+                aria-hidden
+              />
               <button
                 type="button"
                 onClick={() => layers.toggle(id)}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 interface PanelProps {
   title: string;
@@ -25,6 +25,24 @@ export function Panel({
   widthClass = 'w-64',
 }: PanelProps) {
   const [open, setOpen] = useState(defaultOpen);
+  // Aç/kapa durumunu hatırla (localStorage). İlk render defaultOpen (SSR ile aynı → hidrasyon
+  // uyumsuzluğu yok); kayıtlı değer mount sonrası effect'te uygulanır.
+  const storageKey = `zynpparti.panel.${title}`;
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved != null) setOpen(saved === '1');
+    } catch {
+      /* localStorage erişilemiyor → varsayılanla devam */
+    }
+  }, [storageKey]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, open ? '1' : '0');
+    } catch {
+      /* yoksay */
+    }
+  }, [storageKey, open]);
   return (
     <div className={`${widthClass} rounded-lg bg-black/60 text-sm text-white shadow-lg backdrop-blur`}>
       <button
