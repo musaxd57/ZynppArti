@@ -94,8 +94,17 @@ export function SectionPanel({ store, line, onClear }: SectionPanelProps) {
             })}
           </svg>
           <div className="px-1 text-[10px] opacity-60">
-            {s.cuts.length} duvar · uzunluk {(s.lengthCm / 100).toFixed(2).replace('.', ',')} m · maks.
-            yükseklik {Math.round(s.maxHeightCm)} cm
+            {s.cuts.length} duvar
+            {(() => {
+              const doors = s.cuts.filter((c) => c.opening?.kind === 'door').length;
+              const wins = s.cuts.filter((c) => c.opening?.kind === 'window').length;
+              const parts = [doors ? `${doors} kapı` : '', wins ? `${wins} pencere` : '']
+                .filter(Boolean)
+                .join(', ');
+              return parts ? ` (${parts} boşluğu)` : '';
+            })()}{' '}
+            · uzunluk {(s.lengthCm / 100).toFixed(2).replace('.', ',')} m · maks. yükseklik{' '}
+            {Math.round(s.maxHeightCm)} cm
           </div>
           <div className="flex gap-1">
             <button
