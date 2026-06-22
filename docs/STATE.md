@@ -11,6 +11,13 @@
 **Branch:** `main` (güncel + push'lu). Otonom tur main'e merge edildi.
 **Durum:** Faz 1 + 2A/2B + maliyetsiz tur + **Playwright e2e** + **dock layout** + **bol hata-yakalama**.
 
+**Otonom devam turu (2026-06-22 akşam, "30 dk durmadan", `feat/autonomous-30min`):**
+- **Sol dock yeniden boyutlanabilir** (sağ dock gibi: sürükle-kol + localStorage, 180–480px; sol paneller w-full). *(önce yarıda kalmıştı, tamamlandı + main'e alındı)*
+- **Kesit boşlukları (kapı/pencere void):** kesit çizgisi bir duvarı boşluk konumunda kesince kapı = zemin→lento açık, pencere = denizlik+lento bantları. Saf `solidBands(cut)` (document) hem SVG önizleme hem export'u sürüyor. +7 test.
+- **Kalıcı A—A' kesit işareti (engine):** çizilen kesit çizgisi planda kalıcı ok+etiketle görünür (deaktive olunca kaybolmuyor); ekran-sabit, `setSectionMarker` handle. **SectionPanel "Temizle"** → çizgi+işaret kaldırır.
+- **Copilot oda-bazlı doğal ışık kuralı:** yaşam mahalleri (oturma/yatma/mutfak) çevre duvarında en az 1 pencere almalı (pencere↔oda eşleşmesi; bina-düzeyi orandan farklı). Atıflı İmar, info. +4 test.
+- **Test: 247** (document 92 · geometry 43 · copilot 37 · engine 33 · io 27 · tools 15). Zincir yeşil (typecheck 7/7 · lint 7/7 · build 1/1).
+
 **UI/dayanıklılık turu (2026-06-22, main'de, tarayıcı geri bildirimiyle):**
 - **Playwright e2e kuruldu** (8 test: smoke/araçlar/paneller/duvar→mahal/Kaydet-Aç/DXF-SVG/Ctrl+A-Delete-undo) + CI job (her push). `pnpm --filter @zynpparti/web e2e`.
 - **Stale-manifest KALICI fix:** `next.config experimental.devtoolSegmentExplorer:false` (Next 15.5 Segment Explorer kapatıldı).
