@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { Annotation, Block, Dimension, Parcel, Wall } from '@zynpparti/document';
+import type { Annotation, Block, Dimension, Parcel, Space, Wall } from '@zynpparti/document';
 import { exportDxf } from './dxf-export';
 
 const wall = (id: string, x1: number, y1: number, x2: number, y2: number, layerId = 'default'): Wall => ({
@@ -100,6 +100,26 @@ describe('exportDxf', () => {
     };
     const dxf = exportDxf([ann]);
     expect(dxf.split('\n').filter((l) => l === 'TEXT')).toHaveLength(2);
+  });
+
+  it('mahal → ad merkeze TEXT (sınır duvarlardan gelir)', () => {
+    const space: Space = {
+      id: 's',
+      type: 'space',
+      layerId: 'rooms',
+      name: 'Salon',
+      boundary: [
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+        { x: 100, y: 80 },
+        { x: 0, y: 80 },
+      ],
+    };
+    const dxf = exportDxf([space]);
+    expect(dxf).toContain('TEXT');
+    expect(dxf).toContain('Salon');
+    // poligon değil (LWPOLYLINE yazılmaz — sınır duvar işidir)
+    expect(dxf).not.toContain('LWPOLYLINE');
   });
 
   it('ölçü → ölçü + 2 uzatma LINE + değer TEXT', () => {

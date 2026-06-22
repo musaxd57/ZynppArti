@@ -1,4 +1,4 @@
-import type { Vec2 } from '@zynpparti/geometry';
+import { polygonCentroid, type Vec2 } from '@zynpparti/geometry';
 import {
   blockCorners,
   dimensionGeometry,
@@ -58,8 +58,13 @@ export function exportDxf(entities: readonly Entity[]): string {
         }
         break;
       }
-      // Türetilmiş/baskı-dışı entity'ler DXF model uzayına yazılmaz.
       case 'space':
+        // Mahal sınırı duvarlardan zaten gelir; yalnız adını merkeze TEXT olarak yaz (AutoCAD'de oda etiketi).
+        if (e.name && e.boundary.length >= 3) {
+          text(out, e.layerId, polygonCentroid(e.boundary), 20, e.name);
+        }
+        break;
+      // Pafta (baskı çerçevesi) DXF model uzayına yazılmaz.
       case 'sheet':
         break;
     }
