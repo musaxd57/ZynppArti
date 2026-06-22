@@ -34,10 +34,12 @@ interface ToolbarProps {
   store: EntityStore;
   exportPng: () => Promise<string>;
   zoomToFit: () => void;
+  /** Katman görünürlüğü — gizli katmanlar vektör export'larda (DXF/SVG) atlanır. */
+  layers?: { isHidden(id: string): boolean };
 }
 
 /** Araç çubuğu: araç seçimi, undo/redo, DXF içe/dışa aktarma, PNG dışa aktarma. */
-export function Toolbar({ manager, history, store, exportPng, zoomToFit }: ToolbarProps) {
+export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers }: ToolbarProps) {
   const [active, setActive] = useState<ToolName>(manager.activeTool);
   const fileRef = useRef<HTMLInputElement>(null);
   const jsonRef = useRef<HTMLInputElement>(null);
@@ -119,8 +121,13 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit }: Toolb
     pdf.save('zynpparti.pdf');
   }
 
+  /** Görünür katmanlardaki entity'ler (gizli katmanlar vektör export'tan düşülür). */
+  function visibleEntities() {
+    return store.all().filter((ent) => !layers?.isHidden(ent.layerId));
+  }
+
   function onExportDxf(): void {
-    const blob = new Blob([exportDxf(store.all())], { type: 'application/dxf' });
+    const blob = new Blob([exportDxf(visibleEntities())], { type: 'application/dxf' });
     const url = URL.createObjectURL(blob);
     download(url, 'zynpparti.dxf');
     URL.revokeObjectURL(url);
@@ -155,7 +162,7 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit }: Toolb
   }
 
   function onExportSvg(): void {
-    const blob = new Blob([exportSvg(store.all())], { type: 'image/svg+xml' });
+    const blob = new Blob([exportSvg(visibleEntities())], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     download(url, 'zynpparti.svg');
     URL.revokeObjectURL(url);
