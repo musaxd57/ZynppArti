@@ -1,5 +1,5 @@
 import { Graphics } from 'pixi.js';
-import type { Vec2 } from '@zynpparti/geometry';
+import { snapToAngle, type Vec2 } from '@zynpparti/geometry';
 import { AddEntity, createEntityId, type Dimension } from '@zynpparti/document';
 import { drawDimension, type SceneTool, type ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
@@ -37,8 +37,14 @@ export class DimensionTool implements SceneTool {
     return { id, type: 'dimension', layerId: 'default', a, b, offset };
   }
 
+  /** İkinci noktayı seçerken Shift → yön 45°'ye kilitlenir (ortho ölçü). Diğer durumlarda normal snap. */
+  private resolve(p: ScenePointer): Vec2 {
+    if (p.shiftKey && this.a && !this.b) return snapToAngle(this.a, p.world, Math.PI / 4);
+    return this.ctx.snap(p.world);
+  }
+
   onPointerDown(p: ScenePointer): void {
-    const pt = this.ctx.snap(p.world);
+    const pt = this.resolve(p);
     if (!this.a) {
       this.a = pt;
       return;
@@ -56,7 +62,7 @@ export class DimensionTool implements SceneTool {
   }
 
   onPointerMove(p: ScenePointer): void {
-    this.cursor = this.ctx.snap(p.world);
+    this.cursor = this.resolve(p);
     this.render();
   }
 
