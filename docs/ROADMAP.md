@@ -60,6 +60,20 @@
 - [ ] ☐ **Canlı yaklaşık maliyet tohumu (`PRO-FEATURES.md §2`):** metraj × birim fiyat → TL bazında kaba canlı maliyet (detaylı hesap Faz 4)
 **✅ Kabul:** İki kişi aynı anda çiziyor; duvar yüksekliğinden şematik kesit alınabiliyor. (Metraj/çizelge zaten canlı — öne çekildi.)
 
+**Kabul kriterleri (detay):**
+- *Multiplayer (Yjs):*
+  - [ ] İki istemci aynı modelde eş zamanlı duvar ekle/sil/düzenle yapıyor; değişiklik <300 ms'de karşıya yansıyor.
+  - [ ] **Presence:** karşı tarafın imleci + seçimi renkli görünüyor.
+  - [ ] **Conflict-free:** Command'ler Yjs CRDT'ye bağlı; "ben silerken o ad yazıyor" çelişkisi belirlenmiş, tutarlı sonuç.
+  - [ ] **Çevrimdışı + senkron:** bağlantı kesilince çalışmaya devam, dönünce otomatik birleşir.
+  - [ ] **Katman invariant:** döngülü hiyerarşi reddedilir (CRDT tek başına garanti etmez; veri katmanı zorlar).
+  - [ ] Multiplayer undo köşe durumları `ARCHITECTURE.md`'den uygulanır (uydurma yok).
+- *Şematik kesit (ADR-0016, deterministik — Yjs'den bağımsız ilerleyebilir):*
+  - [ ] Veri modeli: `Wall.height?` (varsayılan ~280 cm) + `Sheet.sectionLine?` (planda 2-nokta kesit çizgisi).
+  - [ ] `SectionTool` — planda kesit çizgisi koy; Özellikler panelinden duvar yüksekliği düzenlenir.
+  - [ ] Kesit görünümü: çizgi boyunca duvar cross-profile + döşeme/tavan hattı; çizim değişince canlı güncellenir.
+  - [ ] Fotogerçekçi DEĞİL (tam 3B kesit Faz 5).
+
 ## Faz 4 — Boş Plandan Üretim
 **Hedef:** AI'nın kendisi tasarım üretmesi.
 - [ ] Program girişi (oda/m²/komşuluk = bubble diagram) + sınır girişi UI'si
@@ -67,6 +81,15 @@
 - [ ] Çoklu alternatif üretip puanlama; çıktı **vektör** plan
 - [ ] Otomatik kesit üretimi; insan + AI düzenleme döngüsü
 **✅ Kabul:** Boş plan + istekten otomatik yerleşim ve kesit.
+
+**Kabul kriterleri (detay):**
+- [ ] **Girdi:** parsel sınırı + oda listesi (ad/m²/tip) + komşuluk grafiği (bubble diagram) + kurallar (setback/kat/TAKS).
+- [ ] **Çıktı vektör:** `packages/document` entity'leri (Wall/Opening/Space) — raster değil; sonra Command'le düzenlenebilir.
+- [ ] **Kısıt uyumu:** üretilen plan parsel içinde (ADR-0027), oda asgari genişlik/alan, çekme; copilot uyum raporu temiz/atıflı.
+- [ ] **Alternatifler:** bir istekten ≥2 varyant üretip puanlama; kullanıcı seçer.
+- [ ] **İnsan-döngüde:** AI üretir → mimar Command'lerle düzeltir → copilot canlı denetler.
+- [ ] **Hız:** boş parsel + program → ilk topoloji makul sürede (hedef <5 sn, sağlayıcıya göre ölçülecek).
+- [ ] Maliyetli (LLM/GPU) → ADR-0019: sağlayıcı/bütçe ücretsiz kredilerle test edildikten sonra.
 
 ## Faz 5 — Gerçek 3D + Animasyon
 **Hedef:** Plandan 3D, klasik render, animasyon, **tam 3B kesit**.

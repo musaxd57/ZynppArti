@@ -5,6 +5,60 @@
 
 ---
 
+## ADR-0036 — Ortho/polar mod: Shift ile yön 45°'ye kilitlenir (snapToAngle)
+**Tarih:** 2026-06-22 · **Durum:** Kabul
+**Bağlam:** CAD'de yatay/dikey/çapraz çizim için açı kilidi (ortho) standarttır.
+**Karar:** Saf `snapToAngle(origin, point, stepRad)` (geometry) — uzaklık korunur, yön en yakın `stepRad` katına yuvarlanır. WallTool ve DimensionTool, ikinci noktayı seçerken `Shift` basılıysa `π/4` (45°) ile çağırır; aksi halde normal snap. `ScenePointer.shiftKey` taşır.
+**Sonuç:** Hızlı dik/çapraz çizim. Takas: yalnız duvar+ölçüde; diğer araçlarda yok (gerekirse eklenir).
+
+## ADR-0035 — Vektör export katman görünürlüğüne saygılıdır (DXF/SVG); PNG/PDF zaten render'dan gelir
+**Tarih:** 2026-06-22 · **Durum:** Kabul
+**Bağlam:** Gizli katman ekranda görünmüyorsa export'ta da görünmemeli.
+**Karar:** Toolbar DXF/SVG export öncesi `visibleEntities()` ile `LayerState.isHidden` katmanlarını eler. PNG/PDF canlı tuval görüntüsünden üretildiği için görünürlük zaten motor tarafından uygulanmıştır.
+**Sonuç:** Ekran = çıktı tutarlılığı. Takas: yok.
+
+## ADR-0034 — Yeni/Kaydet/Aç dosya akışı: tüm değişim tek BatchCommand (tek undo)
+**Tarih:** 2026-06-22 · **Durum:** Kabul
+**Bağlam:** Dosya işlemleri undo geçmişiyle tutarlı olmalı.
+**Karar:** **Yeni** = türetilmemiş entity'leri `RemoveEntity` ile tek `BatchCommand`. **Aç** = `[...eskileri sil, ...yenileri ekle]` tek `BatchCommand` (Ctrl+Z geri alır). **Kaydet** = `serializeModel(store.all())`. Mahaller (space) her iki işlemde atlanır → RoomManager yeniden türetir.
+**Sonuç:** Tutarlı undo/redo. Takas: çok büyük dosya yüklemesi tek komutta gecikebilir (ileride parça/asenkron).
+
+## ADR-0033 — Mahal etiketi alan-ağırlıklı centroid'e yerleşir
+**Tarih:** 2026-06-22 · **Durum:** Kabul
+**Bağlam:** Ad+m² etiketi mahalin görsel merkezine yakın olmalı; köşe ortalaması L/konkav odalarda kayıyordu.
+**Karar:** `polygonCentroid` (shoelace alan-ağırlıklı, saf geometry) engine + SVG etiketinde kullanılır; dejenere/alan~0'da köşe ortalamasına düşer.
+**Sonuç:** Daha iyi yerleşim. Takas: konkav (U) poligonda hâlâ dışarı düşebilir → tam "görsel merkez" (pole of inaccessibility) ileride.
+
+## ADR-0032 — RoomType adından TAHMİN EDİLMEZ; kullanıcı atar (atanmazsa 'other')
+**Tarih:** 2026-06-22 · **Durum:** Kabul (Faz 2A'da alınmış karar, ADR borcu kapatıldı)
+**Bağlam:** Mahal adı serbest TR olabilir ("Salon"); otomatik sınıflandırma hatalı metrik üretir.
+**Karar:** `Space.roomType` yalnız kullanıcı ataması (panel dropdown); atanmazsa metrikte 'other'. `ROOM_TYPES`/`roomTypeColor` tek kaynak. LLM/AI katmanı buna güvenir.
+**Sonuç:** Kesin, yanılsız metrik. Takas: adlandırma disiplini gerekir (otomatik öneri ileride eklenebilir).
+
+## ADR-0031 — Katman görünürlük/kilit state'i doküman dışıdır (LayerState; undo dışı)
+**Tarih:** 2026-06-22 · **Durum:** Kabul (geriye dönük kayıt)
+**Bağlam:** Görünürlük/kilit bir görünüm tercihi; modelin parçası değil (CLAUDE.md §6.1 model/view ayrımı).
+**Karar:** `LayerState` (engine) saf view-state: hidden/locked Set'leri + listener; Command/History'den geçmez, model dosyasına yazılmaz. Yüklemede katmanlar açık/kilitsiz başlar.
+**Sonuç:** Temiz doküman modeli. Takas: proje-özel katman ayarları kalıcı değil (ileride oturum/proje state'inde saklanabilir).
+
+## ADR-0030 — Snap öncelik sırası: tam nokta > kesişim > kenar > eksen hizalama > ızgara
+**Tarih:** 2026-06-22 · **Durum:** Kabul (ADR-0024'ü detaylandırır)
+**Bağlam:** Birden çok snap adayı aynı anda olabilir; tutarlı, öngörülebilir bir sıra gerekir.
+**Karar:** `createSnapper` (tools/context.ts) tek rbush aramasıyla: (1) tam nokta = köşe/orta (12px), (2) kesişim = segment çaprazları, (3) kenar-üstü = dik iz düşüm, (4) eksen hizalama (8px şerit), (5) ızgara (50cm). Gösterge glyph'i türü yansıtır (eşkenar dörtgen/X/kare/üçgen + pembe kılavuz).
+**Sonuç:** "CAD hissi" veren öngörülebilir snapping. Takas: T-kesişiminde kenar↔köşe karışması (ileride iyileştirme).
+
+## ADR-0029 — Yüklemede türetilmiş entity'ler (space) yüklenmez, yeniden hesaplanır
+**Tarih:** 2026-06-22 · **Durum:** Kabul
+**Bağlam:** Mahaller duvarlardan türetilir (ADR-0012); kaydedilen mahal yüklemede duvarlarla çelişebilir/eskiyebilir.
+**Karar:** "Aç" akışı `type === 'space'` entity'leri **atlar**; yalnız duvar/ölçü/parsel/blok/metin yüklenir, sonra RoomManager mahalleri yeniden bulur. (Kaydetmede tüm entity yazılır — dosya bütünlüğü.)
+**Sonuç:** Mahal hiçbir zaman stale kalmaz. Takas: kayıtlı mahal adı/tipi yüklemede sıfırlanır (RoomManager varsayılan üretir) — ileride ad/tip seed'lemesi eklenebilir.
+
+## ADR-0028 — Versiyonlu JSON model zarfı (MODEL_FORMAT_VERSION)
+**Tarih:** 2026-06-22 · **Durum:** Kabul
+**Bağlam:** İlk kalıcılık (Kaydet/Aç); format ileride değişebilir (yeni entity/alan).
+**Karar:** `packages/document/serialize.ts` — model `{ format: 'zynpparti-model', version: N, entities: [...] }` zarfında saklanır (saf entity listesi değil). `deserializeModel`: bozuk JSON/yanlış format → hata; tek tek bilinmeyen/eksik entity → atlanır (toleranslı). Lazy migration sürüm artınca eklenir.
+**Sonuç:** İleri uyumlu dosya formatı. Takas: minimal zarf overhead (önemsiz). İlişkili: [ADR-0029].
+
 ## ADR-0027 — Copilot: oda asgari genişlik + parsel içinde kalma denetimleri
 **Tarih:** 2026-06-22 · **Durum:** Kabul
 **Bağlam:** Yönetmelik tabanı büyüyor (ADR-0015, kalite tavanı yok ADR-0019). Mevcut veriyle (mahal/duvar/parsel) çalışan, atıflı yeni kurallar eklenebilir.

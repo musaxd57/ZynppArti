@@ -104,7 +104,7 @@ zynpparti/
 │   ├── engine/      ✅          ← WebGL render motoru (çizim, pan/zoom/snap, hit-test)
 │   ├── tools/       ✅          ← çizim araçları (XState FSM'leri: duvar, ölçü, seçim…)
 │   ├── copilot/     ✅          ← deterministik Türkçe yönetmelik kural motoru (Faz 2B)
-│   ├── io/          ✅          ← DXF import/export (DWG ☐ + PDF web tarafında jsPDF ile)
+│   ├── io/          ✅          ← DXF import (LINE/POLYLINE/CIRCLE/ARC/TEXT) + DXF/SVG export + kalibrasyon (saf TS). DWG ☐. (PNG=engine, PDF=jsPDF, Excel=xlsx → apps/web)
 │   ├── collab/      ☐          ← gerçek zamanlı senkron (Yjs / commit-log) — Faz 3
 │   ├── blocks/      ☐          ← (blok kütüphanesi şimdilik document+engine içinde; ayrı paket yok)
 │   ├── ai/          ☐          ← sağlayıcı-bağımsız AI adapter (ADR-0006) — Faz 2 AI ayağı
@@ -221,6 +221,7 @@ TARAYICI
 - **Her model = blob storage'da tek dosya.** Açılışta belleğe yüklenir, periyodik geri yazılır. (Backend invariant kontrolü için zaten tüm modeli bellekte ister.)
 - Postgres yalnızca **metadata** içindir (kim, hangi proje, hangi izin, yorum başlıkları).
 - **Lazy migration:** Eski formatlı model açılınca, istemci önce onu güncel formata taşıyan bir commit üretir. Toplu migration yok.
+- **İlk kalıcılık (bugün):** model bellekte (`EntityStore`); Kaydet/Aç **versiyonlu JSON zarfı** ile (`packages/document/serialize.ts`, saf TS — istemci+backend aynı kodu kullanır). Format: `{ format, version, entities }`; bozuk JSON → hata, bilinmeyen entity → atla. Backend/blob (yukarısı) Faz 3+. Kurallar: ADR-0028/0029/0034.
 
 ### 6.6 Paylaşılan kod
 - Serileştirme/yapılar `packages/document` + `packages/geometry`'de tek yerde; hem istemci hem backend (invariant kontrolü, AI üretici) **aynı kodu** kullanır.
@@ -270,7 +271,7 @@ TARAYICI
 - **Hedef: 500k entity'de 60 FPS.** Yöntemler: viewport culling (görünmeyeni çizme), batching, dirty-rect/dirty-entity yeniden çizim, LOD (uzakta basitleştir).
 - **Özel shader'lar:** kesik çizgi (dash), tarama (hatch), kalınlık → CPU'da milyon çizgi yerine GPU'da. (Rayon yaklaşımı.)
 - **Metin:** başlangıç MSDF (hızlı), uzun vadede **vektör metin** (çoklu dil/glyph sınırı için). Bkz. `docs/ARCHITECTURE.md`.
-- **Snapping:** uç/orta/dik/kesişim/hizalama + grid. CAD'in ruhu burada.
+- **Snapping (öncelik sırası):** tam nokta (uç/orta) → kesişim → kenar-üstü (dik) → eksen hizalama → ızgara; gösterge glyph'i türü yansıtır (köşe◆/orta▲/kenar■/kesişim✕, hizalama=pembe kılavuz). **Ortho/polar:** `Shift` ile yön 45°'ye kilitlenir (duvar+ölçü). CAD'in ruhu burada. Detay: ADR-0024/0030/0036.
 - **Mekânsal indeks (zorunlu):** hit-test + viewport culling + snapping için **rbush (R-tree)** — broad phase (rbush AABB ile aday bul) → narrow phase (kesin geometri: `distanceToSegment`/`pointInPolygon`). Saf döngü 500k entity'de donar. Detay: `docs/ENGINEERING-NOTES §2`. Picking/performans yazmadan önce `infinitecanvas.cc` Ders 8'i oku.
 - **KRİTİK TUZAK — koordinat ölçeği:** `getBoundingClientRect`'ten gelen ekran koordinatını CSS scale faktörüne **böl**. (Tasarım uzayı sabit, container ölçekleniyorsa hizalama kayar.)
 - **Float hassasiyeti:** çok küçük sayı karşılaştırmalarında epsilon kullan.
@@ -380,6 +381,8 @@ TARAYICI
 - ❌ Entity'leri ilişkisel DB'ye satır satır yazma (§6.5).
 - ❌ Doküman verisini iki yerde tutma (§6.1).
 - ❌ Faz atlama (AI üretim Faz 4'ten önce başlamaz).
+- ❌ JSON serileştirme formatını sessizce kırma — geriye uyumlu kal; format değişimi = `version` artışı + lazy migration (ADR-0028). Zarf düz/serileştirilebilir kalır (Map/Set/döngüsel referans yok).
+- ❌ Saf paketlere (`geometry`/`document`/`io`) UI kütüphanesi (jsPDF/xlsx/React/Pixi) ekleme — UI kütüphaneleri yalnız `apps/web`'e; yeni bağımlılık önce DECISIONS'a ADR (§12).
 - ❌ DWG'yi "her dosya açılır" varsayma — sınırlar var (§8.4); sunucu yedeğini unutma.
 - ❌ Gizli anahtar commit'leme.
 - ⚠️ Koordinatta CSS scale faktörünü bölmeyi unutma.
