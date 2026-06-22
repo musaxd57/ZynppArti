@@ -178,7 +178,12 @@ export function CanvasStage() {
 
       {ui && (
         <>
-          <StatusBar manager={ui.manager} registerHover={ui.setHoverHandler} />
+          <StatusBar
+            manager={ui.manager}
+            registerHover={ui.setHoverHandler}
+            store={ui.store}
+            selectedIds={selectedIds}
+          />
           <ShortcutsHelp />
         </>
       )}
