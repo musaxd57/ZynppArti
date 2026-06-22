@@ -20,9 +20,14 @@
 6. **DXF import genişletme** — CIRCLE/ARC (segment) + TEXT/MTEXT (→Annotation).
 7. **Model kaydet/aç (JSON)** — ilk kalıcılık (`document/serialize.ts`); Toolbar "Kaydet"/"Aç".
 8. **RoomManager testleri** (çekirdek modül, testsizdi).
-9. **.md denetimi** (6 paralel agent değil, 4 agent) → HIGH/MED bulgular düzeltildi (test sayıları, ADR-0011/0013 durum notu, FAZ2-NOTES checklist, UX-INTERACTIONS snap/dosya işlemleri, I18N çelişki notu, ENGINEERING-NOTES tembel-mahal düzeltmesi).
+9. **.md denetimi** (4 paralel agent) → HIGH/MED bulgular düzeltildi (test sayıları, ADR-0011/0013 durum notu, FAZ2-NOTES checklist, UX-INTERACTIONS snap/dosya işlemleri, I18N çelişki notu, ENGINEERING-NOTES tembel-mahal düzeltmesi, ARCHITECTURE export atfı).
+10. **Ctrl+S/Ctrl+O kısayolları** — JSON kaydet/aç (tarayıcı diyaloğu bastırılır).
+11. **Alan-ağırlıklı `polygonCentroid`** (geometry) → mahal etiketleri (engine + SVG) daha iyi yerleşir; 2 kopya centroid silindi.
+12. **Vektör export katman görünürlüğüne saygılı** — gizli katman DXF/SVG'ye gitmez (PNG zaten hariç tutuyordu).
 
-**Test: ~214** (document 80 · geometry 33 · engine 31 · copilot 31 · io 24 · tools 15). Zincir yeşil (typecheck 7/7 · lint 7/7 · build 1/1).
+**Test: ~219** (document 80 · geometry 38 · engine 31 · copilot 31 · io 24 · tools 15). Zincir yeşil (typecheck 7/7 · lint 7/7 · build 1/1). Son commit `7bf80dc`.
+
+**Açık not (Moses'a):** Tüm bu otonom tur `feat/autonomous-tour` branch'inde + push'lu; main'e **merge senin onayını bekliyor**. Sonraki büyük aday: şematik kesit (Faz 3, ADR-0016, deterministik) ya da Yjs multiplayer (Faz 3).
 
 **Son maliyetsiz tur (2026-06-21, hepsi main'de):** blok seç/taşı/döndür · mobilya çizelgesi/katmanı · Annotation (metin) + çift-tık düzenleme · kopyala-yapıştır/çoğalt (Ctrl+C/V/D) · **çoklu seçim (kutu/Shift + toplu)** · hizalama kılavuzları · yönetmelik turu 3 (TAKS+banyo) · hatch malzeme kütüphanesi · **pafta/sheet sistemi** · renk token konsolidasyonu · durum çubuğu · içeriğe sığdır (Home) · Ctrl+A + ok-itme · kısayol yardımı (?) · highlightEntity refactor + EraseTool tüm-tip · **özellikler paneli (seçili entity düzenleme)** · **PDF export (jsPDF)** · panel kaydırma fix + mahal satırı iki satır. **Test: 178 (document 69 · engine 31 · geometry 29 · copilot 26 · tools 12 · io 11).** Zincir yeşil (typecheck 7/7 · lint 7/7 · build 1/1). Son commit `9f1ce11`.
 
