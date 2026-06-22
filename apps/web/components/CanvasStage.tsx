@@ -86,6 +86,8 @@ export function CanvasStage() {
         setRenameId(id);
       });
       // Açıklama metnine çift tık → mevcut metinle düzenle (basit prompt; AnnotationTool ile tutarlı).
+      // Sağ-tık → bağlam menüsü (engine doğrudan canvas'a bağlar; Pixi olayı yutsa bile çalışır).
+      h.setContextMenuHandler((x, y) => setMenu({ x, y }));
       h.setAnnotationActivateHandler((id) => {
         const ent = store.get(id);
         if (ent?.type !== 'annotation') return;
@@ -144,16 +146,8 @@ export function CanvasStage() {
           </div>
         )}
 
-        {/* Canvas (orta, esnek) — Pixi bu div'e resizeTo ile bağlı. */}
-        <div
-          ref={containerRef}
-          className="relative min-w-0 flex-1"
-          onContextMenu={(e) => {
-            if (!ui) return;
-            e.preventDefault();
-            setMenu({ x: e.clientX, y: e.clientY });
-          }}
-        />
+        {/* Canvas (orta, esnek) — Pixi bu div'e resizeTo ile bağlı. Sağ-tık engine'de bağlı. */}
+        <div ref={containerRef} className="relative min-w-0 flex-1" />
 
         {/* Sağ dock: özellikler + mahal/metrik + metraj + pafta. */}
         {ui && (

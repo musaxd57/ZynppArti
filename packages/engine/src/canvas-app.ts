@@ -31,6 +31,8 @@ export interface CanvasHandle {
   setAnnotationActivateHandler(cb: (id: EntityId) => void): void;
   /** İmleç hareket ettikçe dünya koordinatını (cm), tuvalden çıkınca null bildirir (durum çubuğu). */
   setHoverHandler(cb: (world: Vec2 | null) => void): void;
+  /** Sağ-tık (contextmenu) olunca ekran koordinatını bildirir (bağlam menüsü). */
+  setContextMenuHandler(cb: (screenX: number, screenY: number) => void): void;
   /** Mevcut sahneyi PNG data-URL olarak dışa aktarır. */
   exportPng(): Promise<string>;
   /** Tüm entity'leri ekrana sığacak şekilde kamerayı ayarlar (zoom extents). */
@@ -81,6 +83,7 @@ export async function createCanvasApp(
   let spaceActivate: ((id: EntityId) => void) | null = null;
   let annotationActivate: ((id: EntityId) => void) | null = null;
   let hoverCb: ((world: Vec2 | null) => void) | null = null;
+  let contextMenuCb: ((screenX: number, screenY: number) => void) | null = null;
 
   function viewportBounds(): AABB {
     const tl = screenToWorld({ x: 0, y: 0 }, camera);
@@ -282,6 +285,11 @@ export async function createCanvasApp(
   canvas.addEventListener('pointerleave', onPointerLeaveHover);
   canvas.addEventListener('wheel', onWheel, { passive: false });
   canvas.addEventListener('dblclick', onDblClick);
+  const onContextMenu = (e: MouseEvent): void => {
+    e.preventDefault(); // tarayıcı menüsünü bastır
+    contextMenuCb?.(e.clientX, e.clientY);
+  };
+  canvas.addEventListener('contextmenu', onContextMenu);
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
 
@@ -310,6 +318,9 @@ export async function createCanvasApp(
     setHoverHandler(cb: (world: Vec2 | null) => void): void {
       hoverCb = cb;
     },
+    setContextMenuHandler(cb: (screenX: number, screenY: number) => void): void {
+      contextMenuCb = cb;
+    },
     setActiveTool(tool: SceneTool | null): void {
       if (activeTool === tool) return;
       activeTool?.onDeactivate?.();
@@ -328,6 +339,7 @@ export async function createCanvasApp(
       canvas.removeEventListener('pointerleave', onPointerLeaveHover);
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('dblclick', onDblClick);
+      canvas.removeEventListener('contextmenu', onContextMenu);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       activeTool?.onDeactivate?.();
