@@ -33,6 +33,59 @@ describe('importDxf', () => {
     expect(() => importDxf('not a dxf at all')).toThrow();
   });
 
+  it('TEXT → Annotation (içerik + konum + yükseklik)', () => {
+    const dxf = [
+      '0', 'SECTION', '2', 'ENTITIES',
+      '0', 'TEXT', '8', 'NOT',
+      '10', '50.0', '20', '60.0', '30', '0.0',
+      '40', '30.0',
+      '1', 'Salon',
+      '0', 'ENDSEC', '0', 'EOF',
+    ].join('\n');
+    const r = importDxf(dxf);
+    expect(r.annotations).toHaveLength(1);
+    const a = r.annotations[0]!;
+    expect(a.text).toBe('Salon');
+    expect(a.position).toEqual({ x: 50, y: 60 });
+    expect(a.height).toBeCloseTo(30);
+  });
+
+  it('CIRCLE → segmentlenmiş duvarlar (kapalı, çok parça)', () => {
+    const dxf = [
+      '0', 'SECTION', '2', 'ENTITIES',
+      '0', 'CIRCLE', '8', 'C',
+      '10', '0.0', '20', '0.0', '30', '0.0',
+      '40', '100.0',
+      '0', 'ENDSEC', '0', 'EOF',
+    ].join('\n');
+    const r = importDxf(dxf);
+    // 2π / (π/12) = 24 segment
+    expect(r.walls.length).toBeGreaterThanOrEqual(20);
+    // tüm köşeler ~100 cm yarıçapta
+    for (const w of r.walls) {
+      expect(Math.hypot(w.start.x, w.start.y)).toBeCloseTo(100, 0);
+    }
+  });
+
+  it('ARC → çeyrek yay segmentleri (uçlar doğru)', () => {
+    const dxf = [
+      '0', 'SECTION', '2', 'ENTITIES',
+      '0', 'ARC', '8', 'A',
+      '10', '0.0', '20', '0.0', '30', '0.0',
+      '40', '100.0',
+      '50', '0.0', '51', '90.0',
+      '0', 'ENDSEC', '0', 'EOF',
+    ].join('\n');
+    const r = importDxf(dxf);
+    expect(r.walls.length).toBeGreaterThanOrEqual(4);
+    const first = r.walls[0]!;
+    const last = r.walls[r.walls.length - 1]!;
+    expect(first.start.x).toBeCloseTo(100); // 0° → (100,0)
+    expect(first.start.y).toBeCloseTo(0);
+    expect(last.end.x).toBeCloseTo(0, 0); // 90° → (0,100)
+    expect(last.end.y).toBeCloseTo(100, 0);
+  });
+
   it('round-trips through exportDxf (geometry preserved)', () => {
     const dxf = exportDxf([
       {

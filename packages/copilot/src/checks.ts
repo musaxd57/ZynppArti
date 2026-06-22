@@ -1,4 +1,9 @@
-import { polygonArea, polygonMinWidth, distanceToPolygonBoundary } from '@zynpparti/geometry';
+import {
+  polygonArea,
+  polygonMinWidth,
+  distanceToPolygonBoundary,
+  pointInPolygon,
+} from '@zynpparti/geometry';
 import {
   centerlineAreaM2,
   roomTypeOf,
@@ -9,6 +14,7 @@ import {
 } from '@zynpparti/document';
 import {
   DAYLIGHT_REGULATION,
+  PARCEL_CONTAINMENT_REGULATION,
   PARKING_REGULATION,
   REGULATIONS,
   TAKS_REGULATION,
@@ -82,6 +88,49 @@ function checkRoomMinArea(spaces: readonly Space[]): Finding[] {
     }
   }
   return out;
+}
+
+/** Yaşanabilir oda (yatma/yaşam) en küçük net genişliği İmar asgarisini sağlıyor mu? (info — plana göre değişir) */
+function checkRoomMinWidth(spaces: readonly Space[]): Finding[] {
+  const reg = REGULATIONS.roomMinWidth;
+  const out: Finding[] = [];
+  for (const s of spaces) {
+    const t = roomTypeOf(s);
+    if (t !== 'sleeping' && t !== 'living') continue;
+    const widthCm = polygonMinWidth(s.boundary);
+    if (widthCm > 0 && widthCm < reg.min) {
+      out.push({
+        severity: 'info',
+        message: `"${s.name}" en dar net genişlik ~${Math.round(widthCm)} cm; yaşanabilir oda için ~${reg.min} cm beklenir (plana göre değişir).`,
+        citation: citationOf(reg),
+        entityId: s.id,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * Yapı parsel sınırları içinde mi? Bir duvarın herhangi bir ucu parsel poligonu dışındaysa
+ * taşma bulgusu üretir. Parsel yoksa denetlenmez. Etkilenen duvar sayısı özetlenir (gürültüsüz).
+ */
+function checkParcelContainment(walls: readonly Wall[], parcels: readonly Parcel[]): Finding[] {
+  const rings = parcels.filter((p) => p.boundary.length >= 3);
+  if (rings.length === 0 || walls.length === 0) return [];
+  const inAnyParcel = (p: { x: number; y: number }): boolean =>
+    rings.some((parcel) => pointInPolygon(p, parcel.boundary));
+  let outside = 0;
+  for (const w of walls) {
+    if (!inAnyParcel(w.start) || !inAnyParcel(w.end)) outside++;
+  }
+  if (outside === 0) return [];
+  return [
+    {
+      severity: 'warning',
+      message: `${outside} duvar parsel sınırının dışına taşıyor görünüyor — yapı parsel içinde kalmalı.`,
+      citation: `${PARCEL_CONTAINMENT_REGULATION.source} — ${PARCEL_CONTAINMENT_REGULATION.rule}`,
+    },
+  ];
 }
 
 /** Banyo/WC/ıslak hacimde erişilebilir dönüş alanı (TS 9111, ~150 cm) — bilgi (advisory). */
@@ -252,10 +301,12 @@ export function runCopilotChecks(
   return [
     ...checkCorridorWidth(spaces),
     ...checkRoomMinArea(spaces),
+    ...checkRoomMinWidth(spaces),
     ...checkBathroomMinArea(spaces),
     ...checkBathroomAccess(spaces),
     ...checkDoorWidth(openings),
     ...checkDaylight(spaces, openings),
+    ...checkParcelContainment(walls, parcels),
     ...checkSetback(walls, parcels),
     ...checkTaks(spaces, parcels),
     ...checkParking(spaces),

@@ -5,13 +5,15 @@ import { jsPDF } from 'jspdf';
 import {
   AddEntity,
   BatchCommand,
+  RemoveEntity,
+  serializeModel,
+  deserializeModel,
   type EntityStore,
   type History,
   type Sheet,
-  type Wall,
 } from '@zynpparti/document';
 import type { ToolManager, ToolName } from '@zynpparti/tools';
-import { importDxf, exportDxf } from '@zynpparti/io';
+import { importDxf, exportDxf, exportSvg } from '@zynpparti/io';
 
 const TOOLS: { name: ToolName; label: string; hotkey: string }[] = [
   { name: 'select', label: 'Seç', hotkey: 'V' },
@@ -32,26 +34,48 @@ interface ToolbarProps {
   store: EntityStore;
   exportPng: () => Promise<string>;
   zoomToFit: () => void;
+  /** Katman görünürlüğü — gizli katmanlar vektör export'larda (DXF/SVG) atlanır. */
+  layers?: { isHidden(id: string): boolean };
 }
 
 /** Araç çubuğu: araç seçimi, undo/redo, DXF içe/dışa aktarma, PNG dışa aktarma. */
-export function Toolbar({ manager, history, store, exportPng, zoomToFit }: ToolbarProps) {
+export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers }: ToolbarProps) {
   const [active, setActive] = useState<ToolName>(manager.activeTool);
   const fileRef = useRef<HTMLInputElement>(null);
+  const jsonRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => manager.subscribe(setActive), [manager]);
+
+  // Dosya kısayolları: Ctrl+S (kaydet) / Ctrl+O (aç). Tarayıcının kendi diyaloglarını bastır.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent): void {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const k = e.key.toLowerCase();
+      if (k === 's') {
+        e.preventDefault();
+        onSaveJson();
+      } else if (k === 'o') {
+        e.preventDefault();
+        jsonRef.current?.click();
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // Bir kez bağlanır; onSaveJson sabit `store`/`history` prop'larını kapatır (CanvasStage'de tek sefer kurulur).
+  }, []);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     try {
-      const { walls } = importDxf(await file.text());
-      if (walls.length === 0) {
-        alert('DXF içinde içe aktarılabilir duvar (LINE/POLYLINE) bulunamadı.');
+      const { walls, annotations } = importDxf(await file.text());
+      if (walls.length === 0 && annotations.length === 0) {
+        alert('DXF içinde içe aktarılabilir içerik (LINE/POLYLINE/CIRCLE/ARC/TEXT) bulunamadı.');
         return;
       }
-      history.dispatch(new BatchCommand('DXF içe aktar', walls.map((w) => new AddEntity(w))));
+      const imported = [...walls, ...annotations];
+      history.dispatch(new BatchCommand('DXF içe aktar', imported.map((ent) => new AddEntity(ent))));
     } catch (err) {
       alert('DXF okunamadı: ' + (err instanceof Error ? err.message : String(err)));
     }
@@ -97,11 +121,57 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit }: Toolb
     pdf.save('zynpparti.pdf');
   }
 
+  /** Görünür katmanlardaki entity'ler (gizli katmanlar vektör export'tan düşülür). */
+  function visibleEntities() {
+    return store.all().filter((ent) => !layers?.isHidden(ent.layerId));
+  }
+
   function onExportDxf(): void {
-    const walls = store.all().filter((e): e is Wall => e.type === 'wall');
-    const blob = new Blob([exportDxf(walls)], { type: 'application/dxf' });
+    const blob = new Blob([exportDxf(visibleEntities())], { type: 'application/dxf' });
     const url = URL.createObjectURL(blob);
     download(url, 'zynpparti.dxf');
+    URL.revokeObjectURL(url);
+  }
+
+  function onNewModel(): void {
+    const toRemove = store.all().filter((ent) => ent.type !== 'space');
+    if (toRemove.length === 0) return;
+    if (!confirm('Tüm çizim temizlensin mi? (Geri al ile dönülebilir.)')) return;
+    history.dispatch(new BatchCommand('Yeni', toRemove.map((ent) => new RemoveEntity(ent.id))));
+  }
+
+  function onSaveJson(): void {
+    const blob = new Blob([serializeModel(store.all())], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    download(url, 'zynpparti.json');
+    URL.revokeObjectURL(url);
+  }
+
+  async function onOpenJson(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const loaded = deserializeModel(await file.text());
+      // Mahaller (space) duvarlardan RoomManager ile türetilir → yüklemede atlanır, yeniden hesaplanır.
+      const toAdd = loaded.filter((ent) => ent.type !== 'space');
+      // "Aç" = değiştir: mevcut (türetilmemiş) entity'leri kaldır, yüklenenleri ekle (tek undo).
+      const toRemove = store.all().filter((ent) => ent.type !== 'space');
+      history.dispatch(
+        new BatchCommand('Model aç', [
+          ...toRemove.map((ent) => new RemoveEntity(ent.id)),
+          ...toAdd.map((ent) => new AddEntity(ent)),
+        ]),
+      );
+    } catch (err) {
+      alert('Model açılamadı: ' + (err instanceof Error ? err.message : String(err)));
+    }
+  }
+
+  function onExportSvg(): void {
+    const blob = new Blob([exportSvg(visibleEntities())], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    download(url, 'zynpparti.svg');
     URL.revokeObjectURL(url);
   }
 
@@ -134,11 +204,24 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit }: Toolb
         ⊡ Sığdır
       </button>
       <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
+      <button type="button" onClick={onNewModel} className={btn} title="Yeni / temizle">
+        Yeni
+      </button>
+      <button type="button" onClick={onSaveJson} className={btn} title="Modeli kaydet (.json) — Ctrl+S">
+        Kaydet
+      </button>
+      <button type="button" onClick={() => jsonRef.current?.click()} className={btn} title="Model aç (.json) — Ctrl+O">
+        Aç
+      </button>
+      <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
       <button type="button" onClick={() => fileRef.current?.click()} className={btn}>
         DXF Yükle
       </button>
       <button type="button" onClick={onExportDxf} className={btn}>
         DXF İndir
+      </button>
+      <button type="button" onClick={onExportSvg} className={btn}>
+        SVG İndir
       </button>
       <button type="button" onClick={() => void onExportPng()} className={btn}>
         PNG İndir
@@ -152,6 +235,13 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit }: Toolb
         accept=".dxf"
         className="hidden"
         onChange={(e) => void onFile(e)}
+      />
+      <input
+        ref={jsonRef}
+        type="file"
+        accept=".json"
+        className="hidden"
+        onChange={(e) => void onOpenJson(e)}
       />
     </div>
   );

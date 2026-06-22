@@ -66,7 +66,7 @@
 
 - **Tolerans/epsilon her yerde:** duvar birleştirme, oda kapatma, snapping — hep epsilon. Float tam eşitlik testi yok.
 - **Birim tutarlılığı:** iç birim cm (ADR-0008); DXF import'ta kalibrasyon bunu ayarlar; m² = alan/10000.
-- **Mahal yeniden-hesabı tembel olsun:** her küçük değişiklikte tüm planı değil, etkilenen bölgeyi güncelle (büyük planda performans).
+- **Mahal yeniden-hesabı (hedef: tembel):** ileride her küçük değişiklikte tüm planı değil etkilenen bölgeyi güncellemek istiyoruz (büyük planda performans). **ŞU AN (Faz 1):** `RoomManager` her duvar değişiminde TÜM mahalleri yeniden hesaplıyor (`rooms.ts`); küçük modellerde sorun değil, büyük modelde kademeli/bölgesel güncelleme Faz 2+ optimizasyonu (PERFORMANCE.md).
 - **DXF gerçeği:** LINE/LWPOLYLINE → Wall eşlemesi temiz; ama gerçek DXF'ler dağınık olur (kopuk uçlar, çift çizgi, blok içinde duvar). İlk import'ta "temizleme" adımı (1D) şart.
 - **Hit-test önceliği:** üst üste binen entity'lerde z-sırası/katman önceliği belirle (en üstteki seçilsin).
 

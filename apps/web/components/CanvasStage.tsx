@@ -118,6 +118,7 @@ export function CanvasStage() {
             store={ui.store}
             exportPng={ui.exportPng}
             zoomToFit={ui.zoomToFit}
+            layers={ui.layers}
           />
           {/* Sol kolon: katmanlar + copilot. Kaydırma, ETKİLEŞİMLİ iç sarmalayıcıda olmalı
               (dış kolon pointer-events-none → tekerlek/çubuk oraya ulaşmaz). */}

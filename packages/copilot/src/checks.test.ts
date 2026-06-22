@@ -243,6 +243,70 @@ describe('runCopilotChecks — TAKS (İmar, info)', () => {
   });
 });
 
+describe('runCopilotChecks — oda asgari genişliği (İmar, info)', () => {
+  it('dar oda → atıflı genişlik bilgisi', () => {
+    // 180×400: en dar 180 cm < 210
+    const f = runCopilotChecks([rect('Yatak', 'sleeping', 180, 400)], []).filter(
+      (x) => x.severity === 'info' && x.message.includes('net genişlik'),
+    );
+    expect(f).toHaveLength(1);
+    expect(f[0]!.citation).toContain('İmar');
+  });
+
+  it('yeterli genişlik → bulgu yok', () => {
+    // 250×400: en dar 250 ≥ 210
+    const f = runCopilotChecks([rect('Yatak', 'sleeping', 250, 400)], []).filter((x) =>
+      x.message.includes('net genişlik'),
+    );
+    expect(f).toHaveLength(0);
+  });
+});
+
+describe('runCopilotChecks — parsel içinde kalma (İmar)', () => {
+  const parcel: import('@zynpparti/document').Parcel = {
+    id: 'P',
+    type: 'parcel',
+    layerId: 'site',
+    boundary: [
+      { x: 0, y: 0 },
+      { x: 1000, y: 0 },
+      { x: 1000, y: 1000 },
+      { x: 0, y: 1000 },
+    ],
+  };
+  const wall = (x1: number, y1: number, x2: number, y2: number): import('@zynpparti/document').Wall => ({
+    id: 'w',
+    type: 'wall',
+    layerId: 'default',
+    start: { x: x1, y: y1 },
+    end: { x: x2, y: y2 },
+    thickness: 15,
+  });
+
+  it('duvar parsel dışında → atıflı uyarı', () => {
+    const f = runCopilotChecks([], [wall(1200, 500, 1300, 500)], [], [parcel]).filter((x) =>
+      x.message.includes('parsel sınırının dışına'),
+    );
+    expect(f).toHaveLength(1);
+    expect(f[0]!.severity).toBe('warning');
+    expect(f[0]!.citation).toContain('İmar');
+  });
+
+  it('duvar parsel içinde → uyarı yok', () => {
+    const f = runCopilotChecks([], [wall(200, 200, 800, 200)], [], [parcel]).filter((x) =>
+      x.message.includes('parsel sınırının dışına'),
+    );
+    expect(f).toHaveLength(0);
+  });
+
+  it('parsel yoksa içerme denetlenmez', () => {
+    const f = runCopilotChecks([], [wall(1200, 500, 1300, 500)], [], []).filter((x) =>
+      x.message.includes('parsel sınırının dışına'),
+    );
+    expect(f).toHaveLength(0);
+  });
+});
+
 it('boş model → bulgu yok', () => {
   expect(runCopilotChecks([], [])).toEqual([]);
 });

@@ -70,6 +70,15 @@ export const REGULATIONS = {
     unit: 'm2',
     status: 'active',
   },
+  roomMinWidth: {
+    id: 'imar-room-min-width',
+    source: 'Planlı Alanlar İmar Yönetmeliği',
+    // Yaşanabilir oda en küçük net genişliği; tam değer plana/sürüme göre değişir → info.
+    rule: 'Konutta yaşanabilir oda en küçük net genişliği genelde en az 2,10 m (plana göre değişebilir).',
+    min: 210,
+    unit: 'cm',
+    status: 'active',
+  },
   bathroomTurning: {
     id: 'ts9111-bathroom-turning',
     source: 'TS 9111',
@@ -152,6 +161,16 @@ export const DAYLIGHT_REGULATION = {
   minRatio: 0.1,
   /** Pencere yükseklik varsayımı (cm) — alan tahmini için. */
   windowHeightCm: 140,
+} as const;
+
+/**
+ * Yapının parsel içinde kalması (İmar) — eşiksiz kural (geometrik içerme). Çekme mesafeleri
+ * `setbackSide` ile ayrıca denetlenir; bu kural duvarların parsel sınırının dışına taşmasını yakalar.
+ */
+export const PARCEL_CONTAINMENT_REGULATION = {
+  id: 'imar-parcel-containment',
+  source: 'Planlı Alanlar İmar Yönetmeliği',
+  rule: 'Yapı parsel sınırları içinde kalmalı (çekme mesafeleri saklıdır).',
 } as const;
 
 /** Bir kuralın "Kaynak — kural" biçiminde atıf metni. */

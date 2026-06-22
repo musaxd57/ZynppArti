@@ -11,8 +11,12 @@ const GUIDE_COLOR = 0xff4f9a;
  * anahtar noktasıyla yatay/dikey **hizalandıysa** kılavuz segmenti (`vGuide`/`hGuide`). Üçü de
  * aynı anda dolu olabilir (köşe yakalama yoksa eksen hizalama). Tüm alanlar dünya koordinatı.
  */
+export type SnapPointKind = 'endpoint' | 'midpoint' | 'edge' | 'intersection';
+
 export interface SnapHint {
   readonly point: Vec2 | null;
+  /** Yakalanan noktanın türü → gösterge glyph'ini belirler (köşe/orta/kenar). Yoksa 'endpoint'. */
+  readonly pointKind?: SnapPointKind;
   /** Dikey hizalama (x sabit): referans nokta → yakalanan imleç. */
   readonly vGuide: readonly [Vec2, Vec2] | null;
   /** Yatay hizalama (y sabit): referans nokta → yakalanan imleç. */
@@ -45,12 +49,32 @@ export function createSnapIndicator(container: Container): {
       if (hint.hGuide) guide(hint.hGuide, pixelSize);
       if (hint.point) {
         const r = 6 * pixelSize;
-        g.moveTo(hint.point.x, hint.point.y - r)
-          .lineTo(hint.point.x + r, hint.point.y)
-          .lineTo(hint.point.x, hint.point.y + r)
-          .lineTo(hint.point.x - r, hint.point.y)
-          .closePath()
-          .stroke({ width: 1.5 * pixelSize, color: SNAP_COLOR, alpha: 0.95 });
+        const { x, y } = hint.point;
+        const w = 1.5 * pixelSize;
+        // Glyph snap türünü anlatır (CAD geleneği): köşe=eşkenar dörtgen, orta=üçgen, kenar=kare.
+        if (hint.pointKind === 'intersection') {
+          // İki çizginin kesişimi → çapraz X.
+          g.moveTo(x - r, y - r)
+            .lineTo(x + r, y + r)
+            .moveTo(x - r, y + r)
+            .lineTo(x + r, y - r)
+            .stroke({ width: w, color: SNAP_COLOR, alpha: 0.95 });
+        } else if (hint.pointKind === 'midpoint') {
+          g.moveTo(x, y - r)
+            .lineTo(x + r, y + r)
+            .lineTo(x - r, y + r)
+            .closePath()
+            .stroke({ width: w, color: SNAP_COLOR, alpha: 0.95 });
+        } else if (hint.pointKind === 'edge') {
+          g.rect(x - r, y - r, r * 2, r * 2).stroke({ width: w, color: SNAP_COLOR, alpha: 0.95 });
+        } else {
+          g.moveTo(x, y - r)
+            .lineTo(x + r, y)
+            .lineTo(x, y + r)
+            .lineTo(x - r, y)
+            .closePath()
+            .stroke({ width: w, color: SNAP_COLOR, alpha: 0.95 });
+        }
       }
     },
     hide(): void {

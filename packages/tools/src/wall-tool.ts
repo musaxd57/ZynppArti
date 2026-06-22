@@ -1,6 +1,6 @@
 import { setup, assign, createActor, type ActorRefFrom } from 'xstate';
 import { Graphics } from 'pixi.js';
-import type { Vec2 } from '@zynpparti/geometry';
+import { snapToAngle, type Vec2 } from '@zynpparti/geometry';
 import { AddEntity, createEntityId, type Wall } from '@zynpparti/document';
 import { DASH, strokeDashedLine, type SceneTool, type ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
@@ -81,11 +81,21 @@ export class WallTool implements SceneTool {
   }
 
   onPointerDown(p: ScenePointer): void {
-    this.actor.send({ type: 'POINT', at: this.ctx.snap(p.world) });
+    this.actor.send({ type: 'POINT', at: this.resolve(p) });
   }
 
   onPointerMove(p: ScenePointer): void {
-    this.actor.send({ type: 'MOVE', at: this.ctx.snap(p.world) });
+    this.actor.send({ type: 'MOVE', at: this.resolve(p) });
+  }
+
+  /**
+   * İmleci dünya noktasına çözer. Shift basılı + bir başlangıç noktası varsa **ortho/polar mod**:
+   * yön 45°'nin katına kilitlenir (yatay/dikey/çapraz). Aksi halde normal snap (uç/orta/kesişim…).
+   */
+  private resolve(p: ScenePointer): Vec2 {
+    const start = this.actor.getSnapshot().context.start;
+    if (p.shiftKey && start) return snapToAngle(start, p.world, Math.PI / 4);
+    return this.ctx.snap(p.world);
   }
 
   onKeyDown(e: KeyboardEvent): void {

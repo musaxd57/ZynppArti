@@ -63,11 +63,11 @@ Senin baştan istediğin "kesiti de otomatik yapsın" — ama dürüst teknik ge
 
 ---
 
-### Özet — CLAUDE.md/ROADMAP'e eklenecekler
-- [ ] AI render = uygulama içi **canlı panel** (export değil); plan+kesit; yaratıcı/geometri-koru modu.
-- [ ] Copilot = **kaynak-gösteren öneri** + **canlı metrik paneli** (m²'nin üstüne).
-- [ ] **Türkçe yönetmelik bilgisi** = premium farklılaştırıcı (İmar/TBDY/TS 9111…).
-- [ ] Kesit beklentisini düzelt: hafif şematik kesit (duvar yüksekliği) Faz 3, tam 3B kesit Faz 5.
+### Özet — CLAUDE.md/ROADMAP'e eklenecekler (durum 2026-06-22)
+- [x] Copilot = **kaynak-gösteren öneri** + **canlı metrik paneli** (m²'nin üstüne) — **2A+2B TAMAM** (deterministik kural motoru `packages/copilot`, 31 test; RoomList metrik paneli).
+- [x] **Türkçe yönetmelik bilgisi** = premium farklılaştırıcı (İmar/TBDY/TS 9111…) — **tohum kurulu** (ADR-0015), genişliyor.
+- [x] Kesit beklentisini düzelt: hafif şematik kesit Faz 3, tam 3B kesit Faz 5 — **karar yazıldı** (ADR-0016).
+- [ ] AI render = uygulama içi **canlı panel** (export değil); plan+kesit; yaratıcı/geometri-koru modu — **maliyetli, ertelendi** (ADR-0019; LLM doğal-dil katmanı da burada).
 
 ### Kaynaklar
 - Entegre render: Monograph "Best AI for Architecture 2026" (Archicad AI Visualizer/Veras)

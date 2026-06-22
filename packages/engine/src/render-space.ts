@@ -1,5 +1,5 @@
 import { BitmapText, Graphics } from 'pixi.js';
-import { hatchPattern, polygonArea, type Vec2 } from '@zynpparti/geometry';
+import { hatchPattern, polygonArea, polygonCentroid } from '@zynpparti/geometry';
 import { roomTypeColor, roomTypeOf, type Material, type Space } from '@zynpparti/document';
 import { ROOM_FONT } from './charset';
 import { LINEWEIGHTS, PALETTE } from './lineweights';
@@ -62,22 +62,11 @@ export function buildSpaceLabel(space: Space): BitmapText {
     style: { fontFamily: ROOM_FONT, fontSize: LABEL_SIZE, align: 'center' },
   });
   label.anchor.set(0.5);
-  const c = centroid(space.boundary);
+  const c = polygonCentroid(space.boundary);
   label.position.set(c.x, c.y);
   return label;
 }
 
 function formatArea(m2: number): string {
   return m2.toFixed(1).replace('.', ','); // tr-TR ondalık
-}
-
-function centroid(poly: readonly Vec2[]): Vec2 {
-  let x = 0;
-  let y = 0;
-  for (const p of poly) {
-    x += p.x;
-    y += p.y;
-  }
-  const n = poly.length || 1;
-  return { x: x / n, y: y / n };
 }

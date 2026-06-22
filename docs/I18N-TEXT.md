@@ -31,7 +31,13 @@ Uygulama notu: Tek bir `TR_CHARSET` sabiti tanımla (`packages/engine` veya payl
 önceden doldurulsun (preload). Eksik glyph istenirse **sessizce boş bırakma** — log/fallback ver.
 
 ## 2. Çok dil mimarisi
-- **UI dizeleri hardcode EDİLMEZ.** i18n dosyalarında (key → çeviri). İlk diller: **TR (varsayılan) + EN.**
+
+> ⚠️ **ŞU AN (Faz 1–2):** UI dizeleri henüz hardcoded TR (Toolbar/paneller/BLOCK_DEFS etiketleri/
+> ShortcutsHelp). i18n mimarisi (key→çeviri, `tr.json`/`en.json`) **henüz kurulmadı** — aşağısı
+> HEDEF mimaridir. Kritik olan Türkçe glyph atlası (`TR_CHARSET`) ✅ yapıldı (§1). i18n çıkarımı,
+> ürün TR pazarında olgunlaşınca (EN talebi gelince) yapılacak.
+
+- **UI dizeleri hardcode EDİLMEZ (hedef).** i18n dosyalarında (key → çeviri). İlk diller: **TR (varsayılan) + EN.**
 - Dize anahtarları İngilizce, çeviri dosyaları dile göre (`tr.json`, `en.json`).
 - **Yerel biçimlendirme:** sayı/ondalık yerele göre (TR: `12,5` virgül; EN: `12.5`). `Intl.NumberFormat` kullan.
 - **Birim gösterimi:** m² / ft² yerele ve proje birimine göre (iç birim sabit = 1 cm, bkz. ADR-0008; gösterim ayrı).
