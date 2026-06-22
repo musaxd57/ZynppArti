@@ -129,7 +129,10 @@ export function CanvasStage() {
         isLayerLocked: (id) => h.layers.isLocked(id),
         setCursor: (c) => h.setCursor(c),
         onSelectionChange: (ids) => setSelectedIds(ids),
-        onSectionLine: (a, b) => setSectionLine([a, b]),
+        onSectionLine: (a, b) => {
+          setSectionLine([a, b]);
+          h.setSectionMarker([a, b]); // planda kalıcı A—A' işareti
+        },
       });
       h.setActiveTool(manager);
       // Mahal içine çift tık → Seç moduna geç + o mahalin adını düzenlemeye odaklan.
