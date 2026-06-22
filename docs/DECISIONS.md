@@ -5,6 +5,36 @@
 
 ---
 
+## ADR-0027 — Copilot: oda asgari genişlik + parsel içinde kalma denetimleri
+**Tarih:** 2026-06-22 · **Durum:** Kabul
+**Bağlam:** Yönetmelik tabanı büyüyor (ADR-0015, kalite tavanı yok ADR-0019). Mevcut veriyle (mahal/duvar/parsel) çalışan, atıflı yeni kurallar eklenebilir.
+**Karar:** İki yeni deterministik denetim (`packages/copilot`): (1) **roomMinWidth** — yaşanabilir oda (yatma/yaşam) en küçük net genişliği İmar ~210 cm ile kıyaslanır (`polygonMinWidth`); değer plana göre değiştiğinden **info**. (2) **parcelContainment** — duvar uçları parsel poligonu dışındaysa (`pointInPolygon`) "yapı parsel dışına taşıyor" **warning**'i; gürültüyü önlemek için etkilenen duvar sayısı özetlenir. `setbackSide` (çekme) ile tamamlayıcı: çekme mesafeyi, içerme taşmayı yakalar.
+**Sonuç:** Daha kapsamlı, hâlâ Seviye-1 salt-okunur copilot. +5 test (26→31). İlişkili: [ADR-0018], [ADR-0021].
+
+## ADR-0026 — Vektör SVG export (`packages/io`)
+**Tarih:** 2026-06-22 · **Durum:** Kabul
+**Bağlam:** Baskı/Illustrator/web için vektör çıktı gerekiyordu; PNG raster, PDF de tuval görüntüsünü gömüyor (ADR-0022, raster). DXF CAD-içi; tasarım/sunum için SVG daha uygun.
+**Karar:** `exportSvg(entities)` — saf TS (yalnız `document`; engine/DOM yok). Mahal dolgusu (tip rengi + ad), kesik parsel sınırı, kalınlık-stroke duvar, boşluk (beyaz kesim + kanat/cam), blok ayak izi, ölçü (değerli), XML-escape çok satırlı metin. `viewBox` tüm entity'leri otomatik çevreler (cm, y-aşağı = tuval ile aynı). Toolbar "SVG İndir".
+**Sonuç:** Gerçek vektör çıktı (sonsuz ölçeklenir, düzenlenebilir). Takas: SVG metni sistem `sans-serif`; gömülü font değil. Bağımlılık eklenmedi.
+
+## ADR-0025 — DXF export tüm entity tiplerini kapsar
+**Tarih:** 2026-06-22 · **Durum:** Kabul
+**Bağlam:** `exportDxf` yalnız duvarları (LINE) yazıyordu; gerçek interop için parsel/blok/ölçü/metin/boşluk da gerekli.
+**Karar:** İmza `Entity[]`'ye genişletildi (`Wall[]` hâlâ geçerli — kovaryant readonly dizi). Parsel/blok → kapalı **LWPOLYLINE**, metin → (çok satırlı) **TEXT**, ölçü → ölçü+uzatma **LINE**'ları + değer TEXT, boşluk → duvarına çözülen işaret LINE'ı. Türetilmiş/baskı entity'leri (space/sheet) model uzayına yazılmaz. Koordinatlar cm, kendi içe-aktarıcımızla yuvarlanır.
+**Sonuç:** Tam çizim DXF'e gider. Takas: minimal R12 tarzı (gerçek DIMENSION/HATCH entity'leri değil); AutoCAD'de geometri doğru, akıllı ölçü nesnesi değil.
+
+## ADR-0024 — Snapping zenginleştirme: orta nokta + kenar-üstü (dik) yakalama
+**Tarih:** 2026-06-22 · **Durum:** Kabul
+**Bağlam:** CAD'in ruhu snapping (CLAUDE.md §8.1: uç/orta/dik/kesişim/hizalama). Snapper yalnız uç-nokta + eksen-hizalama + ızgara yapıyordu.
+**Karar:** Anahtar noktalara duvar/ölçü/parsel **orta noktaları** eklendi; ayrıca **kenar-üstü** yakalama (segmente dik iz düşüm, `closestPointOnSegment`) tek rbush aramasıyla. Öncelik: tam nokta (köşe/orta) > kenar > eksen hizalama > ızgara. `SnapHint.pointKind` ile gösterge glyph'i ayrışır: eşkenar dörtgen=köşe, üçgen=orta, kare=kenar.
+**Sonuç:** Çok daha "CAD hissi" veren snapping; tıklamadan önce ne tür yakalama olduğu görünür. +2 test. (Kesişim snap'i ileride.)
+
+## ADR-0023 — Block / Annotation / Sheet entity kararları (geriye dönük kayıt)
+**Tarih:** 2026-06-22 · **Durum:** Kabul (uygulama 2026-06-20/21'de yapıldı; ADR borcu kapatıldı)
+**Bağlam:** Faz 1 sonrası maliyetsiz tur (ADR-0019) blok/metin/pafta entity'lerini ekledi ama ADR yazılmamıştı (STATE.md ertelenenler).
+**Karar:** (1) **Block** — kütüphane mobilya/sembolü; `kind` + `position` + `rotation`. Boyut `BLOCK_DEFS` (document/block.ts) içinde sabit; mobilya gerçek ölçülü olduğundan köşe-resize yok (yalnız taşı/90° döndür). Kendi `furniture` katmanında → toplu gizle/kilitle. (2) **Annotation** — serbest metin; `position`+`text`+`height` (dünya cm); çok satırlı `\n`. Engine TR BitmapText atlasını yeniden kullanır. (3) **Sheet** — pafta/sayfa çerçevesi (paper canvas çekirdeği); kağıt boyutu (A4–A0) × yönelim × ölçek → model boyutu; antet alanları. En arka katman; yalnız çerçeveden seçilir.
+**Sonuç:** Domain modeli CLAUDE.md §7 ile hizalı. Tümü `Entity` union'ında, Command'den geçer, hit-test/bounds/render destekli.
+
 ## ADR-0022 — PDF export: jsPDF (istemci) + bağımlılık + UX scroll/toolbar düzeltmeleri
 **Tarih:** 2026-06-21 · **Durum:** Kabul (Moses onayı: "jspdf ekleyebilirsin")
 **Bağlam:** Faz 1 kabul kriterinde PDF export vardı (CLAUDE.md §8.4); PNG/DXF/Excel zaten vardı. PDF için kütüphane gerekir (CLAUDE.md §12: bağımlılık = ciddi karar, önce sor → Moses onayladı).
