@@ -86,6 +86,15 @@ function UnlockIcon() {
     </svg>
   );
 }
+function SoloIcon() {
+  // hedef/nişangah — "yalnız bunu göster"
+  return (
+    <svg className={ICON} {...svgProps}>
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="2.5" />
+    </svg>
+  );
+}
 
 interface LayerPanelProps {
   store: EntityStore;
@@ -113,6 +122,7 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
   const rows = collect(store);
   if (rows.length === 0) return null;
 
+  const allIds = rows.map((r) => r.id);
   const hiddenCount = rows.filter((r) => layers.isHidden(r.id)).length;
   const badge = hiddenCount > 0 ? `${rows.length} · ${hiddenCount} gizli` : `${rows.length}`;
 
@@ -125,6 +135,7 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
         {rows.map(({ id, count }) => {
           const hidden = layers.isHidden(id);
           const locked = layers.isLocked(id);
+          const solo = layers.isSolo(id);
           const name = layerName(id);
           return (
             <div
@@ -156,6 +167,16 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
                 title={locked ? 'Kilidi aç (seçilebilir yap)' : 'Kilitle'}
               >
                 {locked ? <LockIcon /> : <UnlockIcon />}
+              </button>
+              <button
+                type="button"
+                onClick={() => layers.solo(id, allIds)}
+                className={`${iconBtn} ${solo ? 'text-blue-400' : 'text-white/40'}`}
+                aria-label={`${name} katmanı: ${solo ? 'soloyu çöz' : 'yalnız bunu göster'}`}
+                aria-pressed={solo}
+                title={solo ? 'Solo’yu çöz (hepsini göster)' : 'Yalnız bunu göster (solo)'}
+              >
+                <SoloIcon />
               </button>
               <span
                 className={`flex-1 truncate ${hidden ? 'text-white/35 line-through' : locked ? 'text-amber-200/90' : ''}`}

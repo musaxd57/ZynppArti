@@ -28,6 +28,29 @@ describe('LayerState', () => {
     expect(s.isLocked('a')).toBe(false);
   });
 
+  it('solo: yalnız verilen katmanı gösterir, tekrar çağırınca çözer', () => {
+    const s = new LayerState();
+    const all = ['a', 'b', 'c'];
+    s.solo('b', all);
+    expect(s.isHidden('a')).toBe(true);
+    expect(s.isHidden('b')).toBe(false);
+    expect(s.isHidden('c')).toBe(true);
+    expect(s.isSolo('b')).toBe(true);
+    // aynı katmana tekrar solo → çöz (hepsi görünür)
+    s.solo('b', all);
+    expect(s.isHidden('a')).toBe(false);
+    expect(s.isHidden('c')).toBe(false);
+    expect(s.isSolo('b')).toBe(false);
+  });
+
+  it('elle görünürlük değişimi solo durumunu bozar', () => {
+    const s = new LayerState();
+    s.solo('a', ['a', 'b']);
+    expect(s.isSolo('a')).toBe(true);
+    s.toggle('b');
+    expect(s.isSolo('a')).toBe(false);
+  });
+
   it('değişimde aboneleri bildirir; abonelik iptal edilebilir', () => {
     const s = new LayerState();
     const fn = vi.fn();

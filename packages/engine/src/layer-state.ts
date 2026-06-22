@@ -9,6 +9,8 @@ export class LayerState {
   private readonly hidden = new Set<string>();
   private readonly locked = new Set<string>();
   private readonly listeners = new Set<() => void>();
+  /** Solo edilmiş katman (yalnız o görünür); yoksa null. */
+  private soloLayerId: string | null = null;
 
   isHidden(layerId: string): boolean {
     return this.hidden.has(layerId);
@@ -17,6 +19,29 @@ export class LayerState {
   setHidden(layerId: string, hidden: boolean): void {
     if (hidden) this.hidden.add(layerId);
     else this.hidden.delete(layerId);
+    this.soloLayerId = null; // elle görünürlük değişimi solo'yu bozar
+    this.emit();
+  }
+
+  isSolo(layerId: string): boolean {
+    return this.soloLayerId === layerId;
+  }
+
+  /**
+   * "Yalnız bunu göster" (solo): verilen katman dışındakileri gizler. Aynı katman zaten solo ise
+   * çözer (hepsini gösterir). Figma/Photoshop deseni. `allLayerIds` = mevcut tüm katmanlar.
+   */
+  solo(layerId: string, allLayerIds: readonly string[]): void {
+    if (this.soloLayerId === layerId) {
+      for (const id of allLayerIds) this.hidden.delete(id);
+      this.soloLayerId = null;
+    } else {
+      for (const id of allLayerIds) {
+        if (id === layerId) this.hidden.delete(id);
+        else this.hidden.add(id);
+      }
+      this.soloLayerId = layerId;
+    }
     this.emit();
   }
 
