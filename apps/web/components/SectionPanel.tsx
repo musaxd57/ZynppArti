@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { computeSection, DEFAULT_WALL_HEIGHT_CM, type EntityStore, type Wall } from '@zynpparti/document';
 import type { Vec2 } from '@zynpparti/geometry';
+import { exportSectionSvg } from '@zynpparti/io';
 import { Panel } from './Panel';
 
 interface SectionPanelProps {
@@ -68,6 +69,21 @@ export function SectionPanel({ store, line }: SectionPanelProps) {
             {s.cuts.length} duvar · uzunluk {(s.lengthCm / 100).toFixed(2).replace('.', ',')} m · maks.
             yükseklik {Math.round(s.maxHeightCm)} cm
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              const blob = new Blob([exportSectionSvg(s)], { type: 'image/svg+xml' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'zynpparti-kesit.svg';
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="rounded bg-white/10 px-2 py-1 text-xs hover:bg-white/20"
+          >
+            Kesit SVG indir
+          </button>
         </div>
       );
     }

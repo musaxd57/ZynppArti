@@ -8,6 +8,7 @@ import {
   toHexColor,
   type Entity,
   type EntityId,
+  type Section,
   type Wall,
 } from '@zynpparti/document';
 
@@ -95,6 +96,37 @@ export function exportSvg(entities: readonly Entity[]): string {
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${num(minX)} ${num(minY)} ${num(w)} ${num(h)}" ` +
     `width="${num(w)}" height="${num(h)}">\n` +
     `<rect x="${num(minX)}" y="${num(minY)}" width="${num(w)}" height="${num(h)}" fill="#ffffff" />\n` +
+    body.join('\n') +
+    `\n</svg>\n`
+  );
+}
+
+/**
+ * Şematik kesiti vektör SVG'ye aktarır (ADR-0016/0037). Kesilen duvarlar kat tabanından
+ * yüksekliğine kadar dikdörtgen; altta zemin çizgisi. cm birimi (1 birim = 1 cm), y-aşağı.
+ */
+export function exportSectionSvg(section: Section): string {
+  const { lengthCm, maxHeightCm, cuts } = section;
+  const margin = 50;
+  if (cuts.length === 0 || lengthCm <= 0) {
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80"></svg>\n';
+  }
+  const W = lengthCm + margin * 2;
+  const H = maxHeightCm + margin * 2;
+  const floorY = margin + maxHeightCm;
+  const body: string[] = [];
+  body.push(
+    `<line x1="${num(margin)}" y1="${num(floorY)}" x2="${num(margin + lengthCm)}" y2="${num(floorY)}" stroke="#1a1a1a" stroke-width="2" />`,
+  );
+  for (const c of cuts) {
+    const x = margin + c.offsetCm - c.widthCm / 2;
+    body.push(
+      `<rect x="${num(x)}" y="${num(floorY - c.heightCm)}" width="${num(c.widthCm)}" height="${num(c.heightCm)}" fill="#cfcfd6" stroke="#1a1a1a" stroke-width="1" />`,
+    );
+  }
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${num(W)} ${num(H)}" width="${num(W)}" height="${num(H)}">\n` +
+    `<rect x="0" y="0" width="${num(W)}" height="${num(H)}" fill="#ffffff" />\n` +
     body.join('\n') +
     `\n</svg>\n`
   );

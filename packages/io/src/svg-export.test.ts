@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import type { Annotation, Space, Wall } from '@zynpparti/document';
-import { exportSvg } from './svg-export';
+import { computeSection, type Annotation, type Space, type Wall } from '@zynpparti/document';
+import { exportSvg, exportSectionSvg } from './svg-export';
 
 const wall: Wall = {
   id: 'w',
@@ -67,5 +67,21 @@ describe('exportSvg', () => {
     const svg = exportSvg([ann]);
     expect(svg).toContain('A &amp; B &lt;ölçü&gt;');
     expect(svg).not.toContain('A & B <ölçü>');
+  });
+
+  it('exportSectionSvg: kesilen duvarları rect + zemin çizgisi olarak yazar', () => {
+    const walls: Wall[] = [
+      { id: 'a', type: 'wall', layerId: 'default', start: { x: 100, y: -50 }, end: { x: 100, y: 50 }, thickness: 20, height: 300 },
+    ];
+    const section = computeSection({ x: 0, y: 0 }, { x: 400, y: 0 }, walls);
+    const svg = exportSectionSvg(section);
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('<rect'); // duvar gövdesi
+    expect(svg).toContain('<line'); // zemin
+  });
+
+  it('exportSectionSvg: boş kesit → geçerli ama içerik-dışı SVG', () => {
+    const section = computeSection({ x: 0, y: 0 }, { x: 100, y: 0 }, []);
+    expect(exportSectionSvg(section)).toContain('<svg');
   });
 });
