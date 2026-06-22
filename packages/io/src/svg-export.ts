@@ -188,5 +188,6 @@ function esc(s: string): string {
 }
 
 function num(n: number): string {
-  return Number(n.toFixed(2)).toString();
+  // Bozuk koordinat (NaN/Infinity) SVG'yi geçersiz kılmasın → 0.
+  return Number.isFinite(n) ? Number(n.toFixed(2)).toString() : '0';
 }

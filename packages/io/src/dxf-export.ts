@@ -100,5 +100,6 @@ function text(out: string[], layer: string, pos: Vec2, height: number, value: st
 }
 
 function fmt(n: number): string {
-  return n.toFixed(4);
+  // Bozuk entity (NaN/Infinity koordinat) DXF'i geçersiz kılmasın → 0'a indir.
+  return Number.isFinite(n) ? n.toFixed(4) : '0';
 }

@@ -37,7 +37,14 @@ export class RoomManager {
     this.knownWalls = new Set(walls.map((w) => w.id));
 
     const segments: Segment[] = walls.map((w) => ({ a: w.start, b: w.end }));
-    const faces = findFaces(segments);
+    let faces: Vec2[][];
+    try {
+      faces = findFaces(segments);
+    } catch (err) {
+      // Dejenere/bozuk geometri yüz-bulmayı patlatırsa: eski mahalleri KORU, app'i kilitleme.
+      console.error('RoomManager: mahal yeniden-hesabı başarısız, eski mahaller korunuyor.', err);
+      return;
+    }
 
     const oldSpaces = this.store.all().filter((e): e is Space => e.type === 'space');
     const newSpaces: Space[] = faces.map((boundary) => {

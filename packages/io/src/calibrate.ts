@@ -7,6 +7,9 @@ import type { Wall } from '@zynpparti/document';
  * tüm çizim bu çarpanla ölçeklenir (ADR-0008).
  */
 export function computeScaleFactor(p1: Vec2, p2: Vec2, realDistance: number): number {
+  if (!Number.isFinite(realDistance) || realDistance <= 0) {
+    throw new Error('Kalibrasyon mesafesi pozitif bir sayı olmalı.');
+  }
   const measured = distance(p1, p2);
   if (measured === 0) throw new Error('İki kalibrasyon noktası aynı; ölçek hesaplanamaz.');
   return realDistance / measured;

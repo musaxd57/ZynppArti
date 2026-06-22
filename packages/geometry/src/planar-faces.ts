@@ -167,7 +167,11 @@ function properIntersection(p1: Vec2, p2: Vec2, p3: Vec2, p4: Vec2): Vec2 | null
   const u = (qpx * ry - qpy * rx) / denom;
   const e = 1e-9;
   if (t > e && t < 1 - e && u > e && u < 1 - e) {
-    return { x: p1.x + t * rx, y: p1.y + t * ry };
+    const x = p1.x + t * rx;
+    const y = p1.y + t * ry;
+    // Dejenere/taşkın girdi NaN/Infinity üretebilir → bozuk kesişimi yut (yüz-bulmayı kilitlemesin).
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    return { x, y };
   }
   return null;
 }

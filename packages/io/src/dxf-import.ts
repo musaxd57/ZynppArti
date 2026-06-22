@@ -49,40 +49,45 @@ export function importDxf(text: string): DxfImportResult {
 
   for (const e of dxf.entities ?? []) {
     const layer = e.layer || 'default';
-    if (e.type === 'LINE') {
-      const v = (e as ILineEntity).vertices;
-      if (v.length >= 2) {
-        walls.push(makeWall(v[0]!, v[1]!, factor, layer));
+    // Tek bir bozuk entity tüm import'u öldürmesin → entity başına izole et, hatalıyı atla.
+    try {
+      if (e.type === 'LINE') {
+        const v = (e as ILineEntity).vertices;
+        if (v.length >= 2) {
+          walls.push(makeWall(v[0]!, v[1]!, factor, layer));
+          layers.add(layer);
+        }
+      } else if (e.type === 'LWPOLYLINE') {
+        const pl = e as ILwpolylineEntity;
+        if (pushPolyline(pl.vertices, pl.shape, factor, layer, walls)) layers.add(layer);
+      } else if (e.type === 'POLYLINE') {
+        const pl = e as IPolylineEntity;
+        if (pushPolyline(pl.vertices, pl.shape, factor, layer, walls)) layers.add(layer);
+      } else if (e.type === 'CIRCLE') {
+        const c = e as ICircleEntity;
+        tessellateArc(c.center, c.radius, 0, Math.PI * 2, factor, layer, walls);
         layers.add(layer);
-      }
-    } else if (e.type === 'LWPOLYLINE') {
-      const pl = e as ILwpolylineEntity;
-      if (pushPolyline(pl.vertices, pl.shape, factor, layer, walls)) layers.add(layer);
-    } else if (e.type === 'POLYLINE') {
-      const pl = e as IPolylineEntity;
-      if (pushPolyline(pl.vertices, pl.shape, factor, layer, walls)) layers.add(layer);
-    } else if (e.type === 'CIRCLE') {
-      const c = e as ICircleEntity;
-      tessellateArc(c.center, c.radius, 0, Math.PI * 2, factor, layer, walls);
-      layers.add(layer);
-    } else if (e.type === 'ARC') {
-      const a = e as IArcEntity;
-      tessellateArc(a.center, a.radius, a.startAngle, a.endAngle, factor, layer, walls);
-      layers.add(layer);
-    } else if (e.type === 'TEXT') {
-      const t = e as ITextEntity;
-      const ann = makeAnnotation(t.startPoint, t.text, t.textHeight, factor, layer);
-      if (ann) {
-        annotations.push(ann);
+      } else if (e.type === 'ARC') {
+        const a = e as IArcEntity;
+        tessellateArc(a.center, a.radius, a.startAngle, a.endAngle, factor, layer, walls);
         layers.add(layer);
+      } else if (e.type === 'TEXT') {
+        const t = e as ITextEntity;
+        const ann = makeAnnotation(t.startPoint, t.text, t.textHeight, factor, layer);
+        if (ann) {
+          annotations.push(ann);
+          layers.add(layer);
+        }
+      } else if (e.type === 'MTEXT') {
+        const t = e as IMtextEntity;
+        const ann = makeAnnotation(t.position, stripMtext(t.text), t.height, factor, layer);
+        if (ann) {
+          annotations.push(ann);
+          layers.add(layer);
+        }
       }
-    } else if (e.type === 'MTEXT') {
-      const t = e as IMtextEntity;
-      const ann = makeAnnotation(t.position, stripMtext(t.text), t.height, factor, layer);
-      if (ann) {
-        annotations.push(ann);
-        layers.add(layer);
-      }
+    } catch (err) {
+      console.warn('DXF: bozuk entity atlandı', e.type, err);
     }
   }
 
