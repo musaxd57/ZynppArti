@@ -18,6 +18,11 @@ export interface Wall extends EntityBase {
   readonly start: Vec2;
   readonly end: Vec2;
   readonly thickness: number;
+  /**
+   * Duvar yüksekliği (cm, kat tabanından tavana). Atanmazsa kat yüksekliği varsayımı kullanılır
+   * (metraj/şematik kesit). Şematik kesitin (ADR-0016) temel girdisidir.
+   */
+  readonly height?: number;
 }
 
 /**

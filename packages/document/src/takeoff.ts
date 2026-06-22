@@ -88,8 +88,8 @@ export function computeTakeoff(
 
   const wallLenCm = walls.reduce((s, w) => s + wallLengthCm(w), 0);
 
-  // Sıva: iki yüz. Boşluk alanı (iki yüz) düşülür.
-  let plasterCm2 = 2 * wallLenCm * h;
+  // Sıva: iki yüz. Her duvar kendi yüksekliğiyle (yoksa kat yüksekliği). Boşluk alanı (iki yüz) düşülür.
+  let plasterCm2 = walls.reduce((s, w) => s + 2 * wallLengthCm(w) * (w.height ?? h), 0);
   for (const o of openings) {
     const oh = o.kind === 'door' ? DOOR_HEIGHT_CM : WINDOW_HEIGHT_CM;
     plasterCm2 -= 2 * o.width * oh;

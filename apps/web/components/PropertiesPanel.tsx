@@ -40,19 +40,36 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
     const w = e as Wall;
     return (
       <Panel title="Özellikler — Duvar" widthClass="w-56">
-        <label className={labelCls}>
-          <span className="opacity-70">Kalınlık (cm)</span>
-          <input
-            type="number"
-            min={1}
-            defaultValue={Math.round(w.thickness)}
-            onChange={(ev) => {
-              const t = Number(ev.target.value);
-              if (Number.isFinite(t) && t > 0) history.dispatch(new UpdateEntity({ ...w, thickness: t }));
-            }}
-            className={numCls}
-          />
-        </label>
+        <div className="flex flex-col gap-1">
+          <label className={labelCls}>
+            <span className="opacity-70">Kalınlık (cm)</span>
+            <input
+              type="number"
+              min={1}
+              defaultValue={Math.round(w.thickness)}
+              onChange={(ev) => {
+                const t = Number(ev.target.value);
+                if (Number.isFinite(t) && t > 0)
+                  history.dispatch(new UpdateEntity({ ...w, thickness: t }));
+              }}
+              className={numCls}
+            />
+          </label>
+          <label className={labelCls}>
+            <span className="opacity-70">Yükseklik (cm)</span>
+            <input
+              type="number"
+              min={1}
+              defaultValue={Math.round(w.height ?? 280)}
+              onChange={(ev) => {
+                const hh = Number(ev.target.value);
+                if (Number.isFinite(hh) && hh > 0)
+                  history.dispatch(new UpdateEntity({ ...w, height: hh }));
+              }}
+              className={numCls}
+            />
+          </label>
+        </div>
       </Panel>
     );
   }
