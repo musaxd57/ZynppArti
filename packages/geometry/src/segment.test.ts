@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { closestPointOnSegment, distanceToSegment } from './segment';
+import { closestPointOnSegment, distanceToSegment, segmentIntersection } from './segment';
 import { vec2 } from './vec2';
 
 describe('closestPointOnSegment', () => {
@@ -24,5 +24,30 @@ describe('distanceToSegment', () => {
 
   it('measures distance to the nearest endpoint when beyond the segment', () => {
     expect(distanceToSegment(vec2(13, 4), vec2(0, 0), vec2(10, 0))).toBeCloseTo(5);
+  });
+});
+
+describe('segmentIntersection', () => {
+  it('iki çaprazın kesişimini bulur', () => {
+    const p = segmentIntersection(vec2(0, 0), vec2(10, 10), vec2(0, 10), vec2(10, 0));
+    expect(p).not.toBeNull();
+    expect(p!.x).toBeCloseTo(5);
+    expect(p!.y).toBeCloseTo(5);
+  });
+
+  it('parça sınırı dışında kesişim → null', () => {
+    // sonsuz doğrular kesişir ama parçalar değmiyor
+    expect(segmentIntersection(vec2(0, 0), vec2(1, 1), vec2(0, 10), vec2(1, 9))).toBeNull();
+  });
+
+  it('paralel parçalar → null', () => {
+    expect(segmentIntersection(vec2(0, 0), vec2(10, 0), vec2(0, 5), vec2(10, 5))).toBeNull();
+  });
+
+  it('T kesişimi (uç ortaya değiyor) noktayı verir', () => {
+    const p = segmentIntersection(vec2(0, 0), vec2(10, 0), vec2(5, 0), vec2(5, 10));
+    expect(p).not.toBeNull();
+    expect(p!.x).toBeCloseTo(5);
+    expect(p!.y).toBeCloseTo(0);
   });
 });

@@ -103,6 +103,41 @@ describe('createSnapper', () => {
     expect(hint!.pointKind).toBe('edge');
   });
 
+  it('iki çaprazlanan duvarın kesişimine yakalar (intersection glyph)', () => {
+    const store = new EntityStore();
+    const index = new SpatialIndex();
+    // a: yatay y=0 (0,0)-(100,0); b: dikey x=30 (30,-40)-(30,60). Kesişim {30,0} —
+    // hiçbirinin ucu/orta noktası değil (a-orta {50,0}, b-orta {30,10}).
+    const a: Wall = {
+      id: 'a',
+      type: 'wall',
+      layerId: 'default',
+      start: { x: 0, y: 0 },
+      end: { x: 100, y: 0 },
+      thickness: 10,
+    };
+    const b: Wall = {
+      id: 'b',
+      type: 'wall',
+      layerId: 'default',
+      start: { x: 30, y: -40 },
+      end: { x: 30, y: 60 },
+      thickness: 10,
+    };
+    store.put(a);
+    store.put(b);
+    index.insert(a.id, entityBounds(a));
+    index.insert(b.id, entityBounds(b));
+    let hint: SnapHint | null = null;
+    const snap = createSnapper(store, index, () => 1, (h) => {
+      hint = h;
+    });
+    const p = snap({ x: 30, y: -3 });
+    expect(p.x).toBeCloseTo(30);
+    expect(p.y).toBeCloseTo(0);
+    expect(hint!.pointKind).toBe('intersection');
+  });
+
   it('exact endpoint snap reports a point hint (no guides)', () => {
     const { store, index } = wallAt();
     let hint: SnapHint | null = null;

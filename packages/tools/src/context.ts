@@ -1,6 +1,6 @@
 import type { Container } from 'pixi.js';
 import type { Vec2 } from '@zynpparti/geometry';
-import { distance, closestPointOnSegment } from '@zynpparti/geometry';
+import { distance, closestPointOnSegment, segmentIntersection } from '@zynpparti/geometry';
 import type { Entity, EntityId, EntityStore, History } from '@zynpparti/document';
 import type { SnapHint, SnapPointKind, SpatialIndex } from '@zynpparti/engine';
 
@@ -154,6 +154,7 @@ export function createSnapper(
     let bestPtD = r;
     let bestEdge: Vec2 | null = null;
     let bestEdgeD = r;
+    const nearSegs: (readonly [Vec2, Vec2])[] = [];
     for (const id of index.search({
       minX: world.x - r,
       minY: world.y - r,
@@ -169,8 +170,9 @@ export function createSnapper(
           bestPt = sp;
         }
       }
-      for (const [a, b] of segmentsOf(e)) {
-        const c = closestPointOnSegment(world, a, b);
+      for (const seg of segmentsOf(e)) {
+        nearSegs.push(seg);
+        const c = closestPointOnSegment(world, seg[0], seg[1]);
         const d = distance(world, c);
         if (d < bestEdgeD) {
           bestEdgeD = d;
@@ -178,11 +180,34 @@ export function createSnapper(
         }
       }
     }
-    // Köşe/orta nokta kenar-üstünden önceliklidir (daha güçlü niyet).
+
+    // Kesişim: yakındaki segment çiftlerinin gerçek çaprazları (kenardan öncelikli).
+    let bestIx: Vec2 | null = null;
+    let bestIxD = r;
+    for (let i = 0; i < nearSegs.length; i++) {
+      for (let j = i + 1; j < nearSegs.length; j++) {
+        const segA = nearSegs[i];
+        const segB = nearSegs[j];
+        if (!segA || !segB) continue;
+        const x = segmentIntersection(segA[0], segA[1], segB[0], segB[1]);
+        if (!x) continue;
+        const d = distance(world, x);
+        if (d < bestIxD) {
+          bestIxD = d;
+          bestIx = x;
+        }
+      }
+    }
+
+    // Öncelik: köşe/orta nokta > kesişim > kenar-üstü (hepsi güçlüden zayıfa niyet).
     if (bestPt) {
       const p = { x: bestPt.p.x, y: bestPt.p.y };
       onSnap?.({ point: p, pointKind: bestPt.kind, vGuide: null, hGuide: null });
       return p;
+    }
+    if (bestIx) {
+      onSnap?.({ point: bestIx, pointKind: 'intersection', vGuide: null, hGuide: null });
+      return bestIx;
     }
     if (bestEdge) {
       onSnap?.({ point: bestEdge, pointKind: 'edge', vGuide: null, hGuide: null });

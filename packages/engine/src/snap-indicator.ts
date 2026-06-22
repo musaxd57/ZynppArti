@@ -11,7 +11,7 @@ const GUIDE_COLOR = 0xff4f9a;
  * anahtar noktasıyla yatay/dikey **hizalandıysa** kılavuz segmenti (`vGuide`/`hGuide`). Üçü de
  * aynı anda dolu olabilir (köşe yakalama yoksa eksen hizalama). Tüm alanlar dünya koordinatı.
  */
-export type SnapPointKind = 'endpoint' | 'midpoint' | 'edge';
+export type SnapPointKind = 'endpoint' | 'midpoint' | 'edge' | 'intersection';
 
 export interface SnapHint {
   readonly point: Vec2 | null;
@@ -52,7 +52,14 @@ export function createSnapIndicator(container: Container): {
         const { x, y } = hint.point;
         const w = 1.5 * pixelSize;
         // Glyph snap türünü anlatır (CAD geleneği): köşe=eşkenar dörtgen, orta=üçgen, kenar=kare.
-        if (hint.pointKind === 'midpoint') {
+        if (hint.pointKind === 'intersection') {
+          // İki çizginin kesişimi → çapraz X.
+          g.moveTo(x - r, y - r)
+            .lineTo(x + r, y + r)
+            .moveTo(x - r, y + r)
+            .lineTo(x + r, y - r)
+            .stroke({ width: w, color: SNAP_COLOR, alpha: 0.95 });
+        } else if (hint.pointKind === 'midpoint') {
           g.moveTo(x, y - r)
             .lineTo(x + r, y + r)
             .lineTo(x - r, y + r)
