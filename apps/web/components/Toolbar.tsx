@@ -44,6 +44,24 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit }: Toolb
 
   useEffect(() => manager.subscribe(setActive), [manager]);
 
+  // Dosya kısayolları: Ctrl+S (kaydet) / Ctrl+O (aç). Tarayıcının kendi diyaloglarını bastır.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent): void {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const k = e.key.toLowerCase();
+      if (k === 's') {
+        e.preventDefault();
+        onSaveJson();
+      } else if (k === 'o') {
+        e.preventDefault();
+        jsonRef.current?.click();
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // Bir kez bağlanır; onSaveJson sabit `store`/`history` prop'larını kapatır (CanvasStage'de tek sefer kurulur).
+  }, []);
+
   async function onFile(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -172,10 +190,10 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit }: Toolb
         ⊡ Sığdır
       </button>
       <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
-      <button type="button" onClick={onSaveJson} className={btn} title="Modeli kaydet (.json)">
+      <button type="button" onClick={onSaveJson} className={btn} title="Modeli kaydet (.json) — Ctrl+S">
         Kaydet
       </button>
-      <button type="button" onClick={() => jsonRef.current?.click()} className={btn} title="Model aç (.json)">
+      <button type="button" onClick={() => jsonRef.current?.click()} className={btn} title="Model aç (.json) — Ctrl+O">
         Aç
       </button>
       <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />

@@ -48,7 +48,9 @@
 | `Home` | İçeriğe sığdır (zoom extents) | ✅ |
 | `Tekerlek` | Yakınlaş/uzaklaş | ✅ |
 | `?` | Kısayol yardımı aç/kapa | ✅ |
-| `Ctrl+X` (kes) · `Ctrl+G` (grupla) · `Ctrl+S` (kaydet) | — | ☐ kısayol henüz yok |
+| `Ctrl+S` | Modeli kaydet (.json) | ✅ |
+| `Ctrl+O` | Model aç (.json) | ✅ |
+| `Ctrl+X` (kes) · `Ctrl+G` (grupla) | — | ☐ henüz yok |
 
 ## 3.1 Dosya işlemleri (Toolbar butonları — kısayol yok)
 | Buton | İşlem | Durum |
@@ -62,7 +64,7 @@
 | PDF İndir | jsPDF (raster gömme) | ✅ |
 | Excel İndir | Mahal listesi / metraj (.xlsx) | ✅ (RoomList/Metraj panelinde) |
 
-> `Ctrl+S`/`Ctrl+O` klavye kısayolu bağlanması ileride (şu an yalnız buton).
+> `Ctrl+S` (kaydet) / `Ctrl+O` (aç) klavye kısayolları bağlı (tarayıcı diyaloğu bastırılır).
 
 ## 4. Seçim mantığı
 - **Tek tık:** altındaki entity'yi seç. ✅
