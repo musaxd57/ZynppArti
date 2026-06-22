@@ -34,6 +34,7 @@ export function CanvasStage() {
   const [renameId, setRenameId] = useState<string | null>(null);
   const clearRename = useCallback(() => setRenameId(null), []);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -96,6 +97,10 @@ export function CanvasStage() {
         setHoverHandler: h.setHoverHandler,
         zoomToFit: h.zoomToFit,
       });
+    }).catch((err) => {
+      // PixiJS init başarısız (WebGL yok/bellek) → sonsuz "yükleniyor" yerine hata göster.
+      console.error('Tuval başlatılamadı:', err);
+      setInitError(err instanceof Error ? err.message : String(err));
     });
 
     return () => {
@@ -110,6 +115,19 @@ export function CanvasStage() {
   return (
     <>
       <div ref={containerRef} className="h-full w-full" />
+      {initError && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-neutral-900 p-6 text-center text-white">
+          <div className="text-lg font-semibold">Tuval başlatılamadı</div>
+          <div className="max-w-md text-sm text-white/70">{initError}</div>
+          <button
+            type="button"
+            onClick={() => location.reload()}
+            className="rounded bg-blue-600 px-4 py-2 hover:bg-blue-700"
+          >
+            Sayfayı yenile
+          </button>
+        </div>
+      )}
       {ui && (
         <>
           <Toolbar

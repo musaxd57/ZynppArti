@@ -11,9 +11,15 @@ let installed = false;
 export function installRoomFont(): void {
   if (installed) return;
   installed = true;
-  BitmapFont.install({
-    name: ROOM_FONT,
-    style: new TextStyle({ fontFamily: 'Arial', fontSize: 64, fill: 0xffffff }),
-    chars: TR_CHARSET,
-  });
+  try {
+    BitmapFont.install({
+      name: ROOM_FONT,
+      style: new TextStyle({ fontFamily: 'Arial', fontSize: 64, fill: 0xffffff }),
+      chars: TR_CHARSET,
+    });
+  } catch (err) {
+    // Font atlası kurulamazsa (bellek/ortam) app çökmemeli; etiketler düşebilir ama çizim sürer.
+    installed = false;
+    console.error('Mahal fontu yüklenemedi:', err);
+  }
 }

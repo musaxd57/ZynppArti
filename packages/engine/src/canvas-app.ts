@@ -126,6 +126,15 @@ export async function createCanvasApp(
   let cameraStart: Camera = camera;
   let toolCursor = 'default'; // aktif aracın imleci (pan bittiğinde geri yüklenir)
 
+  // Aktif aracın bir handler'ı patlarsa tüm etkileşim donmasın → logla, devam et.
+  function guardTool(label: string, fn: () => void): void {
+    try {
+      fn();
+    } catch (err) {
+      console.error(`Araç hatası (${label}):`, err);
+    }
+  }
+
   function beginPan(e: PointerEvent): void {
     panning = true;
     panStart = pointerPos(e);
@@ -148,7 +157,7 @@ export async function createCanvasApp(
       } catch {
         /* capture desteklenmiyorsa yoksay */
       }
-      activeTool?.onPointerDown?.(scenePointer(e));
+      guardTool('pointerDown', () => activeTool?.onPointerDown?.(scenePointer(e)));
     }
   }
 
@@ -164,7 +173,7 @@ export async function createCanvasApp(
       applyCamera();
       return;
     }
-    activeTool?.onPointerMove?.(scenePointer(e));
+    guardTool('pointerMove', () => activeTool?.onPointerMove?.(scenePointer(e)));
   }
 
   function onPointerUp(e: PointerEvent): void {
@@ -174,7 +183,7 @@ export async function createCanvasApp(
       canvas.style.cursor = spaceHeld ? 'grab' : toolCursor;
       return;
     }
-    activeTool?.onPointerUp?.(scenePointer(e));
+    guardTool('pointerUp', () => activeTool?.onPointerUp?.(scenePointer(e)));
   }
 
   // Çift tık → yerinde düzenleme (aktif araçtan bağımsız; CLAUDE.md UX cilası):
@@ -251,7 +260,7 @@ export async function createCanvasApp(
       e.preventDefault();
       return;
     }
-    activeTool?.onKeyDown?.(e);
+    guardTool('keyDown', () => activeTool?.onKeyDown?.(e));
   }
 
   function onKeyUp(e: KeyboardEvent): void {
@@ -282,7 +291,15 @@ export async function createCanvasApp(
     overlay,
     layers,
     pixelSize: () => 1 / camera.zoom,
-    exportPng: () => app.renderer.extract.base64({ target: app.stage, format: 'png' }),
+    exportPng: async () => {
+      // WebGL bağlamı kaybı / extract desteklenmemesi → anlamlı hata (çağıran yakalar).
+      try {
+        return await app.renderer.extract.base64({ target: app.stage, format: 'png' });
+      } catch (err) {
+        console.error('PNG extract başarısız:', err);
+        throw new Error('Tuval görüntüsü alınamadı (WebGL bağlamı hazır değil).');
+      }
+    },
     zoomToFit,
     setSpaceActivateHandler(cb: (id: EntityId) => void): void {
       spaceActivate = cb;
