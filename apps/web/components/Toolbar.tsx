@@ -100,7 +100,13 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
     const dataUrl = await exportPng();
     const img = new Image();
     img.src = dataUrl;
-    await img.decode();
+    try {
+      await img.decode();
+    } catch {
+      // Tuval görüntüsü çözülemedi (ör. WebGL bağlamı hazır değil) → çökme yerine bilgi ver.
+      alert('PDF için tuval görüntüsü alınamadı. Lütfen tekrar deneyin.');
+      return;
+    }
     const sheet = store.all().find((e): e is Sheet => e.type === 'sheet');
     const format = sheet ? sheet.size.toLowerCase() : 'a4';
     const orientation: 'l' | 'p' = sheet && sheet.orientation === 'portrait' ? 'p' : 'l';
