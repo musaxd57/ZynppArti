@@ -12,6 +12,12 @@ const nextConfig: NextConfig = {
   ],
   // Monorepo kökünü açıkça belirt (home'daki başıboş lockfile'ın yanlış seçilmesini önler).
   outputFileTracingRoot: path.join(import.meta.dirname, '../..'),
+  experimental: {
+    // KALICI DÜZELTME: Next 15.5 devtools "Segment Explorer", uzun HMR oturumunda
+    // "Could not find the module ...segment-explorer-node ... React Client Manifest" hatası verip
+    // sayfayı 500/boş bırakıyordu. Bu paneli kapatınca o hata sınıfı tamamen ortadan kalkıyor.
+    devtoolSegmentExplorer: false,
+  },
 };
 
 export default nextConfig;
