@@ -109,6 +109,18 @@ interface LayerPanelProps {
 export function LayerPanel({ store, layers }: LayerPanelProps) {
   const [, bump] = useState(0);
   const rerender = () => bump((v) => v + 1);
+  // Kullanıcı özel katman adları (çift-tık düzenle, localStorage). Yoksa kanonik ada düşer.
+  const [labels, setLabels] = useState<Record<string, string>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const s = localStorage.getItem('zynpparti.layerLabels');
+      if (s) setLabels(JSON.parse(s) as Record<string, string>);
+    } catch {
+      /* yoksay */
+    }
+  }, []);
 
   useEffect(() => {
     const u1 = store.subscribe(rerender);
@@ -118,6 +130,23 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
       u2();
     };
   }, [store, layers]);
+
+  const displayName = (id: string): string => labels[id] ?? layerName(id);
+  const saveLabel = (id: string, value: string): void => {
+    const v = value.trim();
+    setLabels((prev) => {
+      const next = { ...prev };
+      if (!v || v === layerName(id)) delete next[id];
+      else next[id] = v;
+      try {
+        localStorage.setItem('zynpparti.layerLabels', JSON.stringify(next));
+      } catch {
+        /* yoksay */
+      }
+      return next;
+    });
+    setEditingId(null);
+  };
 
   const rows = collect(store);
   if (rows.length === 0) return null;
@@ -136,7 +165,7 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
           const hidden = layers.isHidden(id);
           const locked = layers.isLocked(id);
           const solo = layers.isSolo(id);
-          const name = layerName(id);
+          const name = displayName(id);
           return (
             <div
               key={id}
@@ -178,11 +207,26 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
               >
                 <SoloIcon />
               </button>
-              <span
-                className={`flex-1 truncate ${hidden ? 'text-white/35 line-through' : locked ? 'text-amber-200/90' : ''}`}
-              >
-                {name}
-              </span>
+              {editingId === id ? (
+                <input
+                  autoFocus
+                  defaultValue={name}
+                  onBlur={(e) => saveLabel(id, e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') saveLabel(id, (e.target as HTMLInputElement).value);
+                    else if (e.key === 'Escape') setEditingId(null);
+                  }}
+                  className="min-w-0 flex-1 rounded bg-white/10 px-1 text-sm outline-none focus:bg-white/20"
+                />
+              ) : (
+                <span
+                  onDoubleClick={() => setEditingId(id)}
+                  title="Çift tık: yeniden adlandır"
+                  className={`flex-1 truncate ${hidden ? 'text-white/35 line-through' : locked ? 'text-amber-200/90' : ''}`}
+                >
+                  {name}
+                </span>
+              )}
               <span className="tabular-nums text-xs opacity-50">{count}</span>
             </div>
           );
