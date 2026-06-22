@@ -55,6 +55,7 @@
 ## 3.1 Dosya işlemleri (Toolbar butonları — kısayol yok)
 | Buton | İşlem | Durum |
 |-------|-------|-------|
+| Yeni | Çizimi temizle (geri alınabilir, onaylı) | ✅ |
 | Kaydet | Modeli `.json` indir (serializeModel) | ✅ |
 | Aç | `.json` model yükle (değiştir, tek undo) | ✅ |
 | DXF Yükle | DXF içe aktar (LINE/POLYLINE/CIRCLE/ARC/TEXT) | ✅ |

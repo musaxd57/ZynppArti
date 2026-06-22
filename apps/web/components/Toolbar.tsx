@@ -133,6 +133,13 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
     URL.revokeObjectURL(url);
   }
 
+  function onNewModel(): void {
+    const toRemove = store.all().filter((ent) => ent.type !== 'space');
+    if (toRemove.length === 0) return;
+    if (!confirm('Tüm çizim temizlensin mi? (Geri al ile dönülebilir.)')) return;
+    history.dispatch(new BatchCommand('Yeni', toRemove.map((ent) => new RemoveEntity(ent.id))));
+  }
+
   function onSaveJson(): void {
     const blob = new Blob([serializeModel(store.all())], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -197,6 +204,9 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
         ⊡ Sığdır
       </button>
       <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
+      <button type="button" onClick={onNewModel} className={btn} title="Yeni / temizle">
+        Yeni
+      </button>
       <button type="button" onClick={onSaveJson} className={btn} title="Modeli kaydet (.json) — Ctrl+S">
         Kaydet
       </button>
