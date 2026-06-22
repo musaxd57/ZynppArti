@@ -8,7 +8,6 @@ import {
   type EntityStore,
   type History,
   type Sheet,
-  type Wall,
 } from '@zynpparti/document';
 import type { ToolManager, ToolName } from '@zynpparti/tools';
 import { importDxf, exportDxf } from '@zynpparti/io';
@@ -98,8 +97,7 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit }: Toolb
   }
 
   function onExportDxf(): void {
-    const walls = store.all().filter((e): e is Wall => e.type === 'wall');
-    const blob = new Blob([exportDxf(walls)], { type: 'application/dxf' });
+    const blob = new Blob([exportDxf(store.all())], { type: 'application/dxf' });
     const url = URL.createObjectURL(blob);
     download(url, 'zynpparti.dxf');
     URL.revokeObjectURL(url);
