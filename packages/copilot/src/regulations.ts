@@ -174,6 +174,17 @@ export const DAYLIGHT_REGULATION = {
 } as const;
 
 /**
+ * Mahal başına doğal aydınlatma/havalandırma (İmar) — yaşam mahalleri (oturma/yatma/mutfak)
+ * en az bir pencereye sahip olmalı. `DAYLIGHT_REGULATION` bina düzeyinde oran bakar; bu kural
+ * mahal-pencere EŞLEŞMESİ yapar (pencere odanın çevre duvarında mı?). Bilgi/advisory (kaba eşleşme).
+ */
+export const ROOM_DAYLIGHT_REGULATION = {
+  id: 'imar-room-daylight',
+  source: 'Planlı Alanlar İmar Yönetmeliği',
+  rule: 'Yaşam mahalleri (oturma/yatma/mutfak) doğal ışık ve havalandırma için en az bir pencere almalı.',
+} as const;
+
+/**
  * Yapının parsel içinde kalması (İmar) — eşiksiz kural (geometrik içerme). Çekme mesafeleri
  * `setbackSide` ile ayrıca denetlenir; bu kural duvarların parsel sınırının dışına taşmasını yakalar.
  */

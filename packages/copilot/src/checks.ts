@@ -6,6 +6,7 @@ import {
 } from '@zynpparti/geometry';
 import {
   centerlineAreaM2,
+  openingFrame,
   roomTypeOf,
   type Opening,
   type Parcel,
@@ -17,6 +18,7 @@ import {
   PARCEL_CONTAINMENT_REGULATION,
   PARKING_REGULATION,
   REGULATIONS,
+  ROOM_DAYLIGHT_REGULATION,
   TAKS_REGULATION,
   citationOf,
 } from './regulations';
@@ -282,6 +284,47 @@ function checkDaylight(spaces: readonly Space[], openings: readonly Opening[]): 
   return [];
 }
 
+/** Doğal ışık için pencere gereken yaşam mahalleri. */
+const HABITABLE_FOR_DAYLIGHT = new Set(['living', 'sleeping', 'kitchen']);
+
+/**
+ * Mahal başına doğal aydınlatma — yaşam mahallerinin (oturma/yatma/mutfak) çevre duvarında en az
+ * bir pencere var mı? Pencere merkezi duvarından türetilir; o nokta mahal sınırına yakınsa (duvar
+ * yarı-kalınlığı + pay) pencere o mahale hizmet ediyor sayılır (kaba eşleşme).
+ *
+ * Henüz HİÇ pencere yoksa nag etmez (kullanıcı pencereleri sonra koyabilir; checkDaylight ile aynı
+ * mantık). Pencere koymaya başlayınca, penceresiz kalan yaşam mahallerini hatırlatır.
+ */
+function checkRoomDaylight(
+  spaces: readonly Space[],
+  walls: readonly Wall[],
+  openings: readonly Opening[],
+): Finding[] {
+  const windows = openings.filter((o) => o.kind === 'window');
+  if (windows.length === 0) return [];
+  const wallById = new Map(walls.map((w) => [w.id, w]));
+  const centers: { x: number; y: number; tol: number }[] = [];
+  for (const o of windows) {
+    const w = wallById.get(o.wallId);
+    if (!w) continue;
+    centers.push({ ...openingFrame(o, w).center, tol: w.thickness / 2 + 8 });
+  }
+  const out: Finding[] = [];
+  for (const s of spaces) {
+    if (!HABITABLE_FOR_DAYLIGHT.has(roomTypeOf(s)) || s.boundary.length < 3) continue;
+    const hasWindow = centers.some((c) => distanceToPolygonBoundary(c, s.boundary) <= c.tol);
+    if (!hasWindow) {
+      out.push({
+        severity: 'info',
+        message: `"${s.name}" çevresinde pencere görünmüyor; yaşam mekanı doğal ışık/havalandırma için pencere almalı.`,
+        citation: `${ROOM_DAYLIGHT_REGULATION.source} — ${ROOM_DAYLIGHT_REGULATION.rule}`,
+        entityId: s.id,
+      });
+    }
+  }
+  return out;
+}
+
 /**
  * Otopark ihtiyacı (Otopark Yönetmeliği) — toplam alandan KABA tahmin (info).
  * Gerçek ihtiyaç kullanım/bölge/nüfusa göredir; bu basitleştirilmiş bir tohumdur.
@@ -322,6 +365,7 @@ export function runCopilotChecks(
     ...checkDoorWidth(openings),
     ...checkCeilingHeight(walls),
     ...checkDaylight(spaces, openings),
+    ...checkRoomDaylight(spaces, walls, openings),
     ...checkParcelContainment(walls, parcels),
     ...checkSetback(walls, parcels),
     ...checkTaks(spaces, parcels),

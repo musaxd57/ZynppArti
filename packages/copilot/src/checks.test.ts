@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import type { Space } from '@zynpparti/document';
+import type { Opening, Space, Wall } from '@zynpparti/document';
 import { runCopilotChecks, type Finding } from './checks';
 import { PARKING_REGULATION, REGULATIONS } from './regulations';
 
 function space(id: string, roomType: Space['roomType'], boundary: Space['boundary']): Space {
   return { id, type: 'space', layerId: 'rooms', name: id, roomType, boundary };
+}
+
+function wall(id: string, x1: number, y1: number, x2: number, y2: number, thickness = 20): Wall {
+  return { id, type: 'wall', layerId: 'walls', start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, thickness };
+}
+
+function windowOn(id: string, wallId: string, t: number, width = 100): Opening {
+  return { id, type: 'opening', layerId: 'openings', wallId, t, width, kind: 'window' };
 }
 
 /** w×h cm dikdörtgen mahal. */
@@ -330,6 +338,43 @@ describe('runCopilotChecks — kat yüksekliği (İmar, info)', () => {
   it('yeterli/atanmamış yükseklik → bulgu yok', () => {
     const f = runCopilotChecks([], [wall(280, 'a'), wall(undefined, 'b')]).filter((x) =>
       x.message.includes('kat yüksekliği'),
+    );
+    expect(f).toHaveLength(0);
+  });
+});
+
+describe('runCopilotChecks — mahal doğal aydınlatma (İmar, info)', () => {
+  const room = rect('Salon', 'living', 400, 300); // 12 m²; sınır 0..400 × 0..300
+
+  it('pencere var ama odaya değmiyorsa → "penceresiz" bilgisi', () => {
+    const far = wall('wfar', 1000, 1000, 1400, 1000);
+    const f = runCopilotChecks([room], [far], [windowOn('p', 'wfar', 0.5)]).filter((x) =>
+      x.message.includes('pencere görünmüyor'),
+    );
+    expect(f).toHaveLength(1);
+    expect(f[0]!.severity).toBe('info');
+    expect(f[0]!.entityId).toBe('Salon');
+    expect(f[0]!.citation).toContain('İmar');
+  });
+
+  it('odanın çevre duvarında pencere → bulgu yok', () => {
+    const bottom = wall('wb', 0, 0, 400, 0); // odanın alt kenarı boyunca
+    const f = runCopilotChecks([room], [bottom], [windowOn('p', 'wb', 0.5)]).filter((x) =>
+      x.message.includes('pencere görünmüyor'),
+    );
+    expect(f).toHaveLength(0);
+  });
+
+  it('hiç pencere yoksa nag etmez', () => {
+    const f = runCopilotChecks([room], [], []).filter((x) => x.message.includes('pencere görünmüyor'));
+    expect(f).toHaveLength(0);
+  });
+
+  it('yaşam mahali olmayan (servis) penceresiz olsa da uyarılmaz', () => {
+    const far = wall('wfar', 1000, 1000, 1400, 1000);
+    const depo = rect('Depo', 'service', 300, 300);
+    const f = runCopilotChecks([depo], [far], [windowOn('p', 'wfar', 0.5)]).filter((x) =>
+      x.message.includes('pencere görünmüyor'),
     );
     expect(f).toHaveLength(0);
   });
