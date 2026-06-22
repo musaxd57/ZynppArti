@@ -34,6 +34,7 @@ export function CanvasStage() {
     layers: CanvasHandle['layers'];
     exportPng: () => Promise<string>;
     setHoverHandler: CanvasHandle['setHoverHandler'];
+    setSectionMarker: CanvasHandle['setSectionMarker'];
     zoomToFit: () => void;
   } | null>(null);
   const [renameId, setRenameId] = useState<string | null>(null);
@@ -160,6 +161,7 @@ export function CanvasStage() {
         layers: h.layers,
         exportPng: h.exportPng,
         setHoverHandler: h.setHoverHandler,
+        setSectionMarker: h.setSectionMarker,
         zoomToFit: h.zoomToFit,
       });
     }).catch((err) => {
@@ -243,7 +245,14 @@ export function CanvasStage() {
               onRenameConsumed={clearRename}
             />
             <TakeoffPanel store={ui.store} />
-            <SectionPanel store={ui.store} line={sectionLine} />
+            <SectionPanel
+              store={ui.store}
+              line={sectionLine}
+              onClear={() => {
+                setSectionLine(null);
+                ui.setSectionMarker(null);
+              }}
+            />
             <SheetPanel store={ui.store} history={ui.history} />
           </div>
         )}

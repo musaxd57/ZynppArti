@@ -17,6 +17,8 @@ interface SectionPanelProps {
   store: EntityStore;
   /** Planda çizilen kesit çizgisi (a→b, dünya cm); yoksa boş durum. */
   line: [Vec2, Vec2] | null;
+  /** Kesit çizgisini + plandaki A—A' işaretini kaldırır. */
+  onClear: () => void;
 }
 
 function walls(store: EntityStore): Wall[] {
@@ -32,7 +34,7 @@ function openings(store: EntityStore): Opening[] {
  * duvarları kat tabanından yüksekliğine kadar dikdörtgenler olarak SVG'de gösterir. Canlı (duvar
  * değişince güncellenir). Hafif şematik; tam 3B kesit Faz 5.
  */
-export function SectionPanel({ store, line }: SectionPanelProps) {
+export function SectionPanel({ store, line, onClear }: SectionPanelProps) {
   const [, bump] = useState(0);
   useEffect(() => store.subscribe(() => bump((v) => v + 1)), [store]);
 
@@ -46,7 +48,18 @@ export function SectionPanel({ store, line }: SectionPanelProps) {
   } else {
     const s = computeSection(line[0], line[1], walls(store), openings(store));
     if (s.cuts.length === 0) {
-      body = <div className="px-1 py-2 text-xs opacity-50">Bu çizgi hiçbir duvarı kesmiyor.</div>;
+      body = (
+        <div className="flex flex-col gap-1">
+          <div className="px-1 py-2 text-xs opacity-50">Bu çizgi hiçbir duvarı kesmiyor.</div>
+          <button
+            type="button"
+            onClick={onClear}
+            className="rounded bg-white/10 px-2 py-1 text-xs hover:bg-white/20"
+          >
+            Temizle
+          </button>
+        </div>
+      );
     } else {
       const innerW = W - 2 * pad;
       const innerH = H - 2 * pad;
@@ -84,21 +97,31 @@ export function SectionPanel({ store, line }: SectionPanelProps) {
             {s.cuts.length} duvar · uzunluk {(s.lengthCm / 100).toFixed(2).replace('.', ',')} m · maks.
             yükseklik {Math.round(s.maxHeightCm)} cm
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              const blob = new Blob([exportSectionSvg(s)], { type: 'image/svg+xml' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = 'zynpparti-kesit.svg';
-              a.click();
-              URL.revokeObjectURL(url);
-            }}
-            className="rounded bg-white/10 px-2 py-1 text-xs hover:bg-white/20"
-          >
-            Kesit SVG indir
-          </button>
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                const blob = new Blob([exportSectionSvg(s)], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'zynpparti-kesit.svg';
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="flex-1 rounded bg-white/10 px-2 py-1 text-xs hover:bg-white/20"
+            >
+              Kesit SVG indir
+            </button>
+            <button
+              type="button"
+              onClick={onClear}
+              title="Kesit çizgisini ve plandaki A—A' işaretini kaldır"
+              className="rounded bg-white/10 px-2 py-1 text-xs hover:bg-white/20"
+            >
+              Temizle
+            </button>
+          </div>
         </div>
       );
     }
