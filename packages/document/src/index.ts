@@ -13,3 +13,4 @@ export * from './annotation';
 export * from './clone';
 export * from './materials';
 export * from './sheet';
+export * from './serialize';
