@@ -10,7 +10,7 @@ import {
   type Sheet,
 } from '@zynpparti/document';
 import type { ToolManager, ToolName } from '@zynpparti/tools';
-import { importDxf, exportDxf } from '@zynpparti/io';
+import { importDxf, exportDxf, exportSvg } from '@zynpparti/io';
 
 const TOOLS: { name: ToolName; label: string; hotkey: string }[] = [
   { name: 'select', label: 'Seç', hotkey: 'V' },
@@ -103,6 +103,13 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit }: Toolb
     URL.revokeObjectURL(url);
   }
 
+  function onExportSvg(): void {
+    const blob = new Blob([exportSvg(store.all())], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    download(url, 'zynpparti.svg');
+    URL.revokeObjectURL(url);
+  }
+
   const btn = 'shrink-0 rounded px-3 py-1.5 transition-colors hover:bg-white/10';
 
   return (
@@ -137,6 +144,9 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit }: Toolb
       </button>
       <button type="button" onClick={onExportDxf} className={btn}>
         DXF İndir
+      </button>
+      <button type="button" onClick={onExportSvg} className={btn}>
+        SVG İndir
       </button>
       <button type="button" onClick={() => void onExportPng()} className={btn}>
         PNG İndir
