@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { GlobalErrorHandlers } from '@/components/GlobalErrorHandlers';
 
 export const metadata: Metadata = {
   title: 'ZynppArti',
@@ -10,7 +12,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="tr">
-      <body>{children}</body>
+      <body>
+        <GlobalErrorHandlers />
+        <ErrorBoundary>{children}</ErrorBoundary>
+      </body>
     </html>
   );
 }

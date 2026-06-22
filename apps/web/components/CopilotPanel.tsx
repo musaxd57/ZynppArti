@@ -18,7 +18,12 @@ function getParcels(store: EntityStore): Parcel[] {
   return store.all().filter((e): e is Parcel => e.type === 'parcel');
 }
 function runChecks(store: EntityStore): Finding[] {
-  return runCopilotChecks(getSpaces(store), getWalls(store), getOpenings(store), getParcels(store));
+  try {
+    return runCopilotChecks(getSpaces(store), getWalls(store), getOpenings(store), getParcels(store));
+  } catch (err) {
+    console.error('Copilot denetimi başarısız:', err);
+    return [];
+  }
 }
 
 const SEVERITY_STYLE: Record<Severity, { dot: string; label: string }> = {

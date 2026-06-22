@@ -71,7 +71,13 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
 
   if (spaces.length === 0) return null;
 
-  const metrics = computeMetrics(spaces, walls);
+  let metrics: ReturnType<typeof computeMetrics>;
+  try {
+    metrics = computeMetrics(spaces, walls);
+  } catch (err) {
+    console.error('Metrik hesabı başarısız:', err);
+    metrics = computeMetrics([], []); // güvenli sıfır metrik (panel çökmesin)
+  }
 
   function rename(space: Space, name: string): void {
     const trimmed = name.trim();

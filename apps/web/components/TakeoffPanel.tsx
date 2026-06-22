@@ -46,14 +46,17 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
 
   useEffect(() => store.subscribe(() => setVersion((v) => v + 1)), [store]);
 
-  const t: Takeoff = useMemo(
-    () =>
-      computeTakeoff(getWalls(store), getSpaces(store), getOpenings(store), getBlocks(store), {
+  const t: Takeoff = useMemo(() => {
+    try {
+      return computeTakeoff(getWalls(store), getSpaces(store), getOpenings(store), getBlocks(store), {
         storeyHeightCm,
-      }),
+      });
+    } catch (err) {
+      console.error('Metraj hesabı başarısız:', err);
+      return computeTakeoff([], [], [], [], { storeyHeightCm }); // güvenli boş metraj
+    }
     // version: store değişince yeniden hesapla
-    [store, storeyHeightCm, version],
-  );
+  }, [store, storeyHeightCm, version]);
 
   const isEmpty = t.wallLengthM === 0 && t.floorAreaM2 === 0 && t.blockSchedule.length === 0;
   if (isEmpty) return null;
