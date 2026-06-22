@@ -15,6 +15,7 @@ const GROUPS: { title: string; items: [string, string][] }[] = [
       ['B', 'Blok'],
       ['T', 'Metin'],
       ['F', 'Pafta'],
+      ['C', 'Kesit (şematik)'],
       ['E', 'Sil'],
       ['K', 'Ölçekle'],
     ],
@@ -40,6 +41,15 @@ const GROUPS: { title: string; items: [string, string][] }[] = [
       ['Tekerlek', 'Yakınlaş'],
       ['Home', 'İçeriğe sığdır'],
       ['Shift + tık / kutu', 'Çoklu seçim'],
+      ['Shift (çizerken)', 'Ortho: 45° kilit'],
+    ],
+  },
+  {
+    title: 'Dosya & Komut',
+    items: [
+      ['Ctrl+S / Ctrl+O', 'Kaydet / Aç (JSON)'],
+      ['Ctrl+K', 'Komut paleti'],
+      ['Sağ tık', 'Bağlam menüsü'],
     ],
   },
 ];
