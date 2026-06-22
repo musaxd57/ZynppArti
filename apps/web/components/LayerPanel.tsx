@@ -159,7 +159,7 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
     'grid h-6 w-6 place-items-center rounded transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400';
 
   return (
-    <Panel title="Katmanlar" widthClass="w-56" badge={badge}>
+    <Panel title="Katmanlar" widthClass="w-full" badge={badge}>
       <div className="flex flex-col gap-0.5">
         {rows.map(({ id, count }) => {
           const hidden = layers.isHidden(id);

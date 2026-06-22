@@ -24,7 +24,7 @@ export function BlockPalette({ manager }: BlockPaletteProps) {
   const isBlock = active === 'block';
 
   return (
-    <Panel title="Bloklar" widthClass="w-52" defaultOpen={false}>
+    <Panel title="Bloklar" widthClass="w-full" defaultOpen={false}>
       <div className="grid grid-cols-2 gap-1">
         {KINDS.map((k) => {
           const on = isBlock && selected === k;

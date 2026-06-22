@@ -43,12 +43,15 @@ export function CanvasStage() {
   const [sectionLine, setSectionLine] = useState<[Vec2, Vec2] | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [rightW, setRightW] = useState(288);
+  const [leftW, setLeftW] = useState(224);
 
-  // Sağ dock genişliğini hatırla (localStorage).
+  // Dock genişliklerini hatırla (localStorage).
   useEffect(() => {
     try {
-      const v = Number(localStorage.getItem('zynpparti.rightDockW'));
-      if (v >= 200 && v <= 560) setRightW(v);
+      const r = Number(localStorage.getItem('zynpparti.rightDockW'));
+      if (r >= 200 && r <= 560) setRightW(r);
+      const l = Number(localStorage.getItem('zynpparti.leftDockW'));
+      if (l >= 180 && l <= 480) setLeftW(l);
     } catch {
       /* yoksay */
     }
@@ -60,12 +63,29 @@ export function CanvasStage() {
       /* yoksay */
     }
   }, [rightW]);
+  useEffect(() => {
+    try {
+      localStorage.setItem('zynpparti.leftDockW', String(leftW));
+    } catch {
+      /* yoksay */
+    }
+  }, [leftW]);
 
-  // Sağ dock kenarından sürükleyerek genişlik ayarı.
+  // Dock kenarlarından sürükleyerek genişlik ayarı.
   const startRightResize = useCallback((e: React.PointerEvent): void => {
     e.preventDefault();
     const onMove = (ev: PointerEvent): void =>
       setRightW(Math.min(560, Math.max(200, window.innerWidth - ev.clientX)));
+    const onUp = (): void => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }, []);
+  const startLeftResize = useCallback((e: React.PointerEvent): void => {
+    e.preventDefault();
+    const onMove = (ev: PointerEvent): void => setLeftW(Math.min(480, Math.max(180, ev.clientX)));
     const onUp = (): void => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
@@ -172,11 +192,21 @@ export function CanvasStage() {
       <div className="relative flex min-h-0 flex-1">
         {/* Sol dock: katmanlar + bloklar + copilot (kendi içinde kaydırılır). */}
         {ui && (
-          <div className="z-10 flex shrink-0 flex-col gap-3 overflow-y-auto p-2">
+          <div
+            style={{ width: leftW }}
+            className="z-10 flex shrink-0 flex-col gap-3 overflow-y-auto overflow-x-hidden p-2"
+          >
             <LayerPanel store={ui.store} layers={ui.layers} />
             <BlockPalette manager={ui.manager} />
             <CopilotPanel store={ui.store} />
           </div>
+        )}
+        {ui && (
+          <div
+            onPointerDown={startLeftResize}
+            className="z-20 w-1.5 shrink-0 cursor-col-resize bg-white/5 transition-colors hover:bg-blue-400/40"
+            title="Sürükleyerek sol paneli genişlet/daralt"
+          />
         )}
 
         {/* Canvas (orta, esnek) — Pixi bu div'e resizeTo ile bağlı. Sağ-tık engine'de bağlı. */}
