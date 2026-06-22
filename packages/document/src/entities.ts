@@ -116,6 +116,9 @@ export interface Sheet extends EntityBase {
   /** Antet alanları. */
   readonly title: string;
   readonly project?: string;
+  readonly date?: string;
+  /** Pafta numarası (ör. "1/5"). */
+  readonly sheetNo?: string;
 }
 
 /**

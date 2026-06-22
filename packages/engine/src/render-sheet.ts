@@ -55,8 +55,11 @@ export function buildSheet(sheet: Sheet, pixelSize: number): Container {
     c.addChild(t);
   };
   line(sheet.title || 'Pafta', 0);
-  if (sheet.project) line(sheet.project, 1);
-  line(`Ölçek 1:${sheet.scale}  ·  ${sheet.size} ${sheet.orientation === 'landscape' ? 'yatay' : 'düşey'}`, 2);
+  const row1 = [sheet.project, sheet.date].filter(Boolean).join('  ·  ');
+  if (row1) line(row1, 1);
+  const orient = sheet.orientation === 'landscape' ? 'yatay' : 'düşey';
+  const row2 = `Ölçek 1:${sheet.scale}  ·  ${sheet.size} ${orient}${sheet.sheetNo ? '  ·  ' + sheet.sheetNo : ''}`;
+  line(row2, 2);
 
   return c;
 }

@@ -67,6 +67,20 @@ export function SheetPanel({ store, history }: SheetPanelProps) {
               className="rounded bg-white/10 px-2 py-1 text-xs outline-none focus:bg-white/20"
             />
             <div className="flex items-center gap-1">
+              <input
+                defaultValue={s.date ?? ''}
+                onBlur={(e) => update(s, { date: e.target.value.trim() || undefined })}
+                placeholder="Tarih"
+                className="min-w-0 flex-1 rounded bg-white/10 px-2 py-1 text-xs outline-none focus:bg-white/20"
+              />
+              <input
+                defaultValue={s.sheetNo ?? ''}
+                onBlur={(e) => update(s, { sheetNo: e.target.value.trim() || undefined })}
+                placeholder="Pafta no (1/5)"
+                className="min-w-0 flex-1 rounded bg-white/10 px-2 py-1 text-xs outline-none focus:bg-white/20"
+              />
+            </div>
+            <div className="flex items-center gap-1">
               <select
                 value={s.size}
                 onChange={(e) => update(s, { size: e.target.value as SheetSize })}
