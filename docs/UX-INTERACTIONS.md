@@ -76,6 +76,7 @@
 ## 5. Snapping (yakalama)
 - ✅ Şu an (öncelik sırasıyla, `tools/context.ts createSnapper`): **köşe/uç + orta nokta** (duvar/ölçü/parsel) → **kesişim** (segment çaprazları) → **kenar-üstü (dik iz düşüm)** → **eksen hizalama** (yatay/dikey kılavuz) → **ızgara**.
 - ✅ Snap göstergesi türe göre glyph değiştirir: **köşe=eşkenar dörtgen, orta=üçgen, kenar=kare, kesişim=X**; eksen hizalamada pembe kılavuz çizgisi.
+- ✅ **Ortho/polar mod:** duvar çizerken `Shift` basılıyken yön en yakın 45°'ye kilitlenir (yatay/dikey/çapraz), uzaklık korunur (`geometry snapToAngle`).
 - ☐ Henüz yok: paralel snap; snap türlerini ayrı ayrı aç/kapa anahtarı.
 
 ## 6. İleride
