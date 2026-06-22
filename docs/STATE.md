@@ -24,10 +24,13 @@
 10. **Ctrl+S/Ctrl+O kısayolları** — JSON kaydet/aç (tarayıcı diyaloğu bastırılır).
 11. **Alan-ağırlıklı `polygonCentroid`** (geometry) → mahal etiketleri (engine + SVG) daha iyi yerleşir; 2 kopya centroid silindi.
 12. **Vektör export katman görünürlüğüne saygılı** — gizli katman DXF/SVG'ye gitmez (PNG zaten hariç tutuyordu).
+13. **DXF export'ta mahal adı** TEXT olarak (oda merkezine) — AutoCAD'de oda etiketleri görünür.
+14. **"Yeni" butonu** — dosya menüsünü tamamlar (Yeni/Kaydet/Aç), geri alınabilir + onaylı temizleme.
+15. **Ortho/polar mod (`Shift`)** — duvar + ölçü çizerken yön 45°'ye kilitlenir (`geometry snapToAngle`, saf+test).
 
-**Test: ~219** (document 80 · geometry 38 · engine 31 · copilot 31 · io 24 · tools 15). Zincir yeşil (typecheck 7/7 · lint 7/7 · build 1/1). Son commit `7bf80dc`.
+**Test: 225** (document 80 · geometry 43 · engine 31 · copilot 31 · io 25 · tools 15). Zincir yeşil (typecheck 7/7 · lint 7/7 · build 1/1).
 
-**Açık not (Moses'a):** Tüm bu otonom tur `feat/autonomous-tour` branch'inde + push'lu; main'e **merge senin onayını bekliyor**. Sonraki büyük aday: şematik kesit (Faz 3, ADR-0016, deterministik) ya da Yjs multiplayer (Faz 3).
+**Açık not (Moses'a):** Tüm bu otonom tur `feat/autonomous-tour` branch'inde + push'lu; main'e **merge senin onayını bekliyor**. Sonraki büyük aday: şematik kesit (Faz 3, ADR-0016, deterministik) ya da Yjs multiplayer (Faz 3). Tarayıcı görsel doğrulaması (yeni snap glyph'leri, ortho çizim, SVG/JSON export, mahal etiket yerleşimi) **sende**.
 
 **Son maliyetsiz tur (2026-06-21, hepsi main'de):** blok seç/taşı/döndür · mobilya çizelgesi/katmanı · Annotation (metin) + çift-tık düzenleme · kopyala-yapıştır/çoğalt (Ctrl+C/V/D) · **çoklu seçim (kutu/Shift + toplu)** · hizalama kılavuzları · yönetmelik turu 3 (TAKS+banyo) · hatch malzeme kütüphanesi · **pafta/sheet sistemi** · renk token konsolidasyonu · durum çubuğu · içeriğe sığdır (Home) · Ctrl+A + ok-itme · kısayol yardımı (?) · highlightEntity refactor + EraseTool tüm-tip · **özellikler paneli (seçili entity düzenleme)** · **PDF export (jsPDF)** · panel kaydırma fix + mahal satırı iki satır. **Test: 178 (document 69 · engine 31 · geometry 29 · copilot 26 · tools 12 · io 11).** Zincir yeşil (typecheck 7/7 · lint 7/7 · build 1/1). Son commit `9f1ce11`.
 
