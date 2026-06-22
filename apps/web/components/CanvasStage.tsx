@@ -129,8 +129,9 @@ export function CanvasStage() {
               <CopilotPanel store={ui.store} />
             </div>
           </div>
-          {/* Sağ kolon: mahal listesi/metrik + metraj + pafta. */}
-          <div className="pointer-events-none absolute bottom-4 right-4 top-16 flex flex-col items-end">
+          {/* Sağ kolon: mahal listesi/metrik + metraj + pafta. top-28 → araç çubuğunun ALTINDA
+              başlar (yoksa geniş toolbar paneli örtüp kapatma düğmesini erişilmez kılıyor). */}
+          <div className="pointer-events-none absolute bottom-4 right-4 top-28 flex flex-col items-end">
             <div className="pointer-events-auto flex max-h-full flex-col items-end gap-3 overflow-y-auto pl-1">
               {/* key = seçili id → seçim değişince input'lar remount olur (defaultValue tazelenir). */}
               <PropertiesPanel

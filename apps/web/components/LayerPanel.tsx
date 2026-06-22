@@ -33,14 +33,59 @@ function collect(store: EntityStore): { id: string; count: number }[] {
     });
 }
 
+/* Feather-tarzı 16px çizgi ikonlar (gömülü SVG — ek bağımlılık yok, emoji'den net). */
+const ICON = 'h-4 w-4';
+const svgProps = {
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round' as const,
+  strokeLinejoin: 'round' as const,
+};
+
+function EyeIcon() {
+  return (
+    <svg className={ICON} {...svgProps}>
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+function EyeOffIcon() {
+  return (
+    <svg className={ICON} {...svgProps}>
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20C5 20 1 12 1 12a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+function LockIcon() {
+  return (
+    <svg className={ICON} {...svgProps}>
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+function UnlockIcon() {
+  return (
+    <svg className={ICON} {...svgProps}>
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+    </svg>
+  );
+}
+
 interface LayerPanelProps {
   store: EntityStore;
   layers: LayerState;
 }
 
 /**
- * Katman paneli: kullanımdaki katmanları listeler + görünürlük aç/kapa (göz). Gizli katman çizilmez
- * ve seçilemez (hit-test atlar). Görünürlük view-state'tir (LayerState; undo dışı).
+ * Katman paneli: kullanımdaki katmanları listeler + görünürlük (göz) ve kilit aç/kapa. Gizli katman
+ * çizilmez ve seçilemez; **kilitli katman görünür kalır ama seçilemez/düzenlenemez** (hit-test atlar).
+ * İkonlar net SVG; kilitli/gizli durum satırda görsel olarak da belirgindir.
  */
 export function LayerPanel({ store, layers }: LayerPanelProps) {
   const [, bump] = useState(0);
@@ -58,38 +103,48 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
   const rows = collect(store);
   if (rows.length === 0) return null;
 
+  const iconBtn =
+    'grid h-6 w-6 place-items-center rounded transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400';
+
   return (
-    <Panel title="Katmanlar" widthClass="w-52">
+    <Panel title="Katmanlar" widthClass="w-56">
       <div className="flex flex-col gap-0.5">
         {rows.map(({ id, count }) => {
           const hidden = layers.isHidden(id);
           const locked = layers.isLocked(id);
+          const name = layerName(id);
           return (
-            <div key={id} className="flex items-center gap-1 rounded px-1 py-1 hover:bg-white/10">
+            <div
+              key={id}
+              className="flex items-center gap-1.5 rounded px-1 py-1 hover:bg-white/10"
+              title={locked ? `${name} kilitli — seçmek için kilidi aç` : name}
+            >
               <button
                 type="button"
                 onClick={() => layers.toggle(id)}
-                className="w-5 text-center opacity-80 hover:opacity-100"
+                className={`${iconBtn} ${hidden ? 'text-white/35' : 'text-white/80'}`}
+                aria-label={`${name} katmanını ${hidden ? 'göster' : 'gizle'}`}
+                aria-pressed={!hidden}
                 title={hidden ? 'Göster' : 'Gizle'}
-                aria-label={`${layerName(id)} katmanını ${hidden ? 'göster' : 'gizle'}`}
-                aria-pressed={hidden}
               >
-                {hidden ? '🚫' : '👁'}
+                {hidden ? <EyeOffIcon /> : <EyeIcon />}
               </button>
               <button
                 type="button"
                 onClick={() => layers.toggleLock(id)}
-                className="w-5 text-center opacity-80 hover:opacity-100"
-                title={locked ? 'Kilidi aç' : 'Kilitle'}
-                aria-label={`${layerName(id)} katmanını ${locked ? 'kilidini aç' : 'kilitle'}`}
+                className={`${iconBtn} ${locked ? 'text-amber-400' : 'text-white/60'}`}
+                aria-label={`${name} katmanını ${locked ? 'kilidini aç' : 'kilitle'}`}
                 aria-pressed={locked}
+                title={locked ? 'Kilidi aç (seçilebilir yap)' : 'Kilitle'}
               >
-                {locked ? '🔒' : '🔓'}
+                {locked ? <LockIcon /> : <UnlockIcon />}
               </button>
-              <span className={`flex-1 ${hidden ? 'opacity-40 line-through' : ''}`}>
-                {layerName(id)}
+              <span
+                className={`flex-1 truncate ${hidden ? 'text-white/35 line-through' : locked ? 'text-amber-200/90' : ''}`}
+              >
+                {name}
               </span>
-              <span className="tabular-nums opacity-50">{count}</span>
+              <span className="tabular-nums text-xs opacity-50">{count}</span>
             </div>
           );
         })}
