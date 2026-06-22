@@ -12,6 +12,7 @@ import { CopilotPanel } from './CopilotPanel';
 import { TakeoffPanel } from './TakeoffPanel';
 import { SheetPanel } from './SheetPanel';
 import { SectionPanel } from './SectionPanel';
+import { ContextMenu, type ContextMenuItem } from './ContextMenu';
 import { PropertiesPanel } from './PropertiesPanel';
 import { LayerPanel } from './LayerPanel';
 import { BlockPalette } from './BlockPalette';
@@ -38,6 +39,7 @@ export function CanvasStage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [initError, setInitError] = useState<string | null>(null);
   const [sectionLine, setSectionLine] = useState<[Vec2, Vec2] | null>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -142,7 +144,15 @@ export function CanvasStage() {
         )}
 
         {/* Canvas (orta, esnek) — Pixi bu div'e resizeTo ile bağlı. */}
-        <div ref={containerRef} className="relative min-w-0 flex-1" />
+        <div
+          ref={containerRef}
+          className="relative min-w-0 flex-1"
+          onContextMenu={(e) => {
+            if (!ui) return;
+            e.preventDefault();
+            setMenu({ x: e.clientX, y: e.clientY });
+          }}
+        />
 
         {/* Sağ dock: özellikler + mahal/metrik + metraj + pafta. */}
         {ui && (
@@ -192,6 +202,37 @@ export function CanvasStage() {
           <ShortcutsHelp />
         </>
       )}
+
+      {menu && ui && (
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          onClose={() => setMenu(null)}
+          items={buildMenuItems(ui, selectedIds)}
+        />
+      )}
     </div>
   );
+}
+
+/** Sağ-tık menü öğeleri — mevcut kısayol mantığına sentetik klavye olaylarıyla bağlanır. */
+function buildMenuItems(
+  ui: { manager: ToolManager; history: History; zoomToFit: () => void },
+  selectedIds: string[],
+): ContextMenuItem[] {
+  const sendKey = (key: string, ctrl = false): void =>
+    ui.manager.onKeyDown(new KeyboardEvent('keydown', { key, ctrlKey: ctrl }));
+  const hasSel = selectedIds.length > 0;
+  const items: ContextMenuItem[] = [];
+  if (hasSel) {
+    items.push({ label: 'Kopyala', onClick: () => sendKey('c', true) });
+    items.push({ label: 'Çoğalt', onClick: () => sendKey('d', true) });
+    items.push({ label: 'Sil', onClick: () => sendKey('Delete') });
+  }
+  items.push({ label: 'Yapıştır', onClick: () => sendKey('v', true) });
+  items.push({ label: 'Tümünü seç', onClick: () => sendKey('a', true) });
+  items.push({ label: 'Geri al', onClick: () => ui.history.undo() });
+  items.push({ label: 'İleri al', onClick: () => ui.history.redo() });
+  items.push({ label: 'İçeriğe sığdır', onClick: () => ui.zoomToFit() });
+  return items;
 }
