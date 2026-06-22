@@ -1,4 +1,4 @@
-import type { Vec2 } from '@zynpparti/geometry';
+import { polygonCentroid, type Vec2 } from '@zynpparti/geometry';
 import {
   blockCorners,
   dimensionGeometry,
@@ -38,7 +38,7 @@ export function exportSvg(entities: readonly Entity[]): string {
     if (e.type !== 'space' || e.boundary.length < 3) continue;
     const fill = toHexColor(roomTypeColor(e.roomType ?? 'other'));
     body.push(`<polygon points="${pts(e.boundary)}" fill="${fill}" fill-opacity="0.16" />`);
-    const c = centroid(e.boundary);
+    const c = polygonCentroid(e.boundary);
     if (e.name) body.push(label(c, e.name, 24, 'middle'));
   }
   // parsel (kesik mülk sınırı)
@@ -165,17 +165,6 @@ function computeBounds(entities: readonly Entity[], walls: Map<EntityId, Wall>):
   }
   if (!Number.isFinite(minX)) return null;
   return { minX, minY, maxX, maxY };
-}
-
-function centroid(poly: readonly Vec2[]): Vec2 {
-  let x = 0;
-  let y = 0;
-  for (const p of poly) {
-    x += p.x;
-    y += p.y;
-  }
-  const n = poly.length || 1;
-  return { x: x / n, y: y / n };
 }
 
 function pts(poly: readonly Vec2[]): string {
