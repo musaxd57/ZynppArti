@@ -22,7 +22,14 @@
 - **Panel aç/kapa hatırlama** (localStorage). PDF export decode guard.
 - **Teşhis:** "seçilemiyor" = kullanıcı Mimari katmanını kilitlemiş (kod doğru); net ikonlar çözüyor.
 
-**Ertelenen tasarım backlog'u (10-agent önerdi, Moses onayıyla sırayla):** komut paleti (Ctrl+K), sağ-tık menü, yeniden-boyutlanabilir paneller, katman solo/sıralama/yeniden-adlandırma/hiyerarşi, duvar malzeme/yükseklik özellikleri, dialog modal (alert/prompt yerine), durum çubuğu seçim özeti, pafta antet şablonları.
+**Devam turu (2026-06-22, "durmadan çalış, fazlara göre"):**
+- **Durum çubuğu seçim özeti** (Duvar×N + toplam uzunluk).
+- **Duvar yüksekliği** (`Wall.height?`) + PropertiesPanel + metraj sıvası duvar-başına yükseklik.
+- **ŞEMATİK KESİT (Faz 3 başlık, ADR-0016/0037):** `computeSection` (saf+4 test) + **SectionTool (C)** + **SectionPanel** (SVG canlı kesit). Hafif şematik; 3B kesit Faz 5.
+- **Sağ-tık bağlam menüsü** + **Komut paleti (Ctrl+K)** (ADR-0038).
+- **Test: 229** (document 84 · geometry 43 · engine 31 · copilot 31 · io 25 · tools 15) + **e2e 8/8**. Zincir yeşil.
+
+**Kalan tasarım backlog'u (10-agent önerdi):** yeniden-boyutlanabilir paneller, katman solo/sürükle-sırala/yeniden-adlandır/hiyerarşi, duvar malzeme özelliği, dialog modal (alert/prompt yerine), pafta antet şablonları, kesit SVG export, Yjs multiplayer (Faz 3, backend — büyük).
 
 **Otonom tur (2026-06-22, `feat/autonomous-tour` branch'inde):** Moses geniş otonom yetki verdi (maliyetsiz/deterministik işler; silme/force-push yok). Yapılanlar (her biri ayrı commit + push):
 1. **Snapping zenginleştirme** — orta nokta + kenar-üstü (dik) + **kesişim** yakalama; gösterge glyph türü (köşe/orta/kenar/kesişim). Artık CLAUDE §8.1'in tüm snap türleri gerçek (ADR-0024).

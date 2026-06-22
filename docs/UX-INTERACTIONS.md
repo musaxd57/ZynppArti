@@ -28,6 +28,7 @@
 | `B` | Blok (block) | ✅ (toggle; blok türü palet panelinden seçilir) |
 | `T` | Metin (annotation) | ✅ |
 | `F` | Pafta (sheet) | ✅ |
+| `C` | Kesit (section — şematik) | ✅ (planda 2-tık çizgi → SectionPanel) |
 | `E` | Sil (erase) | ✅ (ayrıca `Delete`) |
 | `K` | Ölçekle (calibrate) | ✅ |
 | `Esc` | Seç'e dön / temizle | ✅ |
@@ -48,9 +49,13 @@
 | `Home` | İçeriğe sığdır (zoom extents) | ✅ |
 | `Tekerlek` | Yakınlaş/uzaklaş | ✅ |
 | `?` | Kısayol yardımı aç/kapa | ✅ |
+| `Ctrl+K` | Komut paleti (araç/eylem ara) | ✅ |
 | `Ctrl+S` | Modeli kaydet (.json) | ✅ |
 | `Ctrl+O` | Model aç (.json) | ✅ |
+| `Sağ tık` | Bağlam menüsü (kopyala/sil/seç/sığdır…) | ✅ |
 | `Ctrl+X` (kes) · `Ctrl+G` (grupla) | — | ☐ henüz yok |
+
+> **Durum çubuğu:** çoklu seçimde "Seçim: Duvar×3 + Ölçü×1 · 12,40 m" özeti gösterilir.
 
 ## 3.1 Dosya işlemleri (Toolbar butonları — kısayol yok)
 | Buton | İşlem | Durum |

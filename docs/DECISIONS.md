@@ -5,6 +5,18 @@
 
 ---
 
+## ADR-0038 — UX verimlilik: sağ-tık menü + komut paleti + durum çubuğu seçim özeti
+**Tarih:** 2026-06-22 · **Durum:** Kabul
+**Bağlam:** Profesyonel CAD/tasarım araçları (AutoCAD/Figma) sağ-tık menü + komut satırı/palet + durum çubuğu seçim bilgisi sunar (10-agent UI araştırması).
+**Karar:** (1) **Sağ-tık menü** (`ContextMenu`): Kopyala/Çoğalt/Sil (seçim varsa) + Yapıştır/Tümünü seç/Geri-İleri al/Sığdır — mevcut kısayol mantığına **sentetik klavye olaylarıyla** bağlanır (yeni tool API'si yok). (2) **Komut paleti** (`CommandPalette`, **Ctrl+K**): araç/eylem arama, Enter çalıştır. (3) **Durum çubuğu seçim özeti**: "Duvar×3 + Ölçü×1 · 12,40 m".
+**Sonuç:** Klavye+fare karışık kullanıcı için hızlı erişim. Takas: sentetik olaylar mevcut handler'lara dayanır (mantık tek yerde kalır).
+
+## ADR-0037 — Şematik kesit: hafif (duvar yüksekliği + kesit çizgisi), 3B değil
+**Tarih:** 2026-06-22 · **Durum:** Kabul (ADR-0016'yı uygular)
+**Bağlam:** Faz 3 hedefi şematik kesit (ADR-0016): tam 3B Faz 5. Maliyetsiz, deterministik bir ilk sürüm gerekiyordu.
+**Karar:** `Wall.height?` (cm, varsayılan 280) alanı eklendi. Saf `computeSection(a,b,walls)` (document): kesit çizgisini kesen duvarlar offset/kalınlık/yükseklikle "kesim" olur. **SectionTool** (C) planda 2-tıkla çizgi çizer (`ctx.onSectionLine`; modeli değiştirmez → Command değil). **SectionPanel** kesimi SVG'de canlı gösterir. Kesit genişliği = duvar kalınlığı (dik kesişim varsayımı — şematik). Metraj sıvası da artık duvar başına yüksekliği kullanır.
+**Sonuç:** Plandan canlı şematik kesit önizleme. Takas: eğik duvarda kalınlık projeksiyonu yaklaşık; gerçek profil + 3B kesit Faz 5. Kesit çizgisi şimdilik transient (kalıcı değil) — ileride entity/persist edilebilir.
+
 ## ADR-0036 — Ortho/polar mod: Shift ile yön 45°'ye kilitlenir (snapToAngle)
 **Tarih:** 2026-06-22 · **Durum:** Kabul
 **Bağlam:** CAD'de yatay/dikey/çapraz çizim için açı kilidi (ortho) standarttır.
