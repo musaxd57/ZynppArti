@@ -29,9 +29,16 @@
 - **Sağ-tık bağlam menüsü** + **Komut paleti (Ctrl+K)** (ADR-0038).
 - **Katman solo modu** ("yalnız bunu göster"); **kesit SVG export**; **kat yüksekliği copilot kuralı** (Wall.height, atıflı); **kısayol yardımı** yeni kısayolları listeler.
 - **Dialog modal** (lib/dialog + DialogHost): yerel alert/confirm/prompt yerine temalı modal (Toolbar + annotation). Kalibrasyon prompt'u hâlâ native (packages/tools).
-- **Test: ~235** (document 84 · geometry 43 · engine 33 · copilot 33 · io 27 · tools 15) + **e2e 11/11**. Zincir yeşil.
+- **Test: ~237** (document 85 · geometry 43 · engine 33 · copilot 33 · io 27 · tools 15) + **e2e 12/12**. Zincir yeşil.
 
-**Kalan tasarım backlog'u (10-agent önerdi):** yeniden-boyutlanabilir paneller, katman sürükle-sırala/yeniden-adlandır/hiyerarşi, duvar malzeme özelliği, pafta antet şablonları, durum çubuğu seçim metriği (✅ yapıldı), Yjs multiplayer (Faz 3, backend — büyük, Moses onayı bekliyor).
+**Backlog turu 2 (2026-06-22, "1 saat durmadan"):**
+- **Duvar malzemesi** (WALL_MATERIALS katalog + Wall.material + PropertiesPanel + metraj malzeme dağılımı).
+- **Pafta antet alanları** (tarih + pafta no; SheetPanel + render-sheet).
+- **Katman yeniden adlandırma** (çift-tık özel etiket, localStorage) + **solo modu**.
+- **Yeniden boyutlanabilir sağ dock** (sürükle-kol + localStorage; paneller w-full).
+- e2e: pafta yerleştirme (12 toplam).
+
+**Kalan backlog:** katman sürükle-sırala/hiyerarşi, ek copilot kuralları (kat sayısı/pencere-oda eşlemesi gibi daha zengin veri gerekiyor), kesit kalıcılığı (entity), Yjs multiplayer (Faz 3, backend — büyük, Moses onayı bekliyor).
 
 **Otonom tur (2026-06-22, `feat/autonomous-tour` branch'inde):** Moses geniş otonom yetki verdi (maliyetsiz/deterministik işler; silme/force-push yok). Yapılanlar (her biri ayrı commit + push):
 1. **Snapping zenginleştirme** — orta nokta + kenar-üstü (dik) + **kesişim** yakalama; gösterge glyph türü (köşe/orta/kenar/kesişim). Artık CLAUDE §8.1'in tüm snap türleri gerçek (ADR-0024).
