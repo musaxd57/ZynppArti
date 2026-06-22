@@ -1,0 +1,130 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import type { History } from '@zynpparti/document';
+import type { ToolManager, ToolName } from '@zynpparti/tools';
+
+interface Command {
+  readonly label: string;
+  readonly hint?: string;
+  readonly run: () => void;
+}
+
+interface CommandPaletteProps {
+  manager: ToolManager;
+  history: History;
+  zoomToFit: () => void;
+}
+
+const TOOL_COMMANDS: { name: ToolName; label: string; key: string }[] = [
+  { name: 'select', label: 'Seç', key: 'V' },
+  { name: 'wall', label: 'Duvar', key: 'L' },
+  { name: 'door', label: 'Kapı', key: 'D' },
+  { name: 'window', label: 'Pencere', key: 'P' },
+  { name: 'dimension', label: 'Ölçü', key: 'O' },
+  { name: 'parcel', label: 'Parsel', key: 'R' },
+  { name: 'block', label: 'Blok', key: 'B' },
+  { name: 'annotation', label: 'Metin', key: 'T' },
+  { name: 'sheet', label: 'Pafta', key: 'F' },
+  { name: 'section', label: 'Kesit', key: 'C' },
+  { name: 'erase', label: 'Sil', key: 'E' },
+  { name: 'calibrate', label: 'Ölçekle', key: 'K' },
+];
+
+/**
+ * Komut paleti (Ctrl+K): araç ve eylemleri yazarak ara, Enter/tıkla çalıştır. Mevcut mantığa bağlanır
+ * (araçlar setTool; kaydet/aç sentetik kısayolla). Klavye-öncelikli hızlı erişim (AutoCAD/VS Code).
+ */
+export function CommandPalette({ manager, history, zoomToFit }: CommandPaletteProps) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setOpen((o) => !o);
+        setQuery('');
+      } else if (e.key === 'Escape') {
+        setOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const commands = useMemo<Command[]>(() => {
+    const sendKey = (key: string, ctrl = false): void => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key, ctrlKey: ctrl }));
+    };
+    return [
+      ...TOOL_COMMANDS.map((t) => ({
+        label: `Araç: ${t.label}`,
+        hint: t.key,
+        run: () => manager.setTool(t.name),
+      })),
+      { label: 'Geri al', hint: 'Ctrl+Z', run: () => history.undo() },
+      { label: 'İleri al', hint: 'Ctrl+Y', run: () => history.redo() },
+      { label: 'İçeriğe sığdır', hint: 'Home', run: () => zoomToFit() },
+      { label: 'Tümünü seç', hint: 'Ctrl+A', run: () => sendKey('a', true) },
+      { label: 'Kaydet (JSON)', hint: 'Ctrl+S', run: () => sendKey('s', true) },
+      { label: 'Aç (JSON)', hint: 'Ctrl+O', run: () => sendKey('o', true) },
+    ];
+  }, [manager, history, zoomToFit]);
+
+  if (!open) return null;
+
+  const q = query.trim().toLocaleLowerCase('tr');
+  const results = q ? commands.filter((c) => c.label.toLocaleLowerCase('tr').includes(q)) : commands;
+
+  const runFirst = (): void => {
+    const first = results[0];
+    if (first) {
+      first.run();
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[95] flex items-start justify-center bg-black/40 pt-[15vh]"
+      onPointerDown={() => setOpen(false)}
+    >
+      <div
+        className="w-[28rem] max-w-[92vw] overflow-hidden rounded-lg border border-white/10 bg-neutral-800/95 text-sm text-white shadow-2xl backdrop-blur"
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <input
+          autoFocus
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') runFirst();
+          }}
+          placeholder="Komut ara… (araç, kaydet, geri al…)"
+          className="w-full bg-transparent px-4 py-3 outline-none placeholder:text-white/40"
+        />
+        <div className="max-h-[50vh] overflow-y-auto border-t border-white/10">
+          {results.length === 0 ? (
+            <div className="px-4 py-3 text-white/50">Sonuç yok.</div>
+          ) : (
+            results.map((c, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => {
+                  c.run();
+                  setOpen(false);
+                }}
+                className="flex w-full items-center justify-between px-4 py-2 text-left hover:bg-white/10"
+              >
+                <span>{c.label}</span>
+                {c.hint && <span className="text-xs opacity-50">{c.hint}</span>}
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

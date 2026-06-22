@@ -13,6 +13,7 @@ import { TakeoffPanel } from './TakeoffPanel';
 import { SheetPanel } from './SheetPanel';
 import { SectionPanel } from './SectionPanel';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu';
+import { CommandPalette } from './CommandPalette';
 import { PropertiesPanel } from './PropertiesPanel';
 import { LayerPanel } from './LayerPanel';
 import { BlockPalette } from './BlockPalette';
@@ -200,6 +201,7 @@ export function CanvasStage() {
             selectedIds={selectedIds}
           />
           <ShortcutsHelp />
+          <CommandPalette manager={ui.manager} history={ui.history} zoomToFit={ui.zoomToFit} />
         </>
       )}
 
