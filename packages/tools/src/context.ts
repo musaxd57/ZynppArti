@@ -25,6 +25,8 @@ export interface ToolContext {
   setCursor?(cursor: string): void;
   /** Seçim değişince çağrılır (Özellikler paneli için seçili id'ler). İsteğe bağlı. */
   onSelectionChange?(ids: EntityId[]): void;
+  /** Kesit çizgisi çizilince çağrılır (a→b, dünya cm) — şematik kesit görünümü için. İsteğe bağlı. */
+  onSectionLine?(a: Vec2, b: Vec2): void;
 }
 
 const SNAP_PX = 12; // ekran pikseli yarıçapı (tam nokta yakalama)

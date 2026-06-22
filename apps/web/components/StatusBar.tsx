@@ -16,6 +16,7 @@ const TOOL_LABEL: Record<ToolName, string> = {
   block: 'Blok',
   annotation: 'Metin',
   sheet: 'Pafta',
+  section: 'Kesit',
   erase: 'Sil',
   calibrate: 'Ölçekle',
 };

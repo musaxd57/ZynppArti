@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createCanvasApp, createSnapIndicator, type CanvasHandle } from '@zynpparti/engine';
 import { EntityStore, History, RoomManager, UpdateEntity } from '@zynpparti/document';
+import type { Vec2 } from '@zynpparti/geometry';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
 import { seedDemo } from '@/lib/demo-seed';
 import { Toolbar } from './Toolbar';
@@ -10,6 +11,7 @@ import { RoomList } from './RoomList';
 import { CopilotPanel } from './CopilotPanel';
 import { TakeoffPanel } from './TakeoffPanel';
 import { SheetPanel } from './SheetPanel';
+import { SectionPanel } from './SectionPanel';
 import { PropertiesPanel } from './PropertiesPanel';
 import { LayerPanel } from './LayerPanel';
 import { BlockPalette } from './BlockPalette';
@@ -35,6 +37,7 @@ export function CanvasStage() {
   const clearRename = useCallback(() => setRenameId(null), []);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [initError, setInitError] = useState<string | null>(null);
+  const [sectionLine, setSectionLine] = useState<[Vec2, Vec2] | null>(null);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -71,6 +74,7 @@ export function CanvasStage() {
         isLayerLocked: (id) => h.layers.isLocked(id),
         setCursor: (c) => h.setCursor(c),
         onSelectionChange: (ids) => setSelectedIds(ids),
+        onSectionLine: (a, b) => setSectionLine([a, b]),
       });
       h.setActiveTool(manager);
       // Mahal içine çift tık → Seç moduna geç + o mahalin adını düzenlemeye odaklan.
@@ -157,6 +161,7 @@ export function CanvasStage() {
               onRenameConsumed={clearRename}
             />
             <TakeoffPanel store={ui.store} />
+            <SectionPanel store={ui.store} line={sectionLine} />
             <SheetPanel store={ui.store} history={ui.history} />
           </div>
         )}
