@@ -14,6 +14,7 @@ import { SheetPanel } from './SheetPanel';
 import { SectionPanel } from './SectionPanel';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu';
 import { CommandPalette } from './CommandPalette';
+import { promptDialog } from '@/lib/dialog';
 import { PropertiesPanel } from './PropertiesPanel';
 import { LayerPanel } from './LayerPanel';
 import { BlockPalette } from './BlockPalette';
@@ -91,11 +92,12 @@ export function CanvasStage() {
       h.setAnnotationActivateHandler((id) => {
         const ent = store.get(id);
         if (ent?.type !== 'annotation') return;
-        const next = window.prompt('Metin:', ent.text);
-        if (next == null) return;
-        const trimmed = next.trim();
-        if (!trimmed || trimmed === ent.text) return;
-        history.dispatch(new UpdateEntity({ ...ent, text: trimmed }));
+        void promptDialog('Metin:', ent.text).then((next) => {
+          if (next == null) return;
+          const trimmed = next.trim();
+          if (!trimmed || trimmed === ent.text) return;
+          history.dispatch(new UpdateEntity({ ...ent, text: trimmed }));
+        });
       });
       setUi({
         manager,

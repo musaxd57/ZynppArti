@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import './globals.css';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { GlobalErrorHandlers } from '@/components/GlobalErrorHandlers';
+import { DialogHost } from '@/components/DialogHost';
 
 export const metadata: Metadata = {
   title: 'ZynppArti',
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <GlobalErrorHandlers />
         <ErrorBoundary>{children}</ErrorBoundary>
+        <DialogHost />
       </body>
     </html>
   );

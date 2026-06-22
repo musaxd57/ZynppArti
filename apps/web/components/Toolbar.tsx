@@ -14,6 +14,7 @@ import {
 } from '@zynpparti/document';
 import type { ToolManager, ToolName } from '@zynpparti/tools';
 import { importDxf, exportDxf, exportSvg } from '@zynpparti/io';
+import { alertDialog, confirmDialog } from '@/lib/dialog';
 
 const TOOLS: { name: ToolName; label: string; hotkey: string }[] = [
   { name: 'select', label: 'Seç', hotkey: 'V' },
@@ -72,13 +73,13 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
     try {
       const { walls, annotations } = importDxf(await file.text());
       if (walls.length === 0 && annotations.length === 0) {
-        alert('DXF içinde içe aktarılabilir içerik (LINE/POLYLINE/CIRCLE/ARC/TEXT) bulunamadı.');
+        await alertDialog('DXF içinde içe aktarılabilir içerik (LINE/POLYLINE/CIRCLE/ARC/TEXT) bulunamadı.');
         return;
       }
       const imported = [...walls, ...annotations];
       history.dispatch(new BatchCommand('DXF içe aktar', imported.map((ent) => new AddEntity(ent))));
     } catch (err) {
-      alert('DXF okunamadı: ' + (err instanceof Error ? err.message : String(err)));
+      await alertDialog('DXF okunamadı: ' + (err instanceof Error ? err.message : String(err)));
     }
   }
 
@@ -105,7 +106,7 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
       await img.decode();
     } catch {
       // Tuval görüntüsü çözülemedi (ör. WebGL bağlamı hazır değil) → çökme yerine bilgi ver.
-      alert('PDF için tuval görüntüsü alınamadı. Lütfen tekrar deneyin.');
+      await alertDialog('PDF için tuval görüntüsü alınamadı. Lütfen tekrar deneyin.');
       return;
     }
     const sheet = store.all().find((e): e is Sheet => e.type === 'sheet');
@@ -140,10 +141,10 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
     URL.revokeObjectURL(url);
   }
 
-  function onNewModel(): void {
+  async function onNewModel(): Promise<void> {
     const toRemove = store.all().filter((ent) => ent.type !== 'space');
     if (toRemove.length === 0) return;
-    if (!confirm('Tüm çizim temizlensin mi? (Geri al ile dönülebilir.)')) return;
+    if (!(await confirmDialog('Tüm çizim temizlensin mi? (Geri al ile dönülebilir.)'))) return;
     history.dispatch(new BatchCommand('Yeni', toRemove.map((ent) => new RemoveEntity(ent.id))));
   }
 
@@ -171,7 +172,7 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
         ]),
       );
     } catch (err) {
-      alert('Model açılamadı: ' + (err instanceof Error ? err.message : String(err)));
+      await alertDialog('Model açılamadı: ' + (err instanceof Error ? err.message : String(err)));
     }
   }
 
@@ -212,7 +213,7 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
         ⊡ Sığdır
       </button>
       <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
-      <button type="button" onClick={onNewModel} className={btn} title="Yeni / temizle">
+      <button type="button" onClick={() => void onNewModel()} className={btn} title="Yeni / temizle">
         Yeni
       </button>
       <button type="button" onClick={onSaveJson} className={btn} title="Modeli kaydet (.json) — Ctrl+S">

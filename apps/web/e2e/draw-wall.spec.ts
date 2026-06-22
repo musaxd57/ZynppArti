@@ -2,9 +2,9 @@ import { test, expect } from './fixtures';
 
 test('duvar çiz → kapalı döngü → mahal oluşur', async ({ page }) => {
   await page.goto('/');
-  // "Yeni" onay diyaloğunu otomatik kabul et, çizimi temizle.
-  page.on('dialog', (d) => d.accept());
+  // "Yeni" → onay modalı (DialogHost) → Evet ile temizle.
   await page.getByRole('button', { name: 'Yeni', exact: true }).click();
+  await page.getByRole('button', { name: 'Evet', exact: true }).click();
   // Temizlendi → mahal (m²) kalmadı.
   await expect(page.getByText('Toplam', { exact: true })).toHaveCount(0);
 
