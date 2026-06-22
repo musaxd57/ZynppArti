@@ -33,7 +33,14 @@ Faz 1'de Playwright e2e job'u eklenecek (ayrı, headless).
 - Sentetik **50k / 500k entity** sahneleri → FPS / frame-time ölçümü. Bütçe: `docs/PERFORMANCE.md`.
 - CI'da performans regresyon eşiği (bütçeyi geçince kır).
 
-## 6. Şimdiki durum (Faz 0 sonu)
-- `geometry`: `polygonArea` testleri (3) ✅
-- `engine`: `transform` + `clamp` testleri (4) ✅
-- e2e (Playwright) henüz yok → Faz 1 / 1C ile gelir.
+## 6. Şimdiki durum (Faz 1 + 2A/2B, 2026-06-22 — gerçek sayılar)
+Toplam **~214 birim test**, tümü yeşil (`pnpm test`):
+- `geometry`: 33 ✅ (vec/segment/polygon/hull/hatch/planar-faces + segmentIntersection)
+- `document`: 80 ✅ (store/command/history/rooms/metrics/takeoff/clone/serialize/entity geometrileri)
+- `engine`: 31 ✅ (transform/charset/spatial-index/hit-test/entity-bounds/layer-state/linetypes)
+- `io`: 24 ✅ (dxf import/export + svg export + kalibrasyon)
+- `tools`: 15 ✅ (wall/select FSM + snapper)
+- `copilot`: 31 ✅ (yönetmelik kuralları + atıf biçimi)
+
+> Sayılar değişince burayı güncelle. **e2e (Playwright) henüz yok** — tarayıcı doğrulaması şu an
+> headless Chrome/CDP ekran görüntüsüyle (CLAUDE.md §3); Playwright ileri faz.

@@ -25,7 +25,7 @@
 | `P` | Pencere (window) | ✅ |
 | `O` | Ölçü (dimension) | ✅ |
 | `R` | Parsel (parcel) | ✅ |
-| `B` | Blok (block) | ✅ (palet tipi seçer) |
+| `B` | Blok (block) | ✅ (toggle; blok türü palet panelinden seçilir) |
 | `T` | Metin (annotation) | ✅ |
 | `F` | Pafta (sheet) | ✅ |
 | `E` | Sil (erase) | ✅ (ayrıca `Delete`) |
@@ -48,7 +48,21 @@
 | `Home` | İçeriğe sığdır (zoom extents) | ✅ |
 | `Tekerlek` | Yakınlaş/uzaklaş | ✅ |
 | `?` | Kısayol yardımı aç/kapa | ✅ |
-| `Ctrl+X` (kes) · `Ctrl+G` (grupla) · `Ctrl+S` (kaydet) | — | ☐ henüz yok |
+| `Ctrl+X` (kes) · `Ctrl+G` (grupla) · `Ctrl+S` (kaydet) | — | ☐ kısayol henüz yok |
+
+## 3.1 Dosya işlemleri (Toolbar butonları — kısayol yok)
+| Buton | İşlem | Durum |
+|-------|-------|-------|
+| Kaydet | Modeli `.json` indir (serializeModel) | ✅ |
+| Aç | `.json` model yükle (değiştir, tek undo) | ✅ |
+| DXF Yükle | DXF içe aktar (LINE/POLYLINE/CIRCLE/ARC/TEXT) | ✅ |
+| DXF İndir | Tüm entity'leri DXF'e | ✅ |
+| SVG İndir | Vektör SVG export | ✅ |
+| PNG İndir | Raster görüntü | ✅ |
+| PDF İndir | jsPDF (raster gömme) | ✅ |
+| Excel İndir | Mahal listesi / metraj (.xlsx) | ✅ (RoomList/Metraj panelinde) |
+
+> `Ctrl+S`/`Ctrl+O` klavye kısayolu bağlanması ileride (şu an yalnız buton).
 
 ## 4. Seçim mantığı
 - **Tek tık:** altındaki entity'yi seç. ✅
@@ -57,8 +71,9 @@
 - Tek seçimde düzenleme **tutamaçları** (uç/offset/köşe) çıkar. ✅
 
 ## 5. Snapping (yakalama)
-- ✅ Şu an: **anahtar nokta** (duvar ucu, blok merkezi, ölçü ucu, metin/parsel köşesi) → **eksen hizalama** (yatay/dikey kılavuz çizgisi) → **ızgara**; öncelik bu sıradadır (`tools/context.ts createSnapper`). Snap noktasında elmas, hizalamada pembe kılavuz gösterilir.
-- ☐ Henüz yok: orta nokta (midpoint), kesişim (intersection), dik (perpendicular), paralel; ayrıca snap aç/kapa anahtarı.
+- ✅ Şu an (öncelik sırasıyla, `tools/context.ts createSnapper`): **köşe/uç + orta nokta** (duvar/ölçü/parsel) → **kesişim** (segment çaprazları) → **kenar-üstü (dik iz düşüm)** → **eksen hizalama** (yatay/dikey kılavuz) → **ızgara**.
+- ✅ Snap göstergesi türe göre glyph değiştirir: **köşe=eşkenar dörtgen, orta=üçgen, kenar=kare, kesişim=X**; eksen hizalamada pembe kılavuz çizgisi.
+- ☐ Henüz yok: paralel snap; snap türlerini ayrı ayrı aç/kapa anahtarı.
 
 ## 6. İleride
 - **Kullanıcı kısayolu özelleştirme** (keymap'i kullanıcı override eder).

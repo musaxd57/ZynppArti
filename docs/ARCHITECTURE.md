@@ -67,11 +67,17 @@ katman gizli/kilit sorguları, seçim değişim callback'i. `ToolManager` kısay
 
 ## 6. Export hattı (packages/io)
 
-- **DXF import:** `dxf-parser` (LINE/LWPOLYLINE/POLYLINE → Wall, $INSUNITS → cm, katman eşleme).
+`packages/io` (saf TS):
+- **DXF import:** `dxf-parser` (LINE/LWPOLYLINE/POLYLINE → Wall, CIRCLE/ARC → segment, TEXT/MTEXT →
+  Annotation, $INSUNITS → cm, katman eşleme).
 - **DXF export:** tüm entity'ler (ADR-0025) — LINE/LWPOLYLINE/TEXT (minimal R12 tarzı).
-- **SVG export:** vektör (ADR-0026) — saf TS, viewBox auto-fit.
-- **PNG:** engine Pixi extract. **PDF:** jsPDF (raster gömme, ADR-0022). **Excel:** xlsx.
+- **SVG export:** vektör (ADR-0026) — viewBox auto-fit.
 - **Kalibrasyon:** 2 nokta + gerçek mesafe → `computeScaleFactor` → tüm çizim ölçeklenir.
+
+`packages/io` DIŞINDA (DOM/kütüphane gerektirir):
+- **PNG:** engine Pixi extract (`canvas-app.ts`) → Toolbar indirir.
+- **PDF:** jsPDF (raster gömme, ADR-0022) — `apps/web` Toolbar.
+- **Excel (.xlsx):** `xlsx` — `apps/web` RoomList/TakeoffPanel (mahal listesi + metraj).
 
 ## 7. PLANLANAN — collab / sync / persistence (Faz 3+)
 

@@ -8,8 +8,21 @@
 ## ŞU AN
 
 **Faz:** 2 — AI Render + Copilot → **BAŞLADI**. **2A (canlı metrik) + 2B (copilot öneri tohumu) TAMAMLANDI** ✅. Maliyetsiz çizim/zanaat özellikleri sürüyor (ADR-0019).
-**Branch:** `main` güncel + push'lu (son: `9f1ce11`).
-**Durum:** Faz 1 + 2A/2B + geniş maliyetsiz tur (ADR-0019): görsel zanaat, yönetmelik, metraj, blok/metin/pafta, çoklu-seçim, **özellikler paneli, PDF export**.
+**Branch:** `feat/autonomous-tour` (push'lu) — main'e merge bekliyor (Moses onayı).
+**Durum:** Faz 1 + 2A/2B + geniş maliyetsiz tur (ADR-0019): görsel zanaat, yönetmelik, metraj, blok/metin/pafta, çoklu-seçim, özellikler paneli, PDF export.
+
+**Otonom tur (2026-06-22, `feat/autonomous-tour` branch'inde):** Moses geniş otonom yetki verdi (maliyetsiz/deterministik işler; silme/force-push yok). Yapılanlar (her biri ayrı commit + push):
+1. **Snapping zenginleştirme** — orta nokta + kenar-üstü (dik) + **kesişim** yakalama; gösterge glyph türü (köşe/orta/kenar/kesişim). Artık CLAUDE §8.1'in tüm snap türleri gerçek (ADR-0024).
+2. **DXF export tüm entity tipleri** (parsel/blok/ölçü/metin/boşluk; ADR-0025).
+3. **SVG vektör export** (ADR-0026) + Toolbar "SVG İndir".
+4. **Copilot 2 yeni kural** — oda asgari genişlik + parsel içinde kalma (ADR-0027).
+5. **Doküman borcu**: ADR-0023..0027; DOMAIN.md + ARCHITECTURE.md STUB→gerçek.
+6. **DXF import genişletme** — CIRCLE/ARC (segment) + TEXT/MTEXT (→Annotation).
+7. **Model kaydet/aç (JSON)** — ilk kalıcılık (`document/serialize.ts`); Toolbar "Kaydet"/"Aç".
+8. **RoomManager testleri** (çekirdek modül, testsizdi).
+9. **.md denetimi** (6 paralel agent değil, 4 agent) → HIGH/MED bulgular düzeltildi (test sayıları, ADR-0011/0013 durum notu, FAZ2-NOTES checklist, UX-INTERACTIONS snap/dosya işlemleri, I18N çelişki notu, ENGINEERING-NOTES tembel-mahal düzeltmesi).
+
+**Test: ~214** (document 80 · geometry 33 · engine 31 · copilot 31 · io 24 · tools 15). Zincir yeşil (typecheck 7/7 · lint 7/7 · build 1/1).
 
 **Son maliyetsiz tur (2026-06-21, hepsi main'de):** blok seç/taşı/döndür · mobilya çizelgesi/katmanı · Annotation (metin) + çift-tık düzenleme · kopyala-yapıştır/çoğalt (Ctrl+C/V/D) · **çoklu seçim (kutu/Shift + toplu)** · hizalama kılavuzları · yönetmelik turu 3 (TAKS+banyo) · hatch malzeme kütüphanesi · **pafta/sheet sistemi** · renk token konsolidasyonu · durum çubuğu · içeriğe sığdır (Home) · Ctrl+A + ok-itme · kısayol yardımı (?) · highlightEntity refactor + EraseTool tüm-tip · **özellikler paneli (seçili entity düzenleme)** · **PDF export (jsPDF)** · panel kaydırma fix + mahal satırı iki satır. **Test: 178 (document 69 · engine 31 · geometry 29 · copilot 26 · tools 12 · io 11).** Zincir yeşil (typecheck 7/7 · lint 7/7 · build 1/1). Son commit `9f1ce11`.
 

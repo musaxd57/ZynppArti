@@ -160,7 +160,7 @@
 - [ ] §8.7 Render: ControlNet "yaratıcı mod / geometri-koru modu" iki ayarı; kesit girişi; sonraki adım image→video (Veras dersi).
 - [ ] §8.8 Üretici: girdi=bubble diagram+sınır+kural, çıktı=vektör; **imar/yönetmelik uyumu** ticari değer (Maket/ArkDesign dersi).
 - [ ] Roadmap: Faz 5–6'ya **BIM köprüsü (web-ifc/IFC)** ve **Speckle interop** ve **2D→3D (OCCT-WASM)**.
-- [ ] Yeni `docs/` dosyaları: `RENDER.md`, `AI-GENERATE.md`, `ARCHITECTURE.md` (bu bulguların derini).
+- [x] Yeni `docs/` dosyaları: `RENDER.md`, `AI-GENERATE.md` (⏳ araştırma tohumu), `ARCHITECTURE.md` (✅ sevk edilen mimariyle dolduruldu, 2026-06-22). DWG/WASM (`libredwg-web`) hâlâ ☐ (kurulu değil).
 - [ ] Repo okuma listesi (§8) CLAUDE.md "Çalışma kuralları"na referans olarak eklensin.
 
 ---

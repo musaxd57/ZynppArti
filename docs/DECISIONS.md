@@ -98,7 +98,7 @@
 **Sonuç:** Güvenilir + sürekli geri bildirim. Mevcut RoomList paneli bu metrik panelinin çekirdeğidir.
 
 ## ADR-0013 — AI render: uygulama içi canlı panel (export-yükle değil)
-**Tarih:** 2026-06-19 · **Durum:** Kabul
+**Tarih:** 2026-06-19 · **Durum:** Kabul (tasarım kararı) — **HENÜZ KURULMADI** (`services/ai-render` yok; maliyetli → ADR-0019 ile sona ertelendi)
 **Bağlam:** Eski akış "dışa aktar → ayrı AI aracına yükle → bekle" zayıf. Modern araçlar (Veras, Archicad AI Visualizer) uygulama içi prompt paneliyle canlı modele uygular; plan/kesit değişince görsel güncellenir (FAZ2-NOTES §1).
 **Karar:** `services/ai-render` **uygulama içi canlı render paneli** (export-yükle akışı değil). Girdi: plan **ve kesit**. İki mod: "yaratıcı" + "geometriyi koru" (ControlNet, LANDSCAPE §4). Sonraki adım: image→video. ADR-0005'i (aşamalı render) somutlaştırır.
 **Sonuç:** Akıcı UX, hızlı iterasyon. Takas: canlı panel + kuyruk + önbellek mimarisi gerektirir (BullMQ; maliyet kotası).
@@ -110,10 +110,10 @@
 **Sonuç:** Temiz undo (yalnız kullanıcı eylemleri) + canlı m². Takas: mahal bulma/silme geri alınamaz (zaten duvarın türevi). Türkçe etiketler için metin atlası `TR_CHARSET` ile baştan yüklenir (I18N-TEXT.md); BitmapText kullanıldığından "ş görünmüyor" tuzağı kapalı.
 
 ## ADR-0011 — DXF import & kalibrasyon kapsam kararları (1D)
-**Tarih:** 2026-06-19 · **Durum:** Kabul (otonom varsayımlar)
+**Tarih:** 2026-06-19 · **Durum:** Kabul (otonom varsayımlar) — **kapsam genişletildi: bkz. ADR-0025/0026** (CIRCLE/ARC/TEXT/MTEXT artık import ediliyor; aşağıdaki "atlanır" maddesi 2026-06-22'de geçersiz kaldı).
 **Bağlam:** 1D'de DXF import + ölçekleme hızlı ve kullanışlı olmalı; mükemmel CAD-uyumu Faz 1 hedefi değil.
 **Karar:**
-- DXF entity eşlemesi: yalnız **LINE / LWPOLYLINE / POLYLINE → Wall** (kapalı polyline son kenarı da). Diğerleri (ARC, CIRCLE, INSERT, TEXT…) şimdilik atlanır.
+- DXF entity eşlemesi: yalnız **LINE / LWPOLYLINE / POLYLINE → Wall** (kapalı polyline son kenarı da). ~~Diğerleri (ARC, CIRCLE, INSERT, TEXT…) şimdilik atlanır.~~ **GÜNCELLENDİ:** CIRCLE/ARC → segmentlenmiş Wall, TEXT/MTEXT → Annotation (2026-06-22). INSERT (blok referansı) hâlâ ☐.
 - DXF çizgilerinde kalınlık yok → duvarlara **varsayılan 15 cm** kalınlık atanır.
 - Birim: `$INSUNITS` → cm (in/ft/mm/cm/m); bilinmiyorsa 1 (cm) kabul + **2-nokta kalibrasyon** düzeltir.
 - Kalibrasyon: gerçek mesafe Faz 1'de **`window.prompt`** ile alınır (basit; ileride uygun UI). Ölçek **tüm dokümana**, ilk seçilen nokta merkez alınarak uygulanır; tek undo (`BatchCommand`).
