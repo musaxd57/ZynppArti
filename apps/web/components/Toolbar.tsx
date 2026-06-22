@@ -184,7 +184,7 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
   const btn = 'shrink-0 rounded px-3 py-1.5 transition-colors hover:bg-white/10';
 
   return (
-    <div className="absolute left-4 top-16 z-30 flex max-w-[calc(100vw-2rem)] flex-nowrap items-center gap-1 overflow-x-auto rounded-lg bg-black/60 p-1 text-sm text-white backdrop-blur">
+    <div className="z-30 flex w-full shrink-0 flex-nowrap items-center gap-1 overflow-x-auto border-b border-white/10 bg-black/60 p-1.5 text-sm text-white backdrop-blur">
       {TOOLS.map((t) => (
         <button
           key={t.name}

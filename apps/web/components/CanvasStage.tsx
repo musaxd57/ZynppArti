@@ -113,65 +113,75 @@ export function CanvasStage() {
   }, []);
 
   return (
-    <>
-      <div ref={containerRef} className="h-full w-full" />
-      {initError && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-neutral-900 p-6 text-center text-white">
-          <div className="text-lg font-semibold">Tuval başlatılamadı</div>
-          <div className="max-w-md text-sm text-white/70">{initError}</div>
-          <button
-            type="button"
-            onClick={() => location.reload()}
-            className="rounded bg-blue-600 px-4 py-2 hover:bg-blue-700"
-          >
-            Sayfayı yenile
-          </button>
-        </div>
+    // DOCK LAYOUT (Rayon/Figma deseni): üstte toolbar · sol dock | canvas | sağ dock · altta durum.
+    // Paneller canvas'ın YANINDA (üstünde değil) → asla örtüşmez, kapatma düğmeleri hep erişilir,
+    // ve panellere tıklamak canvas seçimini bozmaz (ayrı bölgeler).
+    <div className="relative flex h-full w-full flex-col overflow-hidden">
+      {ui && (
+        <Toolbar
+          manager={ui.manager}
+          history={ui.history}
+          store={ui.store}
+          exportPng={ui.exportPng}
+          zoomToFit={ui.zoomToFit}
+          layers={ui.layers}
+        />
       )}
+      <div className="relative flex min-h-0 flex-1">
+        {/* Sol dock: katmanlar + bloklar + copilot (kendi içinde kaydırılır). */}
+        {ui && (
+          <div className="z-10 flex shrink-0 flex-col gap-3 overflow-y-auto p-2">
+            <LayerPanel store={ui.store} layers={ui.layers} />
+            <BlockPalette manager={ui.manager} />
+            <CopilotPanel store={ui.store} />
+          </div>
+        )}
+
+        {/* Canvas (orta, esnek) — Pixi bu div'e resizeTo ile bağlı. */}
+        <div ref={containerRef} className="relative min-w-0 flex-1" />
+
+        {/* Sağ dock: özellikler + mahal/metrik + metraj + pafta. */}
+        {ui && (
+          <div className="z-10 flex shrink-0 flex-col items-end gap-3 overflow-y-auto p-2">
+            {/* key = seçili id → seçim değişince input'lar remount olur (defaultValue tazelenir). */}
+            <PropertiesPanel
+              key={selectedIds.length === 1 ? selectedIds[0] : 'none'}
+              store={ui.store}
+              history={ui.history}
+              selectedIds={selectedIds}
+            />
+            <RoomList
+              store={ui.store}
+              history={ui.history}
+              renameId={renameId}
+              onRenameConsumed={clearRename}
+            />
+            <TakeoffPanel store={ui.store} />
+            <SheetPanel store={ui.store} history={ui.history} />
+          </div>
+        )}
+
+        {initError && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-neutral-900 p-6 text-center text-white">
+            <div className="text-lg font-semibold">Tuval başlatılamadı</div>
+            <div className="max-w-md text-sm text-white/70">{initError}</div>
+            <button
+              type="button"
+              onClick={() => location.reload()}
+              className="rounded bg-blue-600 px-4 py-2 hover:bg-blue-700"
+            >
+              Sayfayı yenile
+            </button>
+          </div>
+        )}
+      </div>
+
       {ui && (
         <>
-          <Toolbar
-            manager={ui.manager}
-            history={ui.history}
-            store={ui.store}
-            exportPng={ui.exportPng}
-            zoomToFit={ui.zoomToFit}
-            layers={ui.layers}
-          />
-          {/* Sol kolon: katmanlar + copilot. Kaydırma, ETKİLEŞİMLİ iç sarmalayıcıda olmalı
-              (dış kolon pointer-events-none → tekerlek/çubuk oraya ulaşmaz). */}
-          <div className="pointer-events-none absolute bottom-4 left-4 top-28 flex flex-col items-start">
-            <div className="pointer-events-auto flex max-h-full flex-col gap-3 overflow-y-auto pr-1">
-              <LayerPanel store={ui.store} layers={ui.layers} />
-              <BlockPalette manager={ui.manager} />
-              <CopilotPanel store={ui.store} />
-            </div>
-          </div>
-          {/* Sağ kolon: mahal listesi/metrik + metraj + pafta. top-28 → araç çubuğunun ALTINDA
-              başlar (yoksa geniş toolbar paneli örtüp kapatma düğmesini erişilmez kılıyor). */}
-          <div className="pointer-events-none absolute bottom-4 right-4 top-28 flex flex-col items-end">
-            <div className="pointer-events-auto flex max-h-full flex-col items-end gap-3 overflow-y-auto pl-1">
-              {/* key = seçili id → seçim değişince input'lar remount olur (defaultValue tazelenir). */}
-              <PropertiesPanel
-                key={selectedIds.length === 1 ? selectedIds[0] : 'none'}
-                store={ui.store}
-                history={ui.history}
-                selectedIds={selectedIds}
-              />
-              <RoomList
-                store={ui.store}
-                history={ui.history}
-                renameId={renameId}
-                onRenameConsumed={clearRename}
-              />
-              <TakeoffPanel store={ui.store} />
-              <SheetPanel store={ui.store} history={ui.history} />
-            </div>
-          </div>
           <StatusBar manager={ui.manager} registerHover={ui.setHoverHandler} />
           <ShortcutsHelp />
         </>
       )}
-    </>
+    </div>
   );
 }
