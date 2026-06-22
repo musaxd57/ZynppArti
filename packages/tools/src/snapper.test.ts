@@ -80,6 +80,29 @@ describe('createSnapper', () => {
     expect(snap({ x: 103, y: 98 })).toEqual({ x: 100, y: 100 }); // merkeze yakalar
   });
 
+  it('duvar orta noktasına yakalar ve midpoint glyph bildirir', () => {
+    const { store, index } = wallAt();
+    let hint: SnapHint | null = null;
+    const snap = createSnapper(store, index, () => 1, (h) => {
+      hint = h;
+    });
+    // Orta nokta {50,0}; {52,3} ona yakın (uçlar uzak).
+    expect(snap({ x: 52, y: 3 })).toEqual({ x: 50, y: 0 });
+    expect(hint!.point).toEqual({ x: 50, y: 0 });
+    expect(hint!.pointKind).toBe('midpoint');
+  });
+
+  it('duvar kenarına dik iz düşümle yakalar (edge) — uç/orta uzaksa', () => {
+    const { store, index } = wallAt();
+    let hint: SnapHint | null = null;
+    const snap = createSnapper(store, index, () => 1, (h) => {
+      hint = h;
+    });
+    // {30,5}: hiçbir anahtar noktaya yakın değil ama duvar kenarına 5 cm → {30,0}.
+    expect(snap({ x: 30, y: 5 })).toEqual({ x: 30, y: 0 });
+    expect(hint!.pointKind).toBe('edge');
+  });
+
   it('exact endpoint snap reports a point hint (no guides)', () => {
     const { store, index } = wallAt();
     let hint: SnapHint | null = null;
