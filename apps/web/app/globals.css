@@ -8,3 +8,18 @@ body {
   background: #1e1e1e;
   overflow: hidden;
 }
+
+/*
+ * Grafik/CAD uygulaması: araç çubuğu, paneller, tuval üstündeki yazılar fareyle SEÇİLEMEZ
+ * (yoksa sürükleme/çift-tık metni maviyle seçili bırakıp "rahat bırakmıyor" hissi verir).
+ * Yalnız gerçek metin girişleri (input/textarea) seçilebilir kalır — düzenleme bozulmaz.
+ */
+body {
+  user-select: none;
+  -webkit-user-select: none;
+}
+input,
+textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
