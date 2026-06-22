@@ -42,6 +42,37 @@ export function CanvasStage() {
   const [initError, setInitError] = useState<string | null>(null);
   const [sectionLine, setSectionLine] = useState<[Vec2, Vec2] | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const [rightW, setRightW] = useState(288);
+
+  // Sağ dock genişliğini hatırla (localStorage).
+  useEffect(() => {
+    try {
+      const v = Number(localStorage.getItem('zynpparti.rightDockW'));
+      if (v >= 200 && v <= 560) setRightW(v);
+    } catch {
+      /* yoksay */
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem('zynpparti.rightDockW', String(rightW));
+    } catch {
+      /* yoksay */
+    }
+  }, [rightW]);
+
+  // Sağ dock kenarından sürükleyerek genişlik ayarı.
+  const startRightResize = useCallback((e: React.PointerEvent): void => {
+    e.preventDefault();
+    const onMove = (ev: PointerEvent): void =>
+      setRightW(Math.min(560, Math.max(200, window.innerWidth - ev.clientX)));
+    const onUp = (): void => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }, []);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -151,9 +182,20 @@ export function CanvasStage() {
         {/* Canvas (orta, esnek) — Pixi bu div'e resizeTo ile bağlı. Sağ-tık engine'de bağlı. */}
         <div ref={containerRef} className="relative min-w-0 flex-1" />
 
+        {/* Sağ dock genişlik tutamacı. */}
+        {ui && (
+          <div
+            onPointerDown={startRightResize}
+            className="z-20 w-1.5 shrink-0 cursor-col-resize bg-white/5 transition-colors hover:bg-blue-400/40"
+            title="Sürükleyerek paneli genişlet/daralt"
+          />
+        )}
         {/* Sağ dock: özellikler + mahal/metrik + metraj + pafta. */}
         {ui && (
-          <div className="z-10 flex shrink-0 flex-col items-end gap-3 overflow-y-auto p-2">
+          <div
+            style={{ width: rightW }}
+            className="z-10 flex shrink-0 flex-col gap-3 overflow-y-auto overflow-x-hidden p-2"
+          >
             {/* key = seçili id → seçim değişince input'lar remount olur (defaultValue tazelenir). */}
             <PropertiesPanel
               key={selectedIds.length === 1 ? selectedIds[0] : 'none'}

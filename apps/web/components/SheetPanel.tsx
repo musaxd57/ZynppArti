@@ -40,7 +40,7 @@ export function SheetPanel({ store, history }: SheetPanelProps) {
   const sel = 'rounded bg-white/10 px-1 py-0.5 text-xs outline-none focus:bg-white/20';
 
   return (
-    <Panel title="Paftalar" badge={sheets.length} widthClass="w-72">
+    <Panel title="Paftalar" badge={sheets.length} widthClass="w-full">
       <div className="flex flex-col gap-2">
         {sheets.map((s) => (
           <div key={s.id} className="flex flex-col gap-1 rounded bg-white/5 p-1.5">

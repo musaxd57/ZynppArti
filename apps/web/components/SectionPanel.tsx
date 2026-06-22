@@ -90,7 +90,7 @@ export function SectionPanel({ store, line }: SectionPanelProps) {
   }
 
   return (
-    <Panel title="Kesit (şematik)" widthClass="w-64" defaultOpen={false}>
+    <Panel title="Kesit (şematik)" widthClass="w-full" defaultOpen={false}>
       {body}
     </Panel>
   );

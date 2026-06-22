@@ -95,7 +95,7 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
   );
 
   return (
-    <Panel title="Metraj">
+    <Panel title="Metraj" widthClass="w-full">
       <div className="flex flex-col gap-0.5 px-1">
         <Row label="Duvar uzunluğu" value={`${num(t.wallLengthM)} m`} />
         <Row label="Sıva/boya" value={`${num(t.plasterAreaM2)} m²`} />

@@ -40,7 +40,7 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
   if (e.type === 'wall') {
     const w = e as Wall;
     return (
-      <Panel title="Özellikler — Duvar" widthClass="w-56">
+      <Panel title="Özellikler — Duvar" widthClass="w-full">
         <div className="flex flex-col gap-1">
           <label className={labelCls}>
             <span className="opacity-70">Kalınlık (cm)</span>
@@ -97,7 +97,7 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
   if (e.type === 'opening') {
     const o = e as Opening;
     return (
-      <Panel title={`Özellikler — ${o.kind === 'door' ? 'Kapı' : 'Pencere'}`} widthClass="w-56">
+      <Panel title={`Özellikler — ${o.kind === 'door' ? 'Kapı' : 'Pencere'}`} widthClass="w-full">
         <div className="flex flex-col gap-1">
           <label className={labelCls}>
             <span className="opacity-70">Genişlik (cm)</span>
@@ -137,7 +137,7 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
   if (e.type === 'annotation') {
     const a = e as Annotation;
     return (
-      <Panel title="Özellikler — Metin" widthClass="w-56">
+      <Panel title="Özellikler — Metin" widthClass="w-full">
         <div className="flex flex-col gap-1">
           <input
             defaultValue={a.text}
@@ -168,7 +168,7 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
   if (e.type === 'block') {
     const b = e as Block;
     return (
-      <Panel title="Özellikler — Blok" widthClass="w-56">
+      <Panel title="Özellikler — Blok" widthClass="w-full">
         <button
           type="button"
           onClick={() =>
