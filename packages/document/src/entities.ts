@@ -23,6 +23,8 @@ export interface Wall extends EntityBase {
    * (metraj/şematik kesit). Şematik kesitin (ADR-0016) temel girdisidir.
    */
   readonly height?: number;
+  /** Yapı malzemesi (wall-material.ts id'si: tuğla/beton…); metraj malzeme dağılımı için. */
+  readonly material?: string;
 }
 
 /**

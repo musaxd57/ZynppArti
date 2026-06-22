@@ -15,3 +15,4 @@ export * from './materials';
 export * from './sheet';
 export * from './serialize';
 export * from './section';
+export * from './wall-material';

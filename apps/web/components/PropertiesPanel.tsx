@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import {
   UpdateEntity,
+  WALL_MATERIALS,
   type Annotation,
   type Block,
   type EntityStore,
@@ -68,6 +69,25 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
               }}
               className={numCls}
             />
+          </label>
+          <label className={labelCls}>
+            <span className="opacity-70">Malzeme</span>
+            <select
+              value={w.material ?? ''}
+              onChange={(ev) =>
+                history.dispatch(new UpdateEntity({ ...w, material: ev.target.value || undefined }))
+              }
+              className="rounded bg-white/10 px-1 py-0.5 text-xs outline-none focus:bg-white/20"
+            >
+              <option value="" className="bg-neutral-800">
+                —
+              </option>
+              {WALL_MATERIALS.map((m) => (
+                <option key={m.id} value={m.id} className="bg-neutral-800">
+                  {m.label}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
       </Panel>

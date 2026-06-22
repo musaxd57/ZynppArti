@@ -1,6 +1,7 @@
 import { polygonArea } from '@zynpparti/geometry';
 import { BLOCK_DEFS, type BlockKind } from './block';
 import type { Block, Opening, Space, Wall } from './entities';
+import { wallMaterialById } from './wall-material';
 
 /**
  * Metraj / miktar çıkarımı (PRO-FEATURES §1) — saf TS, canlı. Duvar/mahal/boşluktan otomatik
@@ -45,6 +46,13 @@ export interface Takeoff {
   readonly windowSchedule: ScheduleRow[];
   /** Mobilya/blok çizelgesi — tipe göre gruplanmış adet. */
   readonly blockSchedule: BlockScheduleRow[];
+  /** Duvar uzunluğu malzemeye göre dağılım (atanmamış → "Belirsiz"). */
+  readonly wallByMaterial: WallMaterialRow[];
+}
+
+export interface WallMaterialRow {
+  readonly label: string;
+  readonly lengthM: number;
 }
 
 export interface TakeoffOptions {
@@ -74,6 +82,18 @@ function blockSchedule(blocks: readonly Block[]): BlockScheduleRow[] {
   return (Object.keys(BLOCK_DEFS) as BlockKind[])
     .filter((k) => counts.has(k))
     .map((kind) => ({ kind, label: BLOCK_DEFS[kind].label, count: counts.get(kind)! }));
+}
+
+/** Duvar uzunluğunu malzemeye göre gruplar (atanmamış → "Belirsiz"); uzun→kısa sıralı. */
+function wallsByMaterial(walls: readonly Wall[]): WallMaterialRow[] {
+  const byLabel = new Map<string, number>();
+  for (const w of walls) {
+    const label = wallMaterialById(w.material)?.label ?? 'Belirsiz';
+    byLabel.set(label, (byLabel.get(label) ?? 0) + wallLengthCm(w));
+  }
+  return [...byLabel.entries()]
+    .map(([label, cm]) => ({ label, lengthM: cm / 100 }))
+    .sort((a, b) => b.lengthM - a.lengthM);
 }
 
 /** Tüm metrajı hesaplar (canlı; çizim değişince yeniden çağrılır). */
@@ -121,5 +141,6 @@ export function computeTakeoff(
     doorSchedule: schedule(openings, 'door'),
     windowSchedule: schedule(openings, 'window'),
     blockSchedule: blockSchedule(blocks),
+    wallByMaterial: wallsByMaterial(walls),
   };
 }

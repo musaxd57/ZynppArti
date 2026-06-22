@@ -86,6 +86,17 @@ describe('computeTakeoff', () => {
     ]);
   });
 
+  it('duvar uzunluğu malzemeye göre gruplanır (atanmamış → Belirsiz)', () => {
+    const brick: Wall = { ...wall('a', 0, 0, 300, 0), material: 'brick' };
+    const plain = wall('b', 0, 0, 0, 200); // malzeme yok
+    const t = computeTakeoff([brick, plain], [], []);
+    const labels = t.wallByMaterial.map((r) => r.label);
+    expect(labels).toContain('Tuğla');
+    expect(labels).toContain('Belirsiz');
+    const tugla = t.wallByMaterial.find((r) => r.label === 'Tuğla')!;
+    expect(tugla.lengthM).toBeCloseTo(3);
+  });
+
   it('varsayılan kat yüksekliği sabiti', () => {
     expect(DEFAULT_STOREY_HEIGHT_CM).toBe(270);
   });

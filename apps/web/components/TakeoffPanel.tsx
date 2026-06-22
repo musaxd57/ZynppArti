@@ -104,6 +104,15 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
         <Row label="Kapı / Pencere" value={`${t.doorCount} / ${t.windowCount}`} />
       </div>
 
+      {t.wallByMaterial.length > 1 && (
+        <div className="mt-2 flex flex-col gap-0.5 px-1">
+          <div className="text-[10px] uppercase tracking-wide opacity-40">Duvar (malzeme)</div>
+          {t.wallByMaterial.map((r) => (
+            <Row key={r.label} label={r.label} value={`${num(r.lengthM)} m`} />
+          ))}
+        </div>
+      )}
+
       {t.blockSchedule.length > 0 && (
         <div className="mt-2 flex flex-col gap-0.5 px-1">
           <div className="text-[10px] uppercase tracking-wide opacity-40">Mobilya</div>
