@@ -220,7 +220,17 @@ export async function createCanvasApp(
     applyCamera();
   }
 
+  // Bir metin/sayı kutusunda yazarken klavye tuval kısayollarını (Space-pan, Home, araç harfleri)
+  // çalmamalı — odak düzenlenebilir bir öğedeyse tuval klavyesini atla.
+  function isEditableTarget(t: EventTarget | null): boolean {
+    const el = t as HTMLElement | null;
+    if (!el || !el.tagName) return false;
+    const tag = el.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+  }
+
   function onKeyDown(e: KeyboardEvent): void {
+    if (isEditableTarget(e.target)) return;
     if (e.code === 'Space' && !spaceHeld) {
       spaceHeld = true;
       if (!panning) canvas.style.cursor = 'grab';
@@ -246,6 +256,8 @@ export async function createCanvasApp(
   canvas.addEventListener('pointerdown', onPointerDown);
   canvas.addEventListener('pointermove', onPointerMove);
   canvas.addEventListener('pointerup', onPointerUp);
+  // pointercancel (tarayıcı jesti / odak kaybı): pan'i güvenle sonlandır, yoksa "grabbing"de takılır.
+  canvas.addEventListener('pointercancel', onPointerUp);
   canvas.addEventListener('pointerleave', onPointerUp);
   const onPointerLeaveHover = (): void => hoverCb?.(null);
   canvas.addEventListener('pointerleave', onPointerLeaveHover);
@@ -285,6 +297,7 @@ export async function createCanvasApp(
       canvas.removeEventListener('pointerdown', onPointerDown);
       canvas.removeEventListener('pointermove', onPointerMove);
       canvas.removeEventListener('pointerup', onPointerUp);
+      canvas.removeEventListener('pointercancel', onPointerUp);
       canvas.removeEventListener('pointerleave', onPointerUp);
       canvas.removeEventListener('pointerleave', onPointerLeaveHover);
       canvas.removeEventListener('wheel', onWheel);

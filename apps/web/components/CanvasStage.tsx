@@ -132,7 +132,13 @@ export function CanvasStage() {
           {/* Sağ kolon: mahal listesi/metrik + metraj + pafta. */}
           <div className="pointer-events-none absolute bottom-4 right-4 top-16 flex flex-col items-end">
             <div className="pointer-events-auto flex max-h-full flex-col items-end gap-3 overflow-y-auto pl-1">
-              <PropertiesPanel store={ui.store} history={ui.history} selectedIds={selectedIds} />
+              {/* key = seçili id → seçim değişince input'lar remount olur (defaultValue tazelenir). */}
+              <PropertiesPanel
+                key={selectedIds.length === 1 ? selectedIds[0] : 'none'}
+                store={ui.store}
+                history={ui.history}
+                selectedIds={selectedIds}
+              />
               <RoomList
                 store={ui.store}
                 history={ui.history}

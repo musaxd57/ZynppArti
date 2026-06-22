@@ -178,14 +178,15 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
   const btn = 'shrink-0 rounded px-3 py-1.5 transition-colors hover:bg-white/10';
 
   return (
-    <div className="absolute left-4 top-16 flex max-w-[calc(100vw-20rem)] flex-nowrap items-center gap-1 overflow-x-auto rounded-lg bg-black/60 p-1 text-sm text-white backdrop-blur">
+    <div className="absolute left-4 top-16 z-30 flex max-w-[calc(100vw-2rem)] flex-nowrap items-center gap-1 overflow-x-auto rounded-lg bg-black/60 p-1 text-sm text-white backdrop-blur">
       {TOOLS.map((t) => (
         <button
           key={t.name}
           type="button"
           onClick={() => manager.setTool(t.name)}
           title={`${t.label} (${t.hotkey})`}
-          className={`shrink-0 rounded px-2.5 py-1.5 transition-colors ${
+          aria-pressed={active === t.name}
+          className={`shrink-0 rounded px-2.5 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${
             active === t.name ? 'bg-blue-600' : 'hover:bg-white/10'
           }`}
         >

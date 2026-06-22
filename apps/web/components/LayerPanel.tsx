@@ -71,6 +71,8 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
                 onClick={() => layers.toggle(id)}
                 className="w-5 text-center opacity-80 hover:opacity-100"
                 title={hidden ? 'Göster' : 'Gizle'}
+                aria-label={`${layerName(id)} katmanını ${hidden ? 'göster' : 'gizle'}`}
+                aria-pressed={hidden}
               >
                 {hidden ? '🚫' : '👁'}
               </button>
@@ -79,6 +81,8 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
                 onClick={() => layers.toggleLock(id)}
                 className="w-5 text-center opacity-80 hover:opacity-100"
                 title={locked ? 'Kilidi aç' : 'Kilitle'}
+                aria-label={`${layerName(id)} katmanını ${locked ? 'kilidini aç' : 'kilitle'}`}
+                aria-pressed={locked}
               >
                 {locked ? '🔒' : '🔓'}
               </button>
