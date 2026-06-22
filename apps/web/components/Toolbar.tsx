@@ -45,12 +45,13 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit }: Toolb
     e.target.value = '';
     if (!file) return;
     try {
-      const { walls } = importDxf(await file.text());
-      if (walls.length === 0) {
-        alert('DXF içinde içe aktarılabilir duvar (LINE/POLYLINE) bulunamadı.');
+      const { walls, annotations } = importDxf(await file.text());
+      if (walls.length === 0 && annotations.length === 0) {
+        alert('DXF içinde içe aktarılabilir içerik (LINE/POLYLINE/CIRCLE/ARC/TEXT) bulunamadı.');
         return;
       }
-      history.dispatch(new BatchCommand('DXF içe aktar', walls.map((w) => new AddEntity(w))));
+      const imported = [...walls, ...annotations];
+      history.dispatch(new BatchCommand('DXF içe aktar', imported.map((ent) => new AddEntity(ent))));
     } catch (err) {
       alert('DXF okunamadı: ' + (err instanceof Error ? err.message : String(err)));
     }
