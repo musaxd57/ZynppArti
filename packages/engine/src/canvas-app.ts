@@ -140,7 +140,16 @@ export async function createCanvasApp(
       beginPan(e);
       return;
     }
-    if (e.button === 0) activeTool?.onPointerDown?.(scenePointer(e));
+    if (e.button === 0) {
+      // Pointer capture: sürükleme (kutu-seçim/taşıma) sırasında imleç panellerin üstüne geçse
+      // bile olaylar tuvale gelir → seçim iptal olmaz (Figma/Rayon davranışı).
+      try {
+        canvas.setPointerCapture(e.pointerId);
+      } catch {
+        /* capture desteklenmiyorsa yoksay */
+      }
+      activeTool?.onPointerDown?.(scenePointer(e));
+    }
   }
 
   function onPointerMove(e: PointerEvent): void {
@@ -159,9 +168,9 @@ export async function createCanvasApp(
   }
 
   function onPointerUp(e: PointerEvent): void {
+    if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
     if (panning) {
       panning = false;
-      if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
       canvas.style.cursor = spaceHeld ? 'grab' : toolCursor;
       return;
     }
@@ -258,7 +267,8 @@ export async function createCanvasApp(
   canvas.addEventListener('pointerup', onPointerUp);
   // pointercancel (tarayıcı jesti / odak kaybı): pan'i güvenle sonlandır, yoksa "grabbing"de takılır.
   canvas.addEventListener('pointercancel', onPointerUp);
-  canvas.addEventListener('pointerleave', onPointerUp);
+  // NOT: pointerleave artık onPointerUp ÇAĞIRMAZ — sürükleme pointer-capture'la sürdüğünden imleç
+  // panellere/tuval dışına geçince hareket erkenden bitip seçimi iptal etmemeli. Yalnız hover temizlenir.
   const onPointerLeaveHover = (): void => hoverCb?.(null);
   canvas.addEventListener('pointerleave', onPointerLeaveHover);
   canvas.addEventListener('wheel', onWheel, { passive: false });
@@ -298,7 +308,6 @@ export async function createCanvasApp(
       canvas.removeEventListener('pointermove', onPointerMove);
       canvas.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointercancel', onPointerUp);
-      canvas.removeEventListener('pointerleave', onPointerUp);
       canvas.removeEventListener('pointerleave', onPointerLeaveHover);
       canvas.removeEventListener('wheel', onWheel);
       canvas.removeEventListener('dblclick', onDblClick);
