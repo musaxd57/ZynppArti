@@ -7,9 +7,22 @@
 
 ## ŞU AN
 
-**Faz:** 2 — AI Render + Copilot → **BAŞLADI**. **2A (canlı metrik) + 2B (copilot öneri tohumu) TAMAMLANDI** ✅. Maliyetsiz çizim/zanaat özellikleri sürüyor (ADR-0019).
-**Branch:** `feat/autonomous-tour` (push'lu) — main'e merge bekliyor (Moses onayı).
-**Durum:** Faz 1 + 2A/2B + geniş maliyetsiz tur (ADR-0019): görsel zanaat, yönetmelik, metraj, blok/metin/pafta, çoklu-seçim, özellikler paneli, PDF export.
+**Faz:** 2 — AI Render + Copilot → **BAŞLADI**. **2A + 2B TAMAM** ✅. Maliyetsiz tur + UI/dayanıklılık turu sürüyor (ADR-0019).
+**Branch:** `main` (güncel + push'lu). Otonom tur main'e merge edildi.
+**Durum:** Faz 1 + 2A/2B + maliyetsiz tur + **Playwright e2e** + **dock layout** + **bol hata-yakalama**.
+
+**UI/dayanıklılık turu (2026-06-22, main'de, tarayıcı geri bildirimiyle):**
+- **Playwright e2e kuruldu** (8 test: smoke/araçlar/paneller/duvar→mahal/Kaydet-Aç/DXF-SVG/Ctrl+A-Delete-undo) + CI job (her push). `pnpm --filter @zynpparti/web e2e`.
+- **Stale-manifest KALICI fix:** `next.config experimental.devtoolSegmentExplorer:false` (Next 15.5 Segment Explorer kapatıldı).
+- **Metin seçimi kapatıldı** (user-select:none; input hariç) — takılı mavi seçim bitti.
+- **Pointer capture** — kutu-seçim panellere değince iptal olmuyor.
+- **Dock layout** (Rayon/Figma deseni, 10-agent konsensüsü): üstte toolbar · sol dock | canvas | sağ dock · altta durum. Paneller canvas'ı/birbirini örtmüyor.
+- **Bol hata-yakalama** (10-agent denetimi): React **ErrorBoundary** + global `unhandledrejection`/error + toast; RoomManager.findFaces / engine event-handler / room-font / extract / panel compute / io (NaN guard, per-entity, calibrate) try-catch; createCanvasApp init-hata ekranı.
+- **Katman paneli:** emoji→SVG ikon (göz/kilit), kilitli=amber+ipucu, renk noktası, badge.
+- **Panel aç/kapa hatırlama** (localStorage). PDF export decode guard.
+- **Teşhis:** "seçilemiyor" = kullanıcı Mimari katmanını kilitlemiş (kod doğru); net ikonlar çözüyor.
+
+**Ertelenen tasarım backlog'u (10-agent önerdi, Moses onayıyla sırayla):** komut paleti (Ctrl+K), sağ-tık menü, yeniden-boyutlanabilir paneller, katman solo/sıralama/yeniden-adlandırma/hiyerarşi, duvar malzeme/yükseklik özellikleri, dialog modal (alert/prompt yerine), durum çubuğu seçim özeti, pafta antet şablonları.
 
 **Otonom tur (2026-06-22, `feat/autonomous-tour` branch'inde):** Moses geniş otonom yetki verdi (maliyetsiz/deterministik işler; silme/force-push yok). Yapılanlar (her biri ayrı commit + push):
 1. **Snapping zenginleştirme** — orta nokta + kenar-üstü (dik) + **kesişim** yakalama; gösterge glyph türü (köşe/orta/kenar/kesişim). Artık CLAUDE §8.1'in tüm snap türleri gerçek (ADR-0024).
