@@ -307,6 +307,34 @@ describe('runCopilotChecks — parsel içinde kalma (İmar)', () => {
   });
 });
 
+describe('runCopilotChecks — kat yüksekliği (İmar, info)', () => {
+  const wall = (h: number | undefined, id: string): import('@zynpparti/document').Wall => ({
+    id,
+    type: 'wall',
+    layerId: 'default',
+    start: { x: 0, y: 0 },
+    end: { x: 100, y: 0 },
+    thickness: 15,
+    ...(h != null ? { height: h } : {}),
+  });
+
+  it('alçak duvar (yükseklik<240) → atıflı kat yüksekliği bilgisi', () => {
+    const f = runCopilotChecks([], [wall(220, 'w')]).filter((x) =>
+      x.message.includes('kat yüksekliği'),
+    );
+    expect(f).toHaveLength(1);
+    expect(f[0]!.severity).toBe('info');
+    expect(f[0]!.citation).toContain('İmar');
+  });
+
+  it('yeterli/atanmamış yükseklik → bulgu yok', () => {
+    const f = runCopilotChecks([], [wall(280, 'a'), wall(undefined, 'b')]).filter((x) =>
+      x.message.includes('kat yüksekliği'),
+    );
+    expect(f).toHaveLength(0);
+  });
+});
+
 it('boş model → bulgu yok', () => {
   expect(runCopilotChecks([], [])).toEqual([]);
 });

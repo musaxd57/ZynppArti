@@ -97,6 +97,16 @@ export const REGULATIONS = {
     status: 'active',
   },
 
+  ceilingHeight: {
+    id: 'imar-ceiling-height',
+    source: 'Planlı Alanlar İmar Yönetmeliği',
+    // Konutlarda asgari net kat yüksekliği genelde ~2,40 m; tam değer plana/kullanıma göre değişir → info.
+    rule: 'Konutlarda net kat yüksekliği genelde en az 2,40 m (plana/kullanıma göre değişir).',
+    min: 240,
+    unit: 'cm',
+    status: 'active',
+  },
+
   doorClearWidth: {
     id: 'ts9111-door-clear-width',
     source: 'TS 9111',

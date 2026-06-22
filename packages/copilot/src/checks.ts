@@ -196,6 +196,21 @@ function checkTaks(spaces: readonly Space[], parcels: readonly Parcel[]): Findin
   ];
 }
 
+/** Açıkça yükseklik atanmış duvarlar İmar asgari kat yüksekliğini sağlıyor mu? (info — plana göre değişir) */
+function checkCeilingHeight(walls: readonly Wall[]): Finding[] {
+  const reg = REGULATIONS.ceilingHeight;
+  const low = walls.filter((w) => w.height != null && w.height > 0 && w.height < reg.min);
+  if (low.length === 0) return [];
+  const minH = Math.min(...low.map((w) => w.height as number));
+  return [
+    {
+      severity: 'info',
+      message: `${low.length} duvarın yüksekliği < ${reg.min} cm (en düşük ~${Math.round(minH)} cm); konutta asgari net kat yüksekliği ~${reg.min} cm beklenir.`,
+      citation: citationOf(reg),
+    },
+  ];
+}
+
 /** Kapı net geçiş genişliği TS 9111 erişilebilirlik asgarisini sağlıyor mu? */
 function checkDoorWidth(openings: readonly Opening[]): Finding[] {
   const reg = REGULATIONS.doorClearWidth;
@@ -305,6 +320,7 @@ export function runCopilotChecks(
     ...checkBathroomMinArea(spaces),
     ...checkBathroomAccess(spaces),
     ...checkDoorWidth(openings),
+    ...checkCeilingHeight(walls),
     ...checkDaylight(spaces, openings),
     ...checkParcelContainment(walls, parcels),
     ...checkSetback(walls, parcels),
