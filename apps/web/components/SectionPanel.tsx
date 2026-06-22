@@ -1,7 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { computeSection, DEFAULT_WALL_HEIGHT_CM, type EntityStore, type Wall } from '@zynpparti/document';
+import {
+  computeSection,
+  solidBands,
+  DEFAULT_WALL_HEIGHT_CM,
+  type EntityStore,
+  type Opening,
+  type Wall,
+} from '@zynpparti/document';
 import type { Vec2 } from '@zynpparti/geometry';
 import { exportSectionSvg } from '@zynpparti/io';
 import { Panel } from './Panel';
@@ -14,6 +21,10 @@ interface SectionPanelProps {
 
 function walls(store: EntityStore): Wall[] {
   return store.all().filter((e): e is Wall => e.type === 'wall');
+}
+
+function openings(store: EntityStore): Opening[] {
+  return store.all().filter((e): e is Opening => e.type === 'opening');
 }
 
 /**
@@ -33,7 +44,7 @@ export function SectionPanel({ store, line }: SectionPanelProps) {
   if (!line) {
     body = <div className="px-1 py-2 text-xs opacity-50">Araç çubuğundan “Kesit” (C) ile planda bir çizgi çiz.</div>;
   } else {
-    const s = computeSection(line[0], line[1], walls(store));
+    const s = computeSection(line[0], line[1], walls(store), openings(store));
     if (s.cuts.length === 0) {
       body = <div className="px-1 py-2 text-xs opacity-50">Bu çizgi hiçbir duvarı kesmiyor.</div>;
     } else {
@@ -47,22 +58,26 @@ export function SectionPanel({ store, line }: SectionPanelProps) {
           <svg width={W} height={H} className="rounded bg-white/5">
             {/* zemin çizgisi */}
             <line x1={pad} y1={floorY} x2={W - pad} y2={floorY} stroke="#9aa0a8" strokeWidth={1} />
-            {s.cuts.map((c, i) => {
+            {s.cuts.flatMap((c, i) => {
               const cx = pad + (c.offsetCm / len) * innerW;
               const w = Math.max(2, (c.widthCm / len) * innerW);
-              const h = (c.heightCm / maxH) * innerH;
-              return (
-                <rect
-                  key={i}
-                  x={cx - w / 2}
-                  y={floorY - h}
-                  width={w}
-                  height={h}
-                  fill="#cfcfd6"
-                  stroke="#1a1a1a"
-                  strokeWidth={0.5}
-                />
-              );
+              // Dolu bantlar (boşluk varsa açıklık çıkarılır); her bant ayrı dikdörtgen.
+              return solidBands(c).map((band, j) => {
+                const y0 = floorY - (band.to / maxH) * innerH;
+                const y1 = floorY - (band.from / maxH) * innerH;
+                return (
+                  <rect
+                    key={`${i}-${j}`}
+                    x={cx - w / 2}
+                    y={y0}
+                    width={w}
+                    height={Math.max(0, y1 - y0)}
+                    fill="#cfcfd6"
+                    stroke="#1a1a1a"
+                    strokeWidth={0.5}
+                  />
+                );
+              });
             })}
           </svg>
           <div className="px-1 text-[10px] opacity-60">

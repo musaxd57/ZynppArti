@@ -5,6 +5,7 @@ import {
   formatLength,
   openingFrame,
   roomTypeColor,
+  solidBands,
   toHexColor,
   type Entity,
   type EntityId,
@@ -120,9 +121,12 @@ export function exportSectionSvg(section: Section): string {
   );
   for (const c of cuts) {
     const x = margin + c.offsetCm - c.widthCm / 2;
-    body.push(
-      `<rect x="${num(x)}" y="${num(floorY - c.heightCm)}" width="${num(c.widthCm)}" height="${num(c.heightCm)}" fill="#cfcfd6" stroke="#1a1a1a" stroke-width="1" />`,
-    );
+    // Dolu bantlar (kapı/pencere boşluğu açıklık olarak çıkarılır).
+    for (const band of solidBands(c)) {
+      body.push(
+        `<rect x="${num(x)}" y="${num(floorY - band.to)}" width="${num(c.widthCm)}" height="${num(band.to - band.from)}" fill="#cfcfd6" stroke="#1a1a1a" stroke-width="1" />`,
+      );
+    }
   }
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${num(W)} ${num(H)}" width="${num(W)}" height="${num(H)}">\n` +
