@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { wallBoxes, type EntityStore, type Wall } from '@zynpparti/document';
+import { wallBoxesWithOpenings, type EntityStore, type Opening, type Wall } from '@zynpparti/document';
 
 /**
  * Şematik 3B önizleme (Faz 5 başlangıcı): duvarları yüksekliklerine göre ekstrüde edip three.js'te
@@ -23,7 +23,8 @@ export function View3D({ store }: { store: EntityStore }) {
     setError(null);
 
     const walls = store.all().filter((e): e is Wall => e.type === 'wall');
-    const boxes = wallBoxes(walls);
+    const openings = store.all().filter((e): e is Opening => e.type === 'opening');
+    const boxes = wallBoxesWithOpenings(walls, openings);
     if (boxes.length === 0) {
       setError('Önce 2B tuvalde duvar çiz, sonra 3B önizlemeyi aç.');
       return;
@@ -71,7 +72,8 @@ export function View3D({ store }: { store: EntityStore }) {
       };
       updateCam();
 
-      scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+      scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+      scene.add(new THREE.HemisphereLight(0xdfe6ff, 0x202225, 0.55)); // gökyüzü/zemin yumuşak dolgu
       const dir = new THREE.DirectionalLight(0xffffff, 0.85);
       dir.position.set(span, span * 2, span * 0.5);
       scene.add(dir);
@@ -89,7 +91,7 @@ export function View3D({ store }: { store: EntityStore }) {
         const g = new THREE.BoxGeometry(b.length, b.height, b.thickness);
         geos.push(g);
         const mesh = new THREE.Mesh(g, wallMat);
-        mesh.position.set(b.cx, b.height / 2, b.cy);
+        mesh.position.set(b.cx, (b.baseHeight ?? 0) + b.height / 2, b.cy);
         mesh.rotation.y = -b.angleRad;
         scene.add(mesh);
       }
