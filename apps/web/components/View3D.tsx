@@ -26,6 +26,9 @@ export function View3D({ store }: { store: EntityStore }) {
   const spinRef = useRef(false); // animasyon döngüsü bunu okur (otomatik tur)
   const snapshotRef = useRef<(() => void) | null>(null); // 3B görünümünü PNG indir
   const exportGlbRef = useRef<(() => void) | null>(null); // 3B modeli .glb dışa aktar
+  const clipRef = useRef<((on: boolean) => void) | null>(null); // kesit clipping aç/kapat
+  const [clip, setClip] = useState(false);
+  const [hasSection, setHasSection] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,6 +68,7 @@ export function View3D({ store }: { store: EntityStore }) {
       scene.background = new THREE.Color(0x141414);
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+      renderer.localClippingEnabled = true; // kesit çizgisinden 3B kesim için
       renderer.setPixelRatio(window.devicePixelRatio || 1);
       renderer.setSize(W, H);
       container.appendChild(renderer.domElement);
@@ -132,6 +136,28 @@ export function View3D({ store }: { store: EntityStore }) {
         slab.position.y = 0.5; // zemin düzlemiyle z-fight olmasın
         scene.add(slab);
       }
+
+      // Kesit: planda kesit çizgisi varsa, 3B modeli o düşey düzlemden kes (clipping plane — CSG'siz).
+      const sectionEnt = store.all().find((e) => e.type === 'section') as
+        | { a: { x: number; y: number }; b: { x: number; y: number } }
+        | undefined;
+      let sectionPlane: THREE.Plane | null = null;
+      if (sectionEnt) {
+        const dirX = sectionEnt.b.x - sectionEnt.a.x;
+        const dirZ = sectionEnt.b.y - sectionEnt.a.y;
+        const n = new THREE.Vector3(dirZ, 0, -dirX).normalize(); // çizgiye dik yatay normal
+        sectionPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(
+          n,
+          new THREE.Vector3(sectionEnt.a.x, 0, sectionEnt.a.y),
+        );
+      }
+      const allMats = [wallMat, floorMat, ...slabMats];
+      clipRef.current = (on: boolean): void => {
+        const planes = on && sectionPlane ? [sectionPlane] : [];
+        for (const m of allMats) m.clippingPlanes = planes;
+      };
+      clipRef.current(false); // başlangıç: kapalı
+      setHasSection(!!sectionPlane);
 
       // Elle orbit (OrbitControls bağımlılığı yok).
       let dragging = false;
@@ -213,6 +239,7 @@ export function View3D({ store }: { store: EntityStore }) {
       cleanup = (): void => {
         snapshotRef.current = null;
         exportGlbRef.current = null;
+        clipRef.current = null;
         cancelAnimationFrame(raf);
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
@@ -283,6 +310,23 @@ export function View3D({ store }: { store: EntityStore }) {
             >
               ⤓ GLB
             </button>
+            {hasSection && (
+              <button
+                type="button"
+                onClick={() =>
+                  setClip((c) => {
+                    clipRef.current?.(!c);
+                    return !c;
+                  })
+                }
+                className={`rounded-md px-3 py-1 text-sm transition-colors ${
+                  clip ? 'bg-[var(--accent)] text-white' : 'hover:bg-white/10'
+                }`}
+                title="Kesit çizgisinden 3B kesit görünümü"
+              >
+                ✂ Kesit
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
