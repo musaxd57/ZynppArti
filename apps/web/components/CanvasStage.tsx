@@ -47,6 +47,7 @@ export function CanvasStage() {
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [rightW, setRightW] = useState(288);
   const [leftW, setLeftW] = useState(224);
+  const [assistantOpen, setAssistantOpen] = useState(false);
 
   // Dock genişliklerini hatırla (localStorage).
   useEffect(() => {
@@ -198,6 +199,7 @@ export function CanvasStage() {
           exportPng={ui.exportPng}
           zoomToFit={ui.zoomToFit}
           layers={ui.layers}
+          onOpenAssistant={() => setAssistantOpen(true)}
         />
       )}
       <div className="relative flex min-h-0 flex-1">
@@ -291,6 +293,8 @@ export function CanvasStage() {
             store={ui.store}
             history={ui.history}
             selectedIds={selectedIds}
+            open={assistantOpen}
+            onClose={() => setAssistantOpen(false)}
             zoomToFit={ui.zoomToFit}
           />
         </>

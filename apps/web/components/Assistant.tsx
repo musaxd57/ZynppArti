@@ -44,6 +44,10 @@ interface AssistantProps {
   store: EntityStore;
   history: History;
   selectedIds: string[];
+  /** Panel açık mı (üst araç çubuğundaki Arki butonu kontrol eder). */
+  open: boolean;
+  /** Paneli kapat (✕). */
+  onClose: () => void;
   /** Çizimden sonra üretilen planı ekrana getirmek için (zoom extents). */
   zoomToFit?: () => void;
 }
@@ -359,8 +363,7 @@ function TypingDots({ label }: { label: string }) {
 
 const EMPTY_THREADS: Record<Mode, Msg[]> = { ask: [], draw: [], render: [] };
 
-export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantProps) {
-  const [open, setOpen] = useState(false);
+export function Assistant({ store, history, selectedIds, open, onClose, zoomToFit }: AssistantProps) {
   const [mode, setMode] = useState<Mode>('ask');
   // Her mod KENDİ sohbetini tutar (Sor/Çiz/Render karışmaz).
   const [threads, setThreads] = useState<Record<Mode, Msg[]>>(EMPTY_THREADS);
@@ -539,19 +542,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
     }
   };
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="fixed bottom-14 left-4 z-40 flex items-center gap-2 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-blue-900/40 transition-transform hover:scale-105"
-        title="Arki — tasarım yardımcın"
-      >
-        <SparkleIcon className="h-5 w-5" />
-        Arki
-      </button>
-    );
-  }
+  if (!open) return null; // Açma butonu üst araç çubuğunda (Toolbar → Arki).
 
   const examples =
     mode === 'draw'
@@ -585,7 +576,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
           type="button"
           onClick={() => {
             abortRef.current?.abort(); // açık istek varsa iptal et (boşa token harcama)
-            setOpen(false);
+            onClose();
           }}
           className="grid h-7 w-7 place-items-center rounded hover:bg-white/10"
           title="Kapat"

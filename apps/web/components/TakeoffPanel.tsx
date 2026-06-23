@@ -111,7 +111,8 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
   );
 
   return (
-    <Panel title="Metraj" widthClass="w-full">
+    <>
+    <Panel title="Metraj" widthClass="w-full" defaultOpen={false}>
       <div className="flex flex-col gap-0.5 px-1">
         <Row label="Duvar uzunluğu" value={`${num(t.wallLengthM)} m`} />
         <Row label="Duvar örgü" value={`${num(t.wallElevationM2)} m²`} />
@@ -137,19 +138,6 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
           {t.blockSchedule.map((r) => (
             <Row key={r.kind} label={r.label} value={`${r.count} adet`} />
           ))}
-        </div>
-      )}
-
-      {cost.lines.length > 0 && (
-        <div className="mt-2 flex flex-col gap-0.5 px-1">
-          <div className="text-[10px] uppercase tracking-wide opacity-40">Yaklaşık Maliyet (kaba)</div>
-          {cost.lines.map((l) => (
-            <Row key={l.label} label={`${l.label} (${num(l.quantity)} ${l.unit})`} value={formatTRY(l.total)} />
-          ))}
-          <div className="mt-1 flex justify-between border-t border-white/10 pt-1 font-semibold">
-            <span>Toplam</span>
-            <span className="tabular-nums">{formatTRY(cost.total)}</span>
-          </div>
         </div>
       )}
 
@@ -198,5 +186,28 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
         Kat/boşluk yükseklikleri ve birim fiyatlar kaba varsayımdır; resmî metraj/keşifte doğrulayın.
       </div>
     </Panel>
+
+    {cost.lines.length > 0 && (
+      <Panel
+        title="Yaklaşık Maliyet"
+        widthClass="w-full"
+        defaultOpen={false}
+        badge={formatTRY(cost.total)}
+      >
+        <div className="flex flex-col gap-0.5 px-1">
+          {cost.lines.map((l) => (
+            <Row key={l.label} label={`${l.label} (${num(l.quantity)} ${l.unit})`} value={formatTRY(l.total)} />
+          ))}
+          <div className="mt-1 flex justify-between border-t border-white/10 pt-1 font-semibold">
+            <span>Toplam</span>
+            <span className="tabular-nums">{formatTRY(cost.total)}</span>
+          </div>
+          <div className="mt-1 text-[10px] leading-tight opacity-40">
+            Kaba 2026 birim fiyat tahminidir; bölge/malzemeyle değişir.
+          </div>
+        </div>
+      </Panel>
+    )}
+    </>
   );
 }

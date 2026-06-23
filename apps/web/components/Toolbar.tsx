@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { jsPDF } from 'jspdf';
+import { svg2pdf } from 'svg2pdf.js';
 import {
   AddEntity,
   BatchCommand,
@@ -39,10 +40,31 @@ interface ToolbarProps {
   zoomToFit: () => void;
   /** Katman görünürlüğü — gizli katmanlar vektör export'larda (DXF/SVG) atlanır. */
   layers?: { isHidden(id: string): boolean };
+  /** Üst araç çubuğundaki "Arki" butonu AI panelini açar. */
+  onOpenAssistant?: () => void;
+}
+
+/** Arki logosu — mimari pergel (drafting compass) + AI kıvılcımı (yapay zeka olduğunu belli eder). */
+function ArkiLogo({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      {/* pergel: tepe pivot + iki bacak + alt yay */}
+      <circle cx="12" cy="4" r="1.7" fill="currentColor" />
+      <path
+        d="M12 5.6 L7.5 19 M12 5.6 L16.5 19 M9 13.5 a3.6 3.6 0 0 0 6 0"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* AI kıvılcımı */}
+      <path d="M19 3.2 l.5 1.4 1.4 .5 -1.4 .5 -.5 1.4 -.5 -1.4 -1.4 -.5 1.4 -.5 z" fill="currentColor" />
+    </svg>
+  );
 }
 
 /** Araç çubuğu: araç seçimi, undo/redo, DXF içe/dışa aktarma, PNG dışa aktarma. */
-export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers }: ToolbarProps) {
+export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers, onOpenAssistant }: ToolbarProps) {
   const [active, setActive] = useState<ToolName>(manager.activeTool);
   const fileRef = useRef<HTMLInputElement>(null);
   const jsonRef = useRef<HTMLInputElement>(null);
@@ -104,16 +126,6 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
    * yoksa A4 yatay. Görsel sayfaya orantı korunarak, kenar boşluğuyla sığdırılır.
    */
   async function onExportPdf(): Promise<void> {
-    const dataUrl = await exportPng();
-    const img = new Image();
-    img.src = dataUrl;
-    try {
-      await img.decode();
-    } catch {
-      // Tuval görüntüsü çözülemedi (ör. WebGL bağlamı hazır değil) → çökme yerine bilgi ver.
-      await alertDialog('PDF için tuval görüntüsü alınamadı. Lütfen tekrar deneyin.');
-      return;
-    }
     const sheet = store.all().find((e): e is Sheet => e.type === 'sheet');
     const format = sheet ? sheet.size.toLowerCase() : 'a4';
     const orientation: 'l' | 'p' = sheet && sheet.orientation === 'portrait' ? 'p' : 'l';
@@ -123,13 +135,54 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
     const margin = 10;
     const availW = pw - 2 * margin;
     const availH = ph - 2 * margin;
-    const ar = img.width / img.height || 1;
-    let w = availW;
-    let h = w / ar;
-    if (h > availH) {
-      h = availH;
-      w = h * ar;
+    // En-boy oranını sayfa içine sığdır (kenar boşluklu, ortalı).
+    const fit = (ar: number): { w: number; h: number } => {
+      let w = availW;
+      let h = w / ar;
+      if (h > availH) {
+        h = availH;
+        w = h * ar;
+      }
+      return { w, h };
+    };
+
+    // 1) VEKTÖR (keskin baskı): SVG'yi doğrudan PDF'e çiz. Hata olursa raster'a düşer.
+    try {
+      const svgStr = exportSvg(visibleEntities());
+      const el = new DOMParser().parseFromString(svgStr, 'image/svg+xml')
+        .documentElement as unknown as SVGSVGElement;
+      const vb = el.getAttribute('viewBox')?.trim().split(/\s+/).map(Number);
+      const sw = vb && vb.length === 4 ? vb[2]! : Number(el.getAttribute('width'));
+      const sh = vb && vb.length === 4 ? vb[3]! : Number(el.getAttribute('height'));
+      if (!(sw > 0 && sh > 0)) throw new Error('SVG boyutu okunamadı');
+      const { w, h } = fit(sw / sh);
+      // svg2pdf bazı durumlarda canlı DOM ister → görünmez biçimde ekle, sonra kaldır.
+      el.style.position = 'absolute';
+      el.style.left = '-99999px';
+      document.body.appendChild(el);
+      try {
+        await svg2pdf(el, pdf, { x: (pw - w) / 2, y: (ph - h) / 2, width: w, height: h });
+      } finally {
+        el.remove();
+      }
+      pdf.save('zynpparti.pdf');
+      toast('PDF indirildi (vektör).', 'success');
+      return;
+    } catch (err) {
+      console.error('Vektör PDF başarısız, raster yedeğe düşülüyor:', err);
     }
+
+    // 2) RASTER yedeği: tuval görüntüsünü göm.
+    const dataUrl = await exportPng();
+    const img = new Image();
+    img.src = dataUrl;
+    try {
+      await img.decode();
+    } catch {
+      await alertDialog('PDF için çizim alınamadı. Lütfen tekrar deneyin.');
+      return;
+    }
+    const { w, h } = fit(img.width / img.height || 1);
     pdf.addImage(dataUrl, 'PNG', (pw - w) / 2, (ph - h) / 2, w, h);
     pdf.save('zynpparti.pdf');
     toast('PDF indirildi.', 'success');
@@ -248,6 +301,16 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
       </button>
       <button type="button" onClick={() => void onExportPdf()} className={btn}>
         PDF İndir
+      </button>
+      <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
+      <button
+        type="button"
+        onClick={() => onOpenAssistant?.()}
+        title="Arki — AI tasarım yardımcın (Sor / Çiz / Render)"
+        className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 px-3 py-1.5 font-medium text-white shadow hover:opacity-90"
+      >
+        <ArkiLogo className="h-4 w-4" />
+        Arki <span className="opacity-70">AI</span>
       </button>
       <input
         ref={fileRef}
