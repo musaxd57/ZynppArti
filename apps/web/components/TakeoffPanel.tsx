@@ -153,17 +153,38 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
         </div>
       )}
 
-      <label className="mt-2 flex items-center justify-between gap-2 px-1 text-xs opacity-70">
+      <div className="mt-2 flex items-center justify-between gap-2 px-1 text-xs opacity-70">
         <span>Kat yüksekliği (cm)</span>
-        <input
-          type="number"
-          value={storeyHeightCm}
-          min={200}
-          max={600}
-          onChange={(e) => setStoreyHeightCm(Number(e.target.value) || DEFAULT_STOREY_HEIGHT_CM)}
-          className="w-16 rounded bg-white/10 px-1 py-0.5 text-right tabular-nums outline-none focus:bg-white/20"
-        />
-      </label>
+        <div className="flex items-center overflow-hidden rounded-md bg-white/10">
+          <button
+            type="button"
+            onClick={() => setStoreyHeightCm((h) => Math.max(200, h - 10))}
+            className="grid h-6 w-6 place-items-center text-sm text-white/70 hover:bg-white/15 hover:text-white"
+            title="10 cm azalt"
+          >
+            −
+          </button>
+          <input
+            type="number"
+            value={storeyHeightCm}
+            min={200}
+            max={600}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              if (Number.isFinite(v) && v > 0) setStoreyHeightCm(Math.min(600, Math.max(200, Math.round(v))));
+            }}
+            className="w-12 [appearance:textfield] bg-transparent py-0.5 text-center tabular-nums outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          />
+          <button
+            type="button"
+            onClick={() => setStoreyHeightCm((h) => Math.min(600, h + 10))}
+            className="grid h-6 w-6 place-items-center text-sm text-white/70 hover:bg-white/15 hover:text-white"
+            title="10 cm artır"
+          >
+            +
+          </button>
+        </div>
+      </div>
 
       <button
         type="button"

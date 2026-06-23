@@ -51,6 +51,20 @@ export function CollabControl({ store }: { store: EntityStore }) {
     connect(room ?? fromHash ?? `oda-${Math.random().toString(36).slice(2, 8)}`);
   };
 
+  /** Paylaşımı kapat: bağlantıyı sök, URL'den oda kodunu temizle, tek-kullanıcıya dön. */
+  const disconnect = (): void => {
+    handleRef.current?.destroy();
+    handleRef.current = null;
+    setRoom(null);
+    setStatus('connecting');
+    setPeers(1);
+    history.replaceState(null, '', location.pathname + location.search);
+  };
+
+  const copyLink = (): void => {
+    void navigator.clipboard?.writeText(location.href);
+  };
+
   if (room) {
     const dotColor =
       status === 'connected' ? 'bg-emerald-400' : status === 'connecting' ? 'bg-amber-400' : 'bg-red-400';
@@ -64,11 +78,27 @@ export function CollabControl({ store }: { store: EntityStore }) {
           : 'Sunucu yok — terminalde: pnpm sync';
     return (
       <div
-        className={`absolute bottom-3 right-3 z-40 flex items-center gap-2 rounded-full ${bg} px-4 py-2 text-sm text-white shadow-lg`}
-        title="Bu sekme canlı paylaşımda — URL'yi paylaşarak başkalarını davet et"
+        className={`absolute bottom-3 right-3 z-40 flex items-center gap-2 rounded-full ${bg} py-1.5 pl-4 pr-1.5 text-sm text-white shadow-lg`}
       >
         <span className={`h-2 w-2 rounded-full ${dotColor} ${status === 'connected' ? 'animate-pulse' : ''}`} />
-        {label}
+        <span>{label}</span>
+        <button
+          type="button"
+          onClick={copyLink}
+          className="rounded-full px-2 py-0.5 text-xs hover:bg-white/20"
+          title="Davet linkini kopyala (başka sekme/cihazda aç → birlikte çizin)"
+        >
+          🔗 Link
+        </button>
+        <button
+          type="button"
+          onClick={disconnect}
+          className="grid h-6 w-6 place-items-center rounded-full hover:bg-white/20"
+          title="Canlı paylaşımı kapat"
+          aria-label="Canlı paylaşımı kapat"
+        >
+          ✕
+        </button>
       </div>
     );
   }
