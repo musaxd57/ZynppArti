@@ -15,6 +15,7 @@ import {
 import type { ToolManager, ToolName } from '@zynpparti/tools';
 import { importDxf, exportDxf, exportSvg } from '@zynpparti/io';
 import { alertDialog, confirmDialog } from '@/lib/dialog';
+import { toast } from '@/lib/toast';
 
 const TOOLS: { name: ToolName; label: string; hotkey: string }[] = [
   { name: 'select', label: 'Seç', hotkey: 'V' },
@@ -73,13 +74,16 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
     try {
       const { walls, annotations } = importDxf(await file.text());
       if (walls.length === 0 && annotations.length === 0) {
-        await alertDialog('DXF içinde içe aktarılabilir içerik (LINE/POLYLINE/CIRCLE/ARC/TEXT) bulunamadı.');
+        toast('DXF içe aktarılabilir içerik içermiyor (yalnız çizgi/yay/daire/metin desteklenir).', 'info');
         return;
       }
       const imported = [...walls, ...annotations];
       history.dispatch(new BatchCommand('DXF içe aktar', imported.map((ent) => new AddEntity(ent))));
+      toast(`${imported.length} öğe içe aktarıldı (${walls.length} duvar).`, 'success');
     } catch (err) {
-      await alertDialog('DXF okunamadı: ' + (err instanceof Error ? err.message : String(err)));
+      // Mimar-dostu mesaj; teknik ayrıntı konsola.
+      console.error('DXF import hatası:', err);
+      toast('DXF okunamadı — dosya bozuk ya da desteklenmeyen sürüm olabilir. AutoCAD\'de "DXF (R12/2018)" olarak kaydetmeyi dene.', 'error', 5000);
     }
   }
 
@@ -92,6 +96,7 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
 
   async function onExportPng(): Promise<void> {
     download(await exportPng(), 'zynpparti.png');
+    toast('PNG indirildi.', 'success');
   }
 
   /**
@@ -127,6 +132,7 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
     }
     pdf.addImage(dataUrl, 'PNG', (pw - w) / 2, (ph - h) / 2, w, h);
     pdf.save('zynpparti.pdf');
+    toast('PDF indirildi.', 'success');
   }
 
   /** Görünür katmanlardaki entity'ler (gizli katmanlar vektör export'tan düşülür). */
@@ -139,6 +145,7 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
     const url = URL.createObjectURL(blob);
     download(url, 'zynpparti.dxf');
     URL.revokeObjectURL(url);
+    toast('DXF indirildi.', 'success');
   }
 
   async function onNewModel(): Promise<void> {
@@ -153,6 +160,7 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
     const url = URL.createObjectURL(blob);
     download(url, 'zynpparti.json');
     URL.revokeObjectURL(url);
+    toast('Model kaydedildi (.json).', 'success');
   }
 
   async function onOpenJson(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
@@ -171,8 +179,10 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
           ...toAdd.map((ent) => new AddEntity(ent)),
         ]),
       );
+      toast(`Model açıldı (${toAdd.length} öğe).`, 'success');
     } catch (err) {
-      await alertDialog('Model açılamadı: ' + (err instanceof Error ? err.message : String(err)));
+      console.error('Model açma hatası:', err);
+      toast('Model açılamadı — dosya bu uygulamanın .json kayıt biçiminde olmalı.', 'error', 5000);
     }
   }
 
@@ -181,6 +191,7 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers 
     const url = URL.createObjectURL(blob);
     download(url, 'zynpparti.svg');
     URL.revokeObjectURL(url);
+    toast('SVG indirildi.', 'success');
   }
 
   const btn = 'shrink-0 rounded px-3 py-1.5 transition-colors hover:bg-white/10';

@@ -23,6 +23,8 @@ export const dynamic = 'force-dynamic';
 /** Maliyet/kötüye-kullanım koruması: aşırı uzun geçmiş/mesaj sınırlanır (uç henüz auth'suz). */
 const MAX_MESSAGES = 20;
 const MAX_CONTENT = 8000;
+/** Tüm mesajların TOPLAM karakter bütçesi — token maliyetini bağlar (20×8000=160KB'yi engeller). */
+const MAX_TOTAL_CONTENT = 24000;
 
 /**
  * Basit bellek-içi hız sınırı (IP başına, kayan pencere). Bu uç GERÇEK PARA harcar (her istek bir LLM/
@@ -66,6 +68,11 @@ function parseMessages(raw: unknown): ChatMessage[] | null {
     const content = (m as { content?: unknown }).content;
     if ((role !== 'user' && role !== 'assistant') || typeof content !== 'string') return null;
     out.push({ role, content: content.slice(0, MAX_CONTENT) });
+  }
+  // Toplam bütçeyi aşarsa EN ESKİ mesajları at (son mesaj/soru hep korunur).
+  let total = out.reduce((s, m) => s + m.content.length, 0);
+  while (total > MAX_TOTAL_CONTENT && out.length > 1) {
+    total -= out.shift()!.content.length;
   }
   return out;
 }

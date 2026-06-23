@@ -62,6 +62,32 @@ const VALID_ROOM_TYPES = new Set<RoomType>([
   'other',
 ]);
 
+/** Bir entity'yi copilot için insan-okur tek satıra çevirir (seçim bağlamı zenginleştirme). */
+function describeEntity(store: EntityStore, id: string): string {
+  const e = store.get(id);
+  if (!e) return 'bilinmeyen öğe';
+  switch (e.type) {
+    case 'space':
+      return `Mahal "${e.name}"${e.roomType ? ` (${e.roomType})` : ''}, ~${centerlineAreaM2(e).toFixed(1)} m²`;
+    case 'wall': {
+      const L = Math.hypot(e.end.x - e.start.x, e.end.y - e.start.y) / 100;
+      return `Duvar, ${L.toFixed(2)} m, kalınlık ${e.thickness} cm${e.height ? `, yükseklik ${e.height} cm` : ''}`;
+    }
+    case 'opening':
+      return `${e.kind === 'door' ? 'Kapı' : 'Pencere'}, ${e.width} cm genişlik`;
+    case 'parcel':
+      return 'Parsel (arsa sınırı)';
+    case 'dimension':
+      return 'Ölçü çizgisi';
+    case 'annotation':
+      return `Metin notu: "${e.text.slice(0, 40)}"`;
+    case 'block':
+      return `Blok/mobilya (${e.kind})`;
+    default:
+      return e.type;
+  }
+}
+
 function buildContext(store: EntityStore, selectedIds: string[]) {
   const all = store.all();
   const spaces = all.filter((e): e is Space => e.type === 'space');
@@ -70,10 +96,26 @@ function buildContext(store: EntityStore, selectedIds: string[]) {
   const parcels = all.filter((e): e is Parcel => e.type === 'parcel');
   const rooms = spaces.map((s) => ({ name: s.name, type: s.roomType, areaM2: centerlineAreaM2(s) }));
   const total = rooms.reduce((a, r) => a + r.areaM2, 0);
-  const metrics =
-    rooms.length > 0
-      ? [`Mahal sayısı: ${rooms.length}`, `Toplam alan (kaba): ~${total.toFixed(1)} m²`]
-      : [];
+
+  // Zengin metrikler: mahal + duvar/boşluk sayıları + parsel/kullanılabilir alan → copilot doğru ölçek.
+  const metrics: string[] = [];
+  if (rooms.length > 0) {
+    metrics.push(`Mahal sayısı: ${rooms.length}`, `Toplam alan (kaba): ~${total.toFixed(1)} m²`);
+  }
+  if (walls.length > 0) {
+    const doors = openings.filter((o) => o.kind === 'door').length;
+    const windows = openings.filter((o) => o.kind === 'window').length;
+    metrics.push(`Duvar sayısı: ${walls.length}`, `Kapı/Pencere: ${doors}/${windows}`);
+  }
+  if (parcels.length > 0) {
+    const pts = parcels.flatMap((p) => p.boundary);
+    if (pts.length >= 3) {
+      const w = (Math.max(...pts.map((p) => p.x)) - Math.min(...pts.map((p) => p.x))) / 100;
+      const h = (Math.max(...pts.map((p) => p.y)) - Math.min(...pts.map((p) => p.y))) / 100;
+      metrics.push(`Parsel sınırlayıcı kutu: ~${w.toFixed(1)} × ${h.toFixed(1)} m`);
+    }
+  }
+
   let findings: { severity: string; message: string; citation: string }[] = [];
   try {
     findings = runCopilotChecks(spaces, walls, openings, parcels).map((f) => ({
@@ -84,9 +126,15 @@ function buildContext(store: EntityStore, selectedIds: string[]) {
   } catch {
     /* yoksay */
   }
+
+  // Seçim: tek öğede detay (alan/ölçü/tip), çoklu seçimde tip dağılımı → copilot "neyi" konuştuğunu bilir.
   let selection: string | undefined;
-  if (selectedIds.length > 1) selection = `${selectedIds.length} entity seçili`;
-  else if (selectedIds.length === 1) selection = store.get(selectedIds[0]!)?.type;
+  if (selectedIds.length === 1) {
+    selection = describeEntity(store, selectedIds[0]!);
+  } else if (selectedIds.length > 1) {
+    const types = selectedIds.slice(0, 6).map((id) => store.get(id)?.type ?? '?');
+    selection = `${selectedIds.length} öğe seçili (${types.join(', ')}${selectedIds.length > 6 ? '…' : ''})`;
+  }
   return { rooms, metrics, findings, selection };
 }
 
