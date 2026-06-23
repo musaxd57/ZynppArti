@@ -120,6 +120,12 @@
 
 ## GÜNLÜK
 
+### 2026-06-23 (gece-10 — Faz 4 program girişi + Faz 3 collab olgunlaştırma)
+- **Faz 4 — program girişi:** Çiz modunda "🏗️ Program ile çiz" → oda tipleri+adet+toplam m² seç → net/tutarlı tarif üretir (serbest metinden isabetli). `buildProgramPrompt` saf.
+- **Faz 3 — presence imleçleri:** `packages/engine/presence.ts` (overlay'de uzak imleçler, kullanıcı başına renk). Hover multiplex (StatusBar + presence). Collab bağlıyken kendi imlecini Yjs awareness ile paylaşır, uzakları canlı çizer. CollabControl handle'ı yukarı verir (onHandle). Guard'lı.
+- **Faz 3 — mahal-adı senkronu:** `RoomLabelSync` — adlar, merkez-tabanlı stabil anahtarla ayrı Y.Map'te paylaşılır (türetilmiş mahaller entity-senkron değil; ad kaybı çözüldü). 2-doc testleriyle doğrulandı (collab 8).
+- İki sekme aynı odada: çizim + **imleçler** + **mahal adları** senkron. Zincir yeşil (typecheck 9/9 · lint 9/9 · collab 8 · engine 36 · build 1/1).
+
 ### 2026-06-23 (gece-9 — Faz 5 3B zenginleştirme: oda zeminleri + tur + PNG)
 - **Oda zeminleri:** 3B'de her mahal, tipine göre **renkli döşeme** (2B dolgusunun 3B karşılığı) → odalar 3B'de okunur.
 - **Otomatik kamera turu:** "▶ Tur" → kamera yavaşça döner (sunum hissi); sürüklerken durur.
