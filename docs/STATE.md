@@ -120,6 +120,14 @@
 
 ## GÜNLÜK
 
+### 2026-06-23 (gece-12 — boşluk kapatma 2: 3B kesit + glTF + bloklar + yönetmelik)
+- **Faz 5:** 3B'de **clipping-plane kesit** (✂ Kesit, kesit çizgisinden CSG'siz kesim) + **glTF/GLB export** (⤓ GLB).
+- **Bloklar 12→22** (10-ajan web araştırması: kapı açılım yayı, çift kapı, araç, otopark, gardırop, komodin, yemek masası, sehpa, bulaşık mak., lavabo dolabı) + default sembol.
+- **Faz 4:** ProgramBuilder'a komşuluk/istek girişi. **Collab:** link kopyalama toast'ı.
+- **Yönetmelik düzeltmeleri (web-doğrulama ajanı):** tavan 240→**260** (m.28), banyo 3,0→**2,25** (m.29 dar kenar), daylight atfı İmar→"iyi pratik", otopark ifadesi (m.8/Ek-1), tüm İmar atıflarına **madde no**. copilot 42 test yeşil.
+- **Senin yapman gerekenler:** (1) **DWG import** için bir gerçek `.dwg` dosyası ver (kütüphane kurup deneriz). (2) **Collab backend** (auth+kalıcılık) ve **paralı AI render/üretici** → hosting + bütçe kararı (ayrı faz). Bunlar frontend'de bitirilemez.
+- Zincir yeşil (typecheck 9/9 · lint 9/9 · build 1/1; ~310 test).
+
 ### 2026-06-23 (gece-11 — denetim + boşluk kapatma turu)
 - **Faz denetimi:** 8-ajan + tam kod taraması → ROADMAP faz işaretleri gerçeğe çekildi (her faza "GERÇEK DURUM"). Gerçek test: **307**. Konum: Faz 0–2 ✅, Faz 3 v1 (olgun kriterler açık), Faz 4/5 önizleme.
 - **Kapatılan boşluklar:** Canlı link kopyalama **toast** geri bildirimi; **+10 blok** (10-ajan web araştırması: kapı açılım yayı, çift kapı, araç, otopark, gardırop, komodin, yemek masası+sandalye, sehpa, bulaşık mak., lavabo dolabı → 12'den **22 blok**); **glTF/GLB export** (Faz 5, three GLTFExporter); **Faz 4 komşuluk/istek girişi** (ProgramBuilder).
