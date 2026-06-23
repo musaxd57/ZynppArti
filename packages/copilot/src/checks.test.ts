@@ -203,7 +203,7 @@ describe('runCopilotChecks — otopark (Otopark Yönetmeliği, info)', () => {
 
 describe('runCopilotChecks — banyo asgari alanı (İmar, info)', () => {
   it('küçük banyo → İmar info', () => {
-    // 100×200 = 2,0 m² < 3,0
+    // 100×200 = 2,0 m² < 2,25 (İmar m.29 dar kenar tabanı)
     const info = runCopilotChecks([rect('Banyo', 'bathroom', 100, 200)], []).filter(
       (x) => x.severity === 'info' && x.message.includes('banyo'),
     );
@@ -212,7 +212,7 @@ describe('runCopilotChecks — banyo asgari alanı (İmar, info)', () => {
   });
 
   it('yeterli banyo → İmar alanı bulgusu yok', () => {
-    // 200×200 = 4,0 m² > 3,0
+    // 200×200 = 4,0 m² > 2,25
     const info = runCopilotChecks([rect('Banyo', 'bathroom', 200, 200)], []).filter(
       (x) => x.severity === 'info' && x.message.includes('banyo'),
     );
@@ -327,13 +327,21 @@ describe('runCopilotChecks — kat yüksekliği (İmar, info)', () => {
     ...(h != null ? { height: h } : {}),
   });
 
-  it('alçak duvar (yükseklik<240) → atıflı kat yüksekliği bilgisi', () => {
+  it('alçak duvar (yükseklik<260) → atıflı kat yüksekliği bilgisi', () => {
     const f = runCopilotChecks([], [wall(220, 'w')]).filter((x) =>
       x.message.includes('kat yüksekliği'),
     );
     expect(f).toHaveLength(1);
     expect(f[0]!.severity).toBe('info');
     expect(f[0]!.citation).toContain('İmar');
+  });
+
+  it('240–260 bandı (250 cm) → yeni eşikle bilgi verir', () => {
+    // Eski eşik 240'tı; 250 cm artık 260 altında → uyarı tetiklenmeli (eşik değişimi regresyon testi).
+    const f = runCopilotChecks([], [wall(250, 'w')]).filter((x) =>
+      x.message.includes('kat yüksekliği'),
+    );
+    expect(f).toHaveLength(1);
   });
 
   it('yeterli/atanmamış yükseklik → bulgu yok', () => {

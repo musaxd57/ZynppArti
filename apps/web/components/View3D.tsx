@@ -96,6 +96,11 @@ export function View3D({ store }: { store: EntityStore }) {
       // Kamera keyframe sunumu: görünüm yakala + kayıtlılar arası yumuşak geçişle oynat.
       let play: { i: number; t: number } | null = null;
       const lerp = (a: number, b: number, k: number): number => a + (b - a) * k;
+      // theta sınırsız (tur döndükçe birikir) → iki görünüm arası EN KISA yoldan dön (uzun tur atma).
+      const lerpAngle = (a: number, b: number, k: number): number => {
+        const d = ((b - a + Math.PI) % (2 * Math.PI)) - Math.PI;
+        return a + (d < -Math.PI ? d + 2 * Math.PI : d) * k;
+      };
       const easeInOut = (k: number): number => (k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2);
       captureViewRef.current = (): void => {
         viewsRef.current.push({ theta, phi, radius });
@@ -227,7 +232,7 @@ export function View3D({ store }: { store: EntityStore }) {
           const b = viewsRef.current[play.i + 1]!;
           play.t = Math.min(1, play.t + 0.012);
           const k = easeInOut(play.t);
-          theta = lerp(a.theta, b.theta, k);
+          theta = lerpAngle(a.theta, b.theta, k); // en kısa yoldan dön (uzun tur atma)
           phi = lerp(a.phi, b.phi, k);
           radius = lerp(a.radius, b.radius, k);
           updateCam();
@@ -278,6 +283,7 @@ export function View3D({ store }: { store: EntityStore }) {
         captureViewRef.current = null;
         playViewsRef.current = null;
         viewsRef.current = [];
+        setViewCount(0); // rozet, sıfırlanan görünümlerle tutarlı kalsın
         cancelAnimationFrame(raf);
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);

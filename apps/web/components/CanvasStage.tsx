@@ -259,6 +259,7 @@ export function CanvasStage() {
         aw.off('change', render);
         unreg();
         aw.setLocalStateField('cursor', null);
+        aw.setLocalStateField('selection', null); // kopuşta seçim kutusu peer'larda asılı kalmasın
         layer.destroy();
       };
     } catch (e) {

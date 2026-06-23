@@ -370,6 +370,8 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
   const abortRef = useRef<AbortController | null>(null);
   const idRef = useRef(0);
   const typingRef = useRef<number | null>(null);
+  // Yazılmakta olan mesaj (m,id,full): yeni bir daktilo başlayınca öncekini TAMAMA çek (yarım kalmasın).
+  const typingTargetRef = useRef<{ m: Mode; id: string; full: string } | null>(null);
 
   const messages = threads[mode];
   const loading = loadingMode !== null;
@@ -377,23 +379,40 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
   const setThread = (m: Mode, fn: (arr: Msg[]) => Msg[]): void =>
     setThreads((t) => ({ ...t, [m]: fn(t[m]) }));
 
-  // Yeni içerik geldikçe panel hep en alta insin (cevap üretildikçe takip et).
+  // Yeni içerik geldikçe panele in — AMA kullanıcı yukarı kaydırıp okuyorsa zorla aşağı çekme.
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    const el = scrollRef.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+    if (nearBottom) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [threads, mode, loadingMode, variants]);
 
-  // Bileşen sökülürse: devam eden isteği iptal et + yazma animasyonunu durdur.
+  /** Yazılmakta olan mesajı anında tamamına çeker + interval'i temizler (yarım kalmasını önler). */
+  const finishTyping = (): void => {
+    if (typingRef.current) {
+      window.clearInterval(typingRef.current);
+      typingRef.current = null;
+    }
+    const t = typingTargetRef.current;
+    if (t) {
+      setThread(t.m, (arr) => arr.map((x) => (x.id === t.id ? { ...x, content: t.full } : x)));
+      typingTargetRef.current = null;
+    }
+  };
+
+  // Bileşen sökülürse: devam eden isteği iptal et + yazma animasyonunu durdur (mesajı tamamlayarak).
   useEffect(
     () => () => {
       abortRef.current?.abort();
-      if (typingRef.current) window.clearInterval(typingRef.current);
+      finishTyping();
     },
     [],
   );
 
   /** Bir asistan mesajını daktilo efektiyle yazar (cevap "tık diye" düşmesin, sırayla gelsin). */
   const typeOut = (m: Mode, id: string, full: string): void => {
-    if (typingRef.current) window.clearInterval(typingRef.current);
+    finishTyping(); // önceki yarım mesajı tamamla, sonra yenisine başla
+    typingTargetRef.current = { m, id, full };
     let i = 0;
     const step = Math.max(2, Math.ceil(full.length / 80));
     typingRef.current = window.setInterval(() => {
@@ -403,6 +422,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
       if (i >= full.length && typingRef.current) {
         window.clearInterval(typingRef.current);
         typingRef.current = null;
+        typingTargetRef.current = null; // bitti → tamamlanacak bir hedef kalmadı
       }
     }, 18);
   };
@@ -659,7 +679,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
           <div className="flex flex-col gap-2 self-stretch">
             {variants.map(({ layout: v, score: s }, i) => (
               <button
-                key={i}
+                key={`${i}-${v.summary}`}
                 type="button"
                 onClick={() => drawVariant(v)}
                 className="rounded-lg border border-white/15 bg-white/5 p-2 text-left text-sm hover:border-blue-400/60 hover:bg-white/10"

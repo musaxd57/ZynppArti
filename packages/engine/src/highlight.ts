@@ -2,6 +2,7 @@ import type { Graphics } from 'pixi.js';
 import {
   annotationSize,
   blockCorners,
+  commentSize,
   dimensionGeometry,
   openingFrame,
   sheetModelSize,
@@ -76,6 +77,12 @@ export function highlightEntity(
     case 'sheet': {
       const { w, h } = sheetModelSize(entity);
       g.rect(entity.position.x, entity.position.y, w, h).stroke({ width: 2 * px, color, alpha });
+      break;
+    }
+    case 'comment': {
+      // İğne `position`ta; baloncuk+metin YUKARI doğru (bounds/hit-test ile aynı kutu).
+      const { w, h } = commentSize(entity);
+      g.rect(entity.position.x, entity.position.y - h, w, h).stroke({ width: 1.5 * px, color, alpha });
       break;
     }
     case 'space':

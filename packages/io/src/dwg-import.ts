@@ -6,10 +6,12 @@ import { importDxf, type DxfImportResult } from './dxf-import';
  * tek yerde tutarlı geometri. WASM ağır (~9 MB) olduğu için sağlayıcı **dinamik import** edilir
  * (yalnız DWG yüklenince yüklenir, ana paketi şişirmez).
  *
- * `create(dir)` parametresi wasm'ın bulunduğu DİZİNdir → tarayıcıda `'/'` (apps/web/public'ten
- * `/libredwg-web.wasm` servis edilir). Node'da gerçek dosyayla doğrulandı.
+ * `create(dir)` wasm dizinidir; kütüphane URL'i `` `${dir}/libredwg-web.wasm` `` diye kurar. Tarayıcıda
+ * dizin **boş string** olmalı → `/libredwg-web.wasm` (apps/web/public kökünden servis). DİKKAT: `'/'`
+ * verilirse `//libredwg-web.wasm` (protocol-relative) olur ve tarayıcıda kırılır — Node'da fs `//`'i
+ * düzelttiği için bu hata Node testinde gizlenir; tarayıcıda mutlaka boş string kullan.
  */
-const WASM_DIR = '/';
+const WASM_DIR = '';
 
 export async function importDwg(content: ArrayBuffer): Promise<DxfImportResult> {
   const { LibreDwg } = await import('@mlightcad/libredwg-web');

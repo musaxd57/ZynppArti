@@ -265,7 +265,7 @@ export class EntityLayer {
   private destroyObjects(id: EntityId): void {
     const objs = this.objects.get(id);
     if (objs) {
-      for (const o of objs) o.destroy();
+      for (const o of objs) o.destroy({ children: true }); // Container'lar (yorum/pafta) çocuklarıyla yok edilsin (sızıntı önle)
       this.objects.delete(id);
     }
     this.redrawables.delete(id);
@@ -287,7 +287,7 @@ export class EntityLayer {
   destroy(): void {
     this.unsubscribe();
     this.unsubscribeLayers();
-    for (const objs of this.objects.values()) for (const o of objs) o.destroy();
+    for (const objs of this.objects.values()) for (const o of objs) o.destroy({ children: true }); // Container'lar (yorum/pafta) çocuklarıyla yok edilsin (sızıntı önle)
     this.objects.clear();
     this.index.clear();
     this.container.destroy({ children: true });
