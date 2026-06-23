@@ -8,8 +8,8 @@
 ## ŞU AN
 
 **Faz:** 2 — AI Render + Copilot → **BAŞLADI**. **2A + 2B TAMAM** ✅. Maliyetsiz tur + UI/dayanıklılık turu sürüyor (ADR-0019).
-**Branch:** `main` (güncel + push'lu). Otonom tur main'e merge edildi.
-**Durum:** Faz 1 + 2A/2B + maliyetsiz tur + **Playwright e2e** + **dock layout** + **bol hata-yakalama**.
+**Branch:** `main` (güncel + push'lu). Tüm otonom turlar + 2026-06-23 turu (`feat/section-entity`) main'e merge edildi.
+**Durum:** Faz 1 + 2A/2B + maliyetsiz tur + **Playwright e2e** + **dock layout** + **bol hata-yakalama** + **kalıcı kesit entity'si (ADR-0039)** + **katman reorder/hibrit-z (ADR-0040)** + **2 yeni copilot kuralı**. **Test: 257.**
 
 **Otonom devam turu (2026-06-22 akşam, "30 dk durmadan", `feat/autonomous-30min`):**
 - **Sol dock yeniden boyutlanabilir** (sağ dock gibi: sürükle-kol + localStorage, 180–480px; sol paneller w-full). *(önce yarıda kalmıştı, tamamlandı + main'e alındı)*
