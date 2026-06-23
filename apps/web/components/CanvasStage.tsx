@@ -10,6 +10,7 @@ import { RoomList } from './RoomList';
 import { CopilotPanel } from './CopilotPanel';
 import { Assistant } from './Assistant';
 import { CollabControl } from './CollabControl';
+import { View3D } from './View3D';
 import { TakeoffPanel } from './TakeoffPanel';
 import { SheetPanel } from './SheetPanel';
 import { SectionPanel } from './SectionPanel';
@@ -276,6 +277,7 @@ export function CanvasStage() {
             zoomToFit={ui.zoomToFit}
           />
           <CollabControl store={ui.store} />
+          <View3D store={ui.store} />
         </>
       )}
 

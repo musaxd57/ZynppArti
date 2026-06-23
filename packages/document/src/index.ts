@@ -16,4 +16,5 @@ export * from './materials';
 export * from './sheet';
 export * from './serialize';
 export * from './section';
+export * from './wall3d';
 export * from './wall-material';
