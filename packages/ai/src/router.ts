@@ -6,20 +6,36 @@ import type { AiProviderName, Tier } from './types';
  * Claude**. Heuristik + fallback; mükemmel sınıflandırma şart değil (yanlışta fallback devreye girer).
  */
 
-/** Karmaşık (Claude) sinyalleri: yönetmelik + akıl-yürütme fiilleri. Türkçe küçük harf (tr locale). */
+/**
+ * Türkçe metni ŞAPKA-DUYARSIZ ASCII'ye indirger (ç→c, ş→s, ğ→g, ı→i, ö→o, ü→u, İ→i) + küçük harf.
+ * Kritik: kullanıcılar çoğu zaman şapkasız yazar ("yonetmelik", "nasil") → anahtar kelimeler ASCII
+ * tutulur ve soru da ASCII'ye katlanır, böylece her iki yazım da eşleşir.
+ */
+function normalizeTr(s: string): string {
+  return s
+    .toLocaleLowerCase('tr')
+    .replace(/ç/g, 'c')
+    .replace(/ş/g, 's')
+    .replace(/ğ/g, 'g')
+    .replace(/ı/g, 'i')
+    .replace(/ö/g, 'o')
+    .replace(/ü/g, 'u');
+}
+
+/** Karmaşık (Claude) sinyalleri — ASCII-katlanmış (şapkasız). yönetmelik + akıl-yürütme fiilleri. */
 const COMPLEX_KEYWORDS = [
-  'yönetmelik', 'imar', 'tbdy', 'deprem', 'otopark', 'ts 9111', 'ts9111', 'çekme', 'setback',
-  'taks', 'kaks', 'emsal', 'mevzuat', 'erişilebilir', 'engelli', 'yangın', 'tahliye',
-  'neden', 'niçin', 'karşılaştır', 'kıyasla', 'analiz', 'değerlendir', 'öner', 'tasarla',
-  'optimize', 'iyileştir', 'uygun mu', 'riskli', 'hesapla', 'yorumla', 'açıkla',
+  'yonetmelik', 'imar', 'tbdy', 'deprem', 'otopark', 'ts 9111', 'ts9111', 'cekme', 'setback',
+  'taks', 'kaks', 'emsal', 'mevzuat', 'erisilebilir', 'engelli', 'yangin', 'tahliye',
+  'neden', 'nicin', 'karsilastir', 'kiyasla', 'analiz', 'degerlendir', 'oner', 'tasarla',
+  'optimize', 'iyilestir', 'uygun mu', 'riskli', 'hesapla', 'yorumla', 'acikla',
 ];
 
-/** Dar "orta" (OpenAI) ipuçları — yönetmelik değil ama biraz akıl isteyen. */
-const MEDIUM_HINTS = ['nasıl', 'farkı', 'avantaj', 'dezavantaj', 'hangisi daha', 'özetle'];
+/** Dar "orta" (OpenAI) ipuçları — ASCII-katlanmış. yönetmelik değil ama biraz akıl isteyen. */
+const MEDIUM_HINTS = ['nasil', 'farki', 'avantaj', 'dezavantaj', 'hangisi daha', 'ozetle'];
 
 /** Bir sorunun zorluk kademesini belirler. Varsayılan = simple (Akash) → Akash-ağırlıklı. */
 export function classifyTier(question: string): Tier {
-  const q = question.toLocaleLowerCase('tr');
+  const q = normalizeTr(question);
   if (COMPLEX_KEYWORDS.some((k) => q.includes(k)) || question.length > 280) return 'complex';
   // Orta: dar bant — orta-uzun soru ya da bir "orta" ipucu (yönetmelik değil).
   if (question.length >= 160 && question.length <= 280) return 'medium';

@@ -12,6 +12,14 @@ describe('classifyTier', () => {
     expect(classifyTier('İmar açısından bir sorun var mı?')).toBe('complex');
   });
 
+  it('ŞAPKASIZ (ASCII) Türkçe de yakalanır — kullanıcılar genelde böyle yazar', () => {
+    expect(classifyTier('imar yonetmeligine uygun mu')).toBe('complex'); // şapkasız
+    expect(classifyTier('koridor TS 9111 acisindan yeterli mi')).toBe('complex');
+    const m = 'salonu mutfakla birlestirsem acik plan olarak nasil bir his verir genel olarak sence iyi mi olur';
+    expect(m.length).toBeGreaterThanOrEqual(90);
+    expect(classifyTier(m)).toBe('medium'); // 'nasil' (şapkasız) + uzunluk≥90
+  });
+
   it('kısa / olgusal → simple (Akash)', () => {
     expect(classifyTier('Kaç oda var?')).toBe('simple');
     expect(classifyTier('Toplam m² ne kadar?')).toBe('simple');
