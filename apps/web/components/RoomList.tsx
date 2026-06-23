@@ -69,7 +69,20 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
     onRenameConsumed?.();
   }, [renameId, spaces, onRenameConsumed]);
 
-  if (spaces.length === 0) return null;
+  if (spaces.length === 0) {
+    // Hiç duvar yoksa paneli gizle; duvar VAR ama mahal yoksa kullanıcıya nedenini açıkla
+    // (en sık karışıklık: duvar uçları birleşmediği için kapalı alan oluşmaz).
+    if (walls.length === 0) return null;
+    return (
+      <Panel title="Mahal Listesi" widthClass="w-full">
+        <div className="px-1 py-1 text-xs leading-relaxed opacity-75">
+          Duvar var ama kapalı bir mahal bulunamadı. Mahal otomatik oluşması için duvarların{' '}
+          <span className="font-semibold opacity-95">uçları birbirine değmeli</span> (kapalı döngü).
+          Uçları üst üste getir (snap yardımcı olur) ya da aradaki boşlukları kapat.
+        </div>
+      </Panel>
+    );
+  }
 
   let metrics: ReturnType<typeof computeMetrics>;
   try {
