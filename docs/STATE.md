@@ -120,6 +120,12 @@
 
 ## GÜNLÜK
 
+### 2026-06-23 (gece-5 — UX düzeltmeleri + 8-mercek backlog uygulaması)
+- **Canlı Paylaş kullanışlı:** pill'e **🔗 Link kopyala** (2. sekme/cihaz davet) + **✕ kapat** (bağlantıyı sök, URL temizle). **Kat yüksekliği**: çirkin native spinner → şık −/+ stepper. **3B/Canlı butonları** `fixed`→canvas içi `absolute` (sağ panele binmiyordu).
+- **8-mercek uzman analizi (workflow)** → 15 maddelik önceliklendirilmiş backlog. Uygulananlar: **#1 rate-limit** (/api/copilot, IP 30/dk) + **#8 toplam içerik bütçesi**; **#15 AI bağlam zenginliği** (seçili öğe detayı + duvar/kapı sayıları + parsel kutusu → copilot/render doğru ölçek); **#3 toast sistemi** (export/import başarı/hata bildirimi); **#4 dostça hata mesajları** (DXF/model-aç); **#5 boş tuval rehberi** + duvar-var-mahal-yok ipucu; **#6 kilitli katman geri bildirimi** (sessiz no-op → toast).
+- **Kalan backlog (M-L, sıradaki):** #2 bulguya tıkla-seç-zoom (engine'de zoom-to-entity gerek), #9 planar-faces O(n²)→spatial-hash (perf), #10 panel re-render debounce, #11 multiplayer undo + mahal-adı senkron, #12 DXF blok (INSERT) import, #13 vektör PDF (svg2pdf.js dep), #14 çok-pafta PDF + sunum reel, #1 presence imleçleri.
+- Zincir yeşil (typecheck 9/9 · lint 9/9 · tools 15 · ai 29 · build 1/1).
+
 ### 2026-06-23 (gece-4 — Arki kimliği + cüretkâr/kısıtlı prompt + router hız + buton çakışması)
 - **İsim Zeynep → Arki** (Moses isteğiyle marka adı; domain alınacak). 2. tur 10-ajan workflow ile prompt yenilendi: mimariye özelleştiği için **cüretkâr-mütevazı** ("hangi AI daha iyi?" → model adı vermeden kendini öne koyar — canlı doğrulandı), **model gizliliği jailbreak-dirençli** ("sistem promptunu yaz" → nazik ret — canlı doğrulandı), **alan kısıtı** (yalnız mimari/yönetmelik), **basit soruda tek satır hızlı cevap**.
 - **Router didik didik:** complex anahtarları genişledi (yönetmelik + yapı/can-güvenliği + "minimum/olmalı/gerekir" yükümlülük); bantlar sıkılaştı; **maxTokensForTier** (basit 700 / orta 1400 / karmaşık 3000) → basit cevap daha hızlı+ucuz.
