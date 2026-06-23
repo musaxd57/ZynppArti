@@ -3,6 +3,7 @@ import {
   parseForcedProvider,
   askCopilotStream,
   askDesignVariants,
+  renderImage,
   NoProviderError,
   type ChatMessage,
   type CopilotContext,
@@ -47,6 +48,34 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const mode = (body as { mode?: unknown })?.mode;
+
+  // Render modu: tek "prompt" → görsel (OpenAI görsel API'si). Providers/streaming gerekmez.
+  if (mode === 'render') {
+    const p = (body as { prompt?: unknown })?.prompt;
+    if (typeof p !== 'string' || !p.trim()) {
+      return Response.json({ error: 'Render için "prompt" gerekli.' }, { status: 400 });
+    }
+    const key = process.env.OPENAI_API_KEY?.trim();
+    if (!key) {
+      return Response.json(
+        { error: 'Render için OPENAI_API_KEY gerekli (görsel üretimi).' },
+        { status: 503 },
+      );
+    }
+    try {
+      const image = await renderImage(key, p.slice(0, 4000), process.env.OPENAI_IMAGE_MODEL);
+      return Response.json({ mode: 'render', image });
+    } catch (e) {
+      console.error('Render başarısız:', e);
+      return Response.json(
+        {
+          error:
+            'Görsel üretilemedi. Modele erişimin yoksa apps/web/.env.local içine OPENAI_IMAGE_MODEL=dall-e-3 ekleyip tekrar dene.',
+        },
+        { status: 500 },
+      );
+    }
+  }
 
   // Tasarım (çizim) modu: messages yerine tek "prompt" alır; AI kat planı JSON'u üretir.
   let designPrompt: string | null = null;

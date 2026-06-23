@@ -7,6 +7,7 @@ export { openAICompatibleProvider, type OpenAICompatConfig } from './provider-op
 export { classifyTier, resolveChain, FALLBACK_CHAINS } from './router';
 export { buildProviders, parseForcedProvider, type ProviderEnv } from './providers';
 export { askCopilot, askCopilotStream, NoProviderError, type CopilotResult } from './copilot';
+export { renderImage, OPENAI_IMAGE_MODEL } from './render';
 export {
   askDesign,
   askDesignVariants,

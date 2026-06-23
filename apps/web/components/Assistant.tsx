@@ -28,11 +28,13 @@ import { pointInPolygon } from '@zynpparti/geometry';
  * /api/copilot route'una fetch yapılır + saf document/geometry yardımcıları kullanılır.
  */
 
-type Mode = 'ask' | 'draw';
+type Mode = 'ask' | 'draw' | 'render';
 
 interface Msg {
   role: 'user' | 'assistant';
   content: string;
+  /** Render modu yanıtı: gösterilecek görsel (data-URL veya URL). */
+  image?: string;
 }
 
 interface AssistantProps {
@@ -120,6 +122,15 @@ function projectToSeg(
   let t = ((px - a.x) * dx + (py - a.y) * dy) / len2;
   t = Math.max(0, Math.min(1, t));
   return { t, dist: Math.hypot(px - (a.x + t * dx), py - (a.y + t * dy)) };
+}
+
+/** Render istemi: kullanıcı tarifine projedeki oda/m² özetini ekler (program-farkında görsel). */
+function buildRenderPrompt(userText: string, store: EntityStore): string {
+  const rooms = buildContext(store, []).rooms;
+  const planNote = rooms.length
+    ? ` Plan: ${rooms.map((r) => `${r.name} ~${r.areaM2.toFixed(0)} m²`).join(', ')}.`
+    : '';
+  return `Fotogerçekçi mimari iç/dış mekan görseli. ${userText}.${planNote} Gerçekçi ışık, malzeme ve perspektif; profesyonel mimari render kalitesi, insan/yazı yok.`;
 }
 
 /** Çiz modu için bağlam ipucu: parsel varsa kullanılabilir alanı (çekme paylı) AI'a bildir. */
@@ -327,6 +338,20 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
             { role: 'assistant', content: `${vs.length} alternatif plan hazır — aşağıdan birini seç.` },
           ]);
         }
+      } else if (mode === 'render') {
+        const res = await fetch('/api/copilot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'render', prompt: buildRenderPrompt(text, store) }),
+          signal: ctrl.signal,
+        });
+        const data: unknown = await res.json();
+        if (!res.ok) throw new Error((data as { error?: string }).error ?? `Hata (${res.status})`);
+        const image = (data as { image?: string }).image;
+        setMessages((m) => [
+          ...m,
+          { role: 'assistant', content: image ? 'İşte taslak görsel (deneysel):' : 'Görsel alınamadı.', image },
+        ]);
       } else {
         const next: Msg[] = [...messages, { role: 'user', content: text }];
         const res = await fetch('/api/copilot', {
@@ -391,7 +416,9 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
   const examples =
     mode === 'draw'
       ? ['8x10 m, 2 yatak odası, salon, mutfak ve banyo olan bir daire çiz', '60 m² stüdyo daire planı']
-      : ['En küçük oda hangisi?', 'Koridor yönetmeliğe uygun mu?', 'Toplam alanım kaç m²?'];
+      : mode === 'render'
+        ? ['Modern minimalist salon, sıcak ahşap ve doğal ışık', 'Dairenin dış cephesi, akşam ışığı']
+        : ['En küçük oda hangisi?', 'Koridor yönetmeliğe uygun mu?', 'Toplam alanım kaç m²?'];
 
   return (
     <div className="fixed bottom-0 left-0 top-0 z-50 flex w-[420px] max-w-[92vw] flex-col border-r border-white/20 bg-neutral-800 text-white shadow-2xl">
@@ -430,16 +457,16 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
 
       {/* Mod seçimi */}
       <div className="flex gap-1 px-3 pt-3">
-        {(['ask', 'draw'] as const).map((m) => (
+        {(['ask', 'draw', 'render'] as const).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => setMode(m)}
-            className={`flex-1 rounded-md px-3 py-1.5 text-sm transition-colors ${
+            className={`flex-1 rounded-md px-2 py-1.5 text-sm transition-colors ${
               mode === m ? 'bg-white/20 font-semibold' : 'bg-white/5 text-white/70 hover:bg-white/10'
             }`}
           >
-            {m === 'ask' ? '💬 Sor' : '✏️ Çiz'}
+            {m === 'ask' ? '💬 Sor' : m === 'draw' ? '✏️ Çiz' : '🖼️ Render'}
           </button>
         ))}
       </div>
@@ -451,7 +478,9 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
             <SparkleIcon className="mx-auto mb-2 h-8 w-8 text-white/50" />
             {mode === 'draw'
               ? 'Tarif et, planı çizeyim. Örnekler:'
-              : 'Projen hakkında sor. Örnekler:'}
+              : mode === 'render'
+                ? 'Atmosfer tarif et, görsel üreteyim. Örnekler:'
+                : 'Projen hakkında sor. Örnekler:'}
             <ul className="mt-2 flex flex-col gap-1">
               {examples.map((ex) => (
                 <li key={ex}>
@@ -475,6 +504,13 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
             }`}
           >
             <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
+            {m.image && (
+              <img
+                src={m.image}
+                alt="AI render"
+                className="mt-2 w-full rounded-lg border border-white/10"
+              />
+            )}
           </div>
         ))}
         {variants && variants.length > 1 && (
@@ -497,7 +533,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
         )}
         {loading && (messages.length === 0 || messages[messages.length - 1]?.role === 'user') && (
           <div className="self-start rounded-lg bg-white/10 px-3 py-2 text-sm text-white/70">
-            {mode === 'draw' ? 'Planlar üretiliyor…' : 'Düşünüyor…'}
+            {mode === 'draw' ? 'Planlar üretiliyor…' : mode === 'render' ? 'Görsel üretiliyor…' : 'Düşünüyor…'}
           </div>
         )}
       </div>
@@ -517,7 +553,13 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
               }
             }}
             rows={2}
-            placeholder={mode === 'draw' ? 'Örn: 90 m² 3+1 daire çiz' : 'Bir şey sor…'}
+            placeholder={
+              mode === 'draw'
+                ? 'Örn: 90 m² 3+1 daire çiz'
+                : mode === 'render'
+                  ? 'Örn: sıcak ahşap salon, akşam ışığı'
+                  : 'Bir şey sor…'
+            }
             className="min-w-0 flex-1 resize-none rounded-lg bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/40 outline-none focus:bg-white/15"
           />
           <button
@@ -526,13 +568,15 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
             disabled={loading || !input.trim()}
             className="rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
           >
-            {mode === 'draw' ? 'Çiz' : 'Gönder'}
+            {mode === 'draw' ? 'Çiz' : mode === 'render' ? 'Render' : 'Gönder'}
           </button>
         </div>
         <div className="mt-1.5 text-[10px] leading-tight text-white/45">
           {mode === 'draw'
             ? 'AI taslak üretir (deneysel); Ctrl+Z ile geri alınır. Ölçüleri kontrol et.'
-            : 'Öneriler bilgilendirme amaçlıdır; yürürlükteki mevzuattan doğrula.'}
+            : mode === 'render'
+              ? 'AI görsel taslağı (deneysel, yaratıcı mod); planın birebir kopyası değildir.'
+              : 'Öneriler bilgilendirme amaçlıdır; yürürlükteki mevzuattan doğrula.'}
         </div>
       </div>
     </div>
