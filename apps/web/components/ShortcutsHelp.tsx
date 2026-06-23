@@ -16,6 +16,7 @@ const GROUPS: { title: string; items: [string, string][] }[] = [
       ['T', 'Metin'],
       ['F', 'Pafta'],
       ['C', 'Kesit (şematik)'],
+      ['M', 'Yorum'],
       ['E', 'Sil'],
       ['K', 'Ölçekle'],
     ],

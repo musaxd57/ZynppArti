@@ -151,6 +151,17 @@ export interface SectionLine extends EntityBase {
 }
 
 /**
+ * Yorum/markup (comment) — tuvale iliştirilen, işbirliğinde paylaşılan tartışma notu (Faz 3).
+ * Annotation'dan farkı: plan etiketi değil, 💬 işaretli bir geri-bildirim iğnesidir. Yjs ile
+ * otomatik senkronlanır (türetilmiş değil). `position` iğne noktası (cm).
+ */
+export interface Comment extends EntityBase {
+  readonly type: 'comment';
+  readonly position: Vec2;
+  readonly text: string;
+}
+
+/**
  * Entity birliği (discriminated union). `type` alanı ayırıcıdır.
  */
 export type Entity =
@@ -162,6 +173,7 @@ export type Entity =
   | Block
   | Annotation
   | Sheet
-  | SectionLine;
+  | SectionLine
+  | Comment;
 
 export type EntityType = Entity['type'];

@@ -14,7 +14,8 @@ export function isClonable(e: Entity): boolean {
     e.type === 'dimension' ||
     e.type === 'parcel' ||
     e.type === 'sheet' ||
-    e.type === 'section'
+    e.type === 'section' ||
+    e.type === 'comment'
   );
 }
 
@@ -30,6 +31,7 @@ export function offsetEntity(e: Entity, dx: number, dy: number): Entity {
     case 'block':
     case 'annotation':
     case 'sheet':
+    case 'comment':
       return { ...e, position: { x: e.position.x + dx, y: e.position.y + dy } };
     case 'dimension':
     case 'section':

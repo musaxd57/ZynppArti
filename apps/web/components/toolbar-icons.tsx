@@ -7,6 +7,7 @@ import {
   Eraser,
   Scaling,
   Armchair,
+  MessageSquare,
   type LucideIcon,
 } from 'lucide-react';
 import type { ToolName } from '@zynpparti/tools';
@@ -76,4 +77,5 @@ export const TOOL_ICONS: Record<ToolName, LucideIcon | ((p: IconProps) => React.
   erase: Eraser,
   calibrate: Scaling,
   block: Armchair,
+  comment: MessageSquare,
 };

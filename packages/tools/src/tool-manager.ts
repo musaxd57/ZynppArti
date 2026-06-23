@@ -9,6 +9,7 @@ import { DimensionTool } from './dimension-tool';
 import { ParcelTool } from './parcel-tool';
 import { BlockTool } from './block-tool';
 import { AnnotationTool } from './annotation-tool';
+import { CommentTool } from './comment-tool';
 import { SheetTool } from './sheet-tool';
 import { SectionTool } from './section-tool';
 import {
@@ -32,6 +33,7 @@ export type ToolName =
   | 'annotation'
   | 'sheet'
   | 'section'
+  | 'comment'
   | 'erase'
   | 'calibrate';
 
@@ -56,6 +58,7 @@ const CURSOR_BY_TOOL: Record<ToolName, string> = {
   annotation: 'crosshair',
   sheet: 'crosshair',
   section: 'crosshair',
+  comment: 'crosshair',
   erase: 'crosshair',
   calibrate: 'crosshair',
 };
@@ -85,6 +88,7 @@ export class ToolManager implements SceneTool {
       parcel: new ParcelTool(ctx),
       block: this.blockTool,
       annotation: new AnnotationTool(ctx),
+      comment: new CommentTool(ctx),
       sheet: new SheetTool(ctx),
       section: new SectionTool(ctx),
       erase: new EraseTool(ctx),
@@ -186,6 +190,7 @@ export class ToolManager implements SceneTool {
       if (k === 't') return this.toggleTool('annotation'); // metin/açıklama
       if (k === 'f') return this.toggleTool('sheet'); // pafta (frame)
       if (k === 'c') return this.toggleTool('section'); // kesit (cross-section)
+      if (k === 'm') return this.toggleTool('comment'); // yorum/markup
       if (k === 'e') return this.toggleTool('erase');
       if (k === 'k') return this.toggleTool('calibrate');
     }

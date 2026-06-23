@@ -1,6 +1,7 @@
 import type { Vec2 } from '@zynpparti/geometry';
 import { distanceToSegment, distanceToPolygonBoundary } from '@zynpparti/geometry';
 import {
+  commentSize,
   dimensionGeometry,
   openingFrame,
   pointInAnnotation,
@@ -87,6 +88,18 @@ export function hitTest(
       // Metin kutusunun içindeyse seç; köşe uzaklığını mesafe ölçütü olarak kullan.
       if (pointInAnnotation(entity, point)) {
         const d = Math.hypot(point.x - entity.position.x, point.y - entity.position.y);
+        if (d < bestDist) {
+          bestDist = d;
+          bestId = id;
+        }
+      }
+    } else if (entity.type === 'comment') {
+      // Yorum baloncuğu position'ın YUKARISINDA → kutu testi.
+      const { w, h } = commentSize(entity);
+      const px = entity.position.x;
+      const py = entity.position.y;
+      if (point.x >= px && point.x <= px + w && point.y >= py - h && point.y <= py) {
+        const d = Math.hypot(point.x - px, point.y - py);
         if (d < bestDist) {
           bestDist = d;
           bestId = id;

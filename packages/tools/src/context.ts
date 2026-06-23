@@ -62,6 +62,7 @@ function snapPoints(e: Entity): readonly SnapPoint[] {
     case 'block':
     case 'annotation':
     case 'sheet':
+    case 'comment':
       return [{ p: e.position, kind: 'endpoint' }];
     case 'dimension':
     case 'section':

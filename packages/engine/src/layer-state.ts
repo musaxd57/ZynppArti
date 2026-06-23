@@ -5,6 +5,7 @@
  * kesit çizgileri) etkiler → reorder anlamlı ama "dolgu duvarı örttü / etiket kayboldu" olmaz.
  */
 export const DEFAULT_LAYER_ORDER: readonly string[] = [
+  'comment',
   'annotation',
   'section',
   'default',

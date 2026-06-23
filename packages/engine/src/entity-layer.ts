@@ -9,6 +9,7 @@ import { drawDimension, buildDimensionLabel } from './render-dimension';
 import { drawParcel } from './render-parcel';
 import { drawBlock } from './render-block';
 import { buildAnnotation } from './render-annotation';
+import { buildComment } from './render-comment';
 import { buildSheet } from './render-sheet';
 import { drawSection, buildSectionLabels, layoutSectionLabels } from './render-section';
 import { LayerState } from './layer-state';
@@ -190,6 +191,10 @@ export class EntityLayer {
       const label = buildAnnotation(entity);
       this.labelLayer.addChild(label);
       objs.push(label);
+    } else if (entity.type === 'comment') {
+      const cm = buildComment(entity);
+      this.labelLayer.addChild(cm);
+      objs.push(cm);
     } else if (entity.type === 'sheet') {
       const sheet = buildSheet(entity, px);
       this.sheetLayer.addChild(sheet);

@@ -11,6 +11,7 @@ const LAYER_NAMES: Record<string, string> = {
   rooms: 'Mahaller',
   furniture: 'Mobilya',
   annotation: 'Notlar',
+  comment: 'Yorumlar',
   site: 'Parsel',
   sheet: 'Paftalar',
   section: 'Kesit',
@@ -24,6 +25,7 @@ const LAYER_COLORS: Record<string, string> = {
   rooms: '#3b82f6', // mavi
   furniture: '#f59e0b', // amber
   annotation: '#a855f7', // mor
+  comment: '#ffb454', // amber (yorum)
   site: '#22c55e', // yeşil
   sheet: '#9ca3af', // gri
   section: '#ff7a59', // turuncu (kesit düzlemi rengiyle aynı)

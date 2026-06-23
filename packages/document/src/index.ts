@@ -11,6 +11,7 @@ export * from './takeoff';
 export * from './cost';
 export * from './block';
 export * from './annotation';
+export * from './comment';
 export * from './clone';
 export * from './materials';
 export * from './sheet';

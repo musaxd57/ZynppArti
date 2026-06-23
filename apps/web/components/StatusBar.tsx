@@ -17,6 +17,7 @@ const TOOL_LABEL: Record<ToolName, string> = {
   annotation: 'Metin',
   sheet: 'Pafta',
   section: 'Kesit',
+  comment: 'Yorum',
   erase: 'Sil',
   calibrate: 'Ölçekle',
 };
@@ -32,6 +33,7 @@ const TYPE_LABEL: Record<EntityType, string> = {
   annotation: 'Metin',
   sheet: 'Pafta',
   section: 'Kesit',
+  comment: 'Yorum',
 };
 
 /** Seçili entity'lerin "Duvar×3 + Ölçü×1" özeti + toplam duvar uzunluğu (m). */

@@ -1,5 +1,6 @@
 import {
   annotationSize,
+  commentSize,
   blockCorners,
   dimensionGeometry,
   openingFrame,
@@ -81,6 +82,16 @@ export function entityBounds(entity: Entity): AABB {
         minY: entity.position.y,
         maxX: entity.position.x + w,
         maxY: entity.position.y + h,
+      };
+    }
+    case 'comment': {
+      // İğne (kuyruk) `position`ta; baloncuk+metin yukarıda → kutu position.y'den yukarı.
+      const { w, h } = commentSize(entity);
+      return {
+        minX: entity.position.x,
+        minY: entity.position.y - h,
+        maxX: entity.position.x + w,
+        maxY: entity.position.y,
       };
     }
     case 'sheet': {
