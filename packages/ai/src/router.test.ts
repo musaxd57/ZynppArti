@@ -50,19 +50,19 @@ describe('classifyDesignTier', () => {
 describe('resolveChain', () => {
   it('mevcut sağlayıcılara göre filtreler, sırayı korur', () => {
     expect(resolveChain('simple', ['akash', 'anthropic', 'openai'])).toEqual([
-      'akash',
-      'anthropic',
       'openai',
+      'anthropic',
+      'akash',
     ]);
-    // complex birincil anthropic ama anahtarı yok → elenir, akash'a düşer
-    expect(resolveChain('complex', ['akash', 'openai'])).toEqual(['akash', 'openai']);
+    // complex birincil anthropic ama anahtarı yok → elenir, openai'a düşer (akash son yedek)
+    expect(resolveChain('complex', ['akash', 'openai'])).toEqual(['openai', 'akash']);
   });
 
   it('forced sağlayıcı (AI_PROVIDER) en başa alınır', () => {
     expect(resolveChain('simple', ['akash', 'openai', 'anthropic'], 'openai')).toEqual([
       'openai',
-      'akash',
       'anthropic',
+      'akash',
     ]);
   });
 

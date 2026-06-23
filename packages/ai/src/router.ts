@@ -84,13 +84,15 @@ export function classifyDesignTier(prompt: string): Tier {
 }
 
 /**
- * Her kademe için sağlayıcı denenme sırası (ilk = birincil, sonrası fallback). OpenAI 3 zincirin
- * 2'sinde sonda → fallback'te bile az kullanılır (Moses: "OpenAI çok seçilmesin").
+ * Her kademe için sağlayıcı denenme sırası (ilk = birincil, sonrası fallback). **HIZ ÖNCELİKLİ**
+ * (Moses kararı + ölçüm: OpenAI ~1.3sn, Claude ~2.7sn, Akash GLM-5.2 ~8sn — reasoning modeli yavaş).
+ * Basit/orta → OpenAI (en hızlı); karmaşık/yönetmelik → Claude (kalite, atıf); **Akash yalnız son
+ * yedek** (ucuz ama yavaş; ancak ikisi de düşerse devreye girer).
  */
 export const FALLBACK_CHAINS: Record<Tier, readonly AiProviderName[]> = {
-  simple: ['akash', 'anthropic', 'openai'],
-  medium: ['openai', 'akash', 'anthropic'],
-  complex: ['anthropic', 'akash', 'openai'],
+  simple: ['openai', 'anthropic', 'akash'],
+  medium: ['openai', 'anthropic', 'akash'],
+  complex: ['anthropic', 'openai', 'akash'],
 };
 
 /**
