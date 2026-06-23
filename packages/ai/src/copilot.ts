@@ -54,3 +54,43 @@ export async function askCopilot(
   }
   throw lastErr ?? new Error('Tüm AI sağlayıcıları başarısız oldu.');
 }
+
+/**
+ * Akışlı copilot — yanıtı `onDelta` ile parça parça yayar. Fallback yalnız **akış başlamadan** çalışır
+ * (ilk parça gelmeden hata olursa sıradaki sağlayıcıya geçer); akış başladıysa o sağlayıcıya bağlı kalır.
+ */
+export async function askCopilotStream(
+  providers: Partial<Record<AiProviderName, AiProvider>>,
+  messages: readonly ChatMessage[],
+  ctx: CopilotContext,
+  onDelta: (delta: string) => void,
+  forced?: AiProviderName,
+): Promise<void> {
+  const available = Object.keys(providers) as AiProviderName[];
+  if (available.length === 0) throw new NoProviderError();
+
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+  const tier = classifyTier(lastUser?.content ?? '');
+  const chain = resolveChain(tier, available, forced);
+  const order = chain.length > 0 ? chain : available;
+
+  const system = buildSystemPrompt(ctx);
+  let lastErr: unknown;
+  for (const name of order) {
+    const provider = providers[name];
+    if (!provider) continue;
+    let started = false;
+    try {
+      await provider.chatStream(messages, { system }, (d) => {
+        started = true;
+        onDelta(d);
+      });
+      return;
+    } catch (e) {
+      lastErr = e;
+      console.error(`Copilot stream sağlayıcı "${name}" başarısız:`, e);
+      if (started) throw e; // akış başladıysa fallback yapma (kısmi yanıt karışmasın)
+    }
+  }
+  throw lastErr ?? new Error('Tüm AI sağlayıcıları başarısız oldu.');
+}

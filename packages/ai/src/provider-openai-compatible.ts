@@ -41,5 +41,31 @@ export function openAICompatibleProvider(cfg: OpenAICompatConfig): AiProvider {
       const res = await client.chat.completions.create(params);
       return (res.choices[0]?.message?.content ?? '').trim() || 'Yanıt üretilemedi (boş döndü).';
     },
+
+    async chatStream(messages, opts, onDelta): Promise<string> {
+      const max = opts.maxTokens ?? 2000;
+      const base: OpenAI.Chat.ChatCompletionCreateParamsStreaming = {
+        model: cfg.model,
+        stream: true,
+        messages: [
+          ...(opts.system ? [{ role: 'system' as const, content: opts.system }] : []),
+          ...messages.map((m) => ({ role: m.role, content: m.content })),
+        ],
+      };
+      if (cfg.tokenParam === 'max_completion_tokens') base.max_completion_tokens = max;
+      else base.max_tokens = max;
+      if (cfg.temperature !== undefined) base.temperature = cfg.temperature;
+
+      const stream = await client.chat.completions.create(base);
+      let full = '';
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta?.content ?? '';
+        if (delta) {
+          full += delta;
+          onDelta(delta);
+        }
+      }
+      return full.trim() || 'Yanıt üretilemedi (boş döndü).';
+    },
   };
 }

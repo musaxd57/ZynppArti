@@ -6,7 +6,7 @@ export { akashProvider, AKASH_DEFAULT_MODEL, AKASH_BASE_URL } from './provider-a
 export { openAICompatibleProvider, type OpenAICompatConfig } from './provider-openai-compatible';
 export { classifyTier, resolveChain, FALLBACK_CHAINS } from './router';
 export { buildProviders, parseForcedProvider, type ProviderEnv } from './providers';
-export { askCopilot, NoProviderError, type CopilotResult } from './copilot';
+export { askCopilot, askCopilotStream, NoProviderError, type CopilotResult } from './copilot';
 export {
   askDesign,
   parseLayout,

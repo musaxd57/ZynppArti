@@ -216,9 +216,33 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: next, context: buildContext(store, selectedIds) }),
         });
-        const data: unknown = await res.json();
-        if (!res.ok) throw new Error((data as { error?: string }).error ?? `Hata (${res.status})`);
-        setMessages((m) => [...m, { role: 'assistant', content: (data as { answer?: string }).answer ?? '' }]);
+        if (!res.ok) {
+          let msg = `Hata (${res.status})`;
+          try {
+            msg = ((await res.json()) as { error?: string }).error ?? msg;
+          } catch {
+            /* JSON değilse genel mesaj */
+          }
+          throw new Error(msg);
+        }
+        // Akışlı yanıt: boş asistan balonu ekle, gelen parçaları içine yaz.
+        setMessages((m) => [...m, { role: 'assistant', content: '' }]);
+        const reader = res.body?.getReader();
+        if (reader) {
+          const dec = new TextDecoder();
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = dec.decode(value, { stream: true });
+            if (!chunk) continue;
+            setMessages((m) => {
+              const c = [...m];
+              const last = c[c.length - 1];
+              if (last && last.role === 'assistant') c[c.length - 1] = { ...last, content: last.content + chunk };
+              return c;
+            });
+          }
+        }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'İstek başarısız.');
@@ -317,7 +341,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
             <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
           </div>
         ))}
-        {loading && (
+        {loading && (messages.length === 0 || messages[messages.length - 1]?.role === 'user') && (
           <div className="self-start rounded-lg bg-white/10 px-3 py-2 text-sm text-white/70">
             {mode === 'draw' ? 'Plan çiziliyor…' : 'Düşünüyor…'}
           </div>

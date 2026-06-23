@@ -1,7 +1,7 @@
 import {
   buildProviders,
   parseForcedProvider,
-  askCopilot,
+  askCopilotStream,
   askDesign,
   NoProviderError,
   type ChatMessage,
@@ -85,26 +85,40 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const forced = parseForcedProvider(process.env.AI_PROVIDER);
-  try {
-    if (designPrompt !== null) {
+
+  // Tasarım modu: tam JSON gerekir → akışsız.
+  if (designPrompt !== null) {
+    try {
       const d = await askDesign(providers, designPrompt, forced);
-      return Response.json({
-        mode: 'design',
-        summary: d.summary,
-        walls: d.walls,
-        rooms: d.rooms,
-        provider: d.provider,
-        model: d.model,
-      });
+      return Response.json({ mode: 'design', summary: d.summary, walls: d.walls, rooms: d.rooms });
+    } catch (e) {
+      if (e instanceof NoProviderError) return Response.json({ error: 'AI yapılandırılmadı.' }, { status: 503 });
+      console.error('Tasarım üretimi başarısız:', e);
+      return Response.json({ error: 'Plan üretilemedi. Lütfen tekrar deneyin.' }, { status: 500 });
     }
-    const r = await askCopilot(providers, messages!, context, forced);
-    return Response.json({ answer: r.answer, provider: r.provider, model: r.model, tier: r.tier });
-  } catch (e) {
-    if (e instanceof NoProviderError) {
-      return Response.json({ error: 'AI yapılandırılmadı.' }, { status: 503 });
-    }
-    // Sağlayıcı/SDK hata ayrıntısı (model/rate-limit/url) istemciye sızmasın → genel mesaj + sunucu log.
-    console.error('Copilot AI çağrısı başarısız (tüm sağlayıcılar):', e);
-    return Response.json({ error: 'AI yanıtı alınamadı. Lütfen tekrar deneyin.' }, { status: 500 });
   }
+
+  // Sor modu: yanıtı AKIŞLI (streaming) düz metin olarak döndür (cevap kelime kelime akar).
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        await askCopilotStream(
+          providers,
+          messages!,
+          context,
+          (delta) => controller.enqueue(encoder.encode(delta)),
+          forced,
+        );
+      } catch (e) {
+        console.error('Copilot stream başarısız:', e);
+        controller.enqueue(encoder.encode('\n\n[Yanıt alınamadı, lütfen tekrar deneyin.]'));
+      } finally {
+        controller.close();
+      }
+    },
+  });
+  return new Response(stream, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' },
+  });
 }

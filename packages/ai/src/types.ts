@@ -62,4 +62,13 @@ export interface AiProvider {
   /** Hangi modelin kullanıldığı (loglama/teşhis). */
   readonly model: string;
   chat(messages: readonly ChatMessage[], opts: ChatOptions): Promise<string>;
+  /**
+   * Akışlı (streaming) sohbet: yanıt parçalarını `onDelta` ile yayar, sonunda tam metni döndürür.
+   * İnteraktif copilot UX'i için (cevap kelime kelime akar).
+   */
+  chatStream(
+    messages: readonly ChatMessage[],
+    opts: ChatOptions,
+    onDelta: (delta: string) => void,
+  ): Promise<string>;
 }

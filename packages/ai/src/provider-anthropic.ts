@@ -41,5 +41,25 @@ export function anthropicProvider(apiKey: string, model: string = ANTHROPIC_DEFA
       }
       return text;
     },
+
+    async chatStream(messages, opts, onDelta): Promise<string> {
+      const stream = client.messages.stream({
+        model,
+        max_tokens: opts.maxTokens ?? 6000,
+        thinking: { type: 'adaptive' },
+        output_config: { effort: 'low' },
+        ...(opts.system ? { system: opts.system } : {}),
+        messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      });
+      stream.on('text', (delta) => onDelta(delta));
+      const final = await stream.finalMessage();
+      if (final.stop_reason === 'refusal') return 'Bu soruya güvenlik nedeniyle yanıt veremiyorum.';
+      const text = final.content
+        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+        .map((b) => b.text)
+        .join('')
+        .trim();
+      return text || 'Yanıt üretilemedi (boş döndü).';
+    },
   };
 }
