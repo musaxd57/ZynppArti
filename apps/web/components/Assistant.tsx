@@ -247,7 +247,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
       : ['En küçük oda hangisi?', 'Koridor yönetmeliğe uygun mu?', 'Toplam alanım kaç m²?'];
 
   return (
-    <div className="fixed bottom-0 left-0 top-0 z-50 flex w-[420px] max-w-[92vw] flex-col border-r border-white/10 bg-neutral-900/95 shadow-2xl backdrop-blur">
+    <div className="fixed bottom-0 left-0 top-0 z-50 flex w-[420px] max-w-[92vw] flex-col border-r border-white/20 bg-neutral-800 text-white shadow-2xl">
       {/* Başlık */}
       <div className="flex items-center gap-2 border-b border-white/10 bg-gradient-to-r from-violet-600/30 to-blue-600/20 px-4 py-3">
         <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-violet-500 to-blue-500 text-white">
@@ -255,7 +255,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold">ZynppArti Asistanı</div>
-          <div className="text-[10px] opacity-50">Tasarım + yönetmelik yardımcın</div>
+          <div className="text-[11px] text-white/60">Tasarım + yönetmelik yardımcın</div>
         </div>
         <button
           type="button"
@@ -276,7 +276,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
             type="button"
             onClick={() => setMode(m)}
             className={`flex-1 rounded-md px-3 py-1.5 text-sm transition-colors ${
-              mode === m ? 'bg-white/15 font-medium' : 'bg-white/5 opacity-60 hover:opacity-100'
+              mode === m ? 'bg-white/20 font-semibold' : 'bg-white/5 text-white/70 hover:bg-white/10'
             }`}
           >
             {m === 'ask' ? '💬 Sor' : '✏️ Çiz'}
@@ -287,8 +287,8 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
       {/* Mesajlar */}
       <div ref={scrollRef} className="flex flex-1 flex-col gap-2 overflow-y-auto p-3">
         {messages.length === 0 && (
-          <div className="m-auto max-w-[280px] text-center text-sm opacity-50">
-            <SparkleIcon className="mx-auto mb-2 h-8 w-8 opacity-40" />
+          <div className="m-auto max-w-[280px] text-center text-sm text-white/70">
+            <SparkleIcon className="mx-auto mb-2 h-8 w-8 text-white/50" />
             {mode === 'draw'
               ? 'Tarif et, planı çizeyim. Örnekler:'
               : 'Projen hakkında sor. Örnekler:'}
@@ -298,7 +298,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
                   <button
                     type="button"
                     onClick={() => setInput(ex)}
-                    className="rounded bg-white/5 px-2 py-1 text-xs hover:bg-white/10"
+                    className="rounded bg-white/10 px-2 py-1.5 text-xs text-white/90 hover:bg-white/20"
                   >
                     {ex}
                   </button>
@@ -311,14 +311,14 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
           <div
             key={i}
             className={`max-w-[90%] rounded-lg px-3 py-2 text-sm ${
-              m.role === 'user' ? 'self-end bg-blue-600/80 text-white' : 'self-start bg-white/5'
+              m.role === 'user' ? 'self-end bg-blue-600 text-white' : 'self-start bg-white/10 text-white/95'
             }`}
           >
             <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
           </div>
         ))}
         {loading && (
-          <div className="self-start rounded-lg bg-white/5 px-3 py-2 text-sm opacity-60">
+          <div className="self-start rounded-lg bg-white/10 px-3 py-2 text-sm text-white/70">
             {mode === 'draw' ? 'Plan çiziliyor…' : 'Düşünüyor…'}
           </div>
         )}
@@ -340,7 +340,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
             }}
             rows={2}
             placeholder={mode === 'draw' ? 'Örn: 90 m² 3+1 daire çiz' : 'Bir şey sor…'}
-            className="min-w-0 flex-1 resize-none rounded-lg bg-white/10 px-3 py-2 text-sm outline-none focus:bg-white/15"
+            className="min-w-0 flex-1 resize-none rounded-lg bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/40 outline-none focus:bg-white/15"
           />
           <button
             type="button"
@@ -351,7 +351,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
             {mode === 'draw' ? 'Çiz' : 'Gönder'}
           </button>
         </div>
-        <div className="mt-1.5 text-[10px] leading-tight opacity-30">
+        <div className="mt-1.5 text-[10px] leading-tight text-white/45">
           {mode === 'draw'
             ? 'AI taslak üretir (deneysel); Ctrl+Z ile geri alınır. Ölçüleri kontrol et.'
             : 'Öneriler bilgilendirme amaçlıdır; yürürlükteki mevzuattan doğrula.'}
