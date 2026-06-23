@@ -10,6 +10,7 @@ export { drawParcel } from './render-parcel';
 export { drawBlock } from './render-block';
 export { buildAnnotation } from './render-annotation';
 export { buildSheet } from './render-sheet';
+export { drawSection, buildSectionLabels, layoutSectionLabels, SECTION_COLOR } from './render-section';
 export { drawBlockSymbol } from './block-symbols';
 export * from './linetypes';
 export { EntityLayer } from './entity-layer';

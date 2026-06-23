@@ -10,6 +10,7 @@ import { drawParcel } from './render-parcel';
 import { drawBlock } from './render-block';
 import { buildAnnotation } from './render-annotation';
 import { buildSheet } from './render-sheet';
+import { drawSection, buildSectionLabels, layoutSectionLabels } from './render-section';
 import { LayerState } from './layer-state';
 
 /**
@@ -29,6 +30,7 @@ export class EntityLayer {
   private readonly wallLayer = new Container();
   private readonly openingLayer = new Container();
   private readonly dimensionLayer = new Container();
+  private readonly sectionLayer = new Container();
   private readonly labelLayer = new Container();
   private readonly objects = new Map<EntityId, Container[]>();
   /** Ekran-sabit konturları zoom değişince yeniden çizen kapamalar (lineweight hiyerarşisi). */
@@ -52,6 +54,7 @@ export class EntityLayer {
       this.wallLayer,
       this.openingLayer,
       this.dimensionLayer,
+      this.sectionLayer, // kesit işareti: çizimin üstünde, etiketlerin altında
       this.labelLayer,
     );
 
@@ -146,6 +149,20 @@ export class EntityLayer {
       this.blockLayer.addChild(g);
       objs.push(g);
       this.redrawables.set(entity.id, (p) => drawBlock(g, entity, p));
+    } else if (entity.type === 'section') {
+      const g = new Graphics();
+      drawSection(g, entity, px);
+      this.sectionLayer.addChild(g);
+      objs.push(g);
+      const labels = buildSectionLabels(entity);
+      layoutSectionLabels(labels, entity, px);
+      this.labelLayer.addChild(labels);
+      objs.push(labels);
+      // Tek redrawable: zoom'da çizgi/oklar + etiketler birlikte ekran-sabit yenilenir.
+      this.redrawables.set(entity.id, (p) => {
+        drawSection(g, entity, p);
+        layoutSectionLabels(labels, entity, p);
+      });
     } else if (entity.type === 'annotation') {
       const label = buildAnnotation(entity);
       this.labelLayer.addChild(label);

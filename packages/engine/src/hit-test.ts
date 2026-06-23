@@ -62,6 +62,12 @@ export function hitTest(
         bestDist = d;
         bestId = id;
       }
+    } else if (entity.type === 'section') {
+      const d = distanceToSegment(point, entity.a, entity.b);
+      if (d <= tolerance && d < bestDist) {
+        bestDist = d;
+        bestId = id;
+      }
     } else if (entity.type === 'parcel') {
       const d = distanceToPolygonBoundary(point, entity.boundary);
       if (d <= tolerance && d < bestDist) {

@@ -25,8 +25,6 @@ export interface ToolContext {
   setCursor?(cursor: string): void;
   /** Seçim değişince çağrılır (Özellikler paneli için seçili id'ler). İsteğe bağlı. */
   onSelectionChange?(ids: EntityId[]): void;
-  /** Kesit çizgisi çizilince çağrılır (a→b, dünya cm) — şematik kesit görünümü için. İsteğe bağlı. */
-  onSectionLine?(a: Vec2, b: Vec2): void;
 }
 
 const SNAP_PX = 12; // ekran pikseli yarıçapı (tam nokta yakalama)
@@ -59,6 +57,7 @@ function snapPoints(e: Entity): readonly SnapPoint[] {
     case 'sheet':
       return [{ p: e.position, kind: 'endpoint' }];
     case 'dimension':
+    case 'section':
       return [
         { p: e.a, kind: 'endpoint' },
         { p: e.b, kind: 'endpoint' },
@@ -88,6 +87,7 @@ function segmentsOf(e: Entity): readonly (readonly [Vec2, Vec2])[] {
     case 'wall':
       return [[e.start, e.end]];
     case 'dimension':
+    case 'section':
       return [[e.a, e.b]];
     case 'parcel': {
       const segs: (readonly [Vec2, Vec2])[] = [];

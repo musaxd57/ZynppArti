@@ -5,6 +5,12 @@
 
 ---
 
+## ADR-0039 — Kesit çizgisi kalıcı `section` entity'si (transient işaret → first-class)
+**Tarih:** 2026-06-23 · **Durum:** Kabul (ADR-0037'nin "ileride entity/persist edilebilir" notunu uygular)
+**Bağlam:** ADR-0037'de kesit çizgisi transient'ti: yalnız React state + engine `setSectionMarker` görseliydi. Kaydet/aç'ta kaybolurdu, undo'lanmazdı, seçilemezdi. CLAUDE.md §6.3/§7 (her şey entity, model yalnız Command ile değişir) ve §6.1 (tek doğruluk kaynağı) ile çelişiyordu.
+**Karar:** Yeni **`SectionLine` entity** (`type: 'section'`, alanlar `a`/`b`/`label`). SectionTool artık 2-tıkla `AddEntity` dispatch eder (undo'lanır, JSON zarfına girer, lazy-migration uyumlu). EntityLayer çizer (kendi `sectionLayer`'ı + ekran-sabit etiketler), engine'in özel `setSectionMarker`/`onSectionLine` yolu **kaldırıldı**. Section seçilebilir/taşınabilir/silinebilir (hit-test/bounds/highlight/clone/snap eklendi); PropertiesPanel'den etiket düzenlenir; SectionPanel store'dan (seçili/son kesit) okur, "Sil" = `RemoveEntity`. Etiket = ilk boş harf (silince çakışmaz). Kendi "Kesit" katmanı (turuncu).
+**Sonuç:** Kesit artık tam first-class: kalıcı + undo + çoklu kesit + paftaya yerleştirilebilir temel. Takas: çizgi ham noktalar tutar (duvar id'sine bağlı değil) → kesilen duvar silinince kesit canlı yeniden hesaplanır (dangling yok). Etiket/ok bayrakları ekran-sabit (çizgiyle tutarlı).
+
 ## ADR-0038 — UX verimlilik: sağ-tık menü + komut paleti + durum çubuğu seçim özeti
 **Tarih:** 2026-06-22 · **Durum:** Kabul
 **Bağlam:** Profesyonel CAD/tasarım araçları (AutoCAD/Figma) sağ-tık menü + komut satırı/palet + durum çubuğu seçim bilgisi sunar (10-agent UI araştırması).

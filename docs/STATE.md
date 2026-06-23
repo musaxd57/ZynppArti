@@ -14,7 +14,7 @@
 **Otonom devam turu (2026-06-22 akşam, "30 dk durmadan", `feat/autonomous-30min`):**
 - **Sol dock yeniden boyutlanabilir** (sağ dock gibi: sürükle-kol + localStorage, 180–480px; sol paneller w-full). *(önce yarıda kalmıştı, tamamlandı + main'e alındı)*
 - **Kesit boşlukları (kapı/pencere void):** kesit çizgisi bir duvarı boşluk konumunda kesince kapı = zemin→lento açık, pencere = denizlik+lento bantları. Saf `solidBands(cut)` (document) hem SVG önizleme hem export'u sürüyor. +7 test.
-- **Kalıcı A—A' kesit işareti (engine):** çizilen kesit çizgisi planda kalıcı ok+etiketle görünür (deaktive olunca kaybolmuyor); ekran-sabit, `setSectionMarker` handle. **SectionPanel "Temizle"** → çizgi+işaret kaldırır.
+- **Kalıcı A—A' kesit işareti:** ~~engine `setSectionMarker` handle (transient)~~ → **artık kalıcı `section` entity** (2026-06-23, ADR-0039). Çizilen kesit çizgisi planda ok+ekran-sabit etiketle kalır; kaydet/aç'a girer, undo'lanır, seçilebilir/taşınabilir/silinebilir. SectionPanel seçili/son kesiti gösterir; "Sil" = `RemoveEntity`.
 - **Copilot oda-bazlı doğal ışık kuralı:** yaşam mahalleri (oturma/yatma/mutfak) çevre duvarında en az 1 pencere almalı (pencere↔oda eşleşmesi; bina-düzeyi orandan farklı). Atıflı İmar, info. +4 test.
 - **Test: 247** (document 92 · geometry 43 · copilot 37 · engine 33 · io 27 · tools 15). Zincir yeşil (typecheck 7/7 · lint 7/7 · build 1/1).
 
@@ -117,6 +117,9 @@
 ---
 
 ## GÜNLÜK
+
+### 2026-06-23
+- **Kesit çizgisi artık kalıcı `section` entity'si (ADR-0039):** transient engine işareti → first-class entity. `SectionLine` (`type:'section'`, a/b/label) document'e eklendi; SectionTool `AddEntity` dispatch eder (undo + JSON kalıcılık). EntityLayer çizer (`render-section.ts` + kendi `sectionLayer`, ekran-sabit etiketler); engine'in `setSectionMarker`/`onSectionLine` yolu kaldırıldı (tek doğruluk kaynağı). hit-test/bounds/highlight/clone/snap + PropertiesPanel etiket düzenleme + LayerPanel/StatusBar "Kesit" katmanı eklendi. SectionPanel store'dan (seçili/son kesit) okur, "Sil" = `RemoveEntity`. Etiket = ilk boş harf (silince çakışmaz). İnceleme agent'ı (HIGH×2/MED×2 bulgu) önerileri katıldı: ekran-sabit etiket, çakışmayan etiket, ADR+STATE, etiket düzenleme UI, SECTION_COLOR tek kaynak. **Test: 249** (document 94: +clone/serialize section round-trip). Zincir yeşil (typecheck 7/7 · lint 7/7 · build 1/1).
 
 ### 2026-06-21
 - **Doküman denetimi + kritik senkron:** Moses geniş yetki verdi + `.claude/settings.local.json`'a Read/Edit/Write/Glob/Grep/Agent izinleri eklendi (artık dosya işlemleri sormuyor). 6 paralel agent tüm `.md` dosyalarını denetledi → kritik HIGH dokümanlar gerçekle senkronlandı (CLAUDE.md envanter/§7/§10, ROADMAP fazları + ekstra-özellikler bölümü, UX-INTERACTIONS keymap, VISUAL-CRAFT done-işaretleri, PRO-FEATURES metraj/pafta yapıldı). MED/LOW bulgular Moses kararıyla ertelendi (bkz. ŞU AN). Commit `9f1ce11`.

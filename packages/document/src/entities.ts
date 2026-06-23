@@ -134,8 +134,34 @@ export interface Annotation extends EntityBase {
 }
 
 /**
+ * Kesit çizgisi (section line) — planda iki nokta arası kesit düzlemi (ADR-0016/0039). Bu çizgiyi
+ * kesen duvarlar şematik kesit görünümünü (`computeSection`) oluşturur. Planda A—A' işaretiyle
+ * gösterilir; `label` baş harftir ("A" → uçlarda A ve A').
+ *
+ * **Kalıcı entity** (eskiden yalnız geçici engine işaretiydi): kaydet/aç'a girer, undo'lanır,
+ * seçilebilir/taşınabilir/silinebilir. Hesaplanan kesit profili `Section` ayrı bir tiptir
+ * (section.ts) — bu yalnız plandaki çizgidir.
+ */
+export interface SectionLine extends EntityBase {
+  readonly type: 'section';
+  readonly a: Vec2;
+  readonly b: Vec2;
+  /** Kesit etiketi baş harfi ("A" → işaret A ve A'). */
+  readonly label: string;
+}
+
+/**
  * Entity birliği (discriminated union). `type` alanı ayırıcıdır.
  */
-export type Entity = Wall | Space | Opening | Dimension | Parcel | Block | Annotation | Sheet;
+export type Entity =
+  | Wall
+  | Space
+  | Opening
+  | Dimension
+  | Parcel
+  | Block
+  | Annotation
+  | Sheet
+  | SectionLine;
 
 export type EntityType = Entity['type'];

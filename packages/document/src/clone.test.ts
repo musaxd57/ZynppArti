@@ -1,6 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { isClonable, offsetEntity } from './clone';
-import type { Annotation, Block, Dimension, Opening, Parcel, Sheet, Space, Wall } from './entities';
+import type {
+  Annotation,
+  Block,
+  Dimension,
+  Opening,
+  Parcel,
+  SectionLine,
+  Sheet,
+  Space,
+  Wall,
+} from './entities';
 
 const sheet: Sheet = {
   id: 'sh',
@@ -75,10 +85,18 @@ const opening: Opening = {
   width: 90,
   kind: 'door',
 };
+const section: SectionLine = {
+  id: 'sec',
+  type: 'section',
+  layerId: 'section',
+  a: { x: 0, y: 0 },
+  b: { x: 300, y: 0 },
+  label: 'A',
+};
 
 describe('isClonable', () => {
   it('serbest tipler kopyalanabilir', () => {
-    for (const e of [wall, block, annotation, dimension, parcel, sheet]) {
+    for (const e of [wall, block, annotation, dimension, parcel, sheet, section]) {
       expect(isClonable(e)).toBe(true);
     }
   });
@@ -107,6 +125,13 @@ describe('offsetEntity', () => {
     expect(d.a).toEqual({ x: 0, y: 10 });
     expect(d.b).toEqual({ x: 200, y: 10 });
     expect(d.offset).toBe(30);
+  });
+
+  it('kesit çizgisinin a/b uçlarını kaydırır, etiket korunur', () => {
+    const s = offsetEntity(section, 10, 20) as SectionLine;
+    expect(s.a).toEqual({ x: 10, y: 20 });
+    expect(s.b).toEqual({ x: 310, y: 20 });
+    expect(s.label).toBe('A');
   });
 
   it('parselin tüm köşelerini kaydırır', () => {

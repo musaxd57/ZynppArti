@@ -1,4 +1,4 @@
-import { Application, Container, Graphics, Text } from 'pixi.js';
+import { Application, Container, Graphics } from 'pixi.js';
 import type { Vec2 } from '@zynpparti/geometry';
 import { pointInPolygon } from '@zynpparti/geometry';
 import { pointInAnnotation, type EntityId, type EntityStore } from '@zynpparti/document';
@@ -33,11 +33,6 @@ export interface CanvasHandle {
   setHoverHandler(cb: (world: Vec2 | null) => void): void;
   /** Sağ-tık (contextmenu) olunca ekran koordinatını bildirir (bağlam menüsü). */
   setContextMenuHandler(cb: (screenX: number, screenY: number) => void): void;
-  /**
-   * Planda kalıcı kesit (section) işaretini ayarlar (null = gizle). Şematik kesit aracıyla çizilen
-   * çizgi, deaktive olunca kaybolmasın diye burada kalıcı A—A' ok+etiketiyle gösterilir.
-   */
-  setSectionMarker(line: readonly [Vec2, Vec2] | null): void;
   /** Mevcut sahneyi PNG data-URL olarak dışa aktarır. */
   exportPng(): Promise<string>;
   /** Tüm entity'leri ekrana sığacak şekilde kamerayı ayarlar (zoom extents). */
@@ -45,7 +40,6 @@ export interface CanvasHandle {
   destroy: () => void;
 }
 
-const SECTION_COLOR = 0xff7a59; // turuncu — kesit düzlemi (SectionTool ile aynı)
 const GRID_SPACING = 50; // dünya birimi (cm)
 const GRID_EXTENT = 5000;
 const MIN_ZOOM = 0.05;
@@ -81,19 +75,7 @@ export async function createCanvasApp(
   const entityLayer = new EntityLayer(store, layers);
   world.addChild(entityLayer.container);
 
-  // Kalıcı kesit işareti katmanı (entity'lerin üstünde, tool önizlemelerinin altında).
-  const markerLayer = new Container();
-  world.addChild(markerLayer);
-  const sectionMarker = new Graphics();
-  const labelStyle = { fill: SECTION_COLOR, fontSize: 16, fontWeight: 'bold' as const };
-  const labelA = new Text({ text: 'A', style: labelStyle });
-  const labelB = new Text({ text: "A'", style: labelStyle });
-  labelA.anchor.set(0.5);
-  labelB.anchor.set(0.5);
-  labelA.visible = false;
-  labelB.visible = false;
-  markerLayer.addChild(sectionMarker, labelA, labelB);
-  let sectionLine: readonly [Vec2, Vec2] | null = null;
+  // Not: Kesit (A—A') işareti artık kalıcı bir `section` entity'sidir (ADR-0039) → EntityLayer çizer.
 
   const overlay = new Container();
   world.addChild(overlay);
@@ -117,52 +99,7 @@ export async function createCanvasApp(
     const pixelSize = 1 / camera.zoom;
     entityLayer.updateLineweights(pixelSize); // ekran-sabit konturlar (yalnız zoom değişince)
     redrawGrid(pixelSize);
-    drawSectionMarker(pixelSize);
     entityLayer.cull(viewportBounds());
-  }
-
-  /**
-   * Kalıcı kesit işareti: kesim çizgisi + her iki uçta görüş yönünü gösteren ok bayrakları +
-   * A / A' etiketleri. Ekran-sabit (pixelSize ile ölçeklenir) → zoom'da şişmez. Mimari kesit
-   * gösterimi konvansiyonu (VISUAL-CRAFT). Çizgi modeli değiştirmez (yalnız görünüm).
-   */
-  function drawSectionMarker(pixelSize: number): void {
-    sectionMarker.clear();
-    if (!sectionLine) {
-      labelA.visible = false;
-      labelB.visible = false;
-      return;
-    }
-    const [a, b] = sectionLine;
-    const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-    const ux = (b.x - a.x) / len;
-    const uy = (b.y - a.y) / len;
-    const nx = -uy; // çizgiye dik (görüş yönü tarafı)
-    const ny = ux;
-    const w = 1.5 * pixelSize;
-    const arm = 26 * pixelSize; // uç bayrak uzunluğu
-    const head = 11 * pixelSize; // ok ucu boyu
-    // Ana kesim çizgisi.
-    sectionMarker.moveTo(a.x, a.y).lineTo(b.x, b.y).stroke({ width: w, color: SECTION_COLOR, alpha: 0.95 });
-    // Her uçta dik bayrak + ok ucu (+normal yönüne bakar).
-    for (const p of [a, b]) {
-      const tx = p.x + nx * arm;
-      const ty = p.y + ny * arm;
-      sectionMarker.moveTo(p.x, p.y).lineTo(tx, ty).stroke({ width: w, color: SECTION_COLOR });
-      sectionMarker
-        .moveTo(tx, ty)
-        .lineTo(tx - ux * head * 0.6 - nx * head, ty - uy * head * 0.6 - ny * head)
-        .lineTo(tx + ux * head * 0.6 - nx * head, ty + uy * head * 0.6 - ny * head)
-        .closePath()
-        .fill({ color: SECTION_COLOR });
-    }
-    const off = 42 * pixelSize;
-    labelA.visible = true;
-    labelB.visible = true;
-    labelA.scale.set(pixelSize);
-    labelB.scale.set(pixelSize);
-    labelA.position.set(a.x + nx * off, a.y + ny * off);
-    labelB.position.set(b.x + nx * off, b.y + ny * off);
   }
 
   camera = { x: app.screen.width / 2, y: app.screen.height / 2, zoom: 1 };
@@ -385,10 +322,6 @@ export async function createCanvasApp(
     },
     setContextMenuHandler(cb: (screenX: number, screenY: number) => void): void {
       contextMenuCb = cb;
-    },
-    setSectionMarker(line: readonly [Vec2, Vec2] | null): void {
-      sectionLine = line;
-      drawSectionMarker(1 / camera.zoom);
     },
     setActiveTool(tool: SceneTool | null): void {
       if (activeTool === tool) return;

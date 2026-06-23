@@ -13,7 +13,8 @@ export function isClonable(e: Entity): boolean {
     e.type === 'annotation' ||
     e.type === 'dimension' ||
     e.type === 'parcel' ||
-    e.type === 'sheet'
+    e.type === 'sheet' ||
+    e.type === 'section'
   );
 }
 
@@ -31,6 +32,7 @@ export function offsetEntity(e: Entity, dx: number, dy: number): Entity {
     case 'sheet':
       return { ...e, position: { x: e.position.x + dx, y: e.position.y + dy } };
     case 'dimension':
+    case 'section':
       return {
         ...e,
         a: { x: e.a.x + dx, y: e.a.y + dy },

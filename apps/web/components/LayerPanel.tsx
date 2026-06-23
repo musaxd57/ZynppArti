@@ -13,9 +13,10 @@ const LAYER_NAMES: Record<string, string> = {
   annotation: 'Notlar',
   site: 'Parsel',
   sheet: 'Paftalar',
+  section: 'Kesit',
 };
 /** Sabit gösterim sırası (bilinenler önce). */
-const ORDER = ['default', 'rooms', 'furniture', 'annotation', 'site', 'sheet'];
+const ORDER = ['default', 'rooms', 'furniture', 'annotation', 'site', 'sheet', 'section'];
 
 /** Katman kimlik rengi (sol şerit) — hızlı görsel tanıma (Figma/AutoCAD deseni). */
 const LAYER_COLORS: Record<string, string> = {
@@ -25,6 +26,7 @@ const LAYER_COLORS: Record<string, string> = {
   annotation: '#a855f7', // mor
   site: '#22c55e', // yeşil
   sheet: '#9ca3af', // gri
+  section: '#ff7a59', // turuncu (kesit düzlemi rengiyle aynı)
 };
 
 function layerName(id: string): string {

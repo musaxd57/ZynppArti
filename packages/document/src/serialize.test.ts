@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { serializeModel, deserializeModel, MODEL_FORMAT_VERSION } from './serialize';
-import type { Annotation, Entity, Wall } from './entities';
+import type { Annotation, Entity, SectionLine, Wall } from './entities';
 
 const wall: Wall = {
   id: 'w1',
@@ -19,12 +19,27 @@ const ann: Annotation = {
   height: 30,
 };
 
+const section: SectionLine = {
+  id: 'sec1',
+  type: 'section',
+  layerId: 'section',
+  a: { x: 0, y: 0 },
+  b: { x: 500, y: 0 },
+  label: 'A',
+};
+
 describe('serializeModel / deserializeModel', () => {
   it('round-trips entities losslessly', () => {
     const json = serializeModel([wall, ann]);
     const back = deserializeModel(json);
     expect(back).toHaveLength(2);
     expect(back).toEqual([wall, ann]);
+  });
+
+  it('kesit (section) entity round-trip (kalıcılık)', () => {
+    const back = deserializeModel(serializeModel([wall, section]));
+    expect(back).toHaveLength(2);
+    expect(back).toContainEqual(section);
   });
 
   it('writes a versioned envelope', () => {

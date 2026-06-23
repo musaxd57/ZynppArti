@@ -4,21 +4,22 @@ import { useEffect, useState } from 'react';
 import {
   computeSection,
   solidBands,
+  RemoveEntity,
   DEFAULT_WALL_HEIGHT_CM,
   type EntityStore,
+  type History,
   type Opening,
+  type SectionLine,
   type Wall,
 } from '@zynpparti/document';
-import type { Vec2 } from '@zynpparti/geometry';
 import { exportSectionSvg } from '@zynpparti/io';
 import { Panel } from './Panel';
 
 interface SectionPanelProps {
   store: EntityStore;
-  /** Planda çizilen kesit çizgisi (a→b, dünya cm); yoksa boş durum. */
-  line: [Vec2, Vec2] | null;
-  /** Kesit çizgisini + plandaki A—A' işaretini kaldırır. */
-  onClear: () => void;
+  history: History;
+  /** Seçili entity id'leri — bir kesit seçiliyse panel onu gösterir (yoksa en son çizilen). */
+  selectedIds: string[];
 }
 
 function walls(store: EntityStore): Wall[] {
@@ -29,12 +30,30 @@ function openings(store: EntityStore): Opening[] {
   return store.all().filter((e): e is Opening => e.type === 'opening');
 }
 
+function sections(store: EntityStore): SectionLine[] {
+  return store.all().filter((e): e is SectionLine => e.type === 'section');
+}
+
 /**
- * Şematik kesit görünümü (ADR-0016): planda "Kesit" aracıyla çizgi çizilince, o çizgiyi kesen
- * duvarları kat tabanından yüksekliğine kadar dikdörtgenler olarak SVG'de gösterir. Canlı (duvar
- * değişince güncellenir). Hafif şematik; tam 3B kesit Faz 5.
+ * Hangi kesit gösterilecek? Seçili bir kesit varsa o; yoksa en son eklenen kesit (store sırası).
  */
-export function SectionPanel({ store, line, onClear }: SectionPanelProps) {
+function activeSection(store: EntityStore, selectedIds: string[]): SectionLine | null {
+  const all = sections(store);
+  if (all.length === 0) return null;
+  for (const id of selectedIds) {
+    const sel = all.find((s) => s.id === id);
+    if (sel) return sel;
+  }
+  return all[all.length - 1] ?? null;
+}
+
+/**
+ * Şematik kesit görünümü (ADR-0016/0039): planda "Kesit" (C) aracıyla çizilen kesit çizgisi artık
+ * kalıcı bir `section` entity'sidir (kaydet/aç'a girer, undo'lanır). Bu panel seçili/son kesiti
+ * okuyup, o çizgiyi kesen duvarları kat tabanından yüksekliğine kadar SVG'de canlı gösterir.
+ * Hafif şematik; tam 3B kesit Faz 5.
+ */
+export function SectionPanel({ store, history, selectedIds }: SectionPanelProps) {
   const [, bump] = useState(0);
   useEffect(() => store.subscribe(() => bump((v) => v + 1)), [store]);
 
@@ -42,21 +61,30 @@ export function SectionPanel({ store, line, onClear }: SectionPanelProps) {
   const H = 120; // SVG yüksekliği (px)
   const pad = 8;
 
+  const section = activeSection(store, selectedIds);
+
   let body: React.ReactNode;
-  if (!line) {
-    body = <div className="px-1 py-2 text-xs opacity-50">Araç çubuğundan “Kesit” (C) ile planda bir çizgi çiz.</div>;
+  if (!section) {
+    body = (
+      <div className="px-1 py-2 text-xs opacity-50">Araç çubuğundan “Kesit” (C) ile planda bir çizgi çiz.</div>
+    );
   } else {
-    const s = computeSection(line[0], line[1], walls(store), openings(store));
+    const remove = (): void => {
+      history.dispatch(new RemoveEntity(section.id));
+    };
+    const s = computeSection(section.a, section.b, walls(store), openings(store));
     if (s.cuts.length === 0) {
       body = (
         <div className="flex flex-col gap-1">
-          <div className="px-1 py-2 text-xs opacity-50">Bu çizgi hiçbir duvarı kesmiyor.</div>
+          <div className="px-1 py-2 text-xs opacity-50">
+            Kesit {section.label}—{section.label}' hiçbir duvarı kesmiyor.
+          </div>
           <button
             type="button"
-            onClick={onClear}
+            onClick={remove}
             className="rounded bg-white/10 px-2 py-1 text-xs hover:bg-white/20"
           >
-            Temizle
+            Sil
           </button>
         </div>
       );
@@ -94,7 +122,7 @@ export function SectionPanel({ store, line, onClear }: SectionPanelProps) {
             })}
           </svg>
           <div className="px-1 text-[10px] opacity-60">
-            {s.cuts.length} duvar
+            {section.label}—{section.label}' · {s.cuts.length} duvar
             {(() => {
               const doors = s.cuts.filter((c) => c.opening?.kind === 'door').length;
               const wins = s.cuts.filter((c) => c.opening?.kind === 'window').length;
@@ -114,7 +142,7 @@ export function SectionPanel({ store, line, onClear }: SectionPanelProps) {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'zynpparti-kesit.svg';
+                a.download = `zynpparti-kesit-${section.label}.svg`;
                 a.click();
                 URL.revokeObjectURL(url);
               }}
@@ -124,11 +152,11 @@ export function SectionPanel({ store, line, onClear }: SectionPanelProps) {
             </button>
             <button
               type="button"
-              onClick={onClear}
-              title="Kesit çizgisini ve plandaki A—A' işaretini kaldır"
+              onClick={remove}
+              title="Bu kesit çizgisini sil (geri alınabilir)"
               className="rounded bg-white/10 px-2 py-1 text-xs hover:bg-white/20"
             >
-              Temizle
+              Sil
             </button>
           </div>
         </div>

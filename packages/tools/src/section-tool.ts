@@ -1,14 +1,16 @@
 import { Graphics } from 'pixi.js';
 import type { Vec2 } from '@zynpparti/geometry';
-import type { SceneTool, ScenePointer } from '@zynpparti/engine';
+import { distance } from '@zynpparti/geometry';
+import { AddEntity, createEntityId, type EntityStore, type SectionLine } from '@zynpparti/document';
+import { SECTION_COLOR, type SceneTool, type ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
 
-const SECTION_COLOR = 0xff7a59; // turuncu — kesit düzlemi çizgisi
+const MIN_LEN = 5; // cm — bu kadar kısa çizgi (yanlış çift-tık) kesit oluşturmaz
 
 /**
- * Kesit aracı (ADR-0016): planda iki nokta seçilerek bir **kesit çizgisi** çizilir; bu çizgiyi kesen
- * duvarlar şematik kesit görünümünde gösterilir (SectionPanel). İki tık → `ctx.onSectionLine(a, b)`.
- * Çizgi modeli değiştirmez (görünüm/önizleme), bu yüzden Command'e girmez.
+ * Kesit aracı (ADR-0016/0039): planda iki nokta seçilerek bir **kesit çizgisi** çizilir; bu çizgiyi
+ * kesen duvarlar şematik kesit görünümünde gösterilir (SectionPanel). İki tık → kalıcı bir `section`
+ * entity'si oluşturulur (`AddEntity` → undo'lanır, kaydet/aç'a girer). Eskiden geçici görünümdü.
  */
 export class SectionTool implements SceneTool {
   private readonly preview = new Graphics();
@@ -24,7 +26,17 @@ export class SectionTool implements SceneTool {
     if (!this.p1) {
       this.p1 = at;
     } else {
-      this.ctx.onSectionLine?.(this.p1, at);
+      if (distance(this.p1, at) >= MIN_LEN) {
+        const section: SectionLine = {
+          id: createEntityId(),
+          type: 'section',
+          layerId: 'section',
+          a: this.p1,
+          b: at,
+          label: nextLabel(this.ctx.store),
+        };
+        this.ctx.history.dispatch(new AddEntity(section));
+      }
       this.p1 = null;
     }
     this.render();
@@ -65,4 +77,20 @@ export class SectionTool implements SceneTool {
   dispose(): void {
     this.preview.destroy();
   }
+}
+
+/**
+ * Sıradaki kesit etiketi: kullanımdaki ilk boş büyük harf (A, B, C…). Sayaç yerine "boş harf"
+ * seçilir → bir kesit silinince etiket çakışması olmaz (silinen harf yeniden kullanılır). 26 harf
+ * dolarsa A'ya düşer (nadir; çakışma kabul).
+ */
+function nextLabel(store: EntityStore): string {
+  const used = new Set(
+    store.all().filter((e): e is SectionLine => e.type === 'section').map((s) => s.label),
+  );
+  for (let i = 0; i < 26; i++) {
+    const letter = String.fromCharCode(65 + i);
+    if (!used.has(letter)) return letter;
+  }
+  return 'A';
 }
