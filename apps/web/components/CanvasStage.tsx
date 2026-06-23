@@ -8,6 +8,7 @@ import { seedDemo } from '@/lib/demo-seed';
 import { Toolbar } from './Toolbar';
 import { RoomList } from './RoomList';
 import { CopilotPanel } from './CopilotPanel';
+import { Assistant } from './Assistant';
 import { TakeoffPanel } from './TakeoffPanel';
 import { SheetPanel } from './SheetPanel';
 import { SectionPanel } from './SectionPanel';
@@ -267,6 +268,12 @@ export function CanvasStage() {
           />
           <ShortcutsHelp />
           <CommandPalette manager={ui.manager} history={ui.history} zoomToFit={ui.zoomToFit} />
+          <Assistant
+            store={ui.store}
+            history={ui.history}
+            selectedIds={selectedIds}
+            zoomToFit={ui.zoomToFit}
+          />
         </>
       )}
 
