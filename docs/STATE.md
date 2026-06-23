@@ -120,6 +120,12 @@
 
 ## GÜNLÜK
 
+### 2026-06-23 (gece — "üçünü de sırayla yap" turu: Faz 4 + Render + Collab)
+- **Faz 4 — çoklu varyant (ADR kabul kriteri):** AI tek çağrıda 2 farklı plan üretir (`askDesignVariants` + `parseLayouts`); Asistan varyant kartları gösterir, kullanıcı seçer → Command ile çizer. Canlı: "60m²" → 2 plan.
+- **AI Render (Faz 2C v1, ADR yok — Faz2 ayağı):** `render.ts` OpenAI görsel API'si (gpt-image-1); Asistan 3. mod **🖼️ Render** (program-farkında prompt = stil + oda/m²); görsel sohbette gösterilir. Canlı: gerçek 1024² render döndü. "Yaratıcı mod"; ControlNet (geometriyi koru) sonraki sağlayıcı.
+- **Yjs Collab v1 (ADR-0044):** `packages/collab` EntitySync (store↔Y.Map echo-güvenli ayna; mahaller hariç) + `apps/sync` broadcast relay (`pnpm sync`, ws://localhost:1234) + CollabControl ("Canlı Paylaş", #room link). İki sekme aynı odada duvarları paylaşır. 4 test. v1 temel — undo/invariant/kalıcılık/auth follow-up (§6.4).
+- **Test: 292** (collab 4 · ai 27). Zincir yeşil (typecheck 9/9 · lint 9/9 · build 1/1). **Moses'a:** Collab denemek için terminalde `pnpm sync` çalıştır + "Canlı Paylaş"a bas + linki 2. sekmede aç.
+
 ### 2026-06-23 (akşam — "1 saat durmadan" otonom AI turu)
 - **Streaming** — Sor modu yanıtı kelime kelime akıyor (`chatStream`: Anthropic messages.stream / OpenAI-Akash stream:true; `askCopilotStream` akış-öncesi fallback; `/api/copilot` ReadableStream; istemci body stream okur).
 - **Akıllı çizim** — design prompt m² hedefi (±%10) + parsel "kullanılabilir alan" hint'i; yerleşim parsel içine (sol-üst+çekme) ya da mevcut çizimin sağına (dx,dy offset).

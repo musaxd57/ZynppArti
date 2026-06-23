@@ -9,6 +9,7 @@ import { Toolbar } from './Toolbar';
 import { RoomList } from './RoomList';
 import { CopilotPanel } from './CopilotPanel';
 import { Assistant } from './Assistant';
+import { CollabControl } from './CollabControl';
 import { TakeoffPanel } from './TakeoffPanel';
 import { SheetPanel } from './SheetPanel';
 import { SectionPanel } from './SectionPanel';
@@ -274,6 +275,7 @@ export function CanvasStage() {
             selectedIds={selectedIds}
             zoomToFit={ui.zoomToFit}
           />
+          <CollabControl store={ui.store} />
         </>
       )}
 
