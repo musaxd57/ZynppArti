@@ -15,7 +15,7 @@ import {
 } from '@zynpparti/document';
 import type { ToolManager, ToolName } from '@zynpparti/tools';
 import { importDxf, exportDxf, exportSvg } from '@zynpparti/io';
-import { Undo2, Redo2, Maximize } from 'lucide-react';
+import { Undo2, Redo2, Maximize, PanelLeft, PanelLeftClose } from 'lucide-react';
 import { alertDialog, confirmDialog } from '@/lib/dialog';
 import { toast } from '@/lib/toast';
 import { ArkiLogo } from './ArkiLogo';
@@ -45,10 +45,23 @@ interface ToolbarProps {
   layers?: { isHidden(id: string): boolean };
   /** Üst araç çubuğundaki "Arki" butonu AI panelini açar. */
   onOpenAssistant?: () => void;
+  /** Zen modu: sol+sağ paneller gizli mi + aç/kapat. */
+  chromeHidden?: boolean;
+  onToggleChrome?: () => void;
 }
 
 /** Araç çubuğu: araç seçimi, undo/redo, DXF içe/dışa aktarma, PNG dışa aktarma. */
-export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers, onOpenAssistant }: ToolbarProps) {
+export function Toolbar({
+  manager,
+  history,
+  store,
+  exportPng,
+  zoomToFit,
+  layers,
+  onOpenAssistant,
+  chromeHidden,
+  onToggleChrome,
+}: ToolbarProps) {
   const [active, setActive] = useState<ToolName>(manager.activeTool);
   const fileRef = useRef<HTMLInputElement>(null);
   const jsonRef = useRef<HTMLInputElement>(null);
@@ -293,12 +306,25 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers,
       <button type="button" onClick={() => void onExportPdf()} className={btn}>
         PDF İndir
       </button>
+      <button
+        type="button"
+        onClick={() => onToggleChrome?.()}
+        title={chromeHidden ? 'Panelleri göster' : 'Panelleri gizle (sadece çalışma alanı)'}
+        aria-pressed={chromeHidden}
+        className={`ml-auto ${btn} ${chromeHidden ? 'bg-[var(--accent-bg)] text-[var(--accent-text)]' : ''}`}
+      >
+        {chromeHidden ? (
+          <PanelLeft className="h-[18px] w-[18px]" />
+        ) : (
+          <PanelLeftClose className="h-[18px] w-[18px]" />
+        )}
+      </button>
       <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button
         type="button"
         onClick={() => onOpenAssistant?.()}
         title="Arki — AI tasarım yardımcın (Sor / Çiz / Render)"
-        className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 py-1.5 font-semibold text-white shadow-sm transition-colors hover:bg-[var(--accent-hover)]"
+        className="flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 py-1.5 font-semibold text-white shadow-sm transition-colors hover:bg-[var(--accent-hover)]"
       >
         <ArkiLogo className="h-[18px] w-[18px]" />
         Arki <span className="font-normal opacity-75">AI</span>

@@ -48,6 +48,7 @@ export function CanvasStage() {
   const [rightW, setRightW] = useState(288);
   const [leftW, setLeftW] = useState(224);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [chromeHidden, setChromeHidden] = useState(false); // zen: sol+sağ panelleri gizle
 
   // Dock genişliklerini hatırla (localStorage).
   useEffect(() => {
@@ -200,11 +201,13 @@ export function CanvasStage() {
           zoomToFit={ui.zoomToFit}
           layers={ui.layers}
           onOpenAssistant={() => setAssistantOpen(true)}
+          chromeHidden={chromeHidden}
+          onToggleChrome={() => setChromeHidden((v) => !v)}
         />
       )}
       <div className="relative flex min-h-0 flex-1">
-        {/* Sol dock: katmanlar + bloklar + copilot (kendi içinde kaydırılır). */}
-        {ui && (
+        {/* Sol dock: katmanlar + bloklar + copilot (kendi içinde kaydırılır). Zen modda gizlenir. */}
+        {ui && !chromeHidden && (
           <div
             style={{ width: leftW }}
             className="z-10 flex shrink-0 flex-col gap-3 overflow-y-auto overflow-x-hidden p-2"
@@ -214,7 +217,7 @@ export function CanvasStage() {
             <CopilotPanel store={ui.store} />
           </div>
         )}
-        {ui && (
+        {ui && !chromeHidden && (
           <div
             onPointerDown={startLeftResize}
             className="z-20 w-1.5 shrink-0 cursor-col-resize bg-[var(--border-hair)] transition-colors hover:bg-[var(--accent)]"
@@ -227,20 +230,25 @@ export function CanvasStage() {
         <div className="relative min-w-0 flex-1">
           <div ref={containerRef} className="absolute inset-0" />
           {ui && <EmptyCanvasHint store={ui.store} />}
-          {ui && <View3D store={ui.store} />}
-          {ui && <CollabControl store={ui.store} />}
+          {/* Sağ-üst yüzen küme: Canlı Paylaş + 3B (canvas'a göre konumlu, dock'larla çakışmaz). */}
+          {ui && (
+            <div className="absolute right-3 top-3 z-40 flex items-center gap-2">
+              <CollabControl store={ui.store} />
+              <View3D store={ui.store} />
+            </div>
+          )}
         </div>
 
-        {/* Sağ dock genişlik tutamacı. */}
-        {ui && (
+        {/* Sağ dock genişlik tutamacı. Zen modda gizlenir. */}
+        {ui && !chromeHidden && (
           <div
             onPointerDown={startRightResize}
             className="z-20 w-1.5 shrink-0 cursor-col-resize bg-[var(--border-hair)] transition-colors hover:bg-[var(--accent)]"
             title="Sürükleyerek paneli genişlet/daralt"
           />
         )}
-        {/* Sağ dock: özellikler + mahal/metrik + metraj + pafta. */}
-        {ui && (
+        {/* Sağ dock: özellikler + mahal/metrik + metraj + pafta. Zen modda gizlenir. */}
+        {ui && !chromeHidden && (
           <div
             style={{ width: rightW }}
             className="z-10 flex shrink-0 flex-col gap-3 overflow-y-auto overflow-x-hidden p-2"

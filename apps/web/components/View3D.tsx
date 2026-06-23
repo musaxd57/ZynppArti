@@ -167,7 +167,7 @@ export function View3D({ store }: { store: EntityStore }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="absolute right-3 top-3 z-30 rounded-full bg-neutral-900/80 px-4 py-2 text-sm text-white shadow-lg ring-1 ring-white/15 backdrop-blur hover:bg-neutral-800"
+          className="rounded-full bg-[var(--surface-2)] px-3.5 py-1.5 text-sm text-[var(--text-1)] shadow-sm ring-1 ring-[var(--border-soft)] transition-colors hover:bg-[var(--surface-3)]"
           title="Duvarları 3B önizle (şematik)"
         >
           🧊 3B

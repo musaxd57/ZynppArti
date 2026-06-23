@@ -80,8 +80,8 @@ export function ShortcutsHelp() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="absolute bottom-2 right-3 h-7 w-7 rounded-full bg-black/60 text-sm text-white/80 backdrop-blur hover:bg-black/80"
-        title="Kısayollar (?)"
+        className="absolute bottom-2 right-3 h-7 w-7 rounded-full border border-[var(--border-soft)] bg-[var(--surface-2)] text-sm text-[var(--text-2)] transition-colors hover:bg-[var(--surface-3)] hover:text-[var(--text-1)]"
+        title="Klavye kısayolları (?)"
       >
         ?
       </button>
@@ -92,7 +92,7 @@ export function ShortcutsHelp() {
           onClick={() => setOpen(false)}
         >
           <div
-            className="max-h-[80vh] w-[44rem] max-w-[92vw] overflow-y-auto rounded-lg bg-neutral-900/95 p-5 text-sm text-white shadow-2xl ring-1 ring-white/10"
+            className="max-h-[80vh] w-[44rem] max-w-[92vw] overflow-y-auto rounded-xl bg-[var(--overlay)] p-5 text-sm text-[var(--text-1)] shadow-2xl ring-1 ring-[var(--border-soft)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">
