@@ -38,9 +38,25 @@ export function findFaces(segments: readonly Segment[], snapTol = 1, minArea = 1
     .map((s) => ({ a: vid(s.a), b: vid(s.b) }))
     .filter((s) => s.a !== s.b);
 
-  // 2a. Proper (iç) kesişim noktalarını düğüm olarak ekle.
+  // Her segment için sınırlayıcı kutu (AABB) — pahalı testlerden önce ucuz eleme için (perf).
+  const bx0: number[] = [];
+  const bx1: number[] = [];
+  const by0: number[] = [];
+  const by1: number[] = [];
+  for (const s of segs) {
+    const a = verts[s.a]!;
+    const b = verts[s.b]!;
+    bx0.push(Math.min(a.x, b.x));
+    bx1.push(Math.max(a.x, b.x));
+    by0.push(Math.min(a.y, b.y));
+    by1.push(Math.max(a.y, b.y));
+  }
+
+  // 2a. Proper (iç) kesişim noktalarını düğüm olarak ekle. AABB ön-eleme: kutuları kesişmeyen
+  // çiftler asla kesişemez → pahalı properIntersection çağrısını atla (büyük planda ~birkaç kat hız).
   for (let i = 0; i < segs.length; i++) {
     for (let j = i + 1; j < segs.length; j++) {
+      if (bx0[j]! > bx1[i]! || bx1[j]! < bx0[i]! || by0[j]! > by1[i]! || by1[j]! < by0[i]!) continue;
       const p = properIntersection(
         verts[segs[i]!.a]!,
         verts[segs[i]!.b]!,
@@ -62,12 +78,20 @@ export function findFaces(segments: readonly Segment[], snapTol = 1, minArea = 1
       edges.push([u, v]);
     }
   };
-  for (const s of segs) {
+  for (let si = 0; si < segs.length; si++) {
+    const s = segs[si]!;
     const A = verts[s.a]!;
     const B = verts[s.b]!;
+    // AABB ön-eleme (snapTol payıyla): kutu dışındaki düğüm bu segment üzerinde olamaz → paramOnSegment'i atla.
+    const minx = bx0[si]! - snapTol;
+    const maxx = bx1[si]! + snapTol;
+    const miny = by0[si]! - snapTol;
+    const maxy = by1[si]! + snapTol;
     const on: { id: number; t: number }[] = [];
     for (let k = 0; k < verts.length; k++) {
-      const t = paramOnSegment(verts[k]!, A, B, snapTol);
+      const vk = verts[k]!;
+      if (vk.x < minx || vk.x > maxx || vk.y < miny || vk.y > maxy) continue;
+      const t = paramOnSegment(vk, A, B, snapTol);
       if (t !== null) on.push({ id: k, t });
     }
     on.sort((p, r) => p.t - r.t);
