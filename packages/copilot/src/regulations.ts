@@ -185,6 +185,17 @@ export const ROOM_DAYLIGHT_REGULATION = {
 } as const;
 
 /**
+ * Islak hacim havalandırması (İmar) — banyo/WC gibi ıslak hacimlerde doğal havalandırma (pencere)
+ * yoksa mekanik havalandırma (aspiratör/şönt) gerekir. Pencere-mahal eşleşmesiyle (kaba) denetlenir;
+ * penceresiz ıslak hacim için advisory bulgu (mekanik olabilir → info, hata değil).
+ */
+export const WET_VENTILATION_REGULATION = {
+  id: 'imar-wet-ventilation',
+  source: 'Planlı Alanlar İmar Yönetmeliği',
+  rule: 'Islak hacimler (banyo/WC) doğal (pencere) veya mekanik havalandırmaya sahip olmalı.',
+} as const;
+
+/**
  * Yapının parsel içinde kalması (İmar) — eşiksiz kural (geometrik içerme). Çekme mesafeleri
  * `setbackSide` ile ayrıca denetlenir; bu kural duvarların parsel sınırının dışına taşmasını yakalar.
  */

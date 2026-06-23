@@ -26,6 +26,7 @@ const VALID_TYPES: ReadonlySet<EntityType> = new Set<EntityType>([
   'block',
   'annotation',
   'sheet',
+  'section',
 ]);
 
 /** Entity'leri kararlı JSON metnine yazar (girintili, okunabilir). */

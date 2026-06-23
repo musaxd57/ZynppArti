@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createCanvasApp, createSnapIndicator, type CanvasHandle } from '@zynpparti/engine';
 import { EntityStore, History, RoomManager, UpdateEntity } from '@zynpparti/document';
-import type { Vec2 } from '@zynpparti/geometry';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
 import { seedDemo } from '@/lib/demo-seed';
 import { Toolbar } from './Toolbar';
@@ -34,14 +33,12 @@ export function CanvasStage() {
     layers: CanvasHandle['layers'];
     exportPng: () => Promise<string>;
     setHoverHandler: CanvasHandle['setHoverHandler'];
-    setSectionMarker: CanvasHandle['setSectionMarker'];
     zoomToFit: () => void;
   } | null>(null);
   const [renameId, setRenameId] = useState<string | null>(null);
   const clearRename = useCallback(() => setRenameId(null), []);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [initError, setInitError] = useState<string | null>(null);
-  const [sectionLine, setSectionLine] = useState<[Vec2, Vec2] | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [rightW, setRightW] = useState(288);
   const [leftW, setLeftW] = useState(224);
@@ -130,10 +127,6 @@ export function CanvasStage() {
         isLayerLocked: (id) => h.layers.isLocked(id),
         setCursor: (c) => h.setCursor(c),
         onSelectionChange: (ids) => setSelectedIds(ids),
-        onSectionLine: (a, b) => {
-          setSectionLine([a, b]);
-          h.setSectionMarker([a, b]); // planda kalıcı A—A' işareti
-        },
       });
       h.setActiveTool(manager);
       // Mahal içine çift tık → Seç moduna geç + o mahalin adını düzenlemeye odaklan.
@@ -161,7 +154,6 @@ export function CanvasStage() {
         layers: h.layers,
         exportPng: h.exportPng,
         setHoverHandler: h.setHoverHandler,
-        setSectionMarker: h.setSectionMarker,
         zoomToFit: h.zoomToFit,
       });
     }).catch((err) => {
@@ -245,14 +237,7 @@ export function CanvasStage() {
               onRenameConsumed={clearRename}
             />
             <TakeoffPanel store={ui.store} />
-            <SectionPanel
-              store={ui.store}
-              line={sectionLine}
-              onClear={() => {
-                setSectionLine(null);
-                ui.setSectionMarker(null);
-              }}
-            />
+            <SectionPanel store={ui.store} history={ui.history} selectedIds={selectedIds} />
             <SheetPanel store={ui.store} history={ui.history} />
           </div>
         )}

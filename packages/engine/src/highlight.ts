@@ -48,6 +48,11 @@ export function highlightEntity(
         .stroke({ width: 3 * px, color, alpha, cap: 'round' });
       break;
     }
+    case 'section':
+      g.moveTo(entity.a.x, entity.a.y)
+        .lineTo(entity.b.x, entity.b.y)
+        .stroke({ width: 3 * px, color, alpha, cap: 'round' });
+      break;
     case 'parcel': {
       const b = entity.boundary;
       if (b.length >= 2) {

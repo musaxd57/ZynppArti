@@ -31,6 +31,7 @@ const TYPE_LABEL: Record<EntityType, string> = {
   block: 'Blok',
   annotation: 'Metin',
   sheet: 'Pafta',
+  section: 'Kesit',
 };
 
 /** Seçili entity'lerin "Duvar×3 + Ölçü×1" özeti + toplam duvar uzunluğu (m). */

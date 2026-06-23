@@ -20,6 +20,7 @@ import {
   REGULATIONS,
   ROOM_DAYLIGHT_REGULATION,
   TAKS_REGULATION,
+  WET_VENTILATION_REGULATION,
   citationOf,
 } from './regulations';
 
@@ -286,14 +287,38 @@ function checkDaylight(spaces: readonly Space[], openings: readonly Opening[]): 
 
 /** Doğal ışık için pencere gereken yaşam mahalleri. */
 const HABITABLE_FOR_DAYLIGHT = new Set(['living', 'sleeping', 'kitchen']);
+/** Havalandırma için pencere/mekanik gereken ıslak hacimler. */
+const WET_ROOMS = new Set(['bathroom', 'wet']);
+
+/**
+ * Bir mahalin çevre duvarına oturan pencereleri kaba eşleştirir: pencere merkezi (duvarından
+ * türetilir) mahal sınırına duvar yarı-kalınlığı + pay kadar yakınsa o mahale hizmet ediyor sayılır.
+ * `checkRoomDaylight`/`checkWetRoomVentilation`/`checkRoomDaylightRatio` aynı eşleşmeyi paylaşır.
+ *
+ * Bilinen sınır (kaba): iç (ortak) duvardaki bir pencere iki komşu mahale de sayılabilir → oran
+ * hafif şişer. Güvenli yönde hata (bulguyu bastırır, uydurmaz); pencereler çoğunlukla dış duvarda.
+ */
+function windowsServingRoom(
+  space: Space,
+  wallById: Map<string, Wall>,
+  windows: readonly Opening[],
+): Opening[] {
+  if (space.boundary.length < 3) return [];
+  const served: Opening[] = [];
+  for (const o of windows) {
+    const w = wallById.get(o.wallId);
+    if (!w) continue;
+    const c = openingFrame(o, w).center;
+    if (distanceToPolygonBoundary(c, space.boundary) <= w.thickness / 2 + 8) served.push(o);
+  }
+  return served;
+}
 
 /**
  * Mahal başına doğal aydınlatma — yaşam mahallerinin (oturma/yatma/mutfak) çevre duvarında en az
- * bir pencere var mı? Pencere merkezi duvarından türetilir; o nokta mahal sınırına yakınsa (duvar
- * yarı-kalınlığı + pay) pencere o mahale hizmet ediyor sayılır (kaba eşleşme).
- *
- * Henüz HİÇ pencere yoksa nag etmez (kullanıcı pencereleri sonra koyabilir; checkDaylight ile aynı
- * mantık). Pencere koymaya başlayınca, penceresiz kalan yaşam mahallerini hatırlatır.
+ * bir pencere var mı? Henüz HİÇ pencere yoksa nag etmez (kullanıcı pencereleri sonra koyabilir).
+ * Pencere koymaya başlayınca, penceresiz kalan yaşam mahallerini hatırlatır. Pencere VARSA yeterlilik
+ * (alan oranı) `checkRoomDaylightRatio` ile ayrıca bakılır → ikisi mahal başına çakışmaz.
  */
 function checkRoomDaylight(
   spaces: readonly Space[],
@@ -303,21 +328,80 @@ function checkRoomDaylight(
   const windows = openings.filter((o) => o.kind === 'window');
   if (windows.length === 0) return [];
   const wallById = new Map(walls.map((w) => [w.id, w]));
-  const centers: { x: number; y: number; tol: number }[] = [];
-  for (const o of windows) {
-    const w = wallById.get(o.wallId);
-    if (!w) continue;
-    centers.push({ ...openingFrame(o, w).center, tol: w.thickness / 2 + 8 });
-  }
   const out: Finding[] = [];
   for (const s of spaces) {
     if (!HABITABLE_FOR_DAYLIGHT.has(roomTypeOf(s)) || s.boundary.length < 3) continue;
-    const hasWindow = centers.some((c) => distanceToPolygonBoundary(c, s.boundary) <= c.tol);
-    if (!hasWindow) {
+    if (windowsServingRoom(s, wallById, windows).length === 0) {
       out.push({
         severity: 'info',
         message: `"${s.name}" çevresinde pencere görünmüyor; yaşam mekanı doğal ışık/havalandırma için pencere almalı.`,
         citation: `${ROOM_DAYLIGHT_REGULATION.source} — ${ROOM_DAYLIGHT_REGULATION.rule}`,
+        entityId: s.id,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * Mahal başına doğal aydınlatma YETERLİLİĞİ — penceresi OLAN yaşam mahallerinde pencere alanı /
+ * taban alanı oranı İmar ~1/10'unun altındaysa hatırlatır (kaba; pencere yüksekliği varsayımı). Pencere
+ * yoksa fire etmez (presence `checkRoomDaylight`'te) → mahal başına çakışma yok.
+ *
+ * `checkDaylight` (bina geneli, uyarı) ile kasıtlı tamamlayıcıdır: bu bulgu MAHAL bazlı + tıklanabilir
+ * (entityId) + info; bina-düzeyi tüm taban alanına bakar (tip atanmamış modelde de çalışan kaba toplam).
+ */
+function checkRoomDaylightRatio(
+  spaces: readonly Space[],
+  walls: readonly Wall[],
+  openings: readonly Opening[],
+): Finding[] {
+  const reg = DAYLIGHT_REGULATION;
+  const windows = openings.filter((o) => o.kind === 'window');
+  if (windows.length === 0) return [];
+  const wallById = new Map(walls.map((w) => [w.id, w]));
+  const out: Finding[] = [];
+  for (const s of spaces) {
+    if (!HABITABLE_FOR_DAYLIGHT.has(roomTypeOf(s)) || s.boundary.length < 3) continue;
+    const served = windowsServingRoom(s, wallById, windows);
+    if (served.length === 0) continue; // pencere yok → presence kuralına bırak
+    const roomM2 = centerlineAreaM2(s);
+    if (roomM2 <= 0) continue;
+    const winM2 = served.reduce((a, o) => a + (o.width / 100) * (reg.windowHeightCm / 100), 0);
+    const ratio = winM2 / roomM2;
+    if (ratio < reg.minRatio) {
+      out.push({
+        severity: 'info',
+        message: `"${s.name}" pencere/taban ≈ %${Math.round(ratio * 100)}; doğal aydınlatma için ~%${Math.round(reg.minRatio * 100)} önerilir (kaba).`,
+        citation: `${reg.source} — ${reg.rule}`,
+        entityId: s.id,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * Islak hacim havalandırması — banyo/WC çevresinde pencere yoksa hatırlatır (doğal havalandırma yok →
+ * mekanik gerekir; advisory/info). Doğal aydınlatma kuralları yaşam mahalleriyle ilgilenir, ıslak
+ * hacimleri kapsamaz → çakışma yok. Henüz HİÇ boşluk yoksa nag etmez.
+ */
+function checkWetRoomVentilation(
+  spaces: readonly Space[],
+  walls: readonly Wall[],
+  openings: readonly Opening[],
+): Finding[] {
+  if (openings.length === 0) return [];
+  const windows = openings.filter((o) => o.kind === 'window');
+  const wallById = new Map(walls.map((w) => [w.id, w]));
+  const out: Finding[] = [];
+  for (const s of spaces) {
+    if (!WET_ROOMS.has(roomTypeOf(s)) || s.boundary.length < 3) continue;
+    if (windowsServingRoom(s, wallById, windows).length === 0) {
+      out.push({
+        severity: 'info',
+        message: `"${s.name}" ıslak hacminde pencere görünmüyor; doğal havalandırma için pencere ya da mekanik havalandırma (aspiratör/şönt) gerekir.`,
+        citation: `${WET_VENTILATION_REGULATION.source} — ${WET_VENTILATION_REGULATION.rule}`,
         entityId: s.id,
       });
     }
@@ -366,6 +450,8 @@ export function runCopilotChecks(
     ...checkCeilingHeight(walls),
     ...checkDaylight(spaces, openings),
     ...checkRoomDaylight(spaces, walls, openings),
+    ...checkRoomDaylightRatio(spaces, walls, openings),
+    ...checkWetRoomVentilation(spaces, walls, openings),
     ...checkParcelContainment(walls, parcels),
     ...checkSetback(walls, parcels),
     ...checkTaks(spaces, parcels),

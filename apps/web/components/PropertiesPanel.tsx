@@ -9,6 +9,7 @@ import {
   type EntityStore,
   type History,
   type Opening,
+  type SectionLine,
   type Wall,
 } from '@zynpparti/document';
 import { Panel } from './Panel';
@@ -161,6 +162,26 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
             />
           </label>
         </div>
+      </Panel>
+    );
+  }
+
+  if (e.type === 'section') {
+    const s = e as SectionLine;
+    return (
+      <Panel title="Özellikler — Kesit" widthClass="w-full">
+        <label className={labelCls}>
+          <span className="opacity-70">Etiket (A → A—A')</span>
+          <input
+            maxLength={3}
+            defaultValue={s.label}
+            onBlur={(ev) => {
+              const v = ev.target.value.trim().toUpperCase();
+              if (v && v !== s.label) history.dispatch(new UpdateEntity({ ...s, label: v }));
+            }}
+            className="w-20 rounded bg-white/10 px-1.5 py-0.5 text-center outline-none focus:bg-white/20"
+          />
+        </label>
       </Panel>
     );
   }

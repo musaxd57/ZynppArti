@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { LayerState } from './layer-state';
+import { LayerState, DEFAULT_LAYER_ORDER } from './layer-state';
 
 describe('LayerState', () => {
   it('görünürlük varsayılan açık; setHidden/isHidden çalışır', () => {
@@ -61,5 +61,28 @@ describe('LayerState', () => {
     off();
     s.setHidden('a', false);
     expect(fn).toHaveBeenCalledTimes(2); // iptalden sonra çağrılmaz
+  });
+
+  it('sortLayers: açık sıra yoksa DEFAULT_LAYER_ORDER, o da yoksa alfabetik son', () => {
+    const s = new LayerState();
+    // default sıra: annotation < section < default < furniture < rooms < site < sheet
+    expect(s.sortLayers(['site', 'default', 'section'])).toEqual(['section', 'default', 'site']);
+    // bilinmeyen katmanlar (rank 2000) alfabetik olarak en sona
+    expect(s.sortLayers(['zeta', 'default', 'alpha'])).toEqual(['default', 'alpha', 'zeta']);
+  });
+
+  it('setOrder/getOrder: açık z-sırası DEFAULT_LAYER_ORDER yerine geçer + abone bildirilir', () => {
+    const s = new LayerState();
+    const fn = vi.fn();
+    s.subscribe(fn);
+    s.setOrder(['site', 'default', 'section']);
+    expect(s.getOrder()).toEqual(['site', 'default', 'section']);
+    expect(s.sortLayers(['section', 'site', 'default'])).toEqual(['site', 'default', 'section']);
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it('DEFAULT_LAYER_ORDER oda dolgu/etiket bandı dışındaki katmanları kapsar', () => {
+    expect(DEFAULT_LAYER_ORDER).toContain('default');
+    expect(DEFAULT_LAYER_ORDER).toContain('section');
   });
 });

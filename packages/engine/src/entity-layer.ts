@@ -10,6 +10,7 @@ import { drawParcel } from './render-parcel';
 import { drawBlock } from './render-block';
 import { buildAnnotation } from './render-annotation';
 import { buildSheet } from './render-sheet';
+import { drawSection, buildSectionLabels, layoutSectionLabels } from './render-section';
 import { LayerState } from './layer-state';
 
 /**
@@ -22,14 +23,15 @@ import { LayerState } from './layer-state';
 export class EntityLayer {
   readonly container = new Container();
   readonly index = new SpatialIndex();
+  // Hibrit z (ADR-0040): 3 bant. ALT (sabit): pafta çerçeveleri + oda dolguları. ORTA
+  // (katman-sıralı): duvar/boşluk/blok/parsel/ölçü/kesit çizgileri — her layerId kendi
+  // alt-container'ında, LayerState sırasına göre dizilir. ÜST (sabit): tüm metin/etiketler.
   private readonly sheetLayer = new Container();
-  private readonly parcelLayer = new Container();
   private readonly spaceFill = new Container();
-  private readonly blockLayer = new Container();
-  private readonly wallLayer = new Container();
-  private readonly openingLayer = new Container();
-  private readonly dimensionLayer = new Container();
+  private readonly middleBand = new Container();
   private readonly labelLayer = new Container();
+  /** Orta banttaki katman-başına container (layerId → Container); LayerState sırasına göre dizilir. */
+  private readonly layerContainers = new Map<string, Container>();
   private readonly objects = new Map<EntityId, Container[]>();
   /** Ekran-sabit konturları zoom değişince yeniden çizen kapamalar (lineweight hiyerarşisi). */
   private readonly redrawables = new Map<EntityId, (pixelSize: number) => void>();
@@ -46,13 +48,9 @@ export class EntityLayer {
   ) {
     this.container.addChild(
       this.sheetLayer, // en altta: pafta çerçevesi (kağıt) → çizimi kapatmaz
-      this.parcelLayer,
-      this.spaceFill,
-      this.blockLayer,
-      this.wallLayer,
-      this.openingLayer,
-      this.dimensionLayer,
-      this.labelLayer,
+      this.spaceFill, // oda dolguları + malzeme + çevre (hep altta — hibrit z)
+      this.middleBand, // katman-sıralı orta bant (çizgisel entity'ler)
+      this.labelLayer, // en üstte: tüm metin/etiketler (hep üstte — hibrit z)
     );
 
     const entries: { id: EntityId; box: AABB }[] = [];
@@ -62,10 +60,38 @@ export class EntityLayer {
     }
     this.index.bulkLoad(entries);
 
+    this.reorderMiddle(); // bulkLoad sonrası orta-bant katmanlarını sıraya diz
     this.unsubscribe = store.subscribe((change) => this.onChange(change));
-    // Katman görünürlüğü değişince görünürlüğü yeniden uygula (son viewport ile).
+    // Katman görünürlüğü VEYA z-sırası değişince: orta bandı yeniden sırala + görünürlüğü yeniden uygula.
     this.unsubscribeLayers = this.layers.subscribe(() => {
+      this.reorderMiddle();
       if (this.lastViewport) this.cull(this.lastViewport);
+    });
+  }
+
+  /**
+   * Orta bantta bir layerId'nin container'ını döndürür (yoksa oluşturur + sıraya sokar). Çizgisel
+   * entity'ler (duvar/boşluk/blok/parsel/ölçü/kesit) buraya konur → katman z-sırası geçerli olur.
+   */
+  private layerContainer(layerId: string): Container {
+    let c = this.layerContainers.get(layerId);
+    if (!c) {
+      c = new Container();
+      this.layerContainers.set(layerId, c);
+      this.middleBand.addChild(c);
+      this.reorderMiddle();
+    }
+    return c;
+  }
+
+  /** Orta-bant katman container'larını LayerState sırasına göre dizer (ön→arka; ön = en üstte çizilir). */
+  private reorderMiddle(): void {
+    const ids = [...this.layerContainers.keys()];
+    // sortLayers ön→arka verir; Pixi'de sonra eklenen üstte → arka önce gelmeli (child index 0 = arka).
+    const backToFront = this.layers.sortLayers(ids).reverse();
+    backToFront.forEach((id, i) => {
+      const c = this.layerContainers.get(id);
+      if (c) this.middleBand.setChildIndex(c, i);
     });
   }
 
@@ -112,14 +138,14 @@ export class EntityLayer {
     if (entity.type === 'wall') {
       const g = new Graphics();
       drawWall(g, entity, px);
-      this.wallLayer.addChild(g);
+      this.layerContainer(entity.layerId).addChild(g);
       objs.push(g);
       this.redrawables.set(entity.id, (p) => drawWall(g, entity, p));
     } else if (entity.type === 'opening') {
       const g = new Graphics();
       const wall = this.store.get(entity.wallId);
       if (wall?.type === 'wall') drawOpening(g, entity, wall, px);
-      this.openingLayer.addChild(g);
+      this.layerContainer(entity.layerId).addChild(g);
       objs.push(g);
       this.redrawables.set(entity.id, (p) => {
         const w = this.store.get(entity.wallId);
@@ -128,7 +154,7 @@ export class EntityLayer {
     } else if (entity.type === 'dimension') {
       const g = new Graphics();
       drawDimension(g, entity, px);
-      this.dimensionLayer.addChild(g);
+      this.layerContainer(entity.layerId).addChild(g);
       objs.push(g);
       this.redrawables.set(entity.id, (p) => drawDimension(g, entity, p));
       const label = buildDimensionLabel(entity);
@@ -137,15 +163,29 @@ export class EntityLayer {
     } else if (entity.type === 'parcel') {
       const g = new Graphics();
       drawParcel(g, entity, px);
-      this.parcelLayer.addChild(g);
+      this.layerContainer(entity.layerId).addChild(g);
       objs.push(g);
       this.redrawables.set(entity.id, (p) => drawParcel(g, entity, p));
     } else if (entity.type === 'block') {
       const g = new Graphics();
       drawBlock(g, entity, px);
-      this.blockLayer.addChild(g);
+      this.layerContainer(entity.layerId).addChild(g);
       objs.push(g);
       this.redrawables.set(entity.id, (p) => drawBlock(g, entity, p));
+    } else if (entity.type === 'section') {
+      const g = new Graphics();
+      drawSection(g, entity, px);
+      this.layerContainer(entity.layerId).addChild(g);
+      objs.push(g);
+      const labels = buildSectionLabels(entity);
+      layoutSectionLabels(labels, entity, px);
+      this.labelLayer.addChild(labels);
+      objs.push(labels);
+      // Tek redrawable: zoom'da çizgi/oklar + etiketler birlikte ekran-sabit yenilenir.
+      this.redrawables.set(entity.id, (p) => {
+        drawSection(g, entity, p);
+        layoutSectionLabels(labels, entity, p);
+      });
     } else if (entity.type === 'annotation') {
       const label = buildAnnotation(entity);
       this.labelLayer.addChild(label);
@@ -201,6 +241,20 @@ export class EntityLayer {
   private removeEntity(id: EntityId): void {
     this.destroyObjects(id);
     this.index.remove(id);
+    this.pruneEmptyLayers();
+  }
+
+  /**
+   * Boş kalan orta-bant katman container'larını yok eder (örn. bir katmanın tüm entity'leri silinince).
+   * Aksi halde Map sınırsız büyür (DXF importu çok katman üretebilir) ve her reorder döngüsünde gezilir.
+   */
+  private pruneEmptyLayers(): void {
+    for (const [layerId, c] of this.layerContainers) {
+      if (c.children.length === 0) {
+        c.destroy();
+        this.layerContainers.delete(layerId);
+      }
+    }
   }
 
   private destroyObjects(id: EntityId): void {

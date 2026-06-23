@@ -39,6 +39,12 @@ export function entityBounds(entity: Entity): AABB {
       const ys = [g.a.y, g.b.y, g.da.y, g.db.y];
       return { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
     }
+    case 'section': {
+      // Yalnız kesim çizgisini sınırla; ok bayrakları/etiketler ekran-sabit dekordur (culling için yeterli).
+      const xs = [entity.a.x, entity.b.x];
+      const ys = [entity.a.y, entity.b.y];
+      return { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
+    }
     case 'wall': {
       const half = entity.thickness / 2;
       return {
