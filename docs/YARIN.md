@@ -25,6 +25,10 @@
 - [ ] Telefon/tablet'te aç → kullanılabilir mi (responsive kontrol)?
 - > Bulunan her hatayı buraya not düş, sonra düzeltiriz.
 
+### 🐞 Yarın teyit edilecek şüpheli durumlar (Moses'ın gözlemi)
+- [ ] **Kapı/pencere sayımı:** Vesna'nın çizdiği planda (3+1, 90 m²) sanki **kapılar pencere olarak sayılıyor** olabilir (Moses emin değil, 2026-06-23 akşamı gözlem). Kontrol: AI üretici `openings` `kind` ataması (design.ts/applyLayout) + metrik panelindeki "Kapı/Pencere" sayacı (buildContext) doğru mu? Çizilen openings gerçekten door/window olarak mı işaretleniyor?
+- > NOT: Çiz modu canlıda ÇALIŞIYOR ✓ (Vesna 3+1 plan çizdi: Salon×2, Yatak×2, Mutfak, Banyo).
+
 ### 2) Hızlı kazanımlar (maliyetsiz, düşük risk)
 - [ ] Yorum + metin ekleme `window.prompt` yerine **temalı diyalog** (calibrate gibi).
 - [ ] Yorum için **düzenle / sil / "çözüldü" işareti** (şimdilik sadece ekleniyor).
