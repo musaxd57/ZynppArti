@@ -297,13 +297,24 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
         ]
           .filter(Boolean)
           .join(', ');
+        // Faz 4 kriteri: AI üretir → copilot canlı denetler. Çizilen planın uyum özetini ekle.
+        let compliance = '';
+        try {
+          const issues = buildContext(store, []).findings.filter((f) => f.severity !== 'info').length;
+          compliance =
+            issues > 0
+              ? `\n\n⚠ Copilot ${issues} olası uyumsuzluk buldu — soldaki "Copilot — Yönetmelik" paneline bak.`
+              : '\n\n✓ Copilot: belirgin yönetmelik sorunu görünmüyor.';
+        } catch {
+          /* uyum özeti üretilemezse atla */
+        }
         setMessages((m) => [
           ...m,
           {
             role: 'assistant',
             content: `${d.summary ?? 'Taslak çizildi.'}\n\n✓ ${drawn} duvar çizildi${
               extras ? `, ${extras}` : ''
-            }. ${undoNote}`,
+            }. ${undoNote}${compliance}`,
           },
         ]);
       } else {
@@ -383,6 +394,16 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
           <div className="text-sm font-semibold">ZynppArti Asistanı</div>
           <div className="text-[11px] text-white/60">Tasarım + yönetmelik yardımcın</div>
         </div>
+        {messages.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setMessages([])}
+            className="rounded px-2 py-1 text-xs text-white/60 hover:bg-white/10 hover:text-white"
+            title="Sohbeti temizle"
+          >
+            Temizle
+          </button>
+        )}
         <button
           type="button"
           onClick={() => {
