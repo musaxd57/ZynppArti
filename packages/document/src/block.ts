@@ -19,7 +19,18 @@ export type BlockKind =
   | 'tub'
   | 'stove'
   | 'fridge'
-  | 'stairs';
+  | 'stairs'
+  // Faz 2 ekstra (web araştırmasıyla seçilen mimari bloklar)
+  | 'door-single'
+  | 'door-double'
+  | 'car'
+  | 'parking-space'
+  | 'wardrobe'
+  | 'nightstand'
+  | 'dining-table'
+  | 'coffee-table'
+  | 'dishwasher'
+  | 'vanity';
 
 export interface BlockDef {
   readonly label: string;
@@ -43,6 +54,16 @@ export const BLOCK_DEFS: Record<BlockKind, BlockDef> = {
   stove: { label: 'Ocak', w: 60, h: 60 },
   fridge: { label: 'Buzdolabı', w: 60, h: 65 },
   stairs: { label: 'Merdiven', w: 100, h: 250 },
+  'door-single': { label: 'Kapı (tek kanat)', w: 90, h: 90 },
+  'door-double': { label: 'Kapı (çift kanat)', w: 150, h: 75 },
+  car: { label: 'Araç', w: 180, h: 450 },
+  'parking-space': { label: 'Otopark yeri', w: 250, h: 500 },
+  wardrobe: { label: 'Gardırop', w: 120, h: 60 },
+  nightstand: { label: 'Komodin', w: 45, h: 40 },
+  'dining-table': { label: 'Yemek masası (6 kişi)', w: 180, h: 90 },
+  'coffee-table': { label: 'Orta sehpa', w: 110, h: 60 },
+  dishwasher: { label: 'Bulaşık makinesi', w: 60, h: 60 },
+  vanity: { label: 'Lavabo dolabı', w: 80, h: 50 },
 };
 
 /** Blok ayak izinin (dönüş uygulanmış) 4 köşesi — dünya koordinatı. */

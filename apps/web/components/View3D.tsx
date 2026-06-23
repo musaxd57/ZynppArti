@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import {
   wallBoxesWithOpenings,
   roomTypeColor,
@@ -24,6 +25,7 @@ export function View3D({ store }: { store: EntityStore }) {
   const [spin, setSpin] = useState(false);
   const spinRef = useRef(false); // animasyon döngüsü bunu okur (otomatik tur)
   const snapshotRef = useRef<(() => void) | null>(null); // 3B görünümünü PNG indir
+  const exportGlbRef = useRef<(() => void) | null>(null); // 3B modeli .glb dışa aktar
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -181,6 +183,24 @@ export function View3D({ store }: { store: EntityStore }) {
       };
       loop();
 
+      // 3B modeli glTF/GLB olarak dışa aktar (BIM/3B araçlarda açılır — Faz 5 kriteri).
+      exportGlbRef.current = (): void => {
+        new GLTFExporter().parse(
+          scene,
+          (result) => {
+            const blob = new Blob([result as ArrayBuffer], { type: 'model/gltf-binary' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'zynpparti-3b.glb';
+            a.click();
+            URL.revokeObjectURL(url);
+          },
+          (err) => console.error('GLB export hatası:', err),
+          { binary: true },
+        );
+      };
+
       // 3B görünümünü PNG indir (preserveDrawingBuffer açık → toDataURL boş gelmez).
       snapshotRef.current = (): void => {
         renderer.render(scene, cam);
@@ -192,6 +212,7 @@ export function View3D({ store }: { store: EntityStore }) {
 
       cleanup = (): void => {
         snapshotRef.current = null;
+        exportGlbRef.current = null;
         cancelAnimationFrame(raf);
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
@@ -253,6 +274,14 @@ export function View3D({ store }: { store: EntityStore }) {
               title="3B görünümü PNG indir"
             >
               ⤓ PNG
+            </button>
+            <button
+              type="button"
+              onClick={() => exportGlbRef.current?.()}
+              className="rounded-md px-3 py-1 text-sm hover:bg-white/10"
+              title="3B modeli .glb (BIM/3B) dışa aktar"
+            >
+              ⤓ GLB
             </button>
             <button
               type="button"
