@@ -24,6 +24,37 @@ export const dynamic = 'force-dynamic';
 const MAX_MESSAGES = 20;
 const MAX_CONTENT = 8000;
 
+/**
+ * Basit bellek-içi hız sınırı (IP başına, kayan pencere). Bu uç GERÇEK PARA harcar (her istek bir LLM/
+ * görsel çağrısı) ve henüz auth yok → kötüye-kullanım/DoS maliyet patlatabilir. Tek-instans için yeter;
+ * çok-instans/üretimde Redis'e taşınır. (Denetim bulgusu.)
+ */
+const RATE_LIMIT = 30; // istek
+const RATE_WINDOW_MS = 60_000; // / dakika
+const rateHits = new Map<string, number[]>();
+
+function clientIp(req: Request): string {
+  const xf = req.headers.get('x-forwarded-for');
+  if (xf) return xf.split(',')[0]!.trim();
+  return req.headers.get('x-real-ip') ?? 'local';
+}
+
+/** İstek geçerli mi (sınırı aşmadı mı)? Aşarsa false. Eski kayıtları temizler. */
+function allowRequest(ip: string, now: number): boolean {
+  const hits = (rateHits.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+  if (hits.length >= RATE_LIMIT) {
+    rateHits.set(ip, hits);
+    return false;
+  }
+  hits.push(now);
+  rateHits.set(ip, hits);
+  // Ara sıra ölü IP girişlerini temizle (bellek sızıntısı önlemi).
+  if (rateHits.size > 5000) {
+    for (const [k, v] of rateHits) if (v.every((t) => now - t >= RATE_WINDOW_MS)) rateHits.delete(k);
+  }
+  return true;
+}
+
 /** Gelen ham mesajları güvenli ChatMessage[]'e indirger (rol+metin doğrulama + boyut sınırı). */
 function parseMessages(raw: unknown): ChatMessage[] | null {
   if (!Array.isArray(raw) || raw.length === 0) return null;
@@ -40,6 +71,14 @@ function parseMessages(raw: unknown): ChatMessage[] | null {
 }
 
 export async function POST(req: Request): Promise<Response> {
+  // Hız sınırı: para harcayan ucu kötüye-kullanıma karşı koru.
+  if (!allowRequest(clientIp(req), Date.now())) {
+    return Response.json(
+      { error: 'Çok fazla istek — biraz bekleyip tekrar dene.' },
+      { status: 429, headers: { 'Retry-After': '30' } },
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();
