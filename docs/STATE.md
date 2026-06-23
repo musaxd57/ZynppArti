@@ -120,6 +120,14 @@
 
 ## GÜNLÜK
 
+### 2026-06-23 (gece-7 — premium UI redesign (9-mercek web araştırması) + figür maskot)
+- **9 ajan internette** mimari/CAD + premium koyu-tema (Rayon/Arcol/Figma/Linear/Vercel) araştırıp **redesign spec** üretti → uygulandı:
+  - **Tasarım tokenları (globals.css):** 4 parlaklık-katmanlı yüzey (gölge değil luminans), 3 solid metin tonu, hairline border, **tek soğuk accent (iris #5B5BD6)**, semantik; amber yalnız Arki'de. **Inter** (next/font ~510) + tnum.
+  - **Panel:** 32px CAPS başlık, surface-1 + hairline, özet rozeti. **Toolbar:** surface-2, pasif araçlar nötr, accent yalnız aktif araç + Arki CTA. **Chrome:** asistan paneli/başlık, durum çubuğu, dock tutamaçları, **engine tuval zemini #0E0E10**.
+  - **Arki maskotu:** pergel değil → **inşaat kasklı gülümseyen figür** (gövde currentColor + amber baret + koyu gözler).
+- Zincir yeşil (typecheck 9/9 · lint 9/9 · engine 36 · build 1/1).
+- **Sıradaki premium adım:** Toolbar'da Lucide ikon+etiket (spec'in en yüksek-etkili kalan maddesi; lucide-react dep gerek) + data-row split-row (renk noktası) cilası.
+
 ### 2026-06-23 (gece-6 — vektör PDF + DXF blok + accordion + Arki araç çubuğuna)
 - **#13 Vektör PDF:** PDF artık SVG'yi doğrudan gömüyor (svg2pdf.js — A1'de keskin); hata olursa raster'a düşer. Yeni bağımlılık onaylı.
 - **#12 DXF blok (INSERT) import:** Blok referansları çözülüp içerik konum/ölçek/rotasyon dönüşümüyle (iç içe dahil) patlatılıyor → mobilya/sembol blokları kaybolmuyor. +2 test (io 29).
