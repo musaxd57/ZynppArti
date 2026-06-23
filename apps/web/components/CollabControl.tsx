@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { EntityStore } from '@zynpparti/document';
 import { createCollab, type CollabHandle } from '@zynpparti/collab';
+import { toast } from '@/lib/toast';
 
 /** Sync sunucusu adresi — yerel `pnpm sync` (varsayılan) ya da dağıtımda NEXT_PUBLIC_COLLAB_WS. */
 const WS_URL = process.env.NEXT_PUBLIC_COLLAB_WS || 'ws://localhost:1234';
@@ -72,7 +73,10 @@ export function CollabControl({
   };
 
   const copyLink = (): void => {
-    void navigator.clipboard?.writeText(location.href);
+    void navigator.clipboard
+      ?.writeText(location.href)
+      .then(() => toast('Davet linki kopyalandı — başka sekme/cihazda aç.', 'success'))
+      .catch(() => toast('Link kopyalanamadı; URL çubuğundan elle kopyala.', 'error'));
   };
 
   if (room) {
