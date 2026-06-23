@@ -23,6 +23,7 @@ export function View3D({ store }: { store: EntityStore }) {
   const [error, setError] = useState<string | null>(null);
   const [spin, setSpin] = useState(false);
   const spinRef = useRef(false); // animasyon döngüsü bunu okur (otomatik tur)
+  const snapshotRef = useRef<(() => void) | null>(null); // 3B görünümünü PNG indir
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -61,7 +62,7 @@ export function View3D({ store }: { store: EntityStore }) {
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x141414);
 
-      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
       renderer.setPixelRatio(window.devicePixelRatio || 1);
       renderer.setSize(W, H);
       container.appendChild(renderer.domElement);
@@ -180,7 +181,17 @@ export function View3D({ store }: { store: EntityStore }) {
       };
       loop();
 
+      // 3B görünümünü PNG indir (preserveDrawingBuffer açık → toDataURL boş gelmez).
+      snapshotRef.current = (): void => {
+        renderer.render(scene, cam);
+        const a = document.createElement('a');
+        a.href = renderer.domElement.toDataURL('image/png');
+        a.download = 'zynpparti-3b.png';
+        a.click();
+      };
+
       cleanup = (): void => {
+        snapshotRef.current = null;
         cancelAnimationFrame(raf);
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
@@ -234,6 +245,14 @@ export function View3D({ store }: { store: EntityStore }) {
               title="Otomatik kamera turu"
             >
               {spin ? '⏸ Tur' : '▶ Tur'}
+            </button>
+            <button
+              type="button"
+              onClick={() => snapshotRef.current?.()}
+              className="rounded-md px-3 py-1 text-sm hover:bg-white/10"
+              title="3B görünümü PNG indir"
+            >
+              ⤓ PNG
             </button>
             <button
               type="button"
