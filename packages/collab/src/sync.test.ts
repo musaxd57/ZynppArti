@@ -79,6 +79,26 @@ describe('EntitySync — iki istemci', () => {
     expect(s2.has('s1')).toBe(false);
   });
 
+  it('pushLocalIfEmpty: boş odaya yerel çizimi iter, DOLU odaya itmez (host kirlenmez)', () => {
+    // Boş oda → yerel çizim paylaşılır.
+    const s = new EntityStore();
+    s.put(wall('w1', 100)); // emit yok (seedDemo gibi) → abonelik tetiklenmez
+    const d = new Y.Doc();
+    const sync = new EntitySync(s, d);
+    sync.pushLocalIfEmpty();
+    expect(d.getMap<Wall>('entities').has('w1')).toBe(true);
+
+    // Dolu oda (host verisi var) → katılanın yerel demo'su İTİLMEZ, host'unki alınır.
+    const d2 = new Y.Doc();
+    d2.getMap<Wall>('entities').set('host', wall('host', 500));
+    const s2 = new EntityStore();
+    s2.put(wall('local', 300));
+    const sync2 = new EntitySync(s2, d2);
+    sync2.pushLocalIfEmpty();
+    expect(d2.getMap<Wall>('entities').has('local')).toBe(false); // host kirlenmedi
+    expect(s2.has('host')).toBe(true); // host çizimi alındı
+  });
+
   it('var olan odaya katılan istemci mevcut entity-leri alır', () => {
     const s1 = new EntityStore();
     const d1 = new Y.Doc();

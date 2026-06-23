@@ -26,27 +26,39 @@ export class EntitySync {
   ) {
     this.ymap = doc.getMap<Entity>('entities');
 
-    // İlk eşitleme: Y boşsa yerel store'u Y'ye it; Y doluysa (var olan odaya katılım) Y'yi store'a uygula.
-    if (this.ymap.size === 0) {
-      doc.transact(() => {
-        for (const e of this.store.all()) if (isSyncable(e)) this.ymap.set(e.id, e);
-      }, this);
-    } else {
-      this.applyRemote(() => {
-        const added: EntityId[] = [];
-        this.ymap.forEach((e, id) => {
-          this.store.put(e);
-          added.push(id);
-        });
-        if (added.length) this.store.emit({ added, updated: [], removed: [] });
-      });
-    }
+    // Doc kurulurken zaten veri varsa (nadir, eşzamanlı) store'a uygula. Asıl ilk-eşitleme
+    // `pushLocalIfEmpty` ile İLK SYNC SONRASI yapılır (geç katılan, kendi demo'sunu odaya itmesin).
+    if (this.ymap.size > 0) this.applyAllFromY();
 
     this.unsubStore = this.store.subscribe((c) => this.onStoreChange(c));
     this.observer = (event, tx) => {
       if (tx.origin !== this) this.onRemote(event); // kendi yazdığımız değişikliği (origin=this) yok say
     };
     this.ymap.observe(this.observer);
+  }
+
+  /**
+   * İlk sync TAMAMLANDIKTAN sonra çağrılır (createCollab → provider 'sync'): oda HÂLÂ boşsa (taze
+   * oda) yerel çizimi Y'ye iter. Oda doluysa (var olan odaya katılım) İTMEZ → katılan sekmenin
+   * yerel/demo entity'leri host'u kirletmez (yalnız host'unkini alır, onRemote ile).
+   */
+  pushLocalIfEmpty(): void {
+    if (this.ymap.size > 0) return;
+    this.doc.transact(() => {
+      for (const e of this.store.all()) if (isSyncable(e)) this.ymap.set(e.id, e);
+    }, this);
+  }
+
+  /** Mevcut tüm Y.Map entity'lerini store'a uygular (echo-güvenli). */
+  private applyAllFromY(): void {
+    this.applyRemote(() => {
+      const added: EntityId[] = [];
+      this.ymap.forEach((e, id) => {
+        this.store.put(e);
+        added.push(id);
+      });
+      if (added.length) this.store.emit({ added, updated: [], removed: [] });
+    });
   }
 
   private applyRemote(fn: () => void): void {

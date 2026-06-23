@@ -23,6 +23,10 @@ export function createCollab(store: EntityStore, wsUrl: string, room: string): C
   const doc = new Y.Doc();
   const provider = new WebsocketProvider(wsUrl, room, doc);
   const sync = new EntitySync(store, doc);
+  // İlk sync tamamlanınca: oda boşsa yerel çizimi paylaş (taze oda); doluysa host'unkini al, itme.
+  provider.on('sync', (isSynced: boolean) => {
+    if (isSynced) sync.pushLocalIfEmpty();
+  });
   return {
     doc,
     provider,
