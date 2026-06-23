@@ -120,6 +120,13 @@
 
 ## GÜNLÜK
 
+### 2026-06-23 (gece-9 — Faz 5 3B zenginleştirme: oda zeminleri + tur + PNG)
+- **Oda zeminleri:** 3B'de her mahal, tipine göre **renkli döşeme** (2B dolgusunun 3B karşılığı) → odalar 3B'de okunur.
+- **Otomatik kamera turu:** "▶ Tur" → kamera yavaşça döner (sunum hissi); sürüklerken durur.
+- **3B PNG indir:** "⤓ PNG" → 3B görünümü dışa aktar (preserveDrawingBuffer).
+- Faz 5 3B önizleme artık: boşluk-oyma (kapı/pencere) + renkli oda zeminleri + tur + PNG + hemisphere ışık.
+- Zincir yeşil (typecheck 9/9 · lint 9/9 · build 1/1).
+
 ### 2026-06-23 (gece-8 — zen mod + havalı ölçekleme + Faz 5 derinleştirme)
 - **Zen modu:** araç çubuğunda toggle → sol+sağ paneller gizlenir (sadece çalışma alanı). **Canlı Paylaş + 3B** sağ-üst tek kümeye taşındı. "?" = kısayol yardımı (token'landı).
 - **Havalı ölçekleme:** native `window.prompt` → temalı **CalibrateDialog** (iris/Inter): ölçülen mesafeyi gösterir, gerçek cm sorar, **ölçek oranını canlı hesaplar** ("2.40× büyür"). ToolContext.requestCalibration + ölçü çizgisi parlak cyan. DialogHost da token'landı.
