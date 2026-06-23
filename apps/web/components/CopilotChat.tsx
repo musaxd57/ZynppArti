@@ -24,6 +24,8 @@ import { Panel } from './Panel';
 interface ChatMsg {
   role: 'user' | 'assistant';
   content: string;
+  /** Yanıtı üreten sağlayıcı/model (şeffaflık + maliyet görünürlüğü; yalnız assistant). */
+  meta?: { provider: string; model: string };
 }
 
 interface CopilotChatProps {
@@ -96,8 +98,9 @@ export function CopilotChat({ store, selectedIds }: CopilotChatProps) {
       if (!res.ok) {
         throw new Error((data as { error?: string }).error ?? `Hata (${res.status})`);
       }
-      const answer = (data as { answer?: string }).answer ?? '';
-      setMessages((m) => [...m, { role: 'assistant', content: answer }]);
+      const d = data as { answer?: string; provider?: string; model?: string };
+      const meta = d.provider && d.model ? { provider: d.provider, model: d.model } : undefined;
+      setMessages((m) => [...m, { role: 'assistant', content: d.answer ?? '', meta }]);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'İstek başarısız.');
     } finally {
@@ -121,6 +124,11 @@ export function CopilotChat({ store, selectedIds }: CopilotChatProps) {
                   {m.role === 'user' ? 'Sen' : 'Copilot'}
                 </div>
                 <div className="whitespace-pre-wrap leading-snug">{m.content}</div>
+                {m.meta && (
+                  <div className="mt-1 text-[10px] opacity-30" title="Bu yanıtı üreten sağlayıcı/model">
+                    {m.meta.provider} · {m.meta.model}
+                  </div>
+                )}
               </div>
             ))}
             {loading && <div className="px-1 text-xs opacity-50">Copilot düşünüyor…</div>}
