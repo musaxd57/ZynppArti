@@ -22,25 +22,44 @@ function normalizeTr(s: string): string {
     .replace(/ü/g, 'u');
 }
 
-/** Karmaşık (Claude) sinyalleri — ASCII-katlanmış (şapkasız). yönetmelik + akıl-yürütme fiilleri. */
+/**
+ * Karmaşık (Claude) sinyalleri — ASCII-katlanmış (şapkasız). Üç küme: yönetmelik/mevzuat,
+ * yapı/can-güvenliği, akıl-yürütme/öneri + yükümlülük ("olmalı/gerekir/minimum") soruları.
+ */
 const COMPLEX_KEYWORDS = [
-  'yonetmelik', 'imar', 'tbdy', 'deprem', 'otopark', 'ts 9111', 'ts9111', 'cekme', 'setback',
-  'taks', 'kaks', 'emsal', 'mevzuat', 'erisilebilir', 'engelli', 'yangin', 'tahliye',
+  // Yönetmelik / mevzuat
+  'yonetmelik', 'imar', 'tbdy', 'otopark', 'ts 9111', 'ts9111', 'ts 12576', 'mevzuat',
+  'cekme', 'setback', 'taks', 'kaks', 'emsal', 'gabari', 'parsel', 'ruhsat', 'iskan',
+  'erisilebilir', 'engelli', 'rampa', 'plan notu',
+  // Yapı / can güvenliği (akıl + sorumluluk)
+  'deprem', 'statik', 'tasiyici', 'kolon', 'kiris', 'perde', 'temel', 'yangin', 'tahliye',
+  'kacis', 'merdiven', 'yalitim', 'akustik', 'enerji kimlik',
+  // Akıl-yürütme / öneri / yükümlülük
   'neden', 'nicin', 'karsilastir', 'kiyasla', 'analiz', 'degerlendir', 'oner', 'tasarla',
-  'optimize', 'iyilestir', 'uygun mu', 'riskli', 'hesapla', 'yorumla', 'acikla',
+  'optimize', 'iyilestir', 'uygun mu', 'dogru mu', 'riskli', 'hesapla', 'yorumla', 'acikla',
+  'minimum', 'maksimum', 'en az', 'en fazla', 'olmali', 'gerekir', 'sart', 'zorunlu',
+  'ideal', 'standart', 'daha iyi', 'nasil olmali',
 ];
 
 /** Dar "orta" (OpenAI) ipuçları — ASCII-katlanmış. yönetmelik değil ama biraz akıl isteyen. */
-const MEDIUM_HINTS = ['nasil', 'farki', 'avantaj', 'dezavantaj', 'hangisi daha', 'ozetle'];
+const MEDIUM_HINTS = ['nasil', 'farki', 'avantaj', 'dezavantaj', 'hangisi', 'ozetle', 'fikir', 'yorum'];
 
-/** Bir sorunun zorluk kademesini belirler. Varsayılan = simple (Akash) → Akash-ağırlıklı. */
+/**
+ * Bir sorunun zorluk kademesini belirler. Varsayılan = simple (Akash) → Akash-ağırlıklı.
+ * complex: yönetmelik/yapı/akıl-yürütme anahtarı VEYA çok uzun (>240). medium: dar bant.
+ */
 export function classifyTier(question: string): Tier {
   const q = normalizeTr(question);
-  if (COMPLEX_KEYWORDS.some((k) => q.includes(k)) || question.length > 280) return 'complex';
+  if (COMPLEX_KEYWORDS.some((k) => q.includes(k)) || question.length > 240) return 'complex';
   // Orta: dar bant — orta-uzun soru ya da bir "orta" ipucu (yönetmelik değil).
-  if (question.length >= 160 && question.length <= 280) return 'medium';
-  if (question.length >= 90 && MEDIUM_HINTS.some((k) => q.includes(k))) return 'medium';
+  if (question.length >= 150 && question.length <= 240) return 'medium';
+  if (question.length >= 80 && MEDIUM_HINTS.some((k) => q.includes(k))) return 'medium';
   return 'simple';
+}
+
+/** Kademeye göre yanıt üst sınırı (token). Basit soru → az token → HIZLI + ucuz. */
+export function maxTokensForTier(tier: Tier): number {
+  return tier === 'simple' ? 700 : tier === 'medium' ? 1400 : 3000;
 }
 
 /**

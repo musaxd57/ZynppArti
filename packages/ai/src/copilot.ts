@@ -1,5 +1,5 @@
 import { buildSystemPrompt } from './prompt';
-import { classifyTier, resolveChain } from './router';
+import { classifyTier, resolveChain, maxTokensForTier } from './router';
 import type { AiProvider, AiProviderName, ChatMessage, CopilotContext, Tier } from './types';
 
 export interface CopilotResult {
@@ -40,12 +40,13 @@ export async function askCopilot(
   const order = chain.length > 0 ? chain : available;
 
   const system = buildSystemPrompt(ctx);
+  const maxTokens = maxTokensForTier(tier);
   let lastErr: unknown;
   for (const name of order) {
     const provider = providers[name];
     if (!provider) continue;
     try {
-      const answer = await provider.chat(messages, { system });
+      const answer = await provider.chat(messages, { system, maxTokens });
       return { answer, provider: name, model: provider.model, tier };
     } catch (e) {
       lastErr = e;
@@ -76,6 +77,7 @@ export async function askCopilotStream(
   const order = chain.length > 0 ? chain : available;
 
   const system = buildSystemPrompt(ctx);
+  const maxTokens = maxTokensForTier(tier);
   let lastErr: unknown;
   for (const name of order) {
     const provider = providers[name];
@@ -84,7 +86,7 @@ export async function askCopilotStream(
     try {
       // onDelta yalnız boş-OLMAYAN parçayla çağrılır (sağlayıcılar boş delta'yı eler) → `started`
       // yalnız gerçek içerik gelince true olur; akış başladıysa fallback yapılmaz (aşağıda).
-      await provider.chatStream(messages, { system, signal }, (d) => {
+      await provider.chatStream(messages, { system, maxTokens, signal }, (d) => {
         started = true;
         onDelta(d);
       });

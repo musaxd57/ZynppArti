@@ -64,7 +64,7 @@ export function CollabControl({ store }: { store: EntityStore }) {
           : 'Sunucu yok — terminalde: pnpm sync';
     return (
       <div
-        className={`fixed bottom-14 right-4 z-40 flex items-center gap-2 rounded-full ${bg} px-4 py-2 text-sm text-white shadow-lg`}
+        className={`absolute bottom-3 right-3 z-40 flex items-center gap-2 rounded-full ${bg} px-4 py-2 text-sm text-white shadow-lg`}
         title="Bu sekme canlı paylaşımda — URL'yi paylaşarak başkalarını davet et"
       >
         <span className={`h-2 w-2 rounded-full ${dotColor} ${status === 'connected' ? 'animate-pulse' : ''}`} />
@@ -76,7 +76,7 @@ export function CollabControl({ store }: { store: EntityStore }) {
     <button
       type="button"
       onClick={start}
-      className="fixed bottom-14 right-4 z-40 rounded-full bg-white/10 px-4 py-2 text-sm shadow-lg backdrop-blur hover:bg-white/20"
+      className="absolute bottom-3 right-3 z-40 rounded-full bg-neutral-900/80 px-4 py-2 text-sm text-white shadow-lg ring-1 ring-white/15 backdrop-blur hover:bg-neutral-800"
       title="Canlı işbirliği başlat (sync sunucusu çalışmalı: terminalde 'pnpm sync')"
     >
       👥 Canlı Paylaş

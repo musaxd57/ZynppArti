@@ -496,10 +496,10 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
         type="button"
         onClick={() => setOpen(true)}
         className="fixed bottom-14 left-4 z-40 flex items-center gap-2 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-blue-900/40 transition-transform hover:scale-105"
-        title="Zeynep — tasarım yardımcın"
+        title="Arki — tasarım yardımcın"
       >
         <SparkleIcon className="h-5 w-5" />
-        Zeynep
+        Arki
       </button>
     );
   }
@@ -519,7 +519,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
           <SparkleIcon className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold">Zeynep</div>
+          <div className="text-sm font-semibold">Arki</div>
           <div className="text-[11px] text-white/60">Tasarım yardımcın</div>
         </div>
         {messages.length > 0 && (
@@ -652,7 +652,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
             // Daktilo/akış başladıysa (dolu asistan balonu) göstergeyi gizle.
             if (last?.role === 'assistant' && (last.content || last.image)) return null;
             const label =
-              mode === 'draw' ? 'Plan üretiliyor' : mode === 'render' ? 'Görsel üretiliyor' : 'Zeynep yazıyor';
+              mode === 'draw' ? 'Plan üretiliyor' : mode === 'render' ? 'Görsel üretiliyor' : 'Arki yazıyor';
             return <TypingDots label={label} />;
           })()}
       </div>

@@ -209,8 +209,13 @@ export function CanvasStage() {
           />
         )}
 
-        {/* Canvas (orta, esnek) — Pixi bu div'e resizeTo ile bağlı. Sağ-tık engine'de bağlı. */}
-        <div ref={containerRef} className="relative min-w-0 flex-1" />
+        {/* Canvas (orta, esnek). Pixi içteki mutlak div'e bağlı; yüzen butonlar bu sarmala göre
+            konumlanır → sağ/sol dock panellerinin ÜSTÜNE binmez (eski 'fixed' butonlar biniyordu). */}
+        <div className="relative min-w-0 flex-1">
+          <div ref={containerRef} className="absolute inset-0" />
+          {ui && <View3D store={ui.store} />}
+          {ui && <CollabControl store={ui.store} />}
+        </div>
 
         {/* Sağ dock genişlik tutamacı. */}
         {ui && (
@@ -276,8 +281,6 @@ export function CanvasStage() {
             selectedIds={selectedIds}
             zoomToFit={ui.zoomToFit}
           />
-          <CollabControl store={ui.store} />
-          <View3D store={ui.store} />
         </>
       )}
 
