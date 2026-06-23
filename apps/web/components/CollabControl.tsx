@@ -14,7 +14,14 @@ type Status = 'connecting' | 'connected' | 'disconnected';
  * paylaşır. Linki (#room=...) paylaş → 2. sekme otomatik katılır. Bağlantı durumu + kişi sayısı
  * gösterilir (sunucu kapalıysa kullanıcı anlar). Sync sunucusu çalışmalı (`pnpm sync`).
  */
-export function CollabControl({ store }: { store: EntityStore }) {
+export function CollabControl({
+  store,
+  onHandle,
+}: {
+  store: EntityStore;
+  /** Bağlanınca handle yukarı verilir (presence imleçleri için); kopunca null. */
+  onHandle?: (h: CollabHandle | null) => void;
+}) {
   const [room, setRoom] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>('connecting');
   const [peers, setPeers] = useState(1);
@@ -25,6 +32,7 @@ export function CollabControl({ store }: { store: EntityStore }) {
     try {
       const h = createCollab(store, WS_URL, r);
       handleRef.current = h;
+      onHandle?.(h);
       setRoom(r);
       if (location.hash !== `#room=${r}`) location.hash = `room=${r}`;
       h.provider.on('status', (e: { status: Status }) => setStatus(e.status));
@@ -43,6 +51,7 @@ export function CollabControl({ store }: { store: EntityStore }) {
     return () => {
       handleRef.current?.destroy();
       handleRef.current = null;
+      onHandle?.(null);
     };
   }, []);
 
@@ -55,6 +64,7 @@ export function CollabControl({ store }: { store: EntityStore }) {
   const disconnect = (): void => {
     handleRef.current?.destroy();
     handleRef.current = null;
+    onHandle?.(null);
     setRoom(null);
     setStatus('connecting');
     setPeers(1);

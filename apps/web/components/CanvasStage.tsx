@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createCanvasApp, createSnapIndicator, type CanvasHandle } from '@zynpparti/engine';
+import { createCanvasApp, createSnapIndicator, createPresenceLayer, type CanvasHandle } from '@zynpparti/engine';
+import type { CollabHandle } from '@zynpparti/collab';
 import { EntityStore, History, RoomManager, UpdateEntity } from '@zynpparti/document';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
 import { seedDemo } from '@/lib/demo-seed';
@@ -26,6 +27,9 @@ import { BlockPalette } from './BlockPalette';
 import { StatusBar } from './StatusBar';
 import { ShortcutsHelp } from './ShortcutsHelp';
 
+/** Presence imleç renkleri (kullanıcı clientID'sine göre döner) — accent/semantik tonlar. */
+const PRESENCE_COLORS = [0x5b5bd6, 0xffb454, 0x71d083, 0xff9592, 0x4fd1e0, 0xe05bd6, 0xf5d90a];
+
 /**
  * Engine canvas + araç yöneticisini DOM'a bağlayan React sarmalı.
  * PixiJS yalnızca istemcide çalışır → 'use client' + useEffect içinde mount edilir.
@@ -38,9 +42,17 @@ export function CanvasStage() {
     store: EntityStore;
     layers: CanvasHandle['layers'];
     exportPng: () => Promise<string>;
-    setHoverHandler: CanvasHandle['setHoverHandler'];
+    overlay: CanvasHandle['overlay'];
+    pixelSize: CanvasHandle['pixelSize'];
     zoomToFit: () => void;
   } | null>(null);
+  const [collab, setCollab] = useState<CollabHandle | null>(null);
+  // Hover olaylarını çoğa dağıt (StatusBar + presence). Tek motor handler'ı → çok dinleyici.
+  const hoverListenersRef = useRef(new Set<(w: { x: number; y: number } | null) => void>());
+  const registerHover = useCallback((cb: (w: { x: number; y: number } | null) => void) => {
+    hoverListenersRef.current.add(cb);
+    return () => hoverListenersRef.current.delete(cb);
+  }, []);
   const [renameId, setRenameId] = useState<string | null>(null);
   const clearRename = useCallback(() => setRenameId(null), []);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -165,13 +177,18 @@ export function CanvasStage() {
           history.dispatch(new UpdateEntity({ ...ent, text: trimmed }));
         });
       });
+      // Tek motor hover handler'ı → kayıtlı tüm dinleyicilere dağıt (StatusBar + presence).
+      h.setHoverHandler((w) => {
+        for (const fn of hoverListenersRef.current) fn(w);
+      });
       setUi({
         manager,
         history,
         store,
         layers: h.layers,
         exportPng: h.exportPng,
-        setHoverHandler: h.setHoverHandler,
+        overlay: h.overlay,
+        pixelSize: h.pixelSize,
         zoomToFit: h.zoomToFit,
       });
     }).catch((err) => {
@@ -188,6 +205,46 @@ export function CanvasStage() {
       setUi(null);
     };
   }, []);
+
+  // Presence (Faz 3): collab bağlıyken kendi imlecini paylaş + uzak imleçleri overlay'de göster.
+  useEffect(() => {
+    if (!collab || !ui) return;
+    let cleanup = (): void => {};
+    try {
+      const aw = collab.awareness as unknown as {
+        clientID: number;
+        setLocalStateField: (k: string, v: unknown) => void;
+        getStates: () => Map<number, Record<string, unknown>>;
+        on: (e: string, cb: () => void) => void;
+        off: (e: string, cb: () => void) => void;
+      };
+      const color = PRESENCE_COLORS[aw.clientID % PRESENCE_COLORS.length]!;
+      aw.setLocalStateField('user', { color });
+      const layer = createPresenceLayer(ui.overlay);
+      const unreg = registerHover((w) => aw.setLocalStateField('cursor', w ? { x: w.x, y: w.y } : null));
+      const render = (): void => {
+        const cursors: { id: string; x: number; y: number; color: number }[] = [];
+        aw.getStates().forEach((st, id) => {
+          if (id === aw.clientID) return;
+          const c = st.cursor as { x: number; y: number } | null | undefined;
+          const u = st.user as { color?: number } | undefined;
+          if (c) cursors.push({ id: String(id), x: c.x, y: c.y, color: u?.color ?? 0xffffff });
+        });
+        layer.update(cursors, ui.pixelSize());
+      };
+      aw.on('change', render);
+      render();
+      cleanup = (): void => {
+        aw.off('change', render);
+        unreg();
+        aw.setLocalStateField('cursor', null);
+        layer.destroy();
+      };
+    } catch (e) {
+      console.error('Presence kurulamadı:', e);
+    }
+    return () => cleanup();
+  }, [collab, ui, registerHover]);
 
   return (
     // DOCK LAYOUT (Rayon/Figma deseni): üstte toolbar · sol dock | canvas | sağ dock · altta durum.
@@ -235,7 +292,7 @@ export function CanvasStage() {
           {/* Sağ-üst yüzen küme: Canlı Paylaş + 3B (canvas'a göre konumlu, dock'larla çakışmaz). */}
           {ui && (
             <div className="absolute right-3 top-3 z-40 flex items-center gap-2">
-              <CollabControl store={ui.store} />
+              <CollabControl store={ui.store} onHandle={setCollab} />
               <View3D store={ui.store} />
             </div>
           )}
@@ -293,7 +350,7 @@ export function CanvasStage() {
         <>
           <StatusBar
             manager={ui.manager}
-            registerHover={ui.setHoverHandler}
+            registerHover={registerHover}
             store={ui.store}
             selectedIds={selectedIds}
           />

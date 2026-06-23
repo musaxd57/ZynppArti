@@ -53,7 +53,7 @@ function selectionSummary(store: EntityStore, ids: string[]): string {
 interface StatusBarProps {
   manager: ToolManager;
   /** İmleç hareket handler'ını kaydeder (engine). Kendi state'ini tutar → panelleri re-render etmez. */
-  registerHover: (cb: (world: Pt | null) => void) => void;
+  registerHover: (cb: (world: Pt | null) => void) => (() => void) | void;
   /** Doğruluk kaynağı + seçili id'ler — seçim özeti için. */
   store: EntityStore;
   selectedIds: string[];
@@ -68,8 +68,12 @@ export function StatusBar({ manager, registerHover, store, selectedIds }: Status
   const [tool, setTool] = useState<ToolName>(manager.activeTool);
 
   useEffect(() => {
-    registerHover(setWorld);
-    return manager.subscribe(setTool);
+    const offHover = registerHover(setWorld);
+    const offTool = manager.subscribe(setTool);
+    return () => {
+      offHover?.();
+      offTool();
+    };
   }, [manager, registerHover]);
 
   const m = (cm: number): string => (cm / 100).toFixed(2).replace('.', ',');
