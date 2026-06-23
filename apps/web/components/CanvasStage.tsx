@@ -1,7 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createCanvasApp, createSnapIndicator, createPresenceLayer, type CanvasHandle } from '@zynpparti/engine';
+import {
+  createCanvasApp,
+  createSnapIndicator,
+  createPresenceLayer,
+  entityBounds,
+  type CanvasHandle,
+} from '@zynpparti/engine';
 import type { CollabHandle } from '@zynpparti/collab';
 import { EntityStore, History, RoomManager, UpdateEntity } from '@zynpparti/document';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
@@ -224,13 +230,28 @@ export function CanvasStage() {
       const unreg = registerHover((w) => aw.setLocalStateField('cursor', w ? { x: w.x, y: w.y } : null));
       const render = (): void => {
         const cursors: { id: string; x: number; y: number; color: number }[] = [];
+        const selections: { minX: number; minY: number; maxX: number; maxY: number; color: number }[] = [];
         aw.getStates().forEach((st, id) => {
           if (id === aw.clientID) return;
-          const c = st.cursor as { x: number; y: number } | null | undefined;
           const u = st.user as { color?: number } | undefined;
-          if (c) cursors.push({ id: String(id), x: c.x, y: c.y, color: u?.color ?? 0xffffff });
+          const color = u?.color ?? 0xffffff;
+          const c = st.cursor as { x: number; y: number } | null | undefined;
+          if (c) cursors.push({ id: String(id), x: c.x, y: c.y, color });
+          const sel = st.selection as string[] | undefined;
+          if (Array.isArray(sel)) {
+            for (const eid of sel) {
+              const e = ui.store.get(eid);
+              if (!e) continue;
+              try {
+                const b = entityBounds(e);
+                selections.push({ minX: b.minX, minY: b.minY, maxX: b.maxX, maxY: b.maxY, color });
+              } catch {
+                /* sınır hesaplanamadı → atla */
+              }
+            }
+          }
         });
-        layer.update(cursors, ui.pixelSize());
+        layer.update(cursors, selections, ui.pixelSize());
       };
       aw.on('change', render);
       render();
@@ -245,6 +266,19 @@ export function CanvasStage() {
     }
     return () => cleanup();
   }, [collab, ui, registerHover]);
+
+  // Presence: kendi seçimini paylaş (uzaktakiler renkli kutuyla görür).
+  useEffect(() => {
+    if (!collab) return;
+    try {
+      (collab.awareness as unknown as { setLocalStateField: (k: string, v: unknown) => void }).setLocalStateField(
+        'selection',
+        selectedIds,
+      );
+    } catch {
+      /* awareness yoksa atla */
+    }
+  }, [collab, selectedIds]);
 
   return (
     // DOCK LAYOUT (Rayon/Figma deseni): üstte toolbar · sol dock | canvas | sağ dock · altta durum.

@@ -29,6 +29,11 @@ export function View3D({ store }: { store: EntityStore }) {
   const clipRef = useRef<((on: boolean) => void) | null>(null); // kesit clipping aç/kapat
   const [clip, setClip] = useState(false);
   const [hasSection, setHasSection] = useState(false);
+  // Kamera keyframe sunumu: kayıtlı görünümler arası yumuşak geçiş.
+  const viewsRef = useRef<{ theta: number; phi: number; radius: number }[]>([]);
+  const captureViewRef = useRef<(() => void) | null>(null);
+  const playViewsRef = useRef<(() => void) | null>(null);
+  const [viewCount, setViewCount] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -87,6 +92,22 @@ export function View3D({ store }: { store: EntityStore }) {
         cam.lookAt(target);
       };
       updateCam();
+
+      // Kamera keyframe sunumu: görünüm yakala + kayıtlılar arası yumuşak geçişle oynat.
+      let play: { i: number; t: number } | null = null;
+      const lerp = (a: number, b: number, k: number): number => a + (b - a) * k;
+      const easeInOut = (k: number): number => (k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2);
+      captureViewRef.current = (): void => {
+        viewsRef.current.push({ theta, phi, radius });
+        setViewCount(viewsRef.current.length);
+      };
+      playViewsRef.current = (): void => {
+        if (viewsRef.current.length >= 2) {
+          play = { i: 0, t: 0 };
+          spinRef.current = false;
+          setSpin(false);
+        }
+      };
 
       scene.add(new THREE.AmbientLight(0xffffff, 0.5));
       scene.add(new THREE.HemisphereLight(0xdfe6ff, 0x202225, 0.55)); // gökyüzü/zemin yumuşak dolgu
@@ -201,7 +222,21 @@ export function View3D({ store }: { store: EntityStore }) {
       let raf = 0;
       const loop = (): void => {
         raf = requestAnimationFrame(loop);
-        if (spinRef.current && !dragging) {
+        if (play && viewsRef.current.length >= 2) {
+          const a = viewsRef.current[play.i]!;
+          const b = viewsRef.current[play.i + 1]!;
+          play.t = Math.min(1, play.t + 0.012);
+          const k = easeInOut(play.t);
+          theta = lerp(a.theta, b.theta, k);
+          phi = lerp(a.phi, b.phi, k);
+          radius = lerp(a.radius, b.radius, k);
+          updateCam();
+          if (play.t >= 1) {
+            play.i += 1;
+            play.t = 0;
+            if (play.i >= viewsRef.current.length - 1) play = null; // sona geldi
+          }
+        } else if (spinRef.current && !dragging) {
           theta += 0.004; // otomatik tur (sunum hissi)
           updateCam();
         }
@@ -240,6 +275,9 @@ export function View3D({ store }: { store: EntityStore }) {
         snapshotRef.current = null;
         exportGlbRef.current = null;
         clipRef.current = null;
+        captureViewRef.current = null;
+        playViewsRef.current = null;
+        viewsRef.current = [];
         cancelAnimationFrame(raf);
         window.removeEventListener('pointermove', onMove);
         window.removeEventListener('pointerup', onUp);
@@ -296,6 +334,23 @@ export function View3D({ store }: { store: EntityStore }) {
             </button>
             <button
               type="button"
+              onClick={() => captureViewRef.current?.()}
+              className="rounded-md px-3 py-1 text-sm hover:bg-white/10"
+              title="Bu görünümü sunuma ekle (keyframe)"
+            >
+              📷 +Görünüm{viewCount > 0 ? ` (${viewCount})` : ''}
+            </button>
+            <button
+              type="button"
+              onClick={() => playViewsRef.current?.()}
+              disabled={viewCount < 2}
+              className="rounded-md px-3 py-1 text-sm hover:bg-white/10 disabled:opacity-40"
+              title="Kayıtlı görünümler arası sunum (yumuşak geçiş)"
+            >
+              ▶ Sunum
+            </button>
+            <button
+              type="button"
               onClick={() => snapshotRef.current?.()}
               className="rounded-md px-3 py-1 text-sm hover:bg-white/10"
               title="3B görünümü PNG indir"
@@ -332,6 +387,7 @@ export function View3D({ store }: { store: EntityStore }) {
               onClick={() => {
                 spinRef.current = false;
                 setSpin(false);
+                setViewCount(0);
                 setOpen(false);
               }}
               className="rounded-md px-3 py-1 text-sm hover:bg-white/10"
