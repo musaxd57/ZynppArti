@@ -7,9 +7,11 @@
 
 ## ŞU AN
 
-**Faz:** 2 — AI Render + Copilot → **BAŞLADI**. **2A + 2B TAMAM** ✅. Maliyetsiz tur + UI/dayanıklılık turu sürüyor (ADR-0019).
-**Branch:** `main` (güncel + push'lu). Tüm otonom turlar + 2026-06-23 turu (`feat/section-entity`) main'e merge edildi.
-**Durum:** Faz 1 + 2A/2B + maliyetsiz tur + **Playwright e2e** + **dock layout** + **bol hata-yakalama** + **kalıcı kesit entity'si (ADR-0039)** + **katman reorder/hibrit-z (ADR-0040)** + **2 yeni copilot kuralı**. **Test: 257.**
+**Faz:** 2 (AI copilot ✅) + Faz 4 erken önizleme (AI üretici ✅ deneysel). **Paralı AI kapısı AÇILDI** (Moses anahtarları girdi: Akash+OpenAI çalışıyor; Claude sonra).
+**Branch:** `main` (güncel + push'lu). 2026-06-23 turları main'e merge edildi.
+**Durum:** Faz 1 + 2A/2B + kesit entity (ADR-0039) + katman reorder (ADR-0040) + **AI copilot doğal-dil (ADR-0041)** + **3-sağlayıcı router/fallback (ADR-0042)** + **AI tasarım üretici + Asistan UI (ADR-0043)** + **streaming** + **kapı/pencere üretimi** + **canlı maliyet (PRO-FEATURES §2)**. **Test: 285.**
+
+**AI ÖZELLİKLERİ ÇALIŞIYOR (canlı doğrulandı):** Sol-alt **✦ Asistan** → "Sor" (akışlı soru-cevap, proje bağlamıyla) + "Çiz" (Türkçe tariften kat planı: duvar+oda+kapı+pencere, undo'lanabilir, parsel/m² farkında). Sağlayıcı adı UI'da gizli. Anahtarlar yalnız `apps/web/.env.local` (sunucu route, tarayıcıya sızmaz). Router: basit→Akash, orta→OpenAI, karmaşık/yönetmelik→Claude (yoksa fallback).
 
 **Otonom devam turu (2026-06-22 akşam, "30 dk durmadan", `feat/autonomous-30min`):**
 - **Sol dock yeniden boyutlanabilir** (sağ dock gibi: sürükle-kol + localStorage, 180–480px; sol paneller w-full). *(önce yarıda kalmıştı, tamamlandı + main'e alındı)*
@@ -118,7 +120,14 @@
 
 ## GÜNLÜK
 
-### 2026-06-23
+### 2026-06-23 (akşam — "1 saat durmadan" otonom AI turu)
+- **Streaming** — Sor modu yanıtı kelime kelime akıyor (`chatStream`: Anthropic messages.stream / OpenAI-Akash stream:true; `askCopilotStream` akış-öncesi fallback; `/api/copilot` ReadableStream; istemci body stream okur).
+- **Akıllı çizim** — design prompt m² hedefi (±%10) + parsel "kullanılabilir alan" hint'i; yerleşim parsel içine (sol-üst+çekme) ya da mevcut çizimin sağına (dx,dy offset).
+- **Kapı/pencere üretimi (Faz 4 ilerleme)** — AI planı artık openings üretiyor; istemci en yakın duvara projeksiyonla (t) bağlıyor, tek BatchCommand'de (undo). Canlı: 90m² 3 oda → 4 kapı+4 pencere doğru yerleşti.
+- **Canlı yaklaşık maliyet (PRO-FEATURES §2)** — `cost.ts` (saf) metraj×birim fiyat→TL; TakeoffPanel "Yaklaşık Maliyet" + Excel "Maliyet" sayfası (kaba/atıflı).
+- **Panel kontrast fix** — Asistan paneli siyah-üstüne-siyah okunmuyordu → yüksek kontrast (neutral-800 + parlak yazı). **Test: 285.** Zincir yeşil.
+
+### 2026-06-23 (gündüz)
 - **ASİSTAN ARAYÜZÜ + AI TASARIM ÜRETİCİ (deneysel, ADR-0043):** (1) Yeni **Assistant** slide-over paneli (logo→tıkla→solda büyük panel; "Sor"+"Çiz" modu); sağlayıcı/model adı UI'dan kaldırıldı ("kendi AI'mız" hissi — CopilotChat silindi). (2) **Çiz modu = AI kat planı taslağı**: LLM katı JSON plan (cm duvarlar + oda etiketleri) üretir (`design.ts`, complex tier), istemci **Command ile çizer** (BatchCommand→undo), RoomManager mahalleri türetir, pointInPolygon ile adlandırır, zoom-to-fit. **Canlı doğrulandı:** "8x6m daire çiz" → GLM-5.2 geçerli plan → çiziliyor. Fikir 2'nin erken önizlemesi (Moses talebiyle öne çekildi; tam üretici Faz 4). **Test: 277** (ai 20: +design parse). Zincir yeşil (typecheck 8/8 · lint 8/8 · build 1/1). NOT: basit dikdörtgensel taslak; ölçüler kullanıcı kontrolünde.
 - **3 SAĞLAYICILI AKILLI ROUTER + AkashML (ADR-0042):** Copilot artık soru zorluğuna göre otomatik sağlayıcı seçiyor + fallback yapıyor. **Akash** (`zai-org/GLM-5.2`, OpenAI-uyumlu, ucuz — çoğu trafik) · **OpenAI** (`gpt-5.4`, dar "orta" bant, nadir) · **Anthropic** (`claude-opus-4-8`, karmaşık/yönetmelik). `router.ts` classifyTier (Türkçe kw+uzunluk, tr-locale) + FALLBACK_CHAINS; `buildProviders` yalnız anahtarı olanı kurar (eksik = elenir, hata değil). AkashML `openai` SDK + baseURL (yeni dep yok). ADR-0041 inceleme bulguları katıldı (Anthropic kırpılma/refusal, OpenAI max_completion_tokens, genel hata mesajı, mesaj sınırı). Modeller `.env`'den ayarlanır. **Test: 271** (ai 14: prompt+router). Zincir yeşil (typecheck 8/8 · lint 8/8 · build 1/1). **Moses'a:** anahtarları `apps/web/.env.local`'a koy (Akash + OpenAI; Claude sonra).
 - **PARALI AI BAŞLADI — Fikir 1: doğal-dil copilot (ADR-0041, ADR-0019 kapısı açıldı):** Kullanıcı serbest soru sorar, AI proje bağlamıyla (mahaller+metrik+deterministik bulgular+seçim) cevaplar. Yeni **`packages/ai`** sağlayıcı-bağımsız adapter (Anthropic `claude-opus-4-8` + OpenAI, resmî SDK'lar; `.env` seçimi, Anthropic önce). Sunucu route **`/api/copilot`** (Node, dynamic) → anahtar yalnız sunucuda (.env.local), tarayıcıya gitmez. İstemci **CopilotChat** bileşeni (sol dock, Copilot altında). Prompt kurma saf+7 test. **Streaming v1'de yok** (sonraki adım). **Moses'a:** OpenAI anahtarını `apps/web/.env.local`'a koy (`OPENAI_API_KEY=...`) + dev'i yeniden başlat → test. Claude anahtarı: adapter+UI hazır, "şimdi al" denince → `.env`'de `ANTHROPIC_API_KEY` + varsayılan Claude. ROADMAP "Paralı AI Ayağı" sırası #1 yapıldı (#2 render, #3 üretici sırada). **Test: 264** (ai 7). Zincir yeşil (typecheck 8/8 · lint 8/8 · build 1/1).
