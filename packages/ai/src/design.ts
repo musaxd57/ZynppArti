@@ -51,9 +51,14 @@ export const DESIGN_SYSTEM = [
   'rooms[].cx/cy o odanın İÇİNDE bir nokta olmalı.',
 ].join('\n');
 
-/** Bir sayının geçerli sonlu sayı olduğunu doğrular. */
+/** Azami duvar sayısı — taslak için fazlasıyla yeter; aşırısı senkron findFaces'i (O(n²)) dondurur. */
+const MAX_WALLS = 600;
+/** Azami koordinat büyüklüğü (cm) — ~10 km; bunun ötesi saçma + zoom/indeks'i bozar. */
+const MAX_COORD = 1_000_000;
+
+/** Bir sayının geçerli, sonlu ve makul büyüklükte koordinat olduğunu doğrular. */
 function num(v: unknown): v is number {
-  return typeof v === 'number' && Number.isFinite(v);
+  return typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= MAX_COORD;
 }
 
 /**
@@ -99,6 +104,7 @@ export function parseLayout(text: string): Layout | null {
     walls.push([x1, y1, x2, y2]);
   }
   if (walls.length === 0) return null; // çizilecek duvar yoksa başarısız
+  if (walls.length > MAX_WALLS) return null; // aşırı/saldırgan çıktı → reddet (UI'yi dondurma)
 
   const rawRooms = Array.isArray(obj.rooms) ? obj.rooms : [];
   const rooms: LayoutRoom[] = [];

@@ -28,6 +28,16 @@ describe('parseLayout', () => {
     expect(parseLayout('JSON yok burada')).toBeNull();
   });
 
+  it('aşırı duvar sayısını reddeder (UI donma koruması)', () => {
+    const many = Array.from({ length: 700 }, (_, i) => [0, i, 100, i]);
+    expect(parseLayout(JSON.stringify({ walls: many, rooms: [] }))).toBeNull();
+  });
+
+  it('saçma büyüklükte koordinatı eler', () => {
+    const out = parseLayout('{"walls":[[0,0,9999999999,0],[0,0,100,0]],"rooms":[]}');
+    expect(out!.walls).toEqual([[0, 0, 100, 0]]); // devasa koordinatlı duvar atıldı
+  });
+
   it('cx/cy eksik odayı atlar, summary varsayılanı koyar', () => {
     const out = parseLayout('{"walls":[[0,0,100,0]],"rooms":[{"name":"Yarım"}]}');
     expect(out!.rooms).toHaveLength(0);

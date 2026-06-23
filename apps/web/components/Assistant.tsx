@@ -45,6 +45,18 @@ interface AssistantProps {
 
 const WALL_THICKNESS = 20; // cm — AI taslağı için varsayılan duvar kalınlığı
 
+/** Geçerli mahal tipleri — LLM'in uydurduğu tip (ör. "bedroom") modele yazılmasın. */
+const VALID_ROOM_TYPES = new Set<RoomType>([
+  'living',
+  'kitchen',
+  'bathroom',
+  'wet',
+  'sleeping',
+  'circulation',
+  'service',
+  'other',
+]);
+
 function buildContext(store: EntityStore, selectedIds: string[]) {
   const all = store.all();
   const spaces = all.filter((e): e is Space => e.type === 'space');
@@ -80,47 +92,63 @@ interface LayoutRoom {
   cy: number;
 }
 
-/** AI'ın ürettiği planı Command sistemiyle çizer (undo'lanabilir) + odaları adlandırır (best-effort). */
+/**
+ * AI'ın ürettiği planı Command sistemiyle çizer (undo'lanabilir) + odaları adlandırır (best-effort).
+ * Mevcut çizim varsa plan onun SAĞINA kaydırılır (üst üste binmesin). Döndürür: çizilen duvar +
+ * adlandırılan mahal sayısı.
+ */
 function applyLayout(
   store: EntityStore,
   history: History,
   walls: [number, number, number, number][],
   rooms: LayoutRoom[],
-): number {
+): { drawn: number; named: number } {
+  if (walls.length === 0) return { drawn: 0, named: 0 };
+
+  // Mevcut duvarların sağına 3 m boşlukla kaydır (varsa) → mevcut çizimin üstüne binmesin.
+  const existing = store.all().filter((e): e is Wall => e.type === 'wall');
+  const dx =
+    existing.length > 0 ? Math.max(...existing.flatMap((w) => [w.start.x, w.end.x])) + 300 : 0;
+
   const wallCmds = walls.map(
     ([x1, y1, x2, y2]) =>
       new AddEntity({
         id: createEntityId(),
         type: 'wall',
         layerId: 'default',
-        start: { x: x1, y: y1 },
-        end: { x: x2, y: y2 },
+        start: { x: x1 + dx, y: y1 },
+        end: { x: x2 + dx, y: y2 },
         thickness: WALL_THICKNESS,
       } satisfies Wall),
   );
-  if (wallCmds.length === 0) return 0;
   history.dispatch(new BatchCommand('AI taslak plan', wallCmds));
 
   // Duvarlar eklenince RoomManager mahalleri senkron türetir → merkez noktasıyla ad/tip ata.
+  let named = 0;
   try {
     const spaces = store.all().filter((e): e is Space => e.type === 'space');
-    const renameCmds = [];
+    const renameCmds: UpdateEntity[] = [];
     const used = new Set<string>();
     for (const r of rooms) {
+      const rt = r.type && VALID_ROOM_TYPES.has(r.type as RoomType) ? (r.type as RoomType) : undefined;
       const sp = spaces.find(
-        (s) => !used.has(s.id) && s.boundary.length >= 3 && pointInPolygon({ x: r.cx, y: r.cy }, s.boundary),
+        (s) =>
+          !used.has(s.id) &&
+          s.boundary.length >= 3 &&
+          pointInPolygon({ x: r.cx + dx, y: r.cy }, s.boundary),
       );
       if (!sp) continue;
       used.add(sp.id);
-      renameCmds.push(
-        new UpdateEntity({ ...sp, name: r.name, ...(r.type ? { roomType: r.type as RoomType } : {}) }),
-      );
+      renameCmds.push(new UpdateEntity({ ...sp, name: r.name, ...(rt ? { roomType: rt } : {}) }));
     }
-    if (renameCmds.length > 0) history.dispatch(new BatchCommand('AI oda adları', renameCmds));
+    if (renameCmds.length > 0) {
+      history.dispatch(new BatchCommand('AI oda adları', renameCmds));
+      named = renameCmds.length;
+    }
   } catch (e) {
     console.error('AI oda adlandırma atlandı (duvarlar çizildi):', e);
   }
-  return wallCmds.length;
+  return { drawn: wallCmds.length, named };
 }
 
 function SparkleIcon({ className }: { className?: string }) {
@@ -166,15 +194,19 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
           walls?: [number, number, number, number][];
           rooms?: LayoutRoom[];
         };
-        const drawn = applyLayout(store, history, d.walls ?? [], d.rooms ?? []);
+        const { drawn, named } = applyLayout(store, history, d.walls ?? [], d.rooms ?? []);
         if (drawn > 0) zoomToFit?.(); // çizilen planı ekrana getir
+        const undoNote =
+          named > 0
+            ? 'Geri almak için Ctrl+Z (önce adlar, tekrar bas → duvarlar).'
+            : 'Beğenmezsen Ctrl+Z ile geri al.';
         setMessages((m) => [
           ...m,
           {
             role: 'assistant',
             content: `${d.summary ?? 'Taslak çizildi.'}\n\n✓ ${drawn} duvar çizildi${
-              (d.rooms?.length ?? 0) > 0 ? `, ${d.rooms!.length} mahal adlandırıldı` : ''
-            }. Beğenmezsen Ctrl+Z ile geri al.`,
+              named > 0 ? `, ${named} mahal adlandırıldı` : ''
+            }. ${undoNote}`,
           },
         ]);
       } else {
