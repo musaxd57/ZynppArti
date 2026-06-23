@@ -7,11 +7,12 @@
 
 ## ŞU AN
 
-**Faz:** 2 (AI copilot ✅) + Faz 4 erken önizleme (AI üretici ✅ deneysel). **Paralı AI kapısı AÇILDI** (Moses anahtarları girdi: Akash+OpenAI çalışıyor; Claude sonra).
-**Branch:** `main` (güncel + push'lu). 2026-06-23 turları main'e merge edildi.
-**Durum:** Faz 1 + 2A/2B + kesit entity (ADR-0039) + katman reorder (ADR-0040) + **AI copilot doğal-dil (ADR-0041)** + **3-sağlayıcı router/fallback (ADR-0042)** + **AI tasarım üretici + Asistan UI (ADR-0043)** + **streaming** + **kapı/pencere üretimi** + **canlı maliyet (PRO-FEATURES §2)**. **Test: 285.**
+**🚀 CANLI YAYINDA:** Web `https://vesna.design` (Vercel) + sync `wss://zynpparti-production.up.railway.app` (Railway). 3 AI anahtarı Vercel env'de; AI adı **Vesna**.
+**Faz:** 2 (AI copilot ✅) + Faz 4 erken önizleme (AI üretici ✅) + Faz 1 DWG import ✅ + Faz 3 (presence+seçim+yorum) + Faz 5 (3B+kesit+glTF+kamera keyframe) önizleme.
+**Branch:** `main` (güncel + push'lu, Vercel/Railway buradan otomatik deploy).
+**Durum:** Üç sağlayıcı router (ADR-0042) **hız-öncelikli** güncellendi: basit/orta→**OpenAI** (~1.3sn), karmaşık/yönetmelik→**Claude** (~2.7sn), **Akash yedek** (GLM-5.2 reasoning ~8sn yavaş). **Test: ~313.**
 
-**AI ÖZELLİKLERİ ÇALIŞIYOR (canlı doğrulandı):** Sol-alt **✦ Asistan** → "Sor" (akışlı soru-cevap, proje bağlamıyla) + "Çiz" (Türkçe tariften kat planı: duvar+oda+kapı+pencere, undo'lanabilir, parsel/m² farkında). Sağlayıcı adı UI'da gizli. Anahtarlar yalnız `apps/web/.env.local` (sunucu route, tarayıcıya sızmaz). Router: basit→Akash, orta→OpenAI, karmaşık/yönetmelik→Claude (yoksa fallback).
+**AI ÇALIŞIYOR (canlı):** Üst araç çubuğu **Vesna** → Sor/Çiz/Render. Sağlayıcı adı UI'da gizli. Anahtarlar yalnız Vercel env (sunucu route `/api/copilot`, tarayıcıya sızmaz; `@zynpparti/ai` client'a import edilmez). Deploy: `docs/DEPLOY.md`.
 
 **Otonom devam turu (2026-06-22 akşam, "30 dk durmadan", `feat/autonomous-30min`):**
 - **Sol dock yeniden boyutlanabilir** (sağ dock gibi: sürükle-kol + localStorage, 180–480px; sol paneller w-full). *(önce yarıda kalmıştı, tamamlandı + main'e alındı)*
@@ -119,6 +120,12 @@
 ---
 
 ## GÜNLÜK
+
+### 2026-06-23 (gece-14 — CANLI YAYIN + hız routing + 5-ajan denetim turu)
+- **🚀 YAYINDA:** Web → Vercel (`vesna.design` + `zynpp-arti-web.vercel.app`), Sync → Railway (`zynpparti-production.up.railway.app`, Root Directory=apps/sync). AI anahtarları Vercel env; `NEXT_PUBLIC_COLLAB_WS=wss://...railway.app`. AI ismi **Arki→Vesna** (domain). turbo.json'a build env'leri eklendi.
+- **Hız routing (ölçümle):** OpenAI ~1.3sn, Claude ~2.7sn, Akash GLM-5.2 ~8sn (reasoning). Basit/orta→OpenAI, karmaşık→Claude, Akash yalnız yedek (router.ts).
+- **5-ajan denetim + düzeltmeler:** (HIGH) DWG tarayıcıda bozuktu — `create('/')`→`//libredwg-web.wasm`; `WASM_DIR=''` düzeltti. (HIGH) Yorum render GPU sızıntısı → `destroy({children:true})`. (MED) View3D theta en-kısa-yol + viewCount reset; highlight.ts yorum kenarlığı; Assistant daktilo-yarım-kalma + akıllı auto-scroll; EmptyCanvasHint metni; dxf mm metin yüksekliği. (LOW) presence seçim temizliği. +5 test (document 109, copilot 43).
+- Zincir yeşil (typecheck 9/9 · lint 9/9 · ~313 test · build 1/1).
 
 ### 2026-06-23 (gece-13 — DWG import + 3 collab/3B feature + hosting planı)
 - **DWG import (Faz 1 boşluğu kapandı):** `packages/io/dwg-import.ts` libredwg-web (WASM) ile DWG→DXF→importDxf; wasm `apps/web/public`'te; "CAD Yükle" .dxf+.dwg. next.config'te node: şeması düzeltmesi. Gerçek AC1021 dosyayla Node'da doğrulandı.

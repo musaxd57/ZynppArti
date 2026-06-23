@@ -205,7 +205,9 @@ function makeAnnotation(
 ): Annotation | null {
   const value = (text ?? '').trim();
   if (!pos || value === '') return null;
-  const h = (height && height > 0 ? height : DEFAULT_TEXT_HEIGHT) * factor;
+  // Gerçek yükseklik kaynak biriminde → cm'ye ölçekle (×factor). Varsayılan ZATEN cm → ölçekleme.
+  // (Aksi halde mm dosyada factor=0.1 ile varsayılan 25 cm → 2,5 cm'ye düşüp metin görünmez olurdu.)
+  const h = height && height > 0 ? height * factor : DEFAULT_TEXT_HEIGHT;
   return {
     id: createEntityId(),
     type: 'annotation',
