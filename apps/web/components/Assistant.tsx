@@ -16,7 +16,7 @@ import {
   type Space,
   type Wall,
 } from '@zynpparti/document';
-import { pointInPolygon } from '@zynpparti/geometry';
+import { pointInPolygon, findFaces } from '@zynpparti/geometry';
 
 /**
  * ZynppArti Asistanı — uygulamanın kendi AI panelı (sağlayıcı adı GÖSTERİLMEZ; "kendi AI'mız" hissi).
@@ -122,6 +122,39 @@ function projectToSeg(
   let t = ((px - a.x) * dx + (py - a.y) * dy) / len2;
   t = Math.max(0, Math.min(1, t));
   return { t, dist: Math.hypot(px - (a.x + t * dx), py - (a.y + t * dy)) };
+}
+
+/**
+ * Bir varyantı ÇİZMEDEN copilot kurallarıyla puanlar (Faz 4 "puanlama"): duvarlardan mahalleri
+ * türetir (findFaces), oda tiplerini eşler, runCopilotChecks ile uyumsuzluk (info-dışı) sayar.
+ * Hata/dejenere geometride null. (Saf: store'a dokunmaz.)
+ */
+function scoreLayout(v: Layout): number | null {
+  try {
+    const faces = findFaces(v.walls.map(([x1, y1, x2, y2]) => ({ a: { x: x1, y: y1 }, b: { x: x2, y: y2 } })));
+    const spaces: Space[] = faces.map((boundary, i) => {
+      const room = v.rooms.find((r) => pointInPolygon({ x: r.cx, y: r.cy }, boundary));
+      return {
+        id: `v${i}`,
+        type: 'space',
+        layerId: 'rooms',
+        name: room?.name ?? 'Mahal',
+        ...(room?.type ? { roomType: room.type as RoomType } : {}),
+        boundary,
+      };
+    });
+    const walls: Wall[] = v.walls.map(([x1, y1, x2, y2], i) => ({
+      id: `w${i}`,
+      type: 'wall',
+      layerId: 'default',
+      start: { x: x1, y: y1 },
+      end: { x: x2, y: y2 },
+      thickness: WALL_THICKNESS,
+    }));
+    return runCopilotChecks(spaces, walls, [], []).filter((f) => f.severity !== 'info').length;
+  } catch {
+    return null;
+  }
 }
 
 /** Render istemi: kullanıcı tarifine projedeki oda/m² özetini ekler (program-farkında görsel). */
@@ -331,11 +364,12 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
         if (vs.length === 1) {
           drawVariant(vs[0]!); // tek varyant → doğrudan çiz
         } else {
-          // Birden çok alternatif → kullanıcı seçsin (Faz 4: ≥2 varyant, kullanıcı seçer).
-          setVariants(vs);
+          // Birden çok alternatif → copilot uyumuna göre sırala (en az uyarı üstte), kullanıcı seçsin.
+          const scored = [...vs].sort((a, b) => (scoreLayout(a) ?? 99) - (scoreLayout(b) ?? 99));
+          setVariants(scored);
           setMessages((m) => [
             ...m,
-            { role: 'assistant', content: `${vs.length} alternatif plan hazır — aşağıdan birini seç.` },
+            { role: 'assistant', content: `${vs.length} alternatif plan hazır — en uyumlu üstte, birini seç.` },
           ]);
         }
       } else if (mode === 'render') {
@@ -531,7 +565,22 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
                 onClick={() => drawVariant(v)}
                 className="rounded-lg border border-white/15 bg-white/5 p-2 text-left text-sm hover:border-blue-400/60 hover:bg-white/10"
               >
-                <div className="font-medium text-white/90">Seçenek {i + 1}</div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-white/90">Seçenek {i + 1}</span>
+                  {(() => {
+                    const s = scoreLayout(v);
+                    if (s === null) return null;
+                    return (
+                      <span
+                        className={`rounded px-1.5 py-0.5 text-[10px] ${
+                          s === 0 ? 'bg-emerald-600/40 text-emerald-100' : 'bg-amber-600/40 text-amber-100'
+                        }`}
+                      >
+                        {s === 0 ? '✓ uyumlu' : `⚠ ${s} uyarı`}
+                      </span>
+                    );
+                  })()}
+                </div>
                 <div className="text-xs text-white/60">{v.summary}</div>
                 <div className="mt-1 text-[10px] text-white/40">
                   {v.rooms.length} oda · {v.walls.length} duvar · {v.openings.length} kapı/pencere — çizmek için tıkla
