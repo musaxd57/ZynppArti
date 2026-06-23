@@ -14,7 +14,7 @@ import {
   type Sheet,
 } from '@zynpparti/document';
 import type { ToolManager, ToolName } from '@zynpparti/tools';
-import { importDxf, exportDxf, exportSvg } from '@zynpparti/io';
+import { importDxf, importDwg, exportDxf, exportSvg } from '@zynpparti/io';
 import { Undo2, Redo2, Maximize, PanelLeft, PanelLeftClose } from 'lucide-react';
 import { alertDialog, confirmDialog } from '@/lib/dialog';
 import { toast } from '@/lib/toast';
@@ -90,19 +90,29 @@ export function Toolbar({
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
+    const isDwg = file.name.toLowerCase().endsWith('.dwg');
     try {
-      const { walls, annotations } = importDxf(await file.text());
+      if (isDwg) toast('DWG çözülüyor… (ilk seferde WASM yüklenir, biraz sürebilir)', 'info', 4000);
+      const { walls, annotations } = isDwg
+        ? await importDwg(await file.arrayBuffer())
+        : importDxf(await file.text());
       if (walls.length === 0 && annotations.length === 0) {
-        toast('DXF içe aktarılabilir içerik içermiyor (yalnız çizgi/yay/daire/metin desteklenir).', 'info');
+        toast('İçe aktarılabilir içerik bulunamadı (çizgi/yay/daire/metin/blok).', 'info');
         return;
       }
       const imported = [...walls, ...annotations];
-      history.dispatch(new BatchCommand('DXF içe aktar', imported.map((ent) => new AddEntity(ent))));
-      toast(`${imported.length} öğe içe aktarıldı (${walls.length} duvar).`, 'success');
+      history.dispatch(new BatchCommand('CAD içe aktar', imported.map((ent) => new AddEntity(ent))));
+      toast(`${imported.length} öğe içe aktarıldı (${walls.length} çizgi/duvar).`, 'success');
     } catch (err) {
       // Mimar-dostu mesaj; teknik ayrıntı konsola.
-      console.error('DXF import hatası:', err);
-      toast('DXF okunamadı — dosya bozuk ya da desteklenmeyen sürüm olabilir. AutoCAD\'de "DXF (R12/2018)" olarak kaydetmeyi dene.', 'error', 5000);
+      console.error('CAD import hatası:', err);
+      toast(
+        isDwg
+          ? 'DWG okunamadı — dosya bozuk olabilir; AutoCAD\'de "DXF" olarak kaydetmeyi de deneyebilirsin.'
+          : 'DXF okunamadı — dosya bozuk ya da desteklenmeyen sürüm olabilir.',
+        'error',
+        5000,
+      );
     }
   }
 
@@ -292,7 +302,7 @@ export function Toolbar({
       </button>
       <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button type="button" onClick={() => fileRef.current?.click()} className={btn}>
-        DXF Yükle
+        CAD Yükle
       </button>
       <button type="button" onClick={onExportDxf} className={btn}>
         DXF İndir
@@ -332,7 +342,7 @@ export function Toolbar({
       <input
         ref={fileRef}
         type="file"
-        accept=".dxf"
+        accept=".dxf,.dwg"
         className="hidden"
         onChange={(e) => void onFile(e)}
       />

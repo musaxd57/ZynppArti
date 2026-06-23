@@ -1,0 +1,21 @@
+import { importDxf, type DxfImportResult } from './dxf-import';
+
+/**
+ * DWG içe aktarma (Faz 1 — CLAUDE §8.4). Tarayıcıda WASM (`@mlightcad/libredwg-web`) ile DWG'yi
+ * DXF'e çevirir, sonra mevcut DXF import hattını (LINE/POLYLINE/ARC/CIRCLE/TEXT/INSERT) kullanır →
+ * tek yerde tutarlı geometri. WASM ağır (~9 MB) olduğu için sağlayıcı **dinamik import** edilir
+ * (yalnız DWG yüklenince yüklenir, ana paketi şişirmez).
+ *
+ * `create(dir)` parametresi wasm'ın bulunduğu DİZİNdir → tarayıcıda `'/'` (apps/web/public'ten
+ * `/libredwg-web.wasm` servis edilir). Node'da gerçek dosyayla doğrulandı.
+ */
+const WASM_DIR = '/';
+
+export async function importDwg(content: ArrayBuffer): Promise<DxfImportResult> {
+  const { LibreDwg } = await import('@mlightcad/libredwg-web');
+  const lib = await LibreDwg.create(WASM_DIR);
+  const dxf = lib.dwg_write_dxf(content);
+  if (!dxf) throw new Error('DWG çözülemedi (dönüşüm boş döndü).');
+  const text = typeof dxf === 'string' ? dxf : new TextDecoder().decode(dxf);
+  return importDxf(text);
+}

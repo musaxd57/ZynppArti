@@ -20,6 +20,28 @@ const nextConfig: NextConfig = {
     // sayfayı 500/boş bırakıyordu. Bu paneli kapatınca o hata sınıfı tamamen ortadan kalkıyor.
     devtoolSegmentExplorer: false,
   },
+  webpack: (config, { isServer, webpack }) => {
+    // libredwg-web (DWG WASM) Emscripten glue'su Node dalında `node:module/fs/path/url` import eder;
+    // tarayıcı paketinde bunlar ölü-koddur ama webpack çözmeye çalışıp patlıyor → node: şemasını
+    // çıplak ada çevir + tarayıcıda boş modüle düşür.
+    if (!isServer) {
+      config.plugins.push(
+        new webpack.NormalModuleReplacementPlugin(/^node:/, (resource: { request: string }) => {
+          resource.request = resource.request.replace(/^node:/, '');
+        }),
+      );
+      config.resolve = config.resolve ?? {};
+      config.resolve.fallback = {
+        ...(config.resolve.fallback ?? {}),
+        module: false,
+        fs: false,
+        path: false,
+        url: false,
+        crypto: false,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

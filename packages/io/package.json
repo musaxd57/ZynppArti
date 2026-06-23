@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@mlightcad/libredwg-web": "^0.7.7",
     "@zynpparti/document": "workspace:*",
     "@zynpparti/geometry": "workspace:*",
     "dxf-parser": "^1.1.2"
