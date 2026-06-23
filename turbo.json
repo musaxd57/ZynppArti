@@ -8,7 +8,13 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "ANTHROPIC_API_KEY",
+        "OPENAI_API_KEY",
+        "AKASHML_API_KEY",
+        "NEXT_PUBLIC_COLLAB_WS"
+      ]
     },
     "test": {},
     "lint": {},
