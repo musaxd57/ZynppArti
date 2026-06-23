@@ -15,8 +15,8 @@ const LAYER_NAMES: Record<string, string> = {
   sheet: 'Paftalar',
   section: 'Kesit',
 };
-/** Sabit gösterim sırası (bilinenler önce). */
-const ORDER = ['default', 'rooms', 'furniture', 'annotation', 'site', 'sheet', 'section'];
+
+const ORDER_KEY = 'zynpparti.layerOrder';
 
 /** Katman kimlik rengi (sol şerit) — hızlı görsel tanıma (Figma/AutoCAD deseni). */
 const LAYER_COLORS: Record<string, string> = {
@@ -33,16 +33,12 @@ function layerName(id: string): string {
   return LAYER_NAMES[id] ?? id;
 }
 
-function collect(store: EntityStore): { id: string; count: number }[] {
+/** Kullanımdaki katmanları (entity sayısıyla) LayerState z-sırasına göre (ön→arka) döndürür. */
+function collect(store: EntityStore, layers: LayerState): { id: string; count: number }[] {
   const counts = new Map<string, number>();
   for (const e of store.all()) counts.set(e.layerId, (counts.get(e.layerId) ?? 0) + 1);
-  return [...counts.entries()]
-    .map(([id, count]) => ({ id, count }))
-    .sort((a, b) => {
-      const ia = ORDER.indexOf(a.id);
-      const ib = ORDER.indexOf(b.id);
-      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.id.localeCompare(b.id);
-    });
+  const ordered = layers.sortLayers([...counts.keys()]);
+  return ordered.map((id) => ({ id, count: counts.get(id) ?? 0 }));
 }
 
 /* Feather-tarzı 16px çizgi ikonlar (gömülü SVG — ek bağımlılık yok, emoji'den net). */
@@ -97,6 +93,19 @@ function SoloIcon() {
     </svg>
   );
 }
+function GripIcon() {
+  // sürükleme tutamacı (6 nokta) — "yukarı/aşağı sürükle"
+  return (
+    <svg className={ICON} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <circle cx="9" cy="6" r="1.5" />
+      <circle cx="15" cy="6" r="1.5" />
+      <circle cx="9" cy="12" r="1.5" />
+      <circle cx="15" cy="12" r="1.5" />
+      <circle cx="9" cy="18" r="1.5" />
+      <circle cx="15" cy="18" r="1.5" />
+    </svg>
+  );
+}
 
 interface LayerPanelProps {
   store: EntityStore;
@@ -114,15 +123,26 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
   // Kullanıcı özel katman adları (çift-tık düzenle, localStorage). Yoksa kanonik ada düşer.
   const [labels, setLabels] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
+  // Sürükle-sırala durumu: sürüklenen katman + üzerine gelinen hedef (görsel ipucu için).
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
   useEffect(() => {
     try {
       const s = localStorage.getItem('zynpparti.layerLabels');
       if (s) setLabels(JSON.parse(s) as Record<string, string>);
+      const o = localStorage.getItem(ORDER_KEY);
+      if (o) {
+        const parsed: unknown = JSON.parse(o);
+        // Bozuk/eski veriye karşı doğrula: yalnız string[] kabul (yabancı tipler sıralamayı bozmasın).
+        if (Array.isArray(parsed) && parsed.every((x) => typeof x === 'string')) {
+          layers.setOrder(parsed as string[]); // kaydedilmiş z-sırasını geri yükle
+        }
+      }
     } catch {
       /* yoksay */
     }
-  }, []);
+  }, [layers]);
 
   useEffect(() => {
     const u1 = store.subscribe(rerender);
@@ -150,10 +170,24 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
     setEditingId(null);
   };
 
-  const rows = collect(store);
+  const rows = collect(store, layers);
   if (rows.length === 0) return null;
 
   const allIds = rows.map((r) => r.id);
+
+  /** `dragId`'yi `targetId`'nin önüne taşıyıp yeni z-sırasını uygular + kaydeder (ön→arka). */
+  const reorder = (targetId: string): void => {
+    if (!dragId || dragId === targetId) return;
+    const next = allIds.filter((id) => id !== dragId);
+    const at = next.indexOf(targetId);
+    next.splice(at < 0 ? next.length : at, 0, dragId);
+    layers.setOrder(next);
+    try {
+      localStorage.setItem(ORDER_KEY, JSON.stringify(next));
+    } catch {
+      /* yoksay */
+    }
+  };
   const hiddenCount = rows.filter((r) => layers.isHidden(r.id)).length;
   const badge = hiddenCount > 0 ? `${rows.length} · ${hiddenCount} gizli` : `${rows.length}`;
 
@@ -171,9 +205,38 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
           return (
             <div
               key={id}
-              className="flex items-center gap-1.5 rounded px-1 py-1 hover:bg-white/10"
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (overId !== id) setOverId(id);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                reorder(id);
+                setDragId(null);
+                setOverId(null);
+              }}
+              onDragEnd={() => {
+                setDragId(null);
+                setOverId(null);
+              }}
+              className={`flex items-center gap-1.5 rounded px-1 py-1 hover:bg-white/10 ${
+                dragId === id ? 'opacity-40' : ''
+              } ${overId === id && dragId !== id ? 'ring-1 ring-blue-400/70' : ''}`}
               title={locked ? `${name} kilitli — seçmek için kilidi aç` : name}
             >
+              {/* Yalnız grip sürüklenebilir → rename input'u + buton tıklamaları bozulmaz. */}
+              <span
+                draggable
+                onDragStart={(e) => {
+                  setDragId(id);
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+                className="grid h-5 w-3 shrink-0 cursor-grab place-items-center text-white/30 hover:text-white/60"
+                aria-hidden
+                title="Sürükle: katman z-sırasını değiştir (üst = önde)"
+              >
+                <GripIcon />
+              </span>
               <span
                 className="h-4 w-1 shrink-0 rounded-full"
                 style={{ backgroundColor: LAYER_COLORS[id] ?? '#6b7280', opacity: hidden ? 0.3 : 1 }}
@@ -212,6 +275,7 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
               {editingId === id ? (
                 <input
                   autoFocus
+                  draggable={false}
                   defaultValue={name}
                   onBlur={(e) => saveLabel(id, e.target.value)}
                   onKeyDown={(e) => {

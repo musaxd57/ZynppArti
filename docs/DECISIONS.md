@@ -5,6 +5,12 @@
 
 ---
 
+## ADR-0040 — Katman z-sırası: sürükle-sırala + akıllı hibrit bant (hiyerarşi Faz 3'e ertelendi)
+**Tarih:** 2026-06-23 · **Durum:** Kabul
+**Bağlam:** Katmanlar (CLAUDE.md §7, proje adı = katman+artı) şimdiye dek yalnız görünürlük/kilit/solo kontrol ediyordu; z-sırası entity **tipine** göre sabitti. Kullanıcı katman sırasını (neyin neyin üstüne çizileceği) ayarlayamıyordu. Tam Figma-tarzı "sıra = z" ise CAD planında sorun: "Mahaller" yukarı alınınca oda dolguları duvarları örter, etiketler duvar altında kalır (Moses ile netleştirildi).
+**Karar:** **Akıllı hibrit z** (3 bant, EntityLayer): **ALT (sabit)** = pafta çerçeveleri + oda dolguları/malzeme/çevre; **ORTA (katman-sıralı)** = çizgisel entity'ler (duvar/boşluk/blok/parsel/ölçü/kesit), her `layerId` kendi alt-container'ında, `LayerState.sortLayers` ön→arka sırasına göre dizilir; **ÜST (sabit)** = tüm metin/etiketler. LayerState'e açık `order` + `setOrder`/`sortLayers` + `DEFAULT_LAYER_ORDER` eklendi (view-state, undo dışı — §6.1). LayerPanel'de **grip ile sürükle-sırala** (yalnız tutamaç draggable → rename input/butonlar bozulmaz) + localStorage kalıcılık (doğrulamalı). **İç içe hiyerarşi (katman grupları) bilinçli olarak Faz 3'e ertelendi:** döngü invariant'ları yalnız collab/backend'de garanti edilir (§6.4); şimdi yapılırsa Yjs gelince yeniden yazım gerekir.
+**Sonuç:** Reorder anlamlı (mobilya↔duvar↔parsel↔kesit z'si değişir) ama "dolgu örttü / etiket kayboldu" imkânsız. Takas: aynı katmanda duvar gövdesi ile ölçü/kesit çizgisi artık ekleme sırasına göre dizilir (eski sabit tip-z garantisi gider — kabul, çakışma nadir). Yeni/bilinmeyen layerId reorder sonrası en arkaya düşer (kabul; DXF custom katmanları toplu gelir).
+
 ## ADR-0039 — Kesit çizgisi kalıcı `section` entity'si (transient işaret → first-class)
 **Tarih:** 2026-06-23 · **Durum:** Kabul (ADR-0037'nin "ileride entity/persist edilebilir" notunu uygular)
 **Bağlam:** ADR-0037'de kesit çizgisi transient'ti: yalnız React state + engine `setSectionMarker` görseliydi. Kaydet/aç'ta kaybolurdu, undo'lanmazdı, seçilemezdi. CLAUDE.md §6.3/§7 (her şey entity, model yalnız Command ile değişir) ve §6.1 (tek doğruluk kaynağı) ile çelişiyordu.
