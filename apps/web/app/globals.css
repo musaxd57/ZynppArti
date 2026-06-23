@@ -23,3 +23,46 @@ textarea {
   user-select: text;
   -webkit-user-select: text;
 }
+
+/*
+ * Özel kaydırma çubuğu — tarayıcının kalın beyaz scrollbar'ı yerine ince, yuvarlatılmış, sönük.
+ * CAD aracının koyu temasına uyumlu; üstüne gelince biraz belirginleşir.
+ */
+* {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.32);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Asistan mesaj balonu yumuşak giriş animasyonu (cevaplar "tık diye" düşmesin). */
+@keyframes msgIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.msg-in {
+  animation: msgIn 0.22s ease-out;
+}

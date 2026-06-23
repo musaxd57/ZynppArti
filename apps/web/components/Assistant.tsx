@@ -31,6 +31,8 @@ import { pointInPolygon, findFaces } from '@zynpparti/geometry';
 type Mode = 'ask' | 'draw' | 'render';
 
 interface Msg {
+  /** Stabil React key — index key React'i şaşırtıp kaydırınca stili bozuyordu. */
+  id: string;
   role: 'user' | 'assistant';
   content: string;
   /** Render modu yanıtı: gösterilecek görsel (data-URL veya URL). */
@@ -288,25 +290,79 @@ function SparkleIcon({ className }: { className?: string }) {
   );
 }
 
+/** Cevap üretilirken zıplayan üç nokta — "çalışıyor" hissi (tüm modlarda efektli). */
+function TypingDots({ label }: { label: string }) {
+  return (
+    <div className="msg-in flex items-center gap-2 self-start rounded-lg bg-white/10 px-3 py-2 text-sm text-white/70">
+      <span className="flex gap-1">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/70"
+            style={{ animationDelay: `${i * 0.15}s` }}
+          />
+        ))}
+      </span>
+      {label}
+    </div>
+  );
+}
+
+const EMPTY_THREADS: Record<Mode, Msg[]> = { ask: [], draw: [], render: [] };
+
 export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantProps) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>('ask');
-  const [messages, setMessages] = useState<Msg[]>([]);
+  // Her mod KENDİ sohbetini tutar (Sor/Çiz/Render karışmaz).
+  const [threads, setThreads] = useState<Record<Mode, Msg[]>>(EMPTY_THREADS);
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
+  // Hangi modda istek sürüyor (yalnız o modda "üretiliyor" göstergesi çıksın).
+  const [loadingMode, setLoadingMode] = useState<Mode | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [variants, setVariants] = useState<Layout[] | null>(null);
+  // Puan bir kez hesaplanıp saklanır (her render'da findFaces çağırma — O(n²) önle).
+  const [variants, setVariants] = useState<{ layout: Layout; score: number | null }[] | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const idRef = useRef(0);
+  const typingRef = useRef<number | null>(null);
 
+  const messages = threads[mode];
+  const loading = loadingMode !== null;
+  const nextId = (): string => `m${++idRef.current}`;
+  const setThread = (m: Mode, fn: (arr: Msg[]) => Msg[]): void =>
+    setThreads((t) => ({ ...t, [m]: fn(t[m]) }));
+
+  // Yeni içerik geldikçe panel hep en alta insin (cevap üretildikçe takip et).
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [messages, loading]);
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+  }, [threads, mode, loadingMode, variants]);
 
-  // Bileşen sökülürse devam eden isteği iptal et (boşa token harcanmasın).
-  useEffect(() => () => abortRef.current?.abort(), []);
+  // Bileşen sökülürse: devam eden isteği iptal et + yazma animasyonunu durdur.
+  useEffect(
+    () => () => {
+      abortRef.current?.abort();
+      if (typingRef.current) window.clearInterval(typingRef.current);
+    },
+    [],
+  );
 
-  /** Seçilen planı çizer (Command ile), ekrana getirir, copilot uyum özeti ekler. */
+  /** Bir asistan mesajını daktilo efektiyle yazar (cevap "tık diye" düşmesin, sırayla gelsin). */
+  const typeOut = (m: Mode, id: string, full: string): void => {
+    if (typingRef.current) window.clearInterval(typingRef.current);
+    let i = 0;
+    const step = Math.max(2, Math.ceil(full.length / 80));
+    typingRef.current = window.setInterval(() => {
+      i = Math.min(full.length, i + step);
+      const slice = full.slice(0, i);
+      setThread(m, (arr) => arr.map((x) => (x.id === id ? { ...x, content: slice } : x)));
+      if (i >= full.length && typingRef.current) {
+        window.clearInterval(typingRef.current);
+        typingRef.current = null;
+      }
+    }, 18);
+  };
+
+  /** Seçilen planı çizer (Command ile), ekrana getirir, copilot uyum özetini daktilo efektiyle yazar. */
   const drawVariant = (v: Layout): void => {
     setVariants(null);
     const { drawn, named, openingCount } = applyLayout(store, history, v.walls, v.rooms, v.openings);
@@ -331,26 +387,25 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
     } catch {
       /* atla */
     }
-    setMessages((m) => [
-      ...m,
-      {
-        role: 'assistant',
-        content: `${v.summary}\n\n✓ ${drawn} duvar çizildi${extras ? `, ${extras}` : ''}. ${undoNote}${compliance}`,
-      },
-    ]);
+    const content = `${v.summary}\n\n✓ ${drawn} duvar çizildi${extras ? `, ${extras}` : ''}. ${undoNote}${compliance}`;
+    const id = nextId();
+    setThread('draw', (arr) => [...arr, { id, role: 'assistant', content: '' }]);
+    typeOut('draw', id, content);
   };
 
   const send = async (): Promise<void> => {
     const text = input.trim();
     if (!text || loading) return;
-    setMessages((m) => [...m, { role: 'user', content: text }]);
+    const m = mode; // isteği başlatan modu sabitle (async sırasında mod değişebilir)
+    const history0 = threads[m];
+    setThread(m, (arr) => [...arr, { id: nextId(), role: 'user', content: text }]);
     setInput('');
     setError(null);
-    setLoading(true);
+    setLoadingMode(m);
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     try {
-      if (mode === 'draw') {
+      if (m === 'draw') {
         const res = await fetch('/api/copilot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -364,15 +419,16 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
         if (vs.length === 1) {
           drawVariant(vs[0]!); // tek varyant → doğrudan çiz
         } else {
-          // Birden çok alternatif → copilot uyumuna göre sırala (en az uyarı üstte), kullanıcı seçsin.
-          const scored = [...vs].sort((a, b) => (scoreLayout(a) ?? 99) - (scoreLayout(b) ?? 99));
+          // Birden çok alternatif → puanla (bir kez) + copilot uyumuna göre sırala (en az uyarı üstte).
+          const scored = vs
+            .map((layout) => ({ layout, score: scoreLayout(layout) }))
+            .sort((a, b) => (a.score ?? 99) - (b.score ?? 99));
           setVariants(scored);
-          setMessages((m) => [
-            ...m,
-            { role: 'assistant', content: `${vs.length} alternatif plan hazır — en uyumlu üstte, birini seç.` },
-          ]);
+          const id = nextId();
+          setThread('draw', (arr) => [...arr, { id, role: 'assistant', content: '' }]);
+          typeOut('draw', id, `${vs.length} alternatif plan hazır — en uyumlu üstte, birini seç.`);
         }
-      } else if (mode === 'render') {
+      } else if (m === 'render') {
         const res = await fetch('/api/copilot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -382,12 +438,17 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
         const data: unknown = await res.json();
         if (!res.ok) throw new Error((data as { error?: string }).error ?? `Hata (${res.status})`);
         const image = (data as { image?: string }).image;
-        setMessages((m) => [
-          ...m,
-          { role: 'assistant', content: image ? 'İşte taslak görsel (deneysel):' : 'Görsel alınamadı.', image },
+        const id = nextId();
+        setThread('render', (arr) => [
+          ...arr,
+          { id, role: 'assistant', content: '', ...(image ? { image } : {}) },
         ]);
+        typeOut('render', id, image ? 'İşte taslak görsel (deneysel):' : 'Görsel alınamadı.');
       } else {
-        const next: Msg[] = [...messages, { role: 'user', content: text }];
+        const next: { role: 'user' | 'assistant'; content: string }[] = [
+          ...history0.map((x) => ({ role: x.role, content: x.content })),
+          { role: 'user', content: text },
+        ];
         const res = await fetch('/api/copilot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -403,8 +464,9 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
           }
           throw new Error(msg);
         }
-        // Akışlı yanıt: boş asistan balonu ekle, gelen parçaları içine yaz.
-        setMessages((m) => [...m, { role: 'assistant', content: '' }]);
+        // Akışlı yanıt: boş asistan balonu ekle, gelen parçaları id ile içine yaz (sırayla görünür).
+        const aid = nextId();
+        setThread('ask', (arr) => [...arr, { id: aid, role: 'assistant', content: '' }]);
         const reader = res.body?.getReader();
         if (reader) {
           const dec = new TextDecoder();
@@ -413,12 +475,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
             if (done) break;
             const chunk = dec.decode(value, { stream: true });
             if (!chunk) continue;
-            setMessages((m) => {
-              const c = [...m];
-              const last = c[c.length - 1];
-              if (last && last.role === 'assistant') c[c.length - 1] = { ...last, content: last.content + chunk };
-              return c;
-            });
+            setThread('ask', (arr) => arr.map((x) => (x.id === aid ? { ...x, content: x.content + chunk } : x)));
           }
         }
       }
@@ -428,7 +485,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
         setError(e instanceof Error ? e.message : 'İstek başarısız.');
       }
     } finally {
-      setLoading(false);
+      setLoadingMode(null);
       abortRef.current = null;
     }
   };
@@ -439,10 +496,10 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
         type="button"
         onClick={() => setOpen(true)}
         className="fixed bottom-14 left-4 z-40 flex items-center gap-2 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-blue-900/40 transition-transform hover:scale-105"
-        title="ZynppArti Asistanı (AI)"
+        title="Zeynep — tasarım yardımcın"
       >
         <SparkleIcon className="h-5 w-5" />
-        Asistan
+        Zeynep
       </button>
     );
   }
@@ -462,15 +519,15 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
           <SparkleIcon className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold">ZynppArti Asistanı</div>
-          <div className="text-[11px] text-white/60">Tasarım + yönetmelik yardımcın</div>
+          <div className="text-sm font-semibold">Zeynep</div>
+          <div className="text-[11px] text-white/60">Tasarım yardımcın</div>
         </div>
         {messages.length > 0 && (
           <button
             type="button"
-            onClick={() => setMessages([])}
+            onClick={() => setThread(mode, () => [])}
             className="rounded px-2 py-1 text-xs text-white/60 hover:bg-white/10 hover:text-white"
-            title="Sohbeti temizle"
+            title="Bu moddaki sohbeti temizle"
           >
             Temizle
           </button>
@@ -530,10 +587,13 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
             </ul>
           </div>
         )}
-        {messages.map((m, i) => (
+        {messages.map((m) => {
+          // Akış/daktilo başlamadan önceki boş asistan balonunu gizle (yerine üç-nokta göstergesi çıkar).
+          if (m.role === 'assistant' && !m.content && !m.image) return null;
+          return (
           <div
-            key={i}
-            className={`max-w-[90%] rounded-lg px-3 py-2 text-sm ${
+            key={m.id}
+            className={`msg-in max-w-[90%] rounded-lg px-3 py-2 text-sm ${
               m.role === 'user' ? 'self-end bg-blue-600 text-white' : 'self-start bg-white/10 text-white/95'
             }`}
           >
@@ -555,10 +615,11 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
               </>
             )}
           </div>
-        ))}
-        {variants && variants.length > 1 && (
+          );
+        })}
+        {mode === 'draw' && variants && variants.length > 1 && (
           <div className="flex flex-col gap-2 self-stretch">
-            {variants.map((v, i) => (
+            {variants.map(({ layout: v, score: s }, i) => (
               <button
                 key={i}
                 type="button"
@@ -567,19 +628,15 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-white/90">Seçenek {i + 1}</span>
-                  {(() => {
-                    const s = scoreLayout(v);
-                    if (s === null) return null;
-                    return (
-                      <span
-                        className={`rounded px-1.5 py-0.5 text-[10px] ${
-                          s === 0 ? 'bg-emerald-600/40 text-emerald-100' : 'bg-amber-600/40 text-amber-100'
-                        }`}
-                      >
-                        {s === 0 ? '✓ uyumlu' : `⚠ ${s} uyarı`}
-                      </span>
-                    );
-                  })()}
+                  {s !== null && (
+                    <span
+                      className={`rounded px-1.5 py-0.5 text-[10px] ${
+                        s === 0 ? 'bg-emerald-600/40 text-emerald-100' : 'bg-amber-600/40 text-amber-100'
+                      }`}
+                    >
+                      {s === 0 ? '✓ uyumlu' : `⚠ ${s} uyarı`}
+                    </span>
+                  )}
                 </div>
                 <div className="text-xs text-white/60">{v.summary}</div>
                 <div className="mt-1 text-[10px] text-white/40">
@@ -589,11 +646,15 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
             ))}
           </div>
         )}
-        {loading && (messages.length === 0 || messages[messages.length - 1]?.role === 'user') && (
-          <div className="self-start rounded-lg bg-white/10 px-3 py-2 text-sm text-white/70">
-            {mode === 'draw' ? 'Planlar üretiliyor…' : mode === 'render' ? 'Görsel üretiliyor…' : 'Düşünüyor…'}
-          </div>
-        )}
+        {loadingMode === mode &&
+          (() => {
+            const last = messages[messages.length - 1];
+            // Daktilo/akış başladıysa (dolu asistan balonu) göstergeyi gizle.
+            if (last?.role === 'assistant' && (last.content || last.image)) return null;
+            const label =
+              mode === 'draw' ? 'Plan üretiliyor' : mode === 'render' ? 'Görsel üretiliyor' : 'Zeynep yazıyor';
+            return <TypingDots label={label} />;
+          })()}
       </div>
 
       {error && <div className="mx-3 rounded bg-red-500/15 p-2 text-xs text-red-200">{error}</div>}
