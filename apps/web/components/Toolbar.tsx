@@ -17,6 +17,7 @@ import type { ToolManager, ToolName } from '@zynpparti/tools';
 import { importDxf, exportDxf, exportSvg } from '@zynpparti/io';
 import { alertDialog, confirmDialog } from '@/lib/dialog';
 import { toast } from '@/lib/toast';
+import { ArkiLogo } from './ArkiLogo';
 
 const TOOLS: { name: ToolName; label: string; hotkey: string }[] = [
   { name: 'select', label: 'Seç', hotkey: 'V' },
@@ -42,25 +43,6 @@ interface ToolbarProps {
   layers?: { isHidden(id: string): boolean };
   /** Üst araç çubuğundaki "Arki" butonu AI panelini açar. */
   onOpenAssistant?: () => void;
-}
-
-/** Arki logosu — mimari pergel (drafting compass) + AI kıvılcımı (yapay zeka olduğunu belli eder). */
-function ArkiLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-      {/* pergel: tepe pivot + iki bacak + alt yay */}
-      <circle cx="12" cy="4" r="1.7" fill="currentColor" />
-      <path
-        d="M12 5.6 L7.5 19 M12 5.6 L16.5 19 M9 13.5 a3.6 3.6 0 0 0 6 0"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {/* AI kıvılcımı */}
-      <path d="M19 3.2 l.5 1.4 1.4 .5 -1.4 .5 -.5 1.4 -.5 -1.4 -1.4 -.5 1.4 -.5 z" fill="currentColor" />
-    </svg>
-  );
 }
 
 /** Araç çubuğu: araç seçimi, undo/redo, DXF içe/dışa aktarma, PNG dışa aktarma. */

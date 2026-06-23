@@ -17,6 +17,7 @@ import {
   type Wall,
 } from '@zynpparti/document';
 import { pointInPolygon, findFaces } from '@zynpparti/geometry';
+import { ArkiLogo } from './ArkiLogo';
 
 /**
  * Arki — uygulamanın kendi AI paneli (sağlayıcı/model adı GÖSTERİLMEZ; "kendi AI'mız" hissi).
@@ -334,15 +335,6 @@ function applyLayout(
   return { drawn: wallEntities.length, named, openingCount };
 }
 
-function SparkleIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M12 2l1.9 5.3L19 9.2l-5.1 1.9L12 16l-1.9-4.9L5 9.2l5.1-1.9L12 2z" />
-      <path d="M19 14l.9 2.4L22 17.3l-2.1.9L19 21l-.9-2.8-2.1-.9 2.1-.9L19 14z" opacity=".7" />
-    </svg>
-  );
-}
-
 /** Cevap üretilirken zıplayan üç nokta — "çalışıyor" hissi (tüm modlarda efektli). */
 function TypingDots({ label }: { label: string }) {
   return (
@@ -556,7 +548,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
       {/* Başlık */}
       <div className="flex items-center gap-2 border-b border-white/10 bg-gradient-to-r from-violet-600/30 to-blue-600/20 px-4 py-3">
         <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-violet-500 to-blue-500 text-white">
-          <SparkleIcon className="h-5 w-5" />
+          <ArkiLogo className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold">Arki</div>
@@ -606,7 +598,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
       <div ref={scrollRef} className="flex flex-1 flex-col gap-2 overflow-y-auto p-3">
         {messages.length === 0 && (
           <div className="m-auto max-w-[280px] text-center text-sm text-white/70">
-            <SparkleIcon className="mx-auto mb-2 h-8 w-8 text-white/50" />
+            <ArkiLogo className="mx-auto mb-2 h-8 w-8 text-white/50" />
             {mode === 'draw'
               ? 'Tarif et, planı çizeyim. Örnekler:'
               : mode === 'render'
