@@ -120,6 +120,13 @@
 
 ## GÜNLÜK
 
+### 2026-06-23 (gece-3 — asistan UX revizyonu + denetim düzeltmeleri)
+- **Zeynep:** Asistan yeniden adlandırıldı + sıcak/arkadaş-canlısı sistem prompt (10-mercek workflow sentezi: ton, selamlaşma, yönetmelik doğruluğu, uydurma-önleme, mimari sezgi, proaktiflik, biçim, can güvenliği). Canlı: selam → sıcak yanıt + işe yönlendirme.
+- **Mod başına ayrı sohbet:** Sor/Çiz/Render kendi thread'i (karışmıyor); Temizle yalnız o modu siler; "üretiliyor" göstergesi yalnız aktif modda (Çiz çalışırken Sor "düşünüyor" demiyor). Stabil mesaj id'leri (kaydırınca stil bozulması düzeldi). Daktilo efekti + zıplayan nokta + msg-in; otomatik en-alta kaydırma. Şık ince scrollbar.
+- **Router:** tasarım zorluğa göre (classifyDesignTier) — basit daire→Akash (ucuz, geçersizse Claude'a düşer), gelişmiş (villa/çok-katlı/parsel/yönetmelik)→Claude-önce.
+- **Denetim düzeltmeleri (2 ajan):** RoomManager try/finally (zombi bug) + en-yakın merkez eşleşmesi; varyant puanı bir kez hesaplanıyor (O(n²) gitti). Metraj: duvar örgü m² (yükseklik×uzunluk), tavan + boya(duvar+tavan) ayrı; maliyet 2026 fiyatları güncellendi (örgü m² bazlı, sıva/boya ayrı).
+- **Açık kalan denetim önerileri (büyük, sırada):** /api/copilot rate-limit (maliyet-DoS), findFaces duvar-boşluğu kapatma+uyarı, DXF blok (INSERT) import, akış hatalarını gövde-dışı verme, kitchen 3.3 m² gibi yönetmelik sayılarını doğrulama. Test ~302; zincir yeşil (typecheck 9/9 · lint 9/9 · build 1/1).
+
 ### 2026-06-23 (gece-2 — Claude anahtarı eklendi + faz cilası)
 - **Claude aktif:** Moses ANTHROPIC_API_KEY'i girdi (satır başı `#` sorunu düzeltildi). Router artık karmaşık/yönetmelik/tasarım → **claude-opus-4-8**; canlı doğrulandı (TS 9111 sorusu Claude'dan atıflı cevap).
 - **Faz 4 — varyant uyum puanlaması:** her varyant çizilmeden findFaces+runCopilotChecks ile puanlanır; kartta rozet (✓ uyumlu / ⚠ N uyarı), en uyumlu üstte. "Çoklu alternatif + puanlama" kabul kriteri.
