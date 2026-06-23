@@ -9,10 +9,13 @@ export { buildProviders, parseForcedProvider, type ProviderEnv } from './provide
 export { askCopilot, askCopilotStream, NoProviderError, type CopilotResult } from './copilot';
 export {
   askDesign,
+  askDesignVariants,
   parseLayout,
+  parseLayouts,
   DESIGN_SYSTEM,
   type Layout,
   type LayoutRoom,
   type LayoutOpening,
   type DesignResult,
+  type DesignVariantsResult,
 } from './design';

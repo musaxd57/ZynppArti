@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseLayout } from './design';
+import { parseLayout, parseLayouts } from './design';
 
 describe('parseLayout', () => {
   it('düz JSON ayrıştırır', () => {
@@ -55,5 +55,23 @@ describe('parseLayout', () => {
     const out = parseLayout('{"walls":[[0,0,100,0]],"rooms":[{"name":"Yarım"}]}');
     expect(out!.rooms).toHaveLength(0);
     expect(out!.summary).toBe('Taslak plan üretildi.');
+  });
+});
+
+describe('parseLayouts (varyantlar)', () => {
+  it('variants sarmalını ayrıştırır', () => {
+    const out = parseLayouts(
+      '{"variants":[{"walls":[[0,0,100,0]],"rooms":[],"openings":[]},{"walls":[[0,0,200,0]],"rooms":[],"openings":[]}]}',
+    );
+    expect(out).toHaveLength(2);
+    expect(out[1]!.walls[0]![2]).toBe(200);
+  });
+
+  it('tek plan → tek elemanlı dizi', () => {
+    expect(parseLayouts('{"walls":[[0,0,100,0]],"rooms":[]}')).toHaveLength(1);
+  });
+
+  it('geçersiz varyantları eler', () => {
+    expect(parseLayouts('{"variants":[{"walls":[]},{"walls":[[0,0,100,0]]}]}')).toHaveLength(1);
   });
 });

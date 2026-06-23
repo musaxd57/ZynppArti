@@ -99,6 +99,13 @@ interface LayoutOpening {
   width: number;
 }
 
+interface Layout {
+  summary: string;
+  walls: [number, number, number, number][];
+  rooms: LayoutRoom[];
+  openings: LayoutOpening[];
+}
+
 /** Bir noktanın segment üzerindeki izdüşüm oranı (t∈[0,1]) + dik uzaklığı. */
 function projectToSeg(
   px: number,
@@ -244,6 +251,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [variants, setVariants] = useState<Layout[] | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -253,6 +261,40 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
 
   // Bileşen sökülürse devam eden isteği iptal et (boşa token harcanmasın).
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  /** Seçilen planı çizer (Command ile), ekrana getirir, copilot uyum özeti ekler. */
+  const drawVariant = (v: Layout): void => {
+    setVariants(null);
+    const { drawn, named, openingCount } = applyLayout(store, history, v.walls, v.rooms, v.openings);
+    if (drawn > 0) zoomToFit?.();
+    const extras = [
+      named > 0 ? `${named} mahal adlandırıldı` : '',
+      openingCount > 0 ? `${openingCount} kapı/pencere eklendi` : '',
+    ]
+      .filter(Boolean)
+      .join(', ');
+    const undoNote =
+      named > 0
+        ? 'Geri almak için Ctrl+Z (önce adlar, tekrar bas → duvarlar).'
+        : 'Beğenmezsen Ctrl+Z ile geri al.';
+    let compliance = '';
+    try {
+      const issues = buildContext(store, []).findings.filter((f) => f.severity !== 'info').length;
+      compliance =
+        issues > 0
+          ? `\n\n⚠ Copilot ${issues} olası uyumsuzluk buldu — soldaki "Copilot — Yönetmelik" paneline bak.`
+          : '\n\n✓ Copilot: belirgin yönetmelik sorunu görünmüyor.';
+    } catch {
+      /* atla */
+    }
+    setMessages((m) => [
+      ...m,
+      {
+        role: 'assistant',
+        content: `${v.summary}\n\n✓ ${drawn} duvar çizildi${extras ? `, ${extras}` : ''}. ${undoNote}${compliance}`,
+      },
+    ]);
+  };
 
   const send = async (): Promise<void> => {
     const text = input.trim();
@@ -273,50 +315,18 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
         });
         const data: unknown = await res.json();
         if (!res.ok) throw new Error((data as { error?: string }).error ?? `Hata (${res.status})`);
-        const d = data as {
-          summary?: string;
-          walls?: [number, number, number, number][];
-          rooms?: LayoutRoom[];
-          openings?: LayoutOpening[];
-        };
-        const { drawn, named, openingCount } = applyLayout(
-          store,
-          history,
-          d.walls ?? [],
-          d.rooms ?? [],
-          d.openings ?? [],
-        );
-        if (drawn > 0) zoomToFit?.(); // çizilen planı ekrana getir
-        const undoNote =
-          named > 0
-            ? 'Geri almak için Ctrl+Z (önce adlar, tekrar bas → duvarlar).'
-            : 'Beğenmezsen Ctrl+Z ile geri al.';
-        const extras = [
-          named > 0 ? `${named} mahal adlandırıldı` : '',
-          openingCount > 0 ? `${openingCount} kapı/pencere eklendi` : '',
-        ]
-          .filter(Boolean)
-          .join(', ');
-        // Faz 4 kriteri: AI üretir → copilot canlı denetler. Çizilen planın uyum özetini ekle.
-        let compliance = '';
-        try {
-          const issues = buildContext(store, []).findings.filter((f) => f.severity !== 'info').length;
-          compliance =
-            issues > 0
-              ? `\n\n⚠ Copilot ${issues} olası uyumsuzluk buldu — soldaki "Copilot — Yönetmelik" paneline bak.`
-              : '\n\n✓ Copilot: belirgin yönetmelik sorunu görünmüyor.';
-        } catch {
-          /* uyum özeti üretilemezse atla */
+        const vs = (data as { variants?: Layout[] }).variants ?? [];
+        if (vs.length === 0) throw new Error('Plan üretilemedi, tekrar dener misin?');
+        if (vs.length === 1) {
+          drawVariant(vs[0]!); // tek varyant → doğrudan çiz
+        } else {
+          // Birden çok alternatif → kullanıcı seçsin (Faz 4: ≥2 varyant, kullanıcı seçer).
+          setVariants(vs);
+          setMessages((m) => [
+            ...m,
+            { role: 'assistant', content: `${vs.length} alternatif plan hazır — aşağıdan birini seç.` },
+          ]);
         }
-        setMessages((m) => [
-          ...m,
-          {
-            role: 'assistant',
-            content: `${d.summary ?? 'Taslak çizildi.'}\n\n✓ ${drawn} duvar çizildi${
-              extras ? `, ${extras}` : ''
-            }. ${undoNote}${compliance}`,
-          },
-        ]);
       } else {
         const next: Msg[] = [...messages, { role: 'user', content: text }];
         const res = await fetch('/api/copilot', {
@@ -467,9 +477,27 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
             <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
           </div>
         ))}
+        {variants && variants.length > 1 && (
+          <div className="flex flex-col gap-2 self-stretch">
+            {variants.map((v, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => drawVariant(v)}
+                className="rounded-lg border border-white/15 bg-white/5 p-2 text-left text-sm hover:border-blue-400/60 hover:bg-white/10"
+              >
+                <div className="font-medium text-white/90">Seçenek {i + 1}</div>
+                <div className="text-xs text-white/60">{v.summary}</div>
+                <div className="mt-1 text-[10px] text-white/40">
+                  {v.rooms.length} oda · {v.walls.length} duvar · {v.openings.length} kapı/pencere — çizmek için tıkla
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
         {loading && (messages.length === 0 || messages[messages.length - 1]?.role === 'user') && (
           <div className="self-start rounded-lg bg-white/10 px-3 py-2 text-sm text-white/70">
-            {mode === 'draw' ? 'Plan çiziliyor…' : 'Düşünüyor…'}
+            {mode === 'draw' ? 'Planlar üretiliyor…' : 'Düşünüyor…'}
           </div>
         )}
       </div>

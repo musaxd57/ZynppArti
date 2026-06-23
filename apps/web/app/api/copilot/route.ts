@@ -2,7 +2,7 @@ import {
   buildProviders,
   parseForcedProvider,
   askCopilotStream,
-  askDesign,
+  askDesignVariants,
   NoProviderError,
   type ChatMessage,
   type CopilotContext,
@@ -91,14 +91,8 @@ export async function POST(req: Request): Promise<Response> {
     const hintRaw = (body as { hint?: unknown })?.hint;
     const hint = typeof hintRaw === 'string' ? hintRaw.slice(0, 1000) : undefined;
     try {
-      const d = await askDesign(providers, designPrompt, forced, hint);
-      return Response.json({
-        mode: 'design',
-        summary: d.summary,
-        walls: d.walls,
-        rooms: d.rooms,
-        openings: d.openings,
-      });
+      const d = await askDesignVariants(providers, designPrompt, forced, hint, 2);
+      return Response.json({ mode: 'design', variants: d.variants });
     } catch (e) {
       if (e instanceof NoProviderError) return Response.json({ error: 'AI yapılandırılmadı.' }, { status: 503 });
       console.error('Tasarım üretimi başarısız:', e);

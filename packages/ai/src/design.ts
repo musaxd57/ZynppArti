@@ -76,33 +76,29 @@ function num(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= MAX_COORD;
 }
 
-/**
- * LLM metninden ilk dengeli {...} JSON bloğunu çıkarır + Layout'a doğrular. Geçersizse null.
- * (Model bazen JSON'u ```json bloğuna sarar ya da önüne metin koyar → toleranslı.)
- */
-export function parseLayout(text: string): Layout | null {
+/** LLM metninden ilk dengeli {...} JSON bloğunu çıkarıp ayrıştırır (markdown/önek metne toleranslı). */
+function extractJson(text: string): unknown | null {
   const start = text.indexOf('{');
   if (start < 0) return null;
   let depth = 0;
-  let end = -1;
   for (let i = start; i < text.length; i++) {
     if (text[i] === '{') depth++;
     else if (text[i] === '}') {
       depth--;
       if (depth === 0) {
-        end = i;
-        break;
+        try {
+          return JSON.parse(text.slice(start, i + 1));
+        } catch {
+          return null;
+        }
       }
     }
   }
-  if (end < 0) return null;
+  return null;
+}
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text.slice(start, end + 1));
-  } catch {
-    return null;
-  }
+/** Ayrıştırılmış bir nesneyi geçerli bir Layout'a doğrular (saf; null = geçersiz). */
+function validateLayout(parsed: unknown): Layout | null {
   if (typeof parsed !== 'object' || parsed === null) return null;
   const obj = parsed as Record<string, unknown>;
 
@@ -152,6 +148,27 @@ export function parseLayout(text: string): Layout | null {
   return { summary, walls, rooms, openings };
 }
 
+/** Tek bir plan ayrıştırır (geriye dönük uyum + tekil mod). */
+export function parseLayout(text: string): Layout | null {
+  return validateLayout(extractJson(text));
+}
+
+/**
+ * Bir veya çok plan ayrıştırır. LLM `{"variants":[plan, plan]}` döndürdüyse hepsini, tek plan
+ * döndürdüyse onu tek elemanlı dizi olarak verir. Geçersiz varyantlar elenir.
+ */
+export function parseLayouts(text: string): Layout[] {
+  const parsed = extractJson(text);
+  if (parsed && typeof parsed === 'object') {
+    const variants = (parsed as Record<string, unknown>).variants;
+    if (Array.isArray(variants)) {
+      return variants.map(validateLayout).filter((l): l is Layout => l !== null);
+    }
+  }
+  const single = validateLayout(parsed);
+  return single ? [single] : [];
+}
+
 /**
  * Tasarım taslağı üretir: complex kademe zinciri (en iyi model) ile dener; ilk geçerli JSON'u döndürür.
  * Her sağlayıcı için ayrıştırma başarısız olursa sıradakine geçer (JSON üretemeyen modele takılmaz).
@@ -185,4 +202,48 @@ export async function askDesign(
     console.error('Tasarım üretimi başarısız, sıradaki sağlayıcı:', lastErr);
   }
   throw lastErr ?? new Error('Tasarım üretilemedi.');
+}
+
+export interface DesignVariantsResult {
+  readonly variants: Layout[];
+  readonly provider: AiProviderName;
+  readonly model: string;
+}
+
+/**
+ * Birden çok alternatif plan üretir (Faz 4 kabul kriteri: "≥2 varyant, kullanıcı seçer"). Tek LLM
+ * çağrısı; model `{variants:[...]}` döndürür (maliyet için tek istek). En az 1 geçerli varyant
+ * üreten ilk sağlayıcı kazanır; yoksa sıradakine geçer.
+ */
+export async function askDesignVariants(
+  providers: Partial<Record<AiProviderName, AiProvider>>,
+  prompt: string,
+  forced?: AiProviderName,
+  hint?: string,
+  count = 2,
+): Promise<DesignVariantsResult> {
+  const available = Object.keys(providers) as AiProviderName[];
+  const order = resolveChain('complex', available, forced);
+  const chain = order.length > 0 ? order : available;
+  const baseContent = hint ? `${prompt}\n\n[Bağlam: ${hint}]` : prompt;
+  const userContent = `${baseContent}\n\nÖNEMLİ: ${count} FARKLI alternatif plan üret (farklı yerleşim/oda düzeni). Yanıtı {"variants":[plan1, plan2]} biçiminde döndür; her plan yukarıdaki şemaya uysun.`;
+
+  let lastErr: unknown;
+  for (const name of chain) {
+    const provider = providers[name];
+    if (!provider) continue;
+    try {
+      const text = await provider.chat([{ role: 'user', content: userContent }], {
+        system: DESIGN_SYSTEM,
+        maxTokens: 6000,
+      });
+      const variants = parseLayouts(text).slice(0, count);
+      if (variants.length > 0) return { variants, provider: name, model: provider.model };
+      lastErr = new Error(`Sağlayıcı "${name}" geçerli varyant üretemedi.`);
+    } catch (e) {
+      lastErr = e;
+    }
+    console.error('Varyant üretimi başarısız, sıradaki sağlayıcı:', lastErr);
+  }
+  throw lastErr ?? new Error('Tasarım varyantı üretilemedi.');
 }
