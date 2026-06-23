@@ -380,6 +380,59 @@ describe('runCopilotChecks — mahal doğal aydınlatma (İmar, info)', () => {
   });
 });
 
+describe('runCopilotChecks — ıslak hacim havalandırma (İmar, info)', () => {
+  it('penceresiz banyo (başka boşluk varken) → havalandırma bilgisi', () => {
+    const bath = rect('Banyo', 'bathroom', 200, 200);
+    const far = wall('wfar', 1000, 1000, 1400, 1000);
+    const f = runCopilotChecks([bath], [far], [windowOn('p', 'wfar', 0.5)]).filter((x) =>
+      x.message.includes('havalandırma'),
+    );
+    expect(f).toHaveLength(1);
+    expect(f[0]!.severity).toBe('info');
+    expect(f[0]!.entityId).toBe('Banyo');
+  });
+
+  it('çevre duvarında penceresi olan banyo → bulgu yok', () => {
+    const bath = rect('Banyo', 'bathroom', 200, 200);
+    const bottom = wall('wb', 0, 0, 200, 0);
+    const f = runCopilotChecks([bath], [bottom], [windowOn('p', 'wb', 0.5)]).filter((x) =>
+      x.message.includes('havalandırma'),
+    );
+    expect(f).toHaveLength(0);
+  });
+
+  it('hiç boşluk yoksa nag etmez', () => {
+    const f = runCopilotChecks([rect('Banyo', 'bathroom', 200, 200)], []).filter((x) =>
+      x.message.includes('havalandırma'),
+    );
+    expect(f).toHaveLength(0);
+  });
+});
+
+describe('runCopilotChecks — mahal başına aydınlatma oranı (İmar, info)', () => {
+  it('penceresi olan ama küçük pencereli yaşam mahali → oran düşük bilgisi', () => {
+    // 400×400 = 16 m²; 80cm pencere → 0,8×1,4 = 1,12 m² → %7 < %10
+    const salon = rect('Salon', 'living', 400, 400);
+    const bottom = wall('wb', 0, 0, 400, 0);
+    // Mahal-başına bulguyu izole et (entityId'li); bina-düzeyi checkDaylight de "pencere/taban" der.
+    const f = runCopilotChecks([salon], [bottom], [windowOn('p', 'wb', 0.5, 80)]).filter(
+      (x) => x.message.includes('pencere/taban') && x.entityId === 'Salon',
+    );
+    expect(f).toHaveLength(1);
+    expect(f[0]!.severity).toBe('info');
+  });
+
+  it('yeterli pencereli mahal → oran bilgisi yok', () => {
+    // 400×300 = 12 m²; 100cm pencere → 1,4 m² → ~%11,7 ≥ %10
+    const salon = rect('Salon', 'living', 400, 300);
+    const bottom = wall('wb', 0, 0, 400, 0);
+    const f = runCopilotChecks([salon], [bottom], [windowOn('p', 'wb', 0.5, 100)]).filter(
+      (x) => x.message.includes('pencere/taban') && x.entityId === 'Salon',
+    );
+    expect(f).toHaveLength(0);
+  });
+});
+
 it('boş model → bulgu yok', () => {
   expect(runCopilotChecks([], [])).toEqual([]);
 });
