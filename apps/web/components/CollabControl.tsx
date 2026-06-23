@@ -7,21 +7,30 @@ import { createCollab, type CollabHandle } from '@zynpparti/collab';
 /** Sync sunucusu adresi — yerel `pnpm sync` (varsayılan) ya da dağıtımda NEXT_PUBLIC_COLLAB_WS. */
 const WS_URL = process.env.NEXT_PUBLIC_COLLAB_WS || 'ws://localhost:1234';
 
+type Status = 'connecting' | 'connected' | 'disconnected';
+
 /**
  * Canlı işbirliği kontrolü (Faz 3, ADR-0004). "Canlı Paylaş" → aynı odaya bağlanan sekmeler çizimi
- * paylaşır. Linki (URL'deki #room=...) paylaş → 2. sekme otomatik katılır. Sync sunucusu çalışmalı
- * (`pnpm sync`). v1 temel: duvar/kapı vb. senkronlanır (mahaller yerel türetilir, ADR notu).
+ * paylaşır. Linki (#room=...) paylaş → 2. sekme otomatik katılır. Bağlantı durumu + kişi sayısı
+ * gösterilir (sunucu kapalıysa kullanıcı anlar). Sync sunucusu çalışmalı (`pnpm sync`).
  */
 export function CollabControl({ store }: { store: EntityStore }) {
   const [room, setRoom] = useState<string | null>(null);
+  const [status, setStatus] = useState<Status>('connecting');
+  const [peers, setPeers] = useState(1);
   const handleRef = useRef<CollabHandle | null>(null);
 
   const connect = (r: string): void => {
     if (handleRef.current) return;
     try {
-      handleRef.current = createCollab(store, WS_URL, r);
+      const h = createCollab(store, WS_URL, r);
+      handleRef.current = h;
       setRoom(r);
       if (location.hash !== `#room=${r}`) location.hash = `room=${r}`;
+      h.provider.on('status', (e: { status: Status }) => setStatus(e.status));
+      const updatePeers = (): void => setPeers(Math.max(1, h.awareness.getStates().size));
+      h.awareness.on('change', updatePeers);
+      updatePeers();
     } catch (e) {
       console.error('Canlı işbirliğine bağlanılamadı:', e);
     }
@@ -43,13 +52,23 @@ export function CollabControl({ store }: { store: EntityStore }) {
   };
 
   if (room) {
+    const dotColor =
+      status === 'connected' ? 'bg-emerald-400' : status === 'connecting' ? 'bg-amber-400' : 'bg-red-400';
+    const bg =
+      status === 'connected' ? 'bg-emerald-700/90' : status === 'connecting' ? 'bg-amber-700/90' : 'bg-red-800/90';
+    const label =
+      status === 'connected'
+        ? `Canlı · oda: ${room} · ${peers} kişi`
+        : status === 'connecting'
+          ? `Bağlanıyor… (${room})`
+          : 'Sunucu yok — terminalde: pnpm sync';
     return (
       <div
-        className="fixed bottom-14 right-4 z-40 flex items-center gap-2 rounded-full bg-emerald-700/90 px-4 py-2 text-sm text-white shadow-lg"
+        className={`fixed bottom-14 right-4 z-40 flex items-center gap-2 rounded-full ${bg} px-4 py-2 text-sm text-white shadow-lg`}
         title="Bu sekme canlı paylaşımda — URL'yi paylaşarak başkalarını davet et"
       >
-        <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
-        Canlı · oda: {room}
+        <span className={`h-2 w-2 rounded-full ${dotColor} ${status === 'connected' ? 'animate-pulse' : ''}`} />
+        {label}
       </div>
     );
   }

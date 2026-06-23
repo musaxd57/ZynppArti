@@ -505,11 +505,20 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
           >
             <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
             {m.image && (
-              <img
-                src={m.image}
-                alt="AI render"
-                className="mt-2 w-full rounded-lg border border-white/10"
-              />
+              <>
+                <img
+                  src={m.image}
+                  alt="AI render"
+                  className="mt-2 w-full rounded-lg border border-white/10"
+                />
+                <a
+                  href={m.image}
+                  download="zynpparti-render.png"
+                  className="mt-1 inline-block text-xs text-blue-300 hover:underline"
+                >
+                  ⤓ Görseli indir
+                </a>
+              </>
             )}
           </div>
         ))}
