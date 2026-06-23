@@ -176,7 +176,8 @@ describe('runCopilotChecks — doğal aydınlatma (İmar)', () => {
     const findings = nonInfo(runCopilotChecks([rect('Oda', 'living', 400, 400)], [], [win('P', 80)]));
     expect(findings).toHaveLength(1);
     expect(findings[0]!.severity).toBe('warning');
-    expect(findings[0]!.citation).toContain('İmar');
+    // Daylight 1/10 oranı yönetmelikte nicel değil → atıf "İyi pratik" (denetim güncellendi).
+    expect(findings[0]!.citation).toContain('pratik');
   });
 
   it('pencere yokken aydınlatma uyarısı verilmez', () => {

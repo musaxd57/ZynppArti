@@ -48,7 +48,7 @@ export const REGULATIONS = {
   },
   bedroomMinArea: {
     id: 'imar-bedroom-min-area',
-    source: 'Planlı Alanlar İmar Yönetmeliği',
+    source: 'Planlı Alanlar İmar Yönetmeliği (m.29)',
     rule: 'Yatak odası net alanı en az 9,0 m² olmalı.',
     min: 9,
     unit: 'm2',
@@ -56,7 +56,7 @@ export const REGULATIONS = {
   },
   livingMinArea: {
     id: 'imar-living-min-area',
-    source: 'Planlı Alanlar İmar Yönetmeliği',
+    source: 'Planlı Alanlar İmar Yönetmeliği (m.29)',
     rule: 'Oturma odası net alanı en az 12,0 m² olmalı.',
     min: 12,
     unit: 'm2',
@@ -64,7 +64,7 @@ export const REGULATIONS = {
   },
   kitchenMinArea: {
     id: 'imar-kitchen-min-area',
-    source: 'Planlı Alanlar İmar Yönetmeliği',
+    source: 'Planlı Alanlar İmar Yönetmeliği (m.29)',
     rule: 'Mutfak (yemek pişirme yeri) net alanı en az 3,3 m² olmalı.',
     min: 3.3,
     unit: 'm2',
@@ -72,7 +72,7 @@ export const REGULATIONS = {
   },
   roomMinWidth: {
     id: 'imar-room-min-width',
-    source: 'Planlı Alanlar İmar Yönetmeliği',
+    source: 'Planlı Alanlar İmar Yönetmeliği (m.29)',
     // Yaşanabilir oda en küçük net genişliği; tam değer plana/sürüme göre değişir → info.
     rule: 'Konutta yaşanabilir oda en küçük net genişliği genelde en az 2,10 m (plana göre değişebilir).',
     min: 210,
@@ -89,20 +89,20 @@ export const REGULATIONS = {
   },
   bathroomMinArea: {
     id: 'imar-bathroom-min-area',
-    source: 'Planlı Alanlar İmar Yönetmeliği',
-    // Yaygın anılan değer ~3,0 m²; tam değer sürüme/plana göre değişebilir → info (ADR-0021).
-    rule: 'Banyo net alanı yaklaşık 3,0 m² (sürüm/plana göre değişebilir).',
-    min: 3,
+    source: 'Planlı Alanlar İmar Yönetmeliği (m.29)',
+    // İmar m.29 banyo için net-alan değil DAR KENAR min 1,50 m verir → 1,5×1,5 ≈ 2,25 m² efektif taban.
+    rule: 'Banyo dar kenarı en az 1,50 m olmalı (≈2,25 m² efektif; plana göre değişebilir).',
+    min: 2.25,
     unit: 'm2',
     status: 'active',
   },
 
   ceilingHeight: {
     id: 'imar-ceiling-height',
-    source: 'Planlı Alanlar İmar Yönetmeliği',
-    // Konutlarda asgari net kat yüksekliği genelde ~2,40 m; tam değer plana/kullanıma göre değişir → info.
-    rule: 'Konutlarda net kat yüksekliği genelde en az 2,40 m (plana/kullanıma göre değişir).',
-    min: 240,
+    source: 'Planlı Alanlar İmar Yönetmeliği (m.28)',
+    // İmar m.28: iskan edilen kat net yüksekliği en az 2,60 m (2,40 m yalnız istisnai hallerde).
+    rule: 'Konutta iskan edilen kat net yüksekliği en az 2,60 m olmalı (istisnai hallerde 2,40 m).',
+    min: 260,
     unit: 'cm',
     status: 'active',
   },
@@ -119,7 +119,7 @@ export const REGULATIONS = {
   // ---- Tohum: atıflı bilgi tabanı; denetim veri (yeni entity) bekliyor ----
   setbackFront: {
     id: 'imar-setback-front',
-    source: 'Planlı Alanlar İmar Yönetmeliği',
+    source: 'Planlı Alanlar İmar Yönetmeliği (m.5)',
     rule: 'Ön bahçe çekme mesafesi genelde en az 5,0 m (imar planına göre değişir).',
     min: 500,
     unit: 'cm',
@@ -127,7 +127,7 @@ export const REGULATIONS = {
   },
   setbackSide: {
     id: 'imar-setback-side',
-    source: 'Planlı Alanlar İmar Yönetmeliği',
+    source: 'Planlı Alanlar İmar Yönetmeliği (m.5)',
     rule: 'Yapının parsel sınırına çekme mesafesi genelde en az 3,0 m (ön/arka için plana göre daha fazla).',
     min: 300,
     unit: 'cm',
@@ -141,8 +141,9 @@ export const REGULATIONS = {
  */
 export const PARKING_REGULATION = {
   id: 'otopark-area-ratio',
-  source: 'Otopark Yönetmeliği',
-  rule: 'Otopark ihtiyacı kullanım/bölgeye göre belirlenir; kaba tahmin: her ~100 m² için 1 otopark.',
+  source: 'Otopark Yönetmeliği (2018, m.8/Ek-1)',
+  // Gerçek kural DAİRE BÜYÜKLÜĞÜ bracket'ine göredir (alan-orantılı değil); bu yalnız kaba bir tahmin.
+  rule: 'Otopark ihtiyacı daire büyüklüğüne göre belirlenir (Ek-1); bu kaba tahmin: her ~100 m² için ~1 otopark.',
   /** Bir otopark başına yaklaşık yapı alanı (m²). */
   areaPerSpaceM2: 100,
 } as const;
@@ -166,8 +167,9 @@ export const TAKS_REGULATION = {
  */
 export const DAYLIGHT_REGULATION = {
   id: 'imar-daylight-ratio',
-  source: 'Planlı Alanlar İmar Yönetmeliği',
-  rule: "Yaşam mahallerinde pencere alanı taban alanının ~1/10'undan az olmamalı (doğal aydınlatma).",
+  // NOT: 1/10 oranı güncel İmar Yönetmeliği'nde NİCEL olarak yer almaz → "iyi pratik" referansı.
+  source: 'İyi pratik (referans; yönetmelik nicel oran vermez)',
+  rule: "Yaşam mahallerinde pencere alanı taban alanının ~1/10'undan az olmamalı (iyi pratik).",
   minRatio: 0.1,
   /** Pencere yükseklik varsayımı (cm) — alan tahmini için. */
   windowHeightCm: 140,
@@ -180,7 +182,7 @@ export const DAYLIGHT_REGULATION = {
  */
 export const ROOM_DAYLIGHT_REGULATION = {
   id: 'imar-room-daylight',
-  source: 'Planlı Alanlar İmar Yönetmeliği',
+  source: 'Planlı Alanlar İmar Yönetmeliği (m.29)',
   rule: 'Yaşam mahalleri (oturma/yatma/mutfak) doğal ışık ve havalandırma için en az bir pencere almalı.',
 } as const;
 
@@ -191,7 +193,7 @@ export const ROOM_DAYLIGHT_REGULATION = {
  */
 export const WET_VENTILATION_REGULATION = {
   id: 'imar-wet-ventilation',
-  source: 'Planlı Alanlar İmar Yönetmeliği',
+  source: 'Planlı Alanlar İmar Yönetmeliği (m.30)',
   rule: 'Islak hacimler (banyo/WC) doğal (pencere) veya mekanik havalandırmaya sahip olmalı.',
 } as const;
 
