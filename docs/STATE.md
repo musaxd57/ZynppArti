@@ -120,6 +120,13 @@
 
 ## GÜNLÜK
 
+### 2026-06-23 (gece-6 — vektör PDF + DXF blok + accordion + Arki araç çubuğuna)
+- **#13 Vektör PDF:** PDF artık SVG'yi doğrudan gömüyor (svg2pdf.js — A1'de keskin); hata olursa raster'a düşer. Yeni bağımlılık onaylı.
+- **#12 DXF blok (INSERT) import:** Blok referansları çözülüp içerik konum/ölçek/rotasyon dönüşümüyle (iç içe dahil) patlatılıyor → mobilya/sembol blokları kaybolmuyor. +2 test (io 29).
+- **Sağ panel accordion:** Panel zaten katlanabilirdi; Metraj + **Yaklaşık Maliyet (ayrı accordion, toplam rozetli)** + Paftalar varsayılan KAPALI, yalnız **Mahal Listesi** açık (Panel storage v2 → varsayılanlar uygulanır). Maliyet, Metraj'dan ayrıldı.
+- **Arki araç çubuğuna:** Sol-alttaki yüzen launcher kaldırıldı; Asistan kontrollü panel oldu, üst araç çubuğunda **PDF İndir yanında vurgulu "Arki AI"** butonu (mimari pergel + kıvılcım logosu) açıyor. Canvas artık yüzen butonla kapanmıyor.
+- Zincir yeşil (typecheck 9/9 · lint 9/9 · build 1/1 · io 29).
+
 ### 2026-06-23 (gece-5 — UX düzeltmeleri + 8-mercek backlog uygulaması)
 - **Canlı Paylaş kullanışlı:** pill'e **🔗 Link kopyala** (2. sekme/cihaz davet) + **✕ kapat** (bağlantıyı sök, URL temizle). **Kat yüksekliği**: çirkin native spinner → şık −/+ stepper. **3B/Canlı butonları** `fixed`→canvas içi `absolute` (sağ panele binmiyordu).
 - **8-mercek uzman analizi (workflow)** → 15 maddelik önceliklendirilmiş backlog. Uygulananlar: **#1 rate-limit** (/api/copilot, IP 30/dk) + **#8 toplam içerik bütçesi**; **#15 AI bağlam zenginliği** (seçili öğe detayı + duvar/kapı sayıları + parsel kutusu → copilot/render doğru ölçek); **#3 toast sistemi** (export/import başarı/hata bildirimi); **#4 dostça hata mesajları** (DXF/model-aç); **#5 boş tuval rehberi** + duvar-var-mahal-yok ipucu; **#6 kilitli katman geri bildirimi** (sessiz no-op → toast).
