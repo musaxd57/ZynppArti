@@ -120,6 +120,13 @@
 
 ## GÜNLÜK
 
+### 2026-06-23 (gece-8 — zen mod + havalı ölçekleme + Faz 5 derinleştirme)
+- **Zen modu:** araç çubuğunda toggle → sol+sağ paneller gizlenir (sadece çalışma alanı). **Canlı Paylaş + 3B** sağ-üst tek kümeye taşındı. "?" = kısayol yardımı (token'landı).
+- **Havalı ölçekleme:** native `window.prompt` → temalı **CalibrateDialog** (iris/Inter): ölçülen mesafeyi gösterir, gerçek cm sorar, **ölçek oranını canlı hesaplar** ("2.40× büyür"). ToolContext.requestCalibration + ölçü çizgisi parlak cyan. DialogHost da token'landı.
+- **Faz 5 derinleştirme:** `wallBoxesWithOpenings` — 3B duvarlara **kapı/pencere boşlukları oyuluyor** (kapı: lento; pencere: denizlik+lento), +hemisphere ışık. Saf+test (document 105).
+- **İkon-öncelikli araç çubuğu** (Lucide + custom CAD ikon) önceki turda; ikonlu, premium.
+- Zincir yeşil (typecheck 9/9 · lint 9/9 · document 105 · build 1/1).
+
 ### 2026-06-23 (gece-7 — premium UI redesign (9-mercek web araştırması) + figür maskot)
 - **9 ajan internette** mimari/CAD + premium koyu-tema (Rayon/Arcol/Figma/Linear/Vercel) araştırıp **redesign spec** üretti → uygulandı:
   - **Tasarım tokenları (globals.css):** 4 parlaklık-katmanlı yüzey (gölge değil luminans), 3 solid metin tonu, hairline border, **tek soğuk accent (iris #5B5BD6)**, semantik; amber yalnız Arki'de. **Inter** (next/font ~510) + tnum.
