@@ -18,6 +18,7 @@ import {
 } from '@zynpparti/document';
 import { pointInPolygon, findFaces } from '@zynpparti/geometry';
 import { ArkiLogo } from './ArkiLogo';
+import { ProgramBuilder } from './ProgramBuilder';
 
 /**
  * Arki — uygulamanın kendi AI paneli (sağlayıcı/model adı GÖSTERİLMEZ; "kendi AI'mız" hissi).
@@ -617,6 +618,11 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
                 </li>
               ))}
             </ul>
+            {mode === 'draw' && (
+              <div className="mt-3">
+                <ProgramBuilder onApply={(p) => p && setInput(p)} />
+              </div>
+            )}
           </div>
         )}
         {messages.map((m) => {
