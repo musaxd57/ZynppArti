@@ -88,8 +88,10 @@ export async function POST(req: Request): Promise<Response> {
 
   // Tasarım modu: tam JSON gerekir → akışsız.
   if (designPrompt !== null) {
+    const hintRaw = (body as { hint?: unknown })?.hint;
+    const hint = typeof hintRaw === 'string' ? hintRaw.slice(0, 1000) : undefined;
     try {
-      const d = await askDesign(providers, designPrompt, forced);
+      const d = await askDesign(providers, designPrompt, forced, hint);
       return Response.json({ mode: 'design', summary: d.summary, walls: d.walls, rooms: d.rooms });
     } catch (e) {
       if (e instanceof NoProviderError) return Response.json({ error: 'AI yapılandırılmadı.' }, { status: 503 });

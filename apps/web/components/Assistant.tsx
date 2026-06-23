@@ -92,6 +92,18 @@ interface LayoutRoom {
   cy: number;
 }
 
+/** Çiz modu için bağlam ipucu: parsel varsa kullanılabilir alanı (çekme paylı) AI'a bildir. */
+function buildDesignHint(store: EntityStore): string | undefined {
+  const parcels = store.all().filter((e): e is Parcel => e.type === 'parcel');
+  if (parcels.length === 0) return undefined;
+  const pts = parcels.flatMap((p) => p.boundary);
+  if (pts.length < 3) return undefined;
+  const w = Math.round(Math.max(...pts.map((p) => p.x)) - Math.min(...pts.map((p) => p.x)) - 200);
+  const h = Math.round(Math.max(...pts.map((p) => p.y)) - Math.min(...pts.map((p) => p.y)) - 200);
+  if (w <= 0 || h <= 0) return undefined;
+  return `kullanılabilir alan yaklaşık ${w} x ${h} cm (planı parsel içine sığdır, çekme payı bırak)`;
+}
+
 /**
  * AI'ın ürettiği planı Command sistemiyle çizer (undo'lanabilir) + odaları adlandırır (best-effort).
  * Mevcut çizim varsa plan onun SAĞINA kaydırılır (üst üste binmesin). Döndürür: çizilen duvar +
@@ -105,10 +117,20 @@ function applyLayout(
 ): { drawn: number; named: number } {
   if (walls.length === 0) return { drawn: 0, named: 0 };
 
-  // Mevcut duvarların sağına 3 m boşlukla kaydır (varsa) → mevcut çizimin üstüne binmesin.
-  const existing = store.all().filter((e): e is Wall => e.type === 'wall');
-  const dx =
-    existing.length > 0 ? Math.max(...existing.flatMap((w) => [w.start.x, w.end.x])) + 300 : 0;
+  // Yerleşim: parsel varsa onun sol-üst köşesine ~1 m çekmeyle; yoksa mevcut duvarların sağına;
+  // hiçbiri yoksa orijine. (Üst üste binmesin / parsel içinde dursun.)
+  const all = store.all();
+  const parcels = all.filter((e): e is Parcel => e.type === 'parcel');
+  const existing = all.filter((e): e is Wall => e.type === 'wall');
+  let dx = 0;
+  let dy = 0;
+  if (parcels.length > 0) {
+    const pts = parcels.flatMap((p) => p.boundary);
+    dx = Math.min(...pts.map((p) => p.x)) + 100;
+    dy = Math.min(...pts.map((p) => p.y)) + 100;
+  } else if (existing.length > 0) {
+    dx = Math.max(...existing.flatMap((w) => [w.start.x, w.end.x])) + 300;
+  }
 
   const wallCmds = walls.map(
     ([x1, y1, x2, y2]) =>
@@ -116,8 +138,8 @@ function applyLayout(
         id: createEntityId(),
         type: 'wall',
         layerId: 'default',
-        start: { x: x1 + dx, y: y1 },
-        end: { x: x2 + dx, y: y2 },
+        start: { x: x1 + dx, y: y1 + dy },
+        end: { x: x2 + dx, y: y2 + dy },
         thickness: WALL_THICKNESS,
       } satisfies Wall),
   );
@@ -135,7 +157,7 @@ function applyLayout(
         (s) =>
           !used.has(s.id) &&
           s.boundary.length >= 3 &&
-          pointInPolygon({ x: r.cx + dx, y: r.cy }, s.boundary),
+          pointInPolygon({ x: r.cx + dx, y: r.cy + dy }, s.boundary),
       );
       if (!sp) continue;
       used.add(sp.id);
@@ -185,7 +207,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
         const res = await fetch('/api/copilot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mode: 'design', prompt: text }),
+          body: JSON.stringify({ mode: 'design', prompt: text, hint: buildDesignHint(store) }),
         });
         const data: unknown = await res.json();
         if (!res.ok) throw new Error((data as { error?: string }).error ?? `Hata (${res.status})`);

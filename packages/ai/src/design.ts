@@ -49,6 +49,8 @@ export const DESIGN_SYSTEM = [
   'type değerleri: living | kitchen | bathroom | wet | sleeping | circulation | service | other.',
   'Ölçüler tarife uysun; verilmezse makul al (oda kenarı ~250-450 cm). Tüm sayılar tam sayı (cm).',
   'rooms[].cx/cy o odanın İÇİNDE bir nokta olmalı.',
+  'Kullanıcı TOPLAM ALAN (m²) belirttiyse, odaların toplam alanı buna yakın olsun (±%10).',
+  'Sana "[Bağlam: ...]" ile kullanılabilir parsel ölçüsü verilirse plan o sınırlara SIĞMALI (taşma yok).',
 ].join('\n');
 
 /** Azami duvar sayısı — taslak için fazlasıyla yeter; aşırısı senkron findFaces'i (O(n²)) dondurur. */
@@ -133,17 +135,19 @@ export async function askDesign(
   providers: Partial<Record<AiProviderName, AiProvider>>,
   prompt: string,
   forced?: AiProviderName,
+  hint?: string,
 ): Promise<DesignResult> {
   const available = Object.keys(providers) as AiProviderName[];
   const order = resolveChain('complex', available, forced);
   const chain = order.length > 0 ? order : available;
+  const userContent = hint ? `${prompt}\n\n[Bağlam: ${hint}]` : prompt;
 
   let lastErr: unknown;
   for (const name of chain) {
     const provider = providers[name];
     if (!provider) continue;
     try {
-      const text = await provider.chat([{ role: 'user', content: prompt }], {
+      const text = await provider.chat([{ role: 'user', content: userContent }], {
         system: DESIGN_SYSTEM,
         maxTokens: 4000,
       });
