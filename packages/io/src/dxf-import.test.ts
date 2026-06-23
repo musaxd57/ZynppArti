@@ -102,4 +102,39 @@ describe('importDxf', () => {
     expect(back.walls[0]!.start).toEqual({ x: 0, y: 0 });
     expect(back.walls[0]!.end.x).toBeCloseTo(250);
   });
+
+  // BLOCK "KAPI" (LINE 0,0→100,0) + INSERT konum 200,50 → patlatılmış duvar 200,50→300,50.
+  const blockDxf = (insertLines: string[]): string =>
+    [
+      '0', 'SECTION', '2', 'BLOCKS',
+      '0', 'BLOCK', '8', '0', '2', 'KAPI', '10', '0.0', '20', '0.0', '30', '0.0', '3', 'KAPI',
+      '0', 'LINE', '8', 'KAPILAR',
+      '10', '0.0', '20', '0.0', '30', '0.0',
+      '11', '100.0', '21', '0.0', '31', '0.0',
+      '0', 'ENDBLK', '8', '0',
+      '0', 'ENDSEC',
+      '0', 'SECTION', '2', 'ENTITIES',
+      ...insertLines,
+      '0', 'ENDSEC', '0', 'EOF',
+    ].join('\n');
+
+  it('INSERT → blok içeriği konumla patlatılır (mobilya/sembol kaybolmaz)', () => {
+    const r = importDxf(blockDxf(['0', 'INSERT', '8', '0', '2', 'KAPI', '10', '200.0', '20', '50.0', '30', '0.0']));
+    expect(r.walls).toHaveLength(1);
+    const w = r.walls[0]!;
+    expect(w.layerId).toBe('KAPILAR'); // blok içi entity'nin katmanı korunur
+    expect(w.start.x).toBeCloseTo(200);
+    expect(w.start.y).toBeCloseTo(50);
+    expect(w.end.x).toBeCloseTo(300);
+    expect(w.end.y).toBeCloseTo(50);
+  });
+
+  it('INSERT rotasyonu (90°) uygulanır', () => {
+    // rotation kodu 50 = 90° → yerel (100,0) → (0,100)
+    const r = importDxf(blockDxf(['0', 'INSERT', '8', '0', '2', 'KAPI', '10', '0.0', '20', '0.0', '30', '0.0', '50', '90.0']));
+    expect(r.walls).toHaveLength(1);
+    const w = r.walls[0]!;
+    expect(w.end.x).toBeCloseTo(0);
+    expect(w.end.y).toBeCloseTo(100);
+  });
 });
