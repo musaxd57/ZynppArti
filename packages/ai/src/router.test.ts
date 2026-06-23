@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classifyTier, resolveChain } from './router';
+import { classifyTier, classifyDesignTier, resolveChain } from './router';
 
 describe('classifyTier', () => {
   it('yönetmelik / akıl-yürütme → complex (Claude)', () => {
@@ -31,6 +31,19 @@ describe('classifyTier', () => {
       'Bu dairenin genel yerleşimini biraz daha ferah göstermek için odaları yeniden nasıl düzenleyebilirim acaba sence';
     expect(q.length).toBeGreaterThanOrEqual(90);
     expect(classifyTier(q)).toBe('medium');
+  });
+});
+
+describe('classifyDesignTier', () => {
+  it('basit daire → simple (Akash-önce, ucuz)', () => {
+    expect(classifyDesignTier('60 m² stüdyo daire')).toBe('simple');
+    expect(classifyDesignTier('8x10 m 2+1 ev çiz')).toBe('simple');
+  });
+
+  it('gelişmiş/kısıtlı tasarım → complex (Claude-önce)', () => {
+    expect(classifyDesignTier('villa, 5+1, çatı katı dahil')).toBe('complex');
+    expect(classifyDesignTier('parsel içine çekme payıyla 4+1 daire')).toBe('complex');
+    expect(classifyDesignTier('imar yönetmeliğine uygun ofis kat planı')).toBe('complex');
   });
 });
 

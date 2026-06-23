@@ -44,6 +44,27 @@ export function classifyTier(question: string): Tier {
 }
 
 /**
+ * Tasarım (Çiz) zorluğu (Moses talebi): **gelişmiş tasarımlar Claude'la başlasın**, **Akash'ın
+ * rahatça halledebileceği basit daireler hemen Akash'a** gitsin (ucuz). Sınıflandırma yanlışsa
+ * fallback korur: Akash geçersiz JSON üretirse zincir sıradakine (Claude) düşer.
+ *
+ * complex (Claude-önce): villa/dubleks, çok katlı, ofis/klinik/otel, parsel/çekme/yönetmelik
+ * kısıtı, kalabalık program (≥4 oda tipi sinyali), uzun/detaylı tarif. Aksi halde simple (Akash-önce).
+ */
+const DESIGN_ADVANCED = [
+  'villa', 'dubleks', 'tripleks', 'cati kati', 'cati arasi', 'cok katli', 'kat plani',
+  'ofis', 'klinik', 'otel', 'magaza', 'kompleks', 'detayli', 'karmasik', 'kompleks',
+  'komsuluk', 'program', 'engelli', 'erisilebilir', 'yonetmelik', 'cekme', 'parsel',
+  'setback', 'imar', '4+1', '5+1', '6+1', 'cok odali',
+];
+
+export function classifyDesignTier(prompt: string): Tier {
+  const q = normalizeTr(prompt);
+  if (DESIGN_ADVANCED.some((k) => q.includes(k)) || prompt.length > 160) return 'complex';
+  return 'simple';
+}
+
+/**
  * Her kademe için sağlayıcı denenme sırası (ilk = birincil, sonrası fallback). OpenAI 3 zincirin
  * 2'sinde sonda → fallback'te bile az kullanılır (Moses: "OpenAI çok seçilmesin").
  */

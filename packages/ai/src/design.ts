@@ -1,4 +1,4 @@
-import { resolveChain } from './router';
+import { resolveChain, classifyDesignTier } from './router';
 import type { AiProvider, AiProviderName } from './types';
 
 /**
@@ -180,7 +180,7 @@ export async function askDesign(
   hint?: string,
 ): Promise<DesignResult> {
   const available = Object.keys(providers) as AiProviderName[];
-  const order = resolveChain('complex', available, forced);
+  const order = resolveChain(classifyDesignTier(prompt), available, forced);
   const chain = order.length > 0 ? order : available;
   const userContent = hint ? `${prompt}\n\n[Bağlam: ${hint}]` : prompt;
 
@@ -223,7 +223,8 @@ export async function askDesignVariants(
   count = 2,
 ): Promise<DesignVariantsResult> {
   const available = Object.keys(providers) as AiProviderName[];
-  const order = resolveChain('complex', available, forced);
+  // Basit → Akash-önce (ucuz; geçersizse Claude'a düşer), gelişmiş → Claude-önce.
+  const order = resolveChain(classifyDesignTier(prompt), available, forced);
   const chain = order.length > 0 ? order : available;
   const baseContent = hint ? `${prompt}\n\n[Bağlam: ${hint}]` : prompt;
   const userContent = `${baseContent}\n\nÖNEMLİ: ${count} FARKLI alternatif plan üret (farklı yerleşim/oda düzeni). Yanıtı {"variants":[plan1, plan2]} biçiminde döndür; her plan yukarıdaki şemaya uysun.`;
