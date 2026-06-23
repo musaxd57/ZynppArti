@@ -36,6 +36,14 @@ describe('computeTakeoff', () => {
     expect(t.plasterAreaM2).toBeCloseTo(27, 6);
   });
 
+  it('duvar örgü = tek yüz (uzunluk × yükseklik); boya = sıva + tavan', () => {
+    // 500 cm duvar h=270 → örgü 1×5×2,7 = 13,5 m²; 16 m² mahal → boya = 27 + 16 = 43, tavan = 16
+    const t = computeTakeoff([wall('a', 0, 0, 500, 0)], [squareSpace], [], [], { storeyHeightCm: 270 });
+    expect(t.wallElevationM2).toBeCloseTo(13.5, 6);
+    expect(t.ceilingAreaM2).toBeCloseTo(16, 6);
+    expect(t.paintAreaM2).toBeCloseTo(27 + 16, 5);
+  });
+
   it('kapı sıva alanından (iki yüz) düşülür', () => {
     // 500 cm duvar h=270 = 27 m²; 90cm×210cm kapı iki yüz = 2×0,9×2,1 = 3,78 m² düşer
     const t = computeTakeoff([wall('a', 0, 0, 500, 0)], [], [door('d', 90)], [], { storeyHeightCm: 270 });

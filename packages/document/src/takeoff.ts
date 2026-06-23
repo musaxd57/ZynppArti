@@ -33,8 +33,14 @@ export interface BlockScheduleRow {
 export interface Takeoff {
   /** Toplam duvar uzunluğu (m) — segmentlerin toplamı (köşe örtüşmesi hariç tutulmaz). */
   readonly wallLengthM: number;
-  /** Sıva/boya alanı (m²) — iki yüz × uzunluk × kat yüksekliği, boşluklar düşülmüş. */
+  /** Duvar düşey (cephe) alanı (m²) — uzunluk × yükseklik (TEK yüz); örgü/duvar işçiliği bu alandan. */
+  readonly wallElevationM2: number;
+  /** Sıva alanı (m²) — iki yüz × uzunluk × kat yüksekliği, boşluklar düşülmüş. */
   readonly plasterAreaM2: number;
+  /** Tavan alanı (m²) — mahal alanlarının toplamı (boyanır/sıvanır). */
+  readonly ceilingAreaM2: number;
+  /** Boya alanı (m²) — duvar yüzleri (sıva) + tavan. Sıvadan farklı: tavanı da kapsar. */
+  readonly paintAreaM2: number;
   /** Döşeme/şap alanı (m²) — mahal alanlarının toplamı. */
   readonly floorAreaM2: number;
   /** Süpürgelik uzunluğu (m) — mahal çevreleri, kapı genişlikleri düşülmüş. */
@@ -108,6 +114,14 @@ export function computeTakeoff(
 
   const wallLenCm = walls.reduce((s, w) => s + wallLengthCm(w), 0);
 
+  // Duvar düşey alanı (tek yüz) — örgü/duvar işçiliği bundan (uzunluk × yükseklik). Boşluk düşülür.
+  let wallElevCm2 = walls.reduce((s, w) => s + wallLengthCm(w) * (w.height ?? h), 0);
+  for (const o of openings) {
+    const oh = o.kind === 'door' ? DOOR_HEIGHT_CM : WINDOW_HEIGHT_CM;
+    wallElevCm2 -= o.width * oh;
+  }
+  wallElevCm2 = Math.max(0, wallElevCm2);
+
   // Sıva: iki yüz. Her duvar kendi yüksekliğiyle (yoksa kat yüksekliği). Boşluk alanı (iki yüz) düşülür.
   let plasterCm2 = walls.reduce((s, w) => s + 2 * wallLengthCm(w) * (w.height ?? h), 0);
   for (const o of openings) {
@@ -117,6 +131,8 @@ export function computeTakeoff(
   plasterCm2 = Math.max(0, plasterCm2);
 
   const floorCm2 = spaces.reduce((s, sp) => s + polygonArea(sp.boundary), 0);
+  // Boya = duvar yüzleri (sıva alanı) + tavan (mahal alanı). Tavan boyası ayrıca sayılır.
+  const paintCm2 = plasterCm2 + floorCm2;
 
   // Süpürgelik: mahal çevreleri − kapı genişlikleri.
   let skirtingCm = 0;
@@ -133,7 +149,10 @@ export function computeTakeoff(
 
   return {
     wallLengthM: wallLenCm / 100,
+    wallElevationM2: wallElevCm2 / CM2_PER_M2,
     plasterAreaM2: plasterCm2 / CM2_PER_M2,
+    ceilingAreaM2: floorCm2 / CM2_PER_M2,
+    paintAreaM2: paintCm2 / CM2_PER_M2,
     floorAreaM2: floorCm2 / CM2_PER_M2,
     skirtingM: skirtingCm / 100,
     doorCount: openings.filter((o) => o.kind === 'door').length,

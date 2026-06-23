@@ -49,7 +49,16 @@ export class RoomManager {
     const oldSpaces = this.store.all().filter((e): e is Space => e.type === 'space');
     const newSpaces: Space[] = faces.map((boundary) => {
       const c = centroid(boundary);
-      const match = oldSpaces.find((s) => dist(centroid(s.boundary), c) < CENTROID_MATCH_TOL);
+      // EN YAKIN eski mahali eşle (ilk-eşleşen değil) → oda bölününce ad ataması deterministik kalır.
+      let match: Space | undefined;
+      let bestD = CENTROID_MATCH_TOL;
+      for (const s of oldSpaces) {
+        const d = dist(centroid(s.boundary), c);
+        if (d < bestD) {
+          bestD = d;
+          match = s;
+        }
+      }
       return {
         id: createEntityId(),
         type: 'space',
@@ -62,15 +71,20 @@ export class RoomManager {
       };
     });
 
+    // try/finally: store ops/emit patlasa bile `recomputing` sıfırlansın (yoksa manager zombi olur —
+    // bir daha hiç mahal hesaplamaz). Denetim bulgusu.
     this.recomputing = true;
-    for (const s of oldSpaces) new RemoveEntity(s.id).apply(this.store);
-    for (const s of newSpaces) new AddEntity(s).apply(this.store);
-    this.store.emit({
-      added: newSpaces.map((s) => s.id),
-      updated: [],
-      removed: oldSpaces.map((s) => s.id),
-    });
-    this.recomputing = false;
+    try {
+      for (const s of oldSpaces) new RemoveEntity(s.id).apply(this.store);
+      for (const s of newSpaces) new AddEntity(s).apply(this.store);
+      this.store.emit({
+        added: newSpaces.map((s) => s.id),
+        updated: [],
+        removed: oldSpaces.map((s) => s.id),
+      });
+    } finally {
+      this.recomputing = false;
+    }
   }
 
   destroy(): void {

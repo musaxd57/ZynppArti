@@ -4,7 +4,10 @@ import type { Takeoff } from './takeoff';
 
 const base: Takeoff = {
   wallLengthM: 0,
+  wallElevationM2: 0,
   plasterAreaM2: 0,
+  ceilingAreaM2: 0,
+  paintAreaM2: 0,
   floorAreaM2: 0,
   skirtingM: 0,
   doorCount: 0,
@@ -32,8 +35,8 @@ describe('estimateCost', () => {
   });
 
   it('özel fiyatlar uygulanır', () => {
-    const t: Takeoff = { ...base, wallLengthM: 10 };
-    const c = estimateCost(t, { ...DEFAULT_UNIT_PRICES, wallMasonryM: 1000 });
+    const t: Takeoff = { ...base, wallElevationM2: 10 };
+    const c = estimateCost(t, { ...DEFAULT_UNIT_PRICES, wallMasonryM2: 1000 });
     expect(c.total).toBe(10 * 1000);
   });
 });

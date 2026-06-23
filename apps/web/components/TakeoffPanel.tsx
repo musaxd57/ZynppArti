@@ -68,7 +68,9 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
   function exportExcel(): void {
     const rows: Record<string, string | number>[] = [
       { Kalem: 'Duvar uzunluğu (m)', Miktar: Number(t.wallLengthM.toFixed(2)) },
-      { Kalem: `Sıva/boya (m²) [h=${storeyHeightCm} cm]`, Miktar: Number(t.plasterAreaM2.toFixed(2)) },
+      { Kalem: `Duvar örgü (m²) [h=${storeyHeightCm} cm]`, Miktar: Number(t.wallElevationM2.toFixed(2)) },
+      { Kalem: 'Sıva (m²)', Miktar: Number(t.plasterAreaM2.toFixed(2)) },
+      { Kalem: 'Boya — duvar+tavan (m²)', Miktar: Number(t.paintAreaM2.toFixed(2)) },
       { Kalem: 'Döşeme/şap (m²)', Miktar: Number(t.floorAreaM2.toFixed(2)) },
       { Kalem: 'Süpürgelik (m)', Miktar: Number(t.skirtingM.toFixed(2)) },
       { Kalem: 'Kapı (adet)', Miktar: t.doorCount },
@@ -112,7 +114,9 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
     <Panel title="Metraj" widthClass="w-full">
       <div className="flex flex-col gap-0.5 px-1">
         <Row label="Duvar uzunluğu" value={`${num(t.wallLengthM)} m`} />
-        <Row label="Sıva/boya" value={`${num(t.plasterAreaM2)} m²`} />
+        <Row label="Duvar örgü" value={`${num(t.wallElevationM2)} m²`} />
+        <Row label="Sıva" value={`${num(t.plasterAreaM2)} m²`} />
+        <Row label="Boya (duvar+tavan)" value={`${num(t.paintAreaM2)} m²`} />
         <Row label="Döşeme/şap" value={`${num(t.floorAreaM2)} m²`} />
         <Row label="Süpürgelik" value={`${num(t.skirtingM)} m`} />
         <Row label="Kapı / Pencere" value={`${t.doorCount} / ${t.windowCount}`} />
