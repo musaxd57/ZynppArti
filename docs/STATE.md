@@ -120,6 +120,12 @@
 
 ## GÜNLÜK
 
+### 2026-06-23 (gece-11 — denetim + boşluk kapatma turu)
+- **Faz denetimi:** 8-ajan + tam kod taraması → ROADMAP faz işaretleri gerçeğe çekildi (her faza "GERÇEK DURUM"). Gerçek test: **307**. Konum: Faz 0–2 ✅, Faz 3 v1 (olgun kriterler açık), Faz 4/5 önizleme.
+- **Kapatılan boşluklar:** Canlı link kopyalama **toast** geri bildirimi; **+10 blok** (10-ajan web araştırması: kapı açılım yayı, çift kapı, araç, otopark, gardırop, komodin, yemek masası+sandalye, sehpa, bulaşık mak., lavabo dolabı → 12'den **22 blok**); **glTF/GLB export** (Faz 5, three GLTFExporter); **Faz 4 komşuluk/istek girişi** (ProgramBuilder).
+- **Kalan (altyapı/maliyet/dosya-testi gerektiren — bilinçli açık):** DWG import (WASM lib + gerçek dosya), collab auth/sunucu-kalıcılık/offline/multiplayer-undo/katman-döngü-invariant (backend + ARCHITECTURE spec), AI render "geometriyi koru" (ControlNet/GPU), gerçek 3B kesit (CSG), difüzyon üretici. Bunlar adanmış faz/efor ister; "unutulmuş" değil, ROADMAP'te işaretli.
+- Zincir yeşil (typecheck 9/9 · lint 9/9 · build 1/1 · 307 test).
+
 ### 2026-06-23 (gece-10 — Faz 4 program girişi + Faz 3 collab olgunlaştırma)
 - **Faz 4 — program girişi:** Çiz modunda "🏗️ Program ile çiz" → oda tipleri+adet+toplam m² seç → net/tutarlı tarif üretir (serbest metinden isabetli). `buildProgramPrompt` saf.
 - **Faz 3 — presence imleçleri:** `packages/engine/presence.ts` (overlay'de uzak imleçler, kullanıcı başına renk). Hover multiplex (StatusBar + presence). Collab bağlıyken kendi imlecini Yjs awareness ile paylaşır, uzakları canlı çizer. CollabControl handle'ı yukarı verir (onHandle). Guard'lı.
