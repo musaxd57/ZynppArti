@@ -26,7 +26,8 @@
 - [x] Mahal listesi tablosu → Excel; DXF/PNG export (PDF de eklendi, ADR-0022)
 **✅ Kabul (KARŞILANDI):** AutoCAD'den DXF gelip ölçekleniyor, mahaller isimlenip m²'leniyor, tablo dışa aktarılıyor.
 
-## Faz 2 — AI Render + Copilot ⏳ KISMEN (2A+2B ✅; render + LLM ☐)
+## Faz 2 — AI Render + Copilot ✅ TAMAM (copilot+LLM+render v1; ileri render ☐)
+> **GERÇEK DURUM (2026-06-23 denetim):** Copilot (deterministik+LLM) + metrik ✅; **AI Render v1 de yapıldı** (`packages/ai/render.ts` + Asistan Render modu, OpenAI gpt-image-1, "yaratıcı mod"). Eksik: ControlNet "geometriyi koru", render geçmişi/S3 depolama/kota, izole `services/ai-render`.
 **Hedef:** Plandan görsel üret, kullanıcıya atıflı öneri + canlı metrik ver. (Detay: `docs/FAZ2-NOTES.md`.)
 - [ ] ☐ `services/ai-render` — izole render servisi; **doğrudan API başlangıç, kuyruk yük artınca** (ADR-0017). Sağlayıcı (Replicate/Fal) + bütçe 2D'de test edilip seçilir, önce ücretsiz krediler *(maliyetli → ertelendi, ADR-0019)*
 - [ ] ☐ **Uygulama içi canlı render paneli** (export-yükle değil; ADR-0013): plan/kesit → ControlNet + diffusion; "yaratıcı" + "geometriyi koru" modu; stil/malzeme; varyant *(maliyetli → ertelendi)*
@@ -49,7 +50,8 @@
 - [x] **Ölçülendirme** + **Parsel** (setback denetimi) araçları
 - [x] **Görünüm/UX:** içeriğe sığdır (Home) + durum çubuğu (koordinat) + kısayol yardımı (?) + araç başına imleç + katlanabilir paneller
 
-## Faz 3 — Gerçek Zamanlı İşbirliği
+## Faz 3 — Gerçek Zamanlı İşbirliği ⏳ KISMEN (v1 temel çalışıyor; "olgun" kriterler ☐)
+> **GERÇEK DURUM (2026-06-23 denetim):** Çekirdek ✅ — `packages/collab` (EntitySync + RoomLabelSync), `apps/sync` (ws relay), `engine/presence.ts` (uzak imleçler), şematik kesit (ADR-0039), metraj+maliyet. İki sekme: çizim + imleç + mahal-adı senkron. **EKSİK (kabul kriterleri):** çevrimdışı+resync, çakışma çözümü, **multiplayer undo** (bilinçli ertelendi), **katman-döngü invariant'ı** (iç içe katman hiç yok — düz reorder), yorum/markup, paylaşım rol/izin, **auth**, **sunucu-otoriteli kalıcılık** (oda boşalınca kaybolur). = "store-aynası v1".
 **Hedef:** Birden çok kişi aynı çizimde eş zamanlı.
 - [ ] `packages/collab` — Yjs entegrasyonu, Command'leri CRDT'ye bağla
 - [ ] `apps/sync` WebSocket sunucusu, presence (imleç/seçim)
@@ -75,7 +77,8 @@
   - [ ] Kesit görünümü: çizgi boyunca duvar cross-profile + döşeme/tavan hattı; çizim değişince canlı güncellenir.
   - [ ] Fotogerçekçi DEĞİL (tam 3B kesit Faz 5).
 
-## Faz 4 — Boş Plandan Üretim
+## Faz 4 — Boş Plandan Üretim ⏳ ERKEN ÖNİZLEME
+> **GERÇEK DURUM (2026-06-23 denetim):** `packages/ai/design.ts` LLM-JSON üretici → vektör (Wall/Space/Opening, undo'lanabilir) ✅; ≥2 varyant + puanlama ✅; program girişi (`ProgramBuilder`, oda+adet+m²) ⏳. **EKSİK:** komşuluk/bubble-diagram grafiği, sınır-çizme UI, kısıt-uyum döngüsü, otomatik kesit üretimi, retrieval/difüzyon model (şu an yalnız dikdörtgensel LLM taslağı).
 **Hedef:** AI'nın kendisi tasarım üretmesi.
 - [ ] Program girişi (oda/m²/komşuluk = bubble diagram) + sınır girişi UI'si
 - [ ] `services/ai-layout` — kural tabanlı + diffusion/GAN + LLM değerlendirme
@@ -92,7 +95,8 @@
 - [ ] **Hız:** boş parsel + program → ilk topoloji makul sürede (hedef <5 sn, sağlayıcıya göre ölçülecek).
 - [ ] Maliyetli (LLM/GPU) → ADR-0019: sağlayıcı/bütçe ücretsiz kredilerle test edildikten sonra.
 
-## Faz 5 — Gerçek 3D + Animasyon
+## Faz 5 — Gerçek 3D + Animasyon ⏳ ERKEN ÖNİZLEME
+> **GERÇEK DURUM (2026-06-23 denetim):** Şematik 3B ✅ — `document/wall3d.ts` (duvar→hacim, kapı/pencere boşlukları oyulur) + renkli oda zeminleri + three.js `View3D` + otomatik tur + PNG export. **EKSİK:** düzlemle gerçek 3B kesit (Faz 5 başlığı), kamera keyframe animasyonu (yalnız oto-tur var), glTF/GLB export, malzeme/ışık derinliği, görünüş (cephe), IFC/BIM.
 **Hedef:** Plandan 3D, klasik render, animasyon, **tam 3B kesit**.
 - [ ] 2D'den hacim (duvar yüksekliği, boşluklar, döşeme/tavan)
 - [ ] Three.js / react-three-fiber görüntüleme, malzeme/ışık
