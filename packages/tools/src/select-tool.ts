@@ -105,6 +105,15 @@ export class SelectTool implements SceneTool {
       // Shift değilse mevcut seçimin taşınabilir anlık görüntüsünü al (çoklu taşıma).
       if (!this.shiftDown) this.captureMoveOriginals();
     } else {
+      // Seçilebilir öğe yok: ya boşluk ya da KİLİTLİ öğe. Kilitli öğeye tıklandıysa geri bildir
+      // (gizli hariç ama kilitli dahil ikinci hit-test → kullanıcı "araç bozuk" sanmasın).
+      if (this.ctx.onLayerLocked) {
+        const onlyHidden = (lid: string): boolean => !!this.ctx.isLayerHidden?.(lid);
+        const lockedId = hitTest(this.ctx.store, this.ctx.index, p.world, HIT_PX * this.ctx.pixelSize(), onlyHidden);
+        if (lockedId && this.ctx.isLayerLocked?.(this.ctx.store.get(lockedId)?.layerId ?? '')) {
+          this.ctx.onLayerLocked();
+        }
+      }
       this.marqueeStart = p.world;
     }
     this.phase.send({ type: 'DOWN' });

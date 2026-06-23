@@ -25,6 +25,8 @@ export interface ToolContext {
   setCursor?(cursor: string): void;
   /** Seçim değişince çağrılır (Özellikler paneli için seçili id'ler). İsteğe bağlı. */
   onSelectionChange?(ids: EntityId[]): void;
+  /** Kilitli bir öğeye tıklanıp seçim engellendiğinde çağrılır (UI geri bildirim). İsteğe bağlı. */
+  onLayerLocked?(): void;
 }
 
 const SNAP_PX = 12; // ekran pikseli yarıçapı (tam nokta yakalama)

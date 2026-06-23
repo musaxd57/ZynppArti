@@ -11,6 +11,8 @@ import { CopilotPanel } from './CopilotPanel';
 import { Assistant } from './Assistant';
 import { CollabControl } from './CollabControl';
 import { View3D } from './View3D';
+import { EmptyCanvasHint } from './EmptyCanvasHint';
+import { toast } from '@/lib/toast';
 import { TakeoffPanel } from './TakeoffPanel';
 import { SheetPanel } from './SheetPanel';
 import { SectionPanel } from './SectionPanel';
@@ -106,6 +108,7 @@ export function CanvasStage() {
     let manager: ToolManager | undefined;
     let rooms: RoomManager | undefined;
     let disposed = false;
+    let lastLockToast = 0; // kilitli-katman toast'ı için throttle damgası
 
     void createCanvasApp(el, store).then((h) => {
       if (disposed) {
@@ -130,6 +133,14 @@ export function CanvasStage() {
         isLayerLocked: (id) => h.layers.isLocked(id),
         setCursor: (c) => h.setCursor(c),
         onSelectionChange: (ids) => setSelectedIds(ids),
+        onLayerLocked: () => {
+          // Kilitli öğeye tıklayınca bilgilendir; arka arkaya tıklamada spam yapma (1.5 sn).
+          const now = Date.now();
+          if (now - lastLockToast > 1500) {
+            lastLockToast = now;
+            toast('Bu öğe kilitli bir katmanda — düzenlemek için katman kilidini aç.', 'info');
+          }
+        },
       });
       h.setActiveTool(manager);
       // Mahal içine çift tık → Seç moduna geç + o mahalin adını düzenlemeye odaklan.
@@ -213,6 +224,7 @@ export function CanvasStage() {
             konumlanır → sağ/sol dock panellerinin ÜSTÜNE binmez (eski 'fixed' butonlar biniyordu). */}
         <div className="relative min-w-0 flex-1">
           <div ref={containerRef} className="absolute inset-0" />
+          {ui && <EmptyCanvasHint store={ui.store} />}
           {ui && <View3D store={ui.store} />}
           {ui && <CollabControl store={ui.store} />}
         </div>
