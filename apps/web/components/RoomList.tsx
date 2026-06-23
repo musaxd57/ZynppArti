@@ -144,7 +144,10 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
     <Panel title="Mahal Listesi" badge={spaces.length} widthClass="w-full">
       <div className="flex max-h-[40vh] flex-col gap-1 overflow-y-auto">
         {spaces.map((s) => (
-          <div key={s.id} className="flex flex-col gap-1 rounded px-1 py-1 odd:bg-white/[0.03]">
+          <div
+            key={s.id}
+            className="flex flex-col gap-1 rounded-md px-1 py-1 transition-colors hover:bg-[var(--surface-3)]"
+          >
             {/* Satır 1: tip rengi + ad + alan */}
             <div className="flex items-center gap-1">
               <span

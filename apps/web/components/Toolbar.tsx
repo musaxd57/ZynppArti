@@ -15,9 +15,11 @@ import {
 } from '@zynpparti/document';
 import type { ToolManager, ToolName } from '@zynpparti/tools';
 import { importDxf, exportDxf, exportSvg } from '@zynpparti/io';
+import { Undo2, Redo2, Maximize } from 'lucide-react';
 import { alertDialog, confirmDialog } from '@/lib/dialog';
 import { toast } from '@/lib/toast';
 import { ArkiLogo } from './ArkiLogo';
+import { TOOL_ICONS } from './toolbar-icons';
 
 const TOOLS: { name: ToolName; label: string; hotkey: string }[] = [
   { name: 'select', label: 'Seç', hotkey: 'V' },
@@ -234,32 +236,36 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers,
 
   return (
     <div className="z-30 flex w-full shrink-0 flex-nowrap items-center gap-1 overflow-x-auto border-b border-[var(--border-soft)] bg-[var(--surface-2)] p-1.5 text-[13px] text-[var(--text-1)]">
-      {TOOLS.map((t) => (
-        <button
-          key={t.name}
-          type="button"
-          onClick={() => manager.setTool(t.name)}
-          title={`${t.label} (${t.hotkey})`}
-          aria-pressed={active === t.name}
-          className={`shrink-0 rounded-md px-2.5 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
-            active === t.name
-              ? 'bg-[var(--accent-bg)] font-semibold text-[var(--accent-text)] ring-1 ring-[var(--border-focus)]'
-              : 'text-[var(--text-2)] hover:bg-[var(--surface-3)] hover:text-[var(--text-1)]'
-          }`}
-        >
-          {t.label}
-        </button>
-      ))}
+      {TOOLS.map((t) => {
+        const Icon = TOOL_ICONS[t.name];
+        return (
+          <button
+            key={t.name}
+            type="button"
+            onClick={() => manager.setTool(t.name)}
+            title={`${t.label} (${t.hotkey})`}
+            aria-pressed={active === t.name}
+            className={`flex shrink-0 flex-col items-center gap-0.5 rounded-md px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
+              active === t.name
+                ? 'bg-[var(--accent-bg)] font-semibold text-[var(--accent-text)] ring-1 ring-[var(--border-focus)]'
+                : 'text-[var(--text-2)] hover:bg-[var(--surface-3)] hover:text-[var(--text-1)]'
+            }`}
+          >
+            <Icon className="h-[18px] w-[18px]" />
+            <span className="text-[10px] leading-none">{t.label}</span>
+          </button>
+        );
+      })}
       <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button type="button" onClick={() => history.undo()} className={btn} title="Geri al (Ctrl+Z)">
-        ↶
+        <Undo2 className="h-[18px] w-[18px]" />
       </button>
       <button type="button" onClick={() => history.redo()} className={btn} title="İleri al (Ctrl+Shift+Z)">
-        ↷
+        <Redo2 className="h-[18px] w-[18px]" />
       </button>
       <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button type="button" onClick={zoomToFit} className={btn} title="İçeriğe sığdır (Home)">
-        ⊡ Sığdır
+        <Maximize className="h-[18px] w-[18px]" />
       </button>
       <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button type="button" onClick={() => void onNewModel()} className={btn} title="Yeni / temizle">

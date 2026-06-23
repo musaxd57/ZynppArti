@@ -22,6 +22,7 @@
     "@zynpparti/io": "workspace:*",
     "@zynpparti/tools": "workspace:*",
     "jspdf": "^4.2.1",
+    "lucide-react": "^1.21.0",
     "next": "^15.1.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
