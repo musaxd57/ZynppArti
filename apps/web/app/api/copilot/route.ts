@@ -2,6 +2,7 @@ import {
   buildProviders,
   parseForcedProvider,
   askCopilot,
+  askDesign,
   NoProviderError,
   type ChatMessage,
   type CopilotContext,
@@ -45,9 +46,22 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ error: 'Geçersiz istek (JSON çözülemedi).' }, { status: 400 });
   }
 
-  const messages = parseMessages((body as { messages?: unknown })?.messages);
-  if (!messages) {
-    return Response.json({ error: 'Geçerli "messages" gerekli.' }, { status: 400 });
+  const mode = (body as { mode?: unknown })?.mode;
+
+  // Tasarım (çizim) modu: messages yerine tek "prompt" alır; AI kat planı JSON'u üretir.
+  let designPrompt: string | null = null;
+  let messages: ChatMessage[] | null = null;
+  if (mode === 'design') {
+    const p = (body as { prompt?: unknown })?.prompt;
+    if (typeof p !== 'string' || !p.trim()) {
+      return Response.json({ error: 'Tasarım için "prompt" gerekli.' }, { status: 400 });
+    }
+    designPrompt = p.slice(0, MAX_CONTENT);
+  } else {
+    messages = parseMessages((body as { messages?: unknown })?.messages);
+    if (!messages) {
+      return Response.json({ error: 'Geçerli "messages" gerekli.' }, { status: 400 });
+    }
   }
   const context = ((body as { context?: unknown })?.context ?? {}) as CopilotContext;
 
@@ -70,13 +84,20 @@ export async function POST(req: Request): Promise<Response> {
     );
   }
 
+  const forced = parseForcedProvider(process.env.AI_PROVIDER);
   try {
-    const r = await askCopilot(
-      providers,
-      messages,
-      context,
-      parseForcedProvider(process.env.AI_PROVIDER),
-    );
+    if (designPrompt !== null) {
+      const d = await askDesign(providers, designPrompt, forced);
+      return Response.json({
+        mode: 'design',
+        summary: d.summary,
+        walls: d.walls,
+        rooms: d.rooms,
+        provider: d.provider,
+        model: d.model,
+      });
+    }
+    const r = await askCopilot(providers, messages!, context, forced);
     return Response.json({ answer: r.answer, provider: r.provider, model: r.model, tier: r.tier });
   } catch (e) {
     if (e instanceof NoProviderError) {

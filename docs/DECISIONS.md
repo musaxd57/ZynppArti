@@ -5,6 +5,12 @@
 
 ---
 
+## ADR-0043 — Asistan arayüzü (slide-over) + deneysel AI tasarım üretici (Fikir 2 önizleme, öne çekildi)
+**Tarih:** 2026-06-23 · **Durum:** Kabul (Moses açık talebi — "geliştirme amaçlı")
+**Bağlam:** Moses (1) cevap altındaki sağlayıcı/model adının gitmesini ("kendi AI'mız" hissi), (2) düzgün bir asistan arayüzü (logo→tıkla→solda büyük panel), (3) AI'ın **tasarımı çizebilmesini** istedi. (3) aslında Fikir 2 / Faz 4'tür ve CLAUDE.md "Faz 4'e kadar dokunma" + "faz atlama yok" der; ancak Moses bunu açıkça istedi (geliştirme amaçlı) → kural 0 gereği "sor"ulan onay sağlandı; Command/RoomManager altyapısı (Faz 1) bunu güvenle taşıyor (AI-AGENT-VISION: Command tabanı ajan için ideal).
+**Karar:** **`Assistant`** bileşeni (slide-over): logo butonu → solda büyük panel; "Sor" + "Çiz" modu; **sağlayıcı/model adı UI'da gösterilmez** (CopilotChat kaldırıldı). **Çiz modu** = deneysel tasarım üretici: `packages/ai/design.ts` LLM'e katı JSON kat planı ürettirir (cm duvar segmentleri + oda etiketleri; complex kademe = en iyi model); `parseLayout` toleranslı ayrıştırma + doğrulama (5 test). İstemci planı **Command ile** çizer (`BatchCommand([AddEntity...])` → tek undo); RoomManager mahalleri senkron türetir; `pointInPolygon` ile merkez noktasından ad/tip atanır (best-effort, ayrı batch); sonra zoom-to-fit. Salt-okunur değil ama yine de Command'den geçer (kutsal kural) ve undo'lanır. Route'a `mode:'design'` eklendi.
+**Sonuç:** AI artık Türkçe tariften (örn. "8x6m salon+mutfak+yatak+banyo") undo'lanabilir bir kat planı taslağı çiziyor (canlı doğrulandı: GLM-5.2 geçerli plan üretti). Takas: **basit dikdörtgensel taslak** (tam üretici — komşuluk grafiği, kısıt-uyumu, çoklu varyant — Faz 4); JSON güvenilirliği modele bağlı (geçersizse fallback/hata); ölçüleri kullanıcı doğrulamalı ("deneysel" etiketli). Streaming hâlâ yok.
+
 ## ADR-0042 — 3 sağlayıcılı zorluk-bazlı router + fallback (AkashML eklendi)
 **Tarih:** 2026-06-23 · **Durum:** Kabul (ADR-0006 provider-agnostic adapter'ı tam kurar; ADR-0041 üstüne)
 **Bağlam:** Moses AkashML (OpenAI-uyumlu, ucuz açık modeller) entegrasyonu + gerçek sağlayıcı-bağımsız router istedi: soru zorluğuna göre otomatik sağlayıcı + fallback. Maliyet tercihi: **çoğunlukla Akash, OpenAI nadir, yönetmelik/akıl-yürütme Claude.**

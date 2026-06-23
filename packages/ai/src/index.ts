@@ -7,3 +7,11 @@ export { openAICompatibleProvider, type OpenAICompatConfig } from './provider-op
 export { classifyTier, resolveChain, FALLBACK_CHAINS } from './router';
 export { buildProviders, parseForcedProvider, type ProviderEnv } from './providers';
 export { askCopilot, NoProviderError, type CopilotResult } from './copilot';
+export {
+  askDesign,
+  parseLayout,
+  DESIGN_SYSTEM,
+  type Layout,
+  type LayoutRoom,
+  type DesignResult,
+} from './design';
