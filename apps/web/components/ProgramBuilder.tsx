@@ -18,12 +18,17 @@ const ROOMS: { key: string; label: string; def?: number }[] = [
   { key: 'balkon', label: 'Balkon' },
 ];
 
-export function buildProgramPrompt(counts: Record<string, number>, totalM2: number): string {
+export function buildProgramPrompt(
+  counts: Record<string, number>,
+  totalM2: number,
+  notes = '',
+): string {
   const parts = ROOMS.filter((r) => (counts[r.key] ?? 0) > 0).map(
     (r) => `${counts[r.key]} ${r.key}`,
   );
   if (parts.length === 0) return '';
-  return `${totalM2} m² daire çiz: ${parts.join(', ')}. Mantıklı yerleşim yap, ıslak hacimleri (mutfak/banyo/wc) bir arada grupla, her odaya kapı ve dış odalara pencere ekle.`;
+  const extra = notes.trim() ? ` Komşuluk/istek: ${notes.trim()}.` : '';
+  return `${totalM2} m² daire çiz: ${parts.join(', ')}.${extra} Mantıklı yerleşim yap, ıslak hacimleri (mutfak/banyo/wc) bir arada grupla, her odaya kapı ve dış odalara pencere ekle.`;
 }
 
 export function ProgramBuilder({ onApply }: { onApply: (prompt: string) => void }) {
@@ -32,6 +37,7 @@ export function ProgramBuilder({ onApply }: { onApply: (prompt: string) => void 
     Object.fromEntries(ROOMS.map((r) => [r.key, r.def ?? 0])),
   );
   const [totalM2, setTotalM2] = useState(90);
+  const [notes, setNotes] = useState('');
 
   const set = (key: string, delta: number): void =>
     setCounts((c) => ({ ...c, [key]: Math.max(0, Math.min(9, (c[key] ?? 0) + delta)) }));
@@ -67,9 +73,17 @@ export function ProgramBuilder({ onApply }: { onApply: (prompt: string) => void 
               </div>
             </div>
           ))}
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            placeholder="Komşuluk / istek (ops.): örn. salon-mutfak bitişik, yatak odaları kuzeyde"
+            className="mt-1 w-full resize-none rounded-md px-2 py-1.5 text-xs outline-none"
+            style={{ background: 'var(--surface-3)', color: 'var(--text-1)' }}
+          />
           <button
             type="button"
-            onClick={() => onApply(buildProgramPrompt(counts, totalM2))}
+            onClick={() => onApply(buildProgramPrompt(counts, totalM2, notes))}
             className="mt-1 rounded-md px-3 py-1.5 text-sm font-semibold text-white"
             style={{ background: 'var(--accent)' }}
           >
