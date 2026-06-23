@@ -18,7 +18,7 @@ import { importDxf, importDwg, exportDxf, exportSvg } from '@zynpparti/io';
 import { Undo2, Redo2, Maximize, PanelLeft, PanelLeftClose } from 'lucide-react';
 import { alertDialog, confirmDialog } from '@/lib/dialog';
 import { toast } from '@/lib/toast';
-import { ArkiLogo } from './ArkiLogo';
+import { VesnaLogo } from './VesnaLogo';
 import { TOOL_ICONS } from './toolbar-icons';
 
 const TOOLS: { name: ToolName; label: string; hotkey: string }[] = [
@@ -44,7 +44,7 @@ interface ToolbarProps {
   zoomToFit: () => void;
   /** Katman görünürlüğü — gizli katmanlar vektör export'larda (DXF/SVG) atlanır. */
   layers?: { isHidden(id: string): boolean };
-  /** Üst araç çubuğundaki "Arki" butonu AI panelini açar. */
+  /** Üst araç çubuğundaki "Vesna" butonu AI panelini açar. */
   onOpenAssistant?: () => void;
   /** Zen modu: sol+sağ paneller gizli mi + aç/kapat. */
   chromeHidden?: boolean;
@@ -334,11 +334,11 @@ export function Toolbar({
       <button
         type="button"
         onClick={() => onOpenAssistant?.()}
-        title="Arki — AI tasarım yardımcın (Sor / Çiz / Render)"
+        title="Vesna — AI tasarım yardımcın (Sor / Çiz / Render)"
         className="flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 py-1.5 font-semibold text-white shadow-sm transition-colors hover:bg-[var(--accent-hover)]"
       >
-        <ArkiLogo className="h-[18px] w-[18px]" />
-        Arki <span className="font-normal opacity-75">AI</span>
+        <VesnaLogo className="h-[18px] w-[18px]" />
+        Vesna <span className="font-normal opacity-75">AI</span>
       </button>
       <input
         ref={fileRef}

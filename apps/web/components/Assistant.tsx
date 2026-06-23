@@ -17,11 +17,11 @@ import {
   type Wall,
 } from '@zynpparti/document';
 import { pointInPolygon, findFaces } from '@zynpparti/geometry';
-import { ArkiLogo } from './ArkiLogo';
+import { VesnaLogo } from './VesnaLogo';
 import { ProgramBuilder } from './ProgramBuilder';
 
 /**
- * Arki — uygulamanın kendi AI paneli (sağlayıcı/model adı GÖSTERİLMEZ; "kendi AI'mız" hissi).
+ * Vesna — uygulamanın kendi AI paneli (sağlayıcı/model adı GÖSTERİLMEZ; "kendi AI'mız" hissi).
  * Logo butonuna tıkla → solda büyük panel açılır. Her modun KENDİ sohbeti vardır (karışmaz). 3 mod:
  *  - **Sor:** proje bağlamıyla (mahal/metrik/yönetmelik) akışlı soru-cevap (salt-okunur).
  *  - **Çiz:** tarife göre AI kat planı taslağı üretir; **Command ile** çizilir → undo'lanabilir.
@@ -46,7 +46,7 @@ interface AssistantProps {
   store: EntityStore;
   history: History;
   selectedIds: string[];
-  /** Panel açık mı (üst araç çubuğundaki Arki butonu kontrol eder). */
+  /** Panel açık mı (üst araç çubuğundaki Vesna butonu kontrol eder). */
   open: boolean;
   /** Paneli kapat (✕). */
   onClose: () => void;
@@ -535,7 +535,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
     }
   };
 
-  if (!open) return null; // Açma butonu üst araç çubuğunda (Toolbar → Arki).
+  if (!open) return null; // Açma butonu üst araç çubuğunda (Toolbar → Vesna).
 
   const examples =
     mode === 'draw'
@@ -549,10 +549,10 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
       {/* Başlık */}
       <div className="flex items-center gap-2 border-b border-[var(--border-hair)] bg-[var(--surface-2)] px-4 py-3">
         <span className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--accent)] text-white">
-          <ArkiLogo className="h-5 w-5" />
+          <VesnaLogo className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold">Arki</div>
+          <div className="text-sm font-semibold">Vesna</div>
           <div className="text-[11px] text-white/60">Tasarım yardımcın</div>
         </div>
         {messages.length > 0 && (
@@ -599,7 +599,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
       <div ref={scrollRef} className="flex flex-1 flex-col gap-2 overflow-y-auto p-3">
         {messages.length === 0 && (
           <div className="m-auto max-w-[280px] text-center text-sm text-white/70">
-            <ArkiLogo className="mx-auto mb-2 h-8 w-8 text-white/50" />
+            <VesnaLogo className="mx-auto mb-2 h-8 w-8 text-white/50" />
             {mode === 'draw'
               ? 'Tarif et, planı çizeyim. Örnekler:'
               : mode === 'render'
@@ -690,7 +690,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
             // Daktilo/akış başladıysa (dolu asistan balonu) göstergeyi gizle.
             if (last?.role === 'assistant' && (last.content || last.image)) return null;
             const label =
-              mode === 'draw' ? 'Plan üretiliyor' : mode === 'render' ? 'Görsel üretiliyor' : 'Arki yazıyor';
+              mode === 'draw' ? 'Plan üretiliyor' : mode === 'render' ? 'Görsel üretiliyor' : 'Vesna yazıyor';
             return <TypingDots label={label} />;
           })()}
       </div>

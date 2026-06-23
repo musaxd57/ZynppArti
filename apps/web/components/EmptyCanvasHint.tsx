@@ -23,7 +23,7 @@ export function EmptyCanvasHint({ store }: { store: EntityStore }) {
           çizmeye başla — mahaller otomatik bulunur.
         </p>
         <p className="mt-2 leading-relaxed">
-          Ya da sol-alttaki <span className="font-semibold text-white/80">Arki → Çiz</span> ile tarif
+          Ya da sol-alttaki <span className="font-semibold text-white/80">Vesna → Çiz</span> ile tarif
           ederek AI'a plan çizdir.
         </p>
       </div>
