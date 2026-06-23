@@ -19,10 +19,11 @@ import {
 import { pointInPolygon, findFaces } from '@zynpparti/geometry';
 
 /**
- * ZynppArti Asistanı — uygulamanın kendi AI panelı (sağlayıcı adı GÖSTERİLMEZ; "kendi AI'mız" hissi).
- * Logo butonuna tıkla → solda büyük panel açılır. İki mod:
- *  - **Sor:** proje bağlamıyla (mahal/metrik/yönetmelik bulguları) soru-cevap (salt-okunur).
- *  - **Çiz:** tarife göre AI bir kat planı taslağı üretir; **Command ile** çizilir → undo'lanabilir.
+ * Arki — uygulamanın kendi AI paneli (sağlayıcı/model adı GÖSTERİLMEZ; "kendi AI'mız" hissi).
+ * Logo butonuna tıkla → solda büyük panel açılır. Her modun KENDİ sohbeti vardır (karışmaz). 3 mod:
+ *  - **Sor:** proje bağlamıyla (mahal/metrik/yönetmelik) akışlı soru-cevap (salt-okunur).
+ *  - **Çiz:** tarife göre AI kat planı taslağı üretir; **Command ile** çizilir → undo'lanabilir.
+ *  - **Render:** tarife göre fotogerçekçi görsel üretir (deneysel, yaratıcı mod).
  *
  * server-only `@zynpparti/ai` paketi BURADA import EDİLMEZ (anahtar/SDK tarayıcıya sızmasın); yalnız
  * /api/copilot route'una fetch yapılır + saf document/geometry yardımcıları kullanılır.
