@@ -5,11 +5,12 @@ import { BatchCommand, UpdateEntity, type Wall } from '@zynpparti/document';
 import type { SceneTool, ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
 
-const PREVIEW_COLOR = 0x59d98e;
+const PREVIEW_COLOR = 0x5be0d6; // parlak ölçü-şeridi rengi (koyu zeminde okunur)
 
 /**
  * Ölçek kalibrasyonu (ADR-0008): iki nokta seç → gerçek mesafeyi gir → tüm duvarları ölçekle.
- * Faz 1'de gerçek mesafe `window.prompt` ile alınır (basit; ileride uygun bir UI gelecek — ADR-0011).
+ * Gerçek mesafe, varsa uygulamanın temalı diyaloğuyla (ctx.requestCalibration) alınır; yoksa
+ * `window.prompt`'a düşer (ADR-0011).
  */
 export class CalibrateTool implements SceneTool {
   private readonly preview = new Graphics();
@@ -52,19 +53,18 @@ export class CalibrateTool implements SceneTool {
   private applyCalibration(a: Vec2, b: Vec2): void {
     const measured = distance(a, b);
     if (measured === 0) return;
-    const answer =
-      typeof window !== 'undefined'
-        ? window.prompt('Bu iki nokta arası gerçek mesafe (cm):')
-        : null;
-    if (answer == null) return;
-    const real = Number(answer.replace(',', '.'));
-    if (!Number.isFinite(real) || real <= 0) return;
-
-    const factor = real / measured;
-    const walls = this.ctx.store.all().filter((e): e is Wall => e.type === 'wall');
-    if (walls.length === 0) return;
-    const cmds = walls.map((w) => new UpdateEntity(this.scaleWall(w, factor, a)));
-    this.ctx.history.dispatch(new BatchCommand('Ölçekle', cmds));
+    // Gerçek mesafeyi temalı diyalogtan al (yoksa window.prompt yedeği). Asenkron → sonra uygula.
+    const ask: Promise<number | null> = this.ctx.requestCalibration
+      ? this.ctx.requestCalibration(measured)
+      : Promise.resolve(promptFallback());
+    void ask.then((real) => {
+      if (real == null || !Number.isFinite(real) || real <= 0) return;
+      const factor = real / measured;
+      const walls = this.ctx.store.all().filter((e): e is Wall => e.type === 'wall');
+      if (walls.length === 0) return;
+      const cmds = walls.map((w) => new UpdateEntity(this.scaleWall(w, factor, a)));
+      this.ctx.history.dispatch(new BatchCommand('Ölçekle', cmds));
+    });
   }
 
   private scaleWall(w: Wall, f: number, o: Vec2): Wall {
@@ -93,4 +93,13 @@ export class CalibrateTool implements SceneTool {
   dispose(): void {
     this.preview.destroy();
   }
+}
+
+/** Diyalog enjekte edilmemişse (test/edge) basit yedek. */
+function promptFallback(): number | null {
+  if (typeof window === 'undefined') return null;
+  const answer = window.prompt('Bu iki nokta arası gerçek mesafe (cm):');
+  if (answer == null) return null;
+  const real = Number(answer.replace(',', '.'));
+  return Number.isFinite(real) && real > 0 ? real : null;
 }

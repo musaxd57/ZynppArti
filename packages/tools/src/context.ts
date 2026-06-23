@@ -27,6 +27,11 @@ export interface ToolContext {
   onSelectionChange?(ids: EntityId[]): void;
   /** Kilitli bir öğeye tıklanıp seçim engellendiğinde çağrılır (UI geri bildirim). İsteğe bağlı. */
   onLayerLocked?(): void;
+  /**
+   * Ölçek kalibrasyonu: ölçülen mesafe (çizim birimi) verilir, gerçek cm (veya iptal=null) döner.
+   * Uygulama temalı bir diyalog gösterir; yoksa tool `window.prompt`'a düşer.
+   */
+  requestCalibration?(measured: number): Promise<number | null>;
 }
 
 const SNAP_PX = 12; // ekran pikseli yarıçapı (tam nokta yakalama)

@@ -31,7 +31,8 @@ export function DialogHost() {
       onPointerDown={cancel}
     >
       <div
-        className="w-[24rem] max-w-[92vw] rounded-lg border border-white/10 bg-neutral-800 p-5 text-sm text-white shadow-2xl"
+        className="w-[24rem] max-w-[92vw] rounded-xl p-5 text-sm shadow-2xl"
+        style={{ background: 'var(--overlay)', color: 'var(--text-1)', boxShadow: 'inset 0 0 0 1px var(--border-soft)' }}
         onPointerDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === 'Enter') ok();
@@ -45,7 +46,8 @@ export function DialogHost() {
             autoFocus
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="mb-4 w-full rounded bg-white/10 px-2 py-1.5 outline-none focus:bg-white/20"
+            className="mb-4 w-full rounded-md px-3 py-2 outline-none"
+            style={{ background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--border-soft)' }}
           />
         )}
         <div className="flex justify-end gap-2">
@@ -53,7 +55,8 @@ export function DialogHost() {
             <button
               type="button"
               onClick={cancel}
-              className="rounded bg-white/10 px-4 py-1.5 hover:bg-white/20"
+              className="rounded-md px-4 py-1.5 transition-colors hover:bg-[var(--surface-3)]"
+              style={{ color: 'var(--text-2)' }}
             >
               {state.kind === 'confirm' ? 'Hayır' : 'İptal'}
             </button>
@@ -62,7 +65,8 @@ export function DialogHost() {
             type="button"
             autoFocus={state.kind !== 'prompt'}
             onClick={ok}
-            className="rounded bg-blue-600 px-4 py-1.5 hover:bg-blue-700"
+            className="rounded-md px-4 py-1.5 font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
+            style={{ background: 'var(--accent)' }}
           >
             {state.kind === 'confirm' ? 'Evet' : 'Tamam'}
           </button>

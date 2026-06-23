@@ -19,6 +19,7 @@ import { SectionPanel } from './SectionPanel';
 import { ContextMenu, type ContextMenuItem } from './ContextMenu';
 import { CommandPalette } from './CommandPalette';
 import { promptDialog } from '@/lib/dialog';
+import { requestCalibration } from '@/lib/calibrate-dialog';
 import { PropertiesPanel } from './PropertiesPanel';
 import { LayerPanel } from './LayerPanel';
 import { BlockPalette } from './BlockPalette';
@@ -143,6 +144,7 @@ export function CanvasStage() {
             toast('Bu öğe kilitli bir katmanda — düzenlemek için katman kilidini aç.', 'info');
           }
         },
+        requestCalibration, // ölçek için temalı diyalog (window.prompt yerine)
       });
       h.setActiveTool(manager);
       // Mahal içine çift tık → Seç moduna geç + o mahalin adını düzenlemeye odaklan.

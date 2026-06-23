@@ -9,6 +9,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { GlobalErrorHandlers } from '@/components/GlobalErrorHandlers';
 import { DialogHost } from '@/components/DialogHost';
 import { Toaster } from '@/components/Toaster';
+import { CalibrateDialog } from '@/components/CalibrateDialog';
 
 export const metadata: Metadata = {
   title: 'ZynppArti',
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <GlobalErrorHandlers />
         <ErrorBoundary>{children}</ErrorBoundary>
         <DialogHost />
+        <CalibrateDialog />
         <Toaster />
       </body>
     </html>
