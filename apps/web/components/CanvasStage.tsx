@@ -8,6 +8,7 @@ import { seedDemo } from '@/lib/demo-seed';
 import { Toolbar } from './Toolbar';
 import { RoomList } from './RoomList';
 import { CopilotPanel } from './CopilotPanel';
+import { CopilotChat } from './CopilotChat';
 import { TakeoffPanel } from './TakeoffPanel';
 import { SheetPanel } from './SheetPanel';
 import { SectionPanel } from './SectionPanel';
@@ -196,6 +197,7 @@ export function CanvasStage() {
             <LayerPanel store={ui.store} layers={ui.layers} />
             <BlockPalette manager={ui.manager} />
             <CopilotPanel store={ui.store} />
+            <CopilotChat store={ui.store} selectedIds={selectedIds} />
           </div>
         )}
         {ui && (

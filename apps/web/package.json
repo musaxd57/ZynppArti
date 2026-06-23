@@ -13,6 +13,7 @@
     "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@zynpparti/ai": "workspace:*",
     "@zynpparti/copilot": "workspace:*",
     "@zynpparti/document": "workspace:*",
     "@zynpparti/engine": "workspace:*",
