@@ -65,6 +65,7 @@ export async function askCopilotStream(
   ctx: CopilotContext,
   onDelta: (delta: string) => void,
   forced?: AiProviderName,
+  signal?: AbortSignal,
 ): Promise<void> {
   const available = Object.keys(providers) as AiProviderName[];
   if (available.length === 0) throw new NoProviderError();
@@ -81,7 +82,9 @@ export async function askCopilotStream(
     if (!provider) continue;
     let started = false;
     try {
-      await provider.chatStream(messages, { system }, (d) => {
+      // onDelta yalnız boş-OLMAYAN parçayla çağrılır (sağlayıcılar boş delta'yı eler) → `started`
+      // yalnız gerçek içerik gelince true olur; akış başladıysa fallback yapılmaz (aşağıda).
+      await provider.chatStream(messages, { system, signal }, (d) => {
         started = true;
         onDelta(d);
       });

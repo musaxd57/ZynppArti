@@ -245,10 +245,14 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages, loading]);
+
+  // Bileşen sökülürse devam eden isteği iptal et (boşa token harcanmasın).
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const send = async (): Promise<void> => {
     const text = input.trim();
@@ -257,12 +261,15 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
     setInput('');
     setError(null);
     setLoading(true);
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     try {
       if (mode === 'draw') {
         const res = await fetch('/api/copilot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ mode: 'design', prompt: text, hint: buildDesignHint(store) }),
+          signal: ctrl.signal,
         });
         const data: unknown = await res.json();
         if (!res.ok) throw new Error((data as { error?: string }).error ?? `Hata (${res.status})`);
@@ -305,6 +312,7 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: next, context: buildContext(store, selectedIds) }),
+          signal: ctrl.signal,
         });
         if (!res.ok) {
           let msg = `Hata (${res.status})`;
@@ -335,9 +343,13 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
         }
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'İstek başarısız.');
+      // Kullanıcı paneli kapattıysa (abort) sessiz geç; gerçek hatayı göster.
+      if (!(e instanceof DOMException && e.name === 'AbortError')) {
+        setError(e instanceof Error ? e.message : 'İstek başarısız.');
+      }
     } finally {
       setLoading(false);
+      abortRef.current = null;
     }
   };
 
@@ -373,7 +385,10 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
         </div>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={() => {
+            abortRef.current?.abort(); // açık istek varsa iptal et (boşa token harcama)
+            setOpen(false);
+          }}
           className="grid h-7 w-7 place-items-center rounded hover:bg-white/10"
           title="Kapat"
           aria-label="Asistanı kapat"

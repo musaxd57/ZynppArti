@@ -54,6 +54,8 @@ export interface ChatOptions {
   readonly system?: string;
   /** Üretilecek azami yanıt token'ı. */
   readonly maxTokens?: number;
+  /** İstemci bağlantısı koparsa LLM çağrısını iptal eder (boşa token harcamasın). */
+  readonly signal?: AbortSignal;
 }
 
 /** Sağlayıcı-bağımsız sohbet arabirimi. Her sağlayıcı kendi resmî SDK'sıyla uygular. */

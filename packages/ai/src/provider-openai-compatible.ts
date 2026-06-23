@@ -56,7 +56,10 @@ export function openAICompatibleProvider(cfg: OpenAICompatConfig): AiProvider {
       else base.max_tokens = max;
       if (cfg.temperature !== undefined) base.temperature = cfg.temperature;
 
-      const stream = await client.chat.completions.create(base);
+      const stream = await client.chat.completions.create(
+        base,
+        opts.signal ? { signal: opts.signal } : undefined,
+      );
       let full = '';
       for await (const chunk of stream) {
         const delta = chunk.choices[0]?.delta?.content ?? '';

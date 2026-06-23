@@ -31,7 +31,8 @@
 - [ ] ☐ `services/ai-render` — izole render servisi; **doğrudan API başlangıç, kuyruk yük artınca** (ADR-0017). Sağlayıcı (Replicate/Fal) + bütçe 2D'de test edilip seçilir, önce ücretsiz krediler *(maliyetli → ertelendi, ADR-0019)*
 - [ ] ☐ **Uygulama içi canlı render paneli** (export-yükle değil; ADR-0013): plan/kesit → ControlNet + diffusion; "yaratıcı" + "geometriyi koru" modu; stil/malzeme; varyant *(maliyetli → ertelendi)*
 - [ ] ☐ Render geçmişi + S3/R2 depolama + önbellek + kota
-- [x] ✅ **Copilot (1) — kaynak-gösteren öneri (2B):** `packages/copilot` deterministik kural motoru; her bulgu atıflı (ADR-0014/0018). *(Doğal-dil LLM katmanı ☐ — maliyetli, ertelendi.)*
+- [x] ✅ **Copilot (1) — kaynak-gösteren öneri (2B):** `packages/copilot` deterministik kural motoru; her bulgu atıflı (ADR-0014/0018).
+- [x] ✅ **Copilot (1b) — doğal-dil LLM katmanı (Fikir 1, ADR-0041/0042):** `packages/ai` 3-sağlayıcı router (Akash/OpenAI/Claude) + fallback + streaming; Asistan UI. AI kapısı açıldı (Moses anahtarları girdi).
 - [x] ✅ **Copilot (2) — canlı metrik paneli (2A):** RoomList — toplam/net/brüt m², oda tipi dağılımı, Excel
 - [x] ✅ **Türkçe yönetmelik (genişliyor):** koridor (TS 9111), asgari alan (yatak/oturma/mutfak/banyo, İmar), kapı genişliği, çekme/setback, doğal aydınlatma, otopark, TAKS (ADR-0015/0021)
 **✅ Kabul:** 2A/2B karşılandı (metrik + atıflı öneri canlı). Render ayağı (2C) sağlayıcı/bütçe kararından sonra. (Foto-gerçekçi otomatik KESİT burada YOK — bkz. Faz 3/5.)
@@ -57,7 +58,7 @@
 - [ ] **Hafif şematik kesit (ADR-0016):** duvarlara yükseklik özelliği + plana kesit çizgisi → ekstrüzyonla düzenlenebilir şematik kesit (gerçek kesitin ara yolu; tam 3B kesit Faz 5)
 - [x] ✅ **Metraj paneli (`PRO-FEATURES.md §1`) — ADR-0019 ile öne çekildi:** duvar/mahal/kapı-pencereden otomatik miktar (sıva/boya m², döşeme m², süpürgelik, kapı/pencere + mobilya çizelgesi) → canlı tablo + Excel. *(Türkçe **poz/birim fiyat** entegrasyonu ☐ — hâlâ tohum.)*
 - [x] ⏳ **Çizelge (schedule) motoru (`PRO-FEATURES.md §3`):** mahal listesi + kapı/pencere + mobilya çizelgeleri canlı (`takeoff.ts`). *(Genel "entity özelliği → tablo" soyutlaması ☐.)*
-- [ ] ☐ **Canlı yaklaşık maliyet tohumu (`PRO-FEATURES.md §2`):** metraj × birim fiyat → TL bazında kaba canlı maliyet (detaylı hesap Faz 4)
+- [x] ✅ **Canlı yaklaşık maliyet (`PRO-FEATURES.md §2`) — ADR-0019 ile öne çekildi:** `cost.ts` metraj × birim fiyat → kaba TL (TakeoffPanel + Excel "Maliyet"). *(Poz/birim-fiyat veritabanı ☐.)*
 **✅ Kabul:** İki kişi aynı anda çiziyor; duvar yüksekliğinden şematik kesit alınabiliyor. (Metraj/çizelge zaten canlı — öne çekildi.)
 
 **Kabul kriterleri (detay):**
@@ -129,4 +130,4 @@
 
 **Neden bu sıra:** (1) LLM Q&A bugünün deterministik copilot'unun üstüne **ince bir katman** — en hızlı görünür değer, en az risk; aynı zamanda AI-AGENT-VISION Seviye 1→2 merdiveninin doğal devamı (öneri → onaylı Command). (2) Render ayrı bir maliyet/sağlayıcı sınıfı (GPU). (3) Üretici hepsinin üstüne biner; en sona.
 
-**Şu an:** AI kapısı **kapalı** (bilinçli). Hepsi `packages/ai` sağlayıcı-bağımsız adapter arkasında olacak (ADR-0006). Moses "aç" diyene kadar deterministik/bedava işler sürer.
+**Durum (2026-06-23):** AI kapısı **AÇILDI** (Moses Akash+OpenAI anahtarlarını girdi). **#1 LLM Copilot Q&A ✅** (streaming + 3-sağlayıcı router, ADR-0041/0042). **#3 Metin→Plan üretici ⏳ erken/deneysel önizleme** (ADR-0043: duvar+oda+kapı+pencere, undo'lanabilir; tam üretici Faz 4). **#2 AI Render ☐** (hâlâ GPU/maliyet — sırada). Hepsi `packages/ai` adapter arkasında (ADR-0006); Claude anahtarı gelince karmaşık/yönetmelik otomatik Claude'a geçer.

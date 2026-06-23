@@ -110,19 +110,27 @@ export async function POST(req: Request): Promise<Response> {
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      const safeEnqueue = (s: string): void => {
+        try {
+          controller.enqueue(encoder.encode(s));
+        } catch {
+          /* istemci koptu / controller kapalı → yoksay */
+        }
+      };
       try {
-        await askCopilotStream(
-          providers,
-          messages!,
-          context,
-          (delta) => controller.enqueue(encoder.encode(delta)),
-          forced,
-        );
+        await askCopilotStream(providers, messages!, context, safeEnqueue, forced, req.signal);
       } catch (e) {
-        console.error('Copilot stream başarısız:', e);
-        controller.enqueue(encoder.encode('\n\n[Yanıt alınamadı, lütfen tekrar deneyin.]'));
+        // İstemci iptali değilse hata mesajı yaz (iptalde sessiz geç — log gürültüsü olmasın).
+        if (!req.signal.aborted) {
+          console.error('Copilot stream başarısız:', e);
+          safeEnqueue('\n\n[Yanıt alınamadı, lütfen tekrar deneyin.]');
+        }
       } finally {
-        controller.close();
+        try {
+          controller.close();
+        } catch {
+          /* zaten kapalı/errored → yoksay */
+        }
       }
     },
   });

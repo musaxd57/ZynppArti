@@ -43,14 +43,17 @@ export function anthropicProvider(apiKey: string, model: string = ANTHROPIC_DEFA
     },
 
     async chatStream(messages, opts, onDelta): Promise<string> {
-      const stream = client.messages.stream({
-        model,
-        max_tokens: opts.maxTokens ?? 6000,
-        thinking: { type: 'adaptive' },
-        output_config: { effort: 'low' },
-        ...(opts.system ? { system: opts.system } : {}),
-        messages: messages.map((m) => ({ role: m.role, content: m.content })),
-      });
+      const stream = client.messages.stream(
+        {
+          model,
+          max_tokens: opts.maxTokens ?? 6000,
+          thinking: { type: 'adaptive' },
+          output_config: { effort: 'low' },
+          ...(opts.system ? { system: opts.system } : {}),
+          messages: messages.map((m) => ({ role: m.role, content: m.content })),
+        },
+        opts.signal ? { signal: opts.signal } : undefined,
+      );
       stream.on('text', (delta) => onDelta(delta));
       const final = await stream.finalMessage();
       if (final.stop_reason === 'refusal') return 'Bu soruya güvenlik nedeniyle yanıt veremiyorum.';
