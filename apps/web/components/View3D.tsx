@@ -2,7 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { wallBoxesWithOpenings, type EntityStore, type Opening, type Wall } from '@zynpparti/document';
+import {
+  wallBoxesWithOpenings,
+  roomTypeColor,
+  type EntityStore,
+  type Opening,
+  type Space,
+  type Wall,
+} from '@zynpparti/document';
 
 /**
  * Şematik 3B önizleme (Faz 5 başlangıcı): duvarları yüksekliklerine göre ekstrüde edip three.js'te
@@ -14,6 +21,8 @@ import { wallBoxesWithOpenings, type EntityStore, type Opening, type Wall } from
 export function View3D({ store }: { store: EntityStore }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [spin, setSpin] = useState(false);
+  const spinRef = useRef(false); // animasyon döngüsü bunu okur (otomatik tur)
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -96,6 +105,31 @@ export function View3D({ store }: { store: EntityStore }) {
         scene.add(mesh);
       }
 
+      // Oda zeminleri: her mahal sınırı, tipine göre renkli ince döşeme (2B dolgusunun 3B karşılığı).
+      const spaces = store.all().filter((e): e is Space => e.type === 'space');
+      const slabGeos: THREE.ShapeGeometry[] = [];
+      const slabMats: THREE.MeshStandardMaterial[] = [];
+      for (const sp of spaces) {
+        if (sp.boundary.length < 3) continue;
+        const shape = new THREE.Shape();
+        shape.moveTo(sp.boundary[0]!.x, sp.boundary[0]!.y);
+        for (let i = 1; i < sp.boundary.length; i++) shape.lineTo(sp.boundary[i]!.x, sp.boundary[i]!.y);
+        shape.closePath();
+        const g = new THREE.ShapeGeometry(shape);
+        slabGeos.push(g);
+        const mat = new THREE.MeshStandardMaterial({
+          color: roomTypeColor(sp.roomType ?? 'other'),
+          transparent: true,
+          opacity: 0.5,
+          side: THREE.DoubleSide,
+        });
+        slabMats.push(mat);
+        const slab = new THREE.Mesh(g, mat);
+        slab.rotation.x = Math.PI / 2; // XY şeklini zemine (XZ) yatır; plan-y → dünya-z
+        slab.position.y = 0.5; // zemin düzlemiyle z-fight olmasın
+        scene.add(slab);
+      }
+
       // Elle orbit (OrbitControls bağımlılığı yok).
       let dragging = false;
       let lx = 0;
@@ -138,6 +172,10 @@ export function View3D({ store }: { store: EntityStore }) {
       let raf = 0;
       const loop = (): void => {
         raf = requestAnimationFrame(loop);
+        if (spinRef.current && !dragging) {
+          theta += 0.004; // otomatik tur (sunum hissi)
+          updateCam();
+        }
         renderer.render(scene, cam);
       };
       loop();
@@ -150,6 +188,8 @@ export function View3D({ store }: { store: EntityStore }) {
         renderer.domElement.removeEventListener('pointerdown', onDown);
         renderer.domElement.removeEventListener('wheel', onWheel);
         geos.forEach((g) => g.dispose());
+        slabGeos.forEach((g) => g.dispose());
+        slabMats.forEach((m) => m.dispose());
         floorGeo.dispose();
         floorMat.dispose();
         wallMat.dispose();
@@ -182,8 +222,27 @@ export function View3D({ store }: { store: EntityStore }) {
             <span className="text-[11px] text-white/50">sürükle: döndür · tekerlek: yakınlaş</span>
             <button
               type="button"
-              onClick={() => setOpen(false)}
-              className="ml-auto rounded px-3 py-1 text-sm hover:bg-white/10"
+              onClick={() =>
+                setSpin((s) => {
+                  spinRef.current = !s;
+                  return !s;
+                })
+              }
+              className={`ml-auto rounded-md px-3 py-1 text-sm transition-colors ${
+                spin ? 'bg-[var(--accent)] text-white' : 'hover:bg-white/10'
+              }`}
+              title="Otomatik kamera turu"
+            >
+              {spin ? '⏸ Tur' : '▶ Tur'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                spinRef.current = false;
+                setSpin(false);
+                setOpen(false);
+              }}
+              className="rounded-md px-3 py-1 text-sm hover:bg-white/10"
             >
               ✕ Kapat
             </button>
