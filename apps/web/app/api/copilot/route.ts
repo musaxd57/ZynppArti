@@ -92,7 +92,13 @@ export async function POST(req: Request): Promise<Response> {
     const hint = typeof hintRaw === 'string' ? hintRaw.slice(0, 1000) : undefined;
     try {
       const d = await askDesign(providers, designPrompt, forced, hint);
-      return Response.json({ mode: 'design', summary: d.summary, walls: d.walls, rooms: d.rooms });
+      return Response.json({
+        mode: 'design',
+        summary: d.summary,
+        walls: d.walls,
+        rooms: d.rooms,
+        openings: d.openings,
+      });
     } catch (e) {
       if (e instanceof NoProviderError) return Response.json({ error: 'AI yapılandırılmadı.' }, { status: 503 });
       console.error('Tasarım üretimi başarısız:', e);

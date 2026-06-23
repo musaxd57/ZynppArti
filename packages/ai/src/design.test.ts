@@ -38,6 +38,19 @@ describe('parseLayout', () => {
     expect(out!.walls).toEqual([[0, 0, 100, 0]]); // devasa koordinatlı duvar atıldı
   });
 
+  it('kapı/pencere ayrıştırır; geçersiz kind elenir, eksik genişlik varsayılır', () => {
+    const out = parseLayout(
+      '{"walls":[[0,0,400,0]],"rooms":[],"openings":[{"kind":"door","cx":200,"cy":0,"width":90},{"kind":"x","cx":1,"cy":1},{"kind":"window","cx":50,"cy":0}]}',
+    );
+    expect(out!.openings).toHaveLength(2);
+    expect(out!.openings[0]).toEqual({ kind: 'door', cx: 200, cy: 0, width: 90 });
+    expect(out!.openings[1]!.width).toBe(120); // pencere varsayılan genişlik
+  });
+
+  it('openings yoksa boş dizi', () => {
+    expect(parseLayout('{"walls":[[0,0,100,0]],"rooms":[]}')!.openings).toEqual([]);
+  });
+
   it('cx/cy eksik odayı atlar, summary varsayılanı koyar', () => {
     const out = parseLayout('{"walls":[[0,0,100,0]],"rooms":[{"name":"Yarım"}]}');
     expect(out!.rooms).toHaveLength(0);

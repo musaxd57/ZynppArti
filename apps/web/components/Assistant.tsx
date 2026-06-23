@@ -92,6 +92,29 @@ interface LayoutRoom {
   cy: number;
 }
 
+interface LayoutOpening {
+  kind: 'door' | 'window';
+  cx: number;
+  cy: number;
+  width: number;
+}
+
+/** Bir noktanın segment üzerindeki izdüşüm oranı (t∈[0,1]) + dik uzaklığı. */
+function projectToSeg(
+  px: number,
+  py: number,
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+): { t: number; dist: number } {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  if (len2 === 0) return { t: 0, dist: Math.hypot(px - a.x, py - a.y) };
+  let t = ((px - a.x) * dx + (py - a.y) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return { t, dist: Math.hypot(px - (a.x + t * dx), py - (a.y + t * dy)) };
+}
+
 /** Çiz modu için bağlam ipucu: parsel varsa kullanılabilir alanı (çekme paylı) AI'a bildir. */
 function buildDesignHint(store: EntityStore): string | undefined {
   const parcels = store.all().filter((e): e is Parcel => e.type === 'parcel');
@@ -114,8 +137,9 @@ function applyLayout(
   history: History,
   walls: [number, number, number, number][],
   rooms: LayoutRoom[],
-): { drawn: number; named: number } {
-  if (walls.length === 0) return { drawn: 0, named: 0 };
+  openings: LayoutOpening[],
+): { drawn: number; named: number; openingCount: number } {
+  if (walls.length === 0) return { drawn: 0, named: 0, openingCount: 0 };
 
   // Yerleşim: parsel varsa onun sol-üst köşesine ~1 m çekmeyle; yoksa mevcut duvarların sağına;
   // hiçbiri yoksa orijine. (Üst üste binmesin / parsel içinde dursun.)
@@ -132,18 +156,49 @@ function applyLayout(
     dx = Math.max(...existing.flatMap((w) => [w.start.x, w.end.x])) + 300;
   }
 
-  const wallCmds = walls.map(
-    ([x1, y1, x2, y2]) =>
-      new AddEntity({
-        id: createEntityId(),
-        type: 'wall',
-        layerId: 'default',
-        start: { x: x1 + dx, y: y1 + dy },
-        end: { x: x2 + dx, y: y2 + dy },
-        thickness: WALL_THICKNESS,
-      } satisfies Wall),
-  );
-  history.dispatch(new BatchCommand('AI taslak plan', wallCmds));
+  // Duvar entity'lerini (id'leriyle) önce kur → kapı/pencereyi en yakın duvara bağlayabilelim.
+  const wallEntities: Wall[] = walls.map(([x1, y1, x2, y2]) => ({
+    id: createEntityId(),
+    type: 'wall',
+    layerId: 'default',
+    start: { x: x1 + dx, y: y1 + dy },
+    end: { x: x2 + dx, y: y2 + dy },
+    thickness: WALL_THICKNESS,
+  }));
+  const cmds: AddEntity[] = wallEntities.map((w) => new AddEntity(w));
+
+  // Kapı/pencereleri en yakın duvara (≤80 cm) bağla; t = duvar üzerindeki izdüşüm oranı.
+  let openingCount = 0;
+  for (const o of openings) {
+    const px = o.cx + dx;
+    const py = o.cy + dy;
+    let best: Wall | null = null;
+    let bestT = 0.5;
+    let bestD = Infinity;
+    for (const w of wallEntities) {
+      const { t, dist } = projectToSeg(px, py, w.start, w.end);
+      if (dist < bestD) {
+        bestD = dist;
+        best = w;
+        bestT = t;
+      }
+    }
+    if (best && bestD <= 80) {
+      cmds.push(
+        new AddEntity({
+          id: createEntityId(),
+          type: 'opening',
+          layerId: 'default',
+          wallId: best.id,
+          t: bestT,
+          width: o.width,
+          kind: o.kind,
+        } satisfies Opening),
+      );
+      openingCount++;
+    }
+  }
+  history.dispatch(new BatchCommand('AI taslak plan', cmds));
 
   // Duvarlar eklenince RoomManager mahalleri senkron türetir → merkez noktasıyla ad/tip ata.
   let named = 0;
@@ -170,7 +225,7 @@ function applyLayout(
   } catch (e) {
     console.error('AI oda adlandırma atlandı (duvarlar çizildi):', e);
   }
-  return { drawn: wallCmds.length, named };
+  return { drawn: wallEntities.length, named, openingCount };
 }
 
 function SparkleIcon({ className }: { className?: string }) {
@@ -215,19 +270,32 @@ export function Assistant({ store, history, selectedIds, zoomToFit }: AssistantP
           summary?: string;
           walls?: [number, number, number, number][];
           rooms?: LayoutRoom[];
+          openings?: LayoutOpening[];
         };
-        const { drawn, named } = applyLayout(store, history, d.walls ?? [], d.rooms ?? []);
+        const { drawn, named, openingCount } = applyLayout(
+          store,
+          history,
+          d.walls ?? [],
+          d.rooms ?? [],
+          d.openings ?? [],
+        );
         if (drawn > 0) zoomToFit?.(); // çizilen planı ekrana getir
         const undoNote =
           named > 0
             ? 'Geri almak için Ctrl+Z (önce adlar, tekrar bas → duvarlar).'
             : 'Beğenmezsen Ctrl+Z ile geri al.';
+        const extras = [
+          named > 0 ? `${named} mahal adlandırıldı` : '',
+          openingCount > 0 ? `${openingCount} kapı/pencere eklendi` : '',
+        ]
+          .filter(Boolean)
+          .join(', ');
         setMessages((m) => [
           ...m,
           {
             role: 'assistant',
             content: `${d.summary ?? 'Taslak çizildi.'}\n\n✓ ${drawn} duvar çizildi${
-              named > 0 ? `, ${named} mahal adlandırıldı` : ''
+              extras ? `, ${extras}` : ''
             }. ${undoNote}`,
           },
         ]);

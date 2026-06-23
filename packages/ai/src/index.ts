@@ -13,5 +13,6 @@ export {
   DESIGN_SYSTEM,
   type Layout,
   type LayoutRoom,
+  type LayoutOpening,
   type DesignResult,
 } from './design';

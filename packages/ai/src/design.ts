@@ -19,11 +19,21 @@ export interface LayoutRoom {
   readonly cy: number;
 }
 
+/** AI'ın önerdiği kapı/pencere — bir duvar üzerindeki nokta (istemci en yakın duvara bağlar). */
+export interface LayoutOpening {
+  readonly kind: 'door' | 'window';
+  /** Boşluğun (duvar üzerindeki) merkez noktası (cm). */
+  readonly cx: number;
+  readonly cy: number;
+  readonly width: number;
+}
+
 export interface Layout {
   readonly summary: string;
   /** Duvar segmentleri [x1,y1,x2,y2] (cm). Komşu odalar duvarı paylaşır. */
   readonly walls: readonly [number, number, number, number][];
   readonly rooms: readonly LayoutRoom[];
+  readonly openings: readonly LayoutOpening[];
 }
 
 export interface DesignResult extends Layout {
@@ -44,8 +54,11 @@ export const DESIGN_SYSTEM = [
   '{',
   '  "summary": "tek cümle Türkçe özet",',
   '  "walls": [[x1,y1,x2,y2], ...],',
-  '  "rooms": [{"name":"Salon","type":"living","cx":200,"cy":150}, ...]',
+  '  "rooms": [{"name":"Salon","type":"living","cx":200,"cy":150}, ...],',
+  '  "openings": [{"kind":"door","cx":400,"cy":300,"width":90}, {"kind":"window","cx":200,"cy":0,"width":120}, ...]',
   '}',
+  'openings: kapı/pencere. cx/cy bir DUVARIN ÜZERİNDE nokta. Her odaya en az bir KAPI (odalar arası',
+  'veya hole). Dış duvarlara (yaşam mahalleri için) PENCERE ekle. Kapı ~80-100, pencere ~100-150 cm.',
   'type değerleri: living | kitchen | bathroom | wet | sleeping | circulation | service | other.',
   'Ölçüler tarife uysun; verilmezse makul al (oda kenarı ~250-450 cm). Tüm sayılar tam sayı (cm).',
   'rooms[].cx/cy o odanın İÇİNDE bir nokta olmalı.',
@@ -123,8 +136,20 @@ export function parseLayout(text: string): Layout | null {
     }
   }
 
+  const rawOpenings = Array.isArray(obj.openings) ? obj.openings : [];
+  const openings: LayoutOpening[] = [];
+  for (const o of rawOpenings) {
+    if (typeof o !== 'object' || o === null) continue;
+    const oo = o as Record<string, unknown>;
+    const kind = oo.kind === 'door' || oo.kind === 'window' ? oo.kind : null;
+    if (!kind || !num(oo.cx) || !num(oo.cy)) continue;
+    const width = num(oo.width) && oo.width > 0 ? Math.min(oo.width, 1000) : kind === 'door' ? 90 : 120;
+    openings.push({ kind, cx: oo.cx, cy: oo.cy, width });
+    if (openings.length >= 200) break; // güvenlik sınırı
+  }
+
   const summary = typeof obj.summary === 'string' ? obj.summary : 'Taslak plan üretildi.';
-  return { summary, walls, rooms };
+  return { summary, walls, rooms, openings };
 }
 
 /**
