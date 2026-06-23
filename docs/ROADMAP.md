@@ -106,3 +106,27 @@
 - [ ] Multi-tenant, organizasyon/izin, gözlemlenebilirlik
 - [ ] Ödeme/abonelik (editor ücretli, viewer ücretsiz — Rayon modeli)
 **✅ Kabul:** 500k entity'de akıcı + sürüm kontrolü.
+
+---
+
+## 💸 PARALI AI AYAĞI — ne zaman, hangi sırayla (ADR-0019)
+
+> Bu kesişen (cross-phase) bölüm, **para harcayan AI** parçalarını tek yerde toplar. CLAUDE §0
+> kural 12 + ADR-0019: maliyetli AI **en sona** ertelenir; sebep kalite değil — en iyi sağlayıcıyı
+> **bedava kredilerle gerçek projeyle** test edip seçmek. Bedava/deterministik her şey önce ve en iyi.
+
+**AI kapısı (gate) — ne zaman açılır?** İkisi birden olunca:
+1. Deterministik ürün uçtan uca **kullanılabilir/demo-hazır** (pratikte ~Faz 3 collab bitince; Moses'ın elinde test edeceği **gerçek bir proje** olunca), ve
+2. **Moses açıkça "şimdi paralı AI'a geç" der** (her çağrı para; sağlayıcı seçimi `packages/ai` adapter + ADR-0006).
+
+**Sıra — ucuzdan/kolaydan pahalıya/zora:**
+
+| # | Özellik | Ne | Maliyet | Yapılış sırası | Faz / doküman |
+|---|---------|-----|---------|----------------|----------------|
+| 1 | **LLM Copilot Q&A** *(Moses Fikir 1)* | Kullanıcı serbest soru sorar, AI **proje + seçili bölge + mevcut deterministik bulgular/metrik/Türkçe yönetmelik** bağlamıyla cevaplar | Düşük (yalnız LLM API; GPU yok) | **İlk** — en ucuz, en kolay; mevcut copilot verisini bağlam verir (RAG-lite) | Faz 2 "doğal-dil katmanı" (FAZ2-NOTES §2) → olgunlaşınca AI-AGENT-VISION Seviye 2 (onaylı Command) |
+| 2 | **AI Render** | Plan/kesit → ControlNet + diffusion ile fotogerçekçi görsel; uygulama-içi canlı panel; "yaratıcı" + "geometriyi koru" modu | Orta-yüksek (diffusion/GPU) | İkinci | Faz 2 render ayağı (FAZ2-NOTES §1, RENDER.md, ADR-0013/0017) |
+| 3 | **Metin→Plan Üretici** *(Moses Fikir 2)* | "8×6 m, 2 oda, parke" gibi tarif → AI eksik bilgiyi sorar → emin olunca **vektör plan (Command'ler)** üretir | Yüksek (LLM + üretim modeli) + en zor mühendislik | **Son** — sağlam çizim motoru + domain + tercihen collab şart (CLAUDE §8.8: "Faz 4'e kadar dokunma") | Faz 4 (AI-GENERATE.md; Tell2Design/Graph2Plan/HouseDiffusion) |
+
+**Neden bu sıra:** (1) LLM Q&A bugünün deterministik copilot'unun üstüne **ince bir katman** — en hızlı görünür değer, en az risk; aynı zamanda AI-AGENT-VISION Seviye 1→2 merdiveninin doğal devamı (öneri → onaylı Command). (2) Render ayrı bir maliyet/sağlayıcı sınıfı (GPU). (3) Üretici hepsinin üstüne biner; en sona.
+
+**Şu an:** AI kapısı **kapalı** (bilinçli). Hepsi `packages/ai` sağlayıcı-bağımsız adapter arkasında olacak (ADR-0006). Moses "aç" diyene kadar deterministik/bedava işler sürer.
