@@ -120,6 +120,12 @@
 
 ## GÜNLÜK
 
+### 2026-06-23 (gece-2 — Claude anahtarı eklendi + faz cilası)
+- **Claude aktif:** Moses ANTHROPIC_API_KEY'i girdi (satır başı `#` sorunu düzeltildi). Router artık karmaşık/yönetmelik/tasarım → **claude-opus-4-8**; canlı doğrulandı (TS 9111 sorusu Claude'dan atıflı cevap).
+- **Faz 4 — varyant uyum puanlaması:** her varyant çizilmeden findFaces+runCopilotChecks ile puanlanır; kartta rozet (✓ uyumlu / ⚠ N uyarı), en uyumlu üstte. "Çoklu alternatif + puanlama" kabul kriteri.
+- **Collab durum göstergesi:** CollabControl bağlanıyor/bağlı/kopuk + kişi sayısı (sunucu kapalıysa belli olur). **Render indirme** butonu.
+- **(NOT: ZynppArti'yi kodlayan model = Claude Opus 4.8.)** Zincir yeşil (typecheck 9/9 · lint 9/9). Test 293.
+
 ### 2026-06-23 (gece — "üçünü de sırayla yap" turu: Faz 4 + Render + Collab)
 - **Faz 4 — çoklu varyant (ADR kabul kriteri):** AI tek çağrıda 2 farklı plan üretir (`askDesignVariants` + `parseLayouts`); Asistan varyant kartları gösterir, kullanıcı seçer → Command ile çizer. Canlı: "60m²" → 2 plan.
 - **AI Render (Faz 2C v1, ADR yok — Faz2 ayağı):** `render.ts` OpenAI görsel API'si (gpt-image-1); Asistan 3. mod **🖼️ Render** (program-farkında prompt = stil + oda/m²); görsel sohbette gösterilir. Canlı: gerçek 1024² render döndü. "Yaratıcı mod"; ControlNet (geometriyi koru) sonraki sağlayıcı.
