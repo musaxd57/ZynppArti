@@ -26,7 +26,7 @@ export const LINEWEIGHTS = {
  * Koyu zeminde "poché" tersine döner: duvar gövdesi açık dolgu, kenarı tanımlı.
  */
 export const PALETTE = {
-  background: 0x1e1e1e,
+  background: 0x0e0e10, // redesign spec --bg-canvas (krom yüzeylerden ayrı, en derin)
   /** Duvar gövdesi (poché) — açık, masif. */
   wallBody: 0xdedede,
   /** Duvar kesit konturu — gövdeyi tanımlayan kenar. */

@@ -45,18 +45,30 @@ export function Panel({
     }
   }, [storageKey, open]);
   return (
-    <div className={`${widthClass} rounded-lg bg-black/60 text-sm text-white shadow-lg backdrop-blur`}>
+    <div
+      className={`${widthClass} overflow-hidden rounded-lg text-sm ring-1`}
+      style={{ background: 'var(--surface-1)', color: 'var(--text-1)', boxShadow: 'inset 0 0 0 1px var(--border-soft)' }}
+    >
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-2 px-2 py-1.5 text-left font-semibold opacity-90 hover:opacity-100"
+        className="flex h-8 w-full items-center gap-2 px-3 text-left text-[11px] font-semibold uppercase tracking-[0.05em] transition-colors"
+        style={{ color: 'var(--text-2)' }}
         title={open ? 'Katla' : 'Aç'}
       >
-        <span className="w-3 text-center text-xs opacity-60">{open ? '▾' : '▸'}</span>
+        <span className="text-[10px] opacity-70">{open ? '▾' : '▸'}</span>
         <span className="flex-1 truncate">{title}</span>
-        {badge != null && <span className="text-xs font-normal opacity-50">{badge}</span>}
+        {badge != null && (
+          <span className="tnum text-[11px] font-normal normal-case tracking-normal" style={{ color: 'var(--text-3)' }}>
+            {badge}
+          </span>
+        )}
       </button>
-      {open && <div className="px-2 pb-2">{children}</div>}
+      {open && (
+        <div className="px-3 pb-3" style={{ borderTop: '1px solid var(--border-hair)', paddingTop: '8px' }}>
+          {children}
+        </div>
+      )}
     </div>
   );
 }

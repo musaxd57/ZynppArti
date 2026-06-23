@@ -217,7 +217,7 @@ export function CanvasStage() {
         {ui && (
           <div
             onPointerDown={startLeftResize}
-            className="z-20 w-1.5 shrink-0 cursor-col-resize bg-white/5 transition-colors hover:bg-blue-400/40"
+            className="z-20 w-1.5 shrink-0 cursor-col-resize bg-[var(--border-hair)] transition-colors hover:bg-[var(--accent)]"
             title="Sürükleyerek sol paneli genişlet/daralt"
           />
         )}
@@ -235,7 +235,7 @@ export function CanvasStage() {
         {ui && (
           <div
             onPointerDown={startRightResize}
-            className="z-20 w-1.5 shrink-0 cursor-col-resize bg-white/5 transition-colors hover:bg-blue-400/40"
+            className="z-20 w-1.5 shrink-0 cursor-col-resize bg-[var(--border-hair)] transition-colors hover:bg-[var(--accent)]"
             title="Sürükleyerek paneli genişlet/daralt"
           />
         )}

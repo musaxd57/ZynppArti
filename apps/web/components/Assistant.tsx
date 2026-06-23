@@ -544,10 +544,10 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
         : ['En küçük oda hangisi?', 'Koridor yönetmeliğe uygun mu?', 'Toplam alanım kaç m²?'];
 
   return (
-    <div className="fixed bottom-0 left-0 top-0 z-50 flex w-[420px] max-w-[92vw] flex-col border-r border-white/20 bg-neutral-800 text-white shadow-2xl">
+    <div className="fixed bottom-0 left-0 top-0 z-50 flex w-[420px] max-w-[92vw] flex-col border-r border-[var(--border-soft)] bg-[var(--overlay)] text-[var(--text-1)] shadow-2xl">
       {/* Başlık */}
-      <div className="flex items-center gap-2 border-b border-white/10 bg-gradient-to-r from-violet-600/30 to-blue-600/20 px-4 py-3">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-violet-500 to-blue-500 text-white">
+      <div className="flex items-center gap-2 border-b border-[var(--border-hair)] bg-[var(--surface-2)] px-4 py-3">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--accent)] text-white">
           <ArkiLogo className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">

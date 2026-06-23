@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { Inter } from 'next/font/google';
 import './globals.css';
+
+// Premium UI tipografisi (redesign spec §2): Inter (değişken ağırlık → gövde 510).
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { GlobalErrorHandlers } from '@/components/GlobalErrorHandlers';
 import { DialogHost } from '@/components/DialogHost';
@@ -13,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="tr">
+    <html lang="tr" className={inter.variable}>
       <body>
         <GlobalErrorHandlers />
         <ErrorBoundary>{children}</ErrorBoundary>

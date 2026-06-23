@@ -1,12 +1,61 @@
 @import 'tailwindcss';
 
+/*
+ * REDESIGN SPEC (premium koyu tema) — tek kaynak tasarım tokenları.
+ * Derinlik gölgeyle değil, %5-7 luminans artan yüzey katmanlarıyla. Tek soğuk accent (iris);
+ * sıcaklık yalnız Arki maskotunda (amber). Metin: saf beyaz yok, 3 solid ton.
+ */
+:root {
+  --bg-canvas: #0e0e10;
+  --bg-base: #111113;
+  --surface-1: #18191b;
+  --surface-2: #212225;
+  --surface-3: #272a2d;
+  --overlay: #2e3135;
+
+  --text-1: #edeef0;
+  --text-2: #b0b4ba;
+  --text-3: #777b84;
+
+  --border-hair: rgba(255, 255, 255, 0.06);
+  --border-soft: rgba(255, 255, 255, 0.1);
+  --border-focus: rgba(91, 91, 214, 0.4);
+
+  --accent: #5b5bd6;
+  --accent-hover: #6e6ade;
+  --accent-text: #b1a9ff;
+  --accent-bg: rgba(91, 91, 214, 0.12);
+
+  --arki-warm: #ffb454;
+
+  --success: #71d083;
+  --warning: #ffca16;
+  --error: #ff9592;
+
+  --font-ui: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
 html,
 body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background: #1e1e1e;
+  background: var(--bg-base);
   overflow: hidden;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-weight: 480; /* Inter değişken — premium gövde ağırlığı (spec: ~510) */
+  color: var(--text-1);
+  font-feature-settings: 'cv01', 'cv11', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Sayısal değerler (m²/₺/koordinat) hizada dursun, zıplamasın (spec §6 #1). */
+.tnum {
+  font-variant-numeric: tabular-nums;
 }
 
 /*

@@ -229,10 +229,11 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers,
     toast('SVG indirildi.', 'success');
   }
 
-  const btn = 'shrink-0 rounded px-3 py-1.5 transition-colors hover:bg-white/10';
+  const btn =
+    'shrink-0 rounded-md px-3 py-1.5 text-[var(--text-2)] transition-colors hover:bg-[var(--surface-3)] hover:text-[var(--text-1)]';
 
   return (
-    <div className="z-30 flex w-full shrink-0 flex-nowrap items-center gap-1 overflow-x-auto border-b border-white/10 bg-black/60 p-1.5 text-sm text-white backdrop-blur">
+    <div className="z-30 flex w-full shrink-0 flex-nowrap items-center gap-1 overflow-x-auto border-b border-[var(--border-soft)] bg-[var(--surface-2)] p-1.5 text-[13px] text-[var(--text-1)]">
       {TOOLS.map((t) => (
         <button
           key={t.name}
@@ -240,25 +241,27 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers,
           onClick={() => manager.setTool(t.name)}
           title={`${t.label} (${t.hotkey})`}
           aria-pressed={active === t.name}
-          className={`shrink-0 rounded px-2.5 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${
-            active === t.name ? 'bg-blue-600' : 'hover:bg-white/10'
+          className={`shrink-0 rounded-md px-2.5 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] ${
+            active === t.name
+              ? 'bg-[var(--accent-bg)] font-semibold text-[var(--accent-text)] ring-1 ring-[var(--border-focus)]'
+              : 'text-[var(--text-2)] hover:bg-[var(--surface-3)] hover:text-[var(--text-1)]'
           }`}
         >
           {t.label}
         </button>
       ))}
-      <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
+      <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button type="button" onClick={() => history.undo()} className={btn} title="Geri al (Ctrl+Z)">
         ↶
       </button>
       <button type="button" onClick={() => history.redo()} className={btn} title="İleri al (Ctrl+Shift+Z)">
         ↷
       </button>
-      <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
+      <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button type="button" onClick={zoomToFit} className={btn} title="İçeriğe sığdır (Home)">
         ⊡ Sığdır
       </button>
-      <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
+      <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button type="button" onClick={() => void onNewModel()} className={btn} title="Yeni / temizle">
         Yeni
       </button>
@@ -268,7 +271,7 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers,
       <button type="button" onClick={() => jsonRef.current?.click()} className={btn} title="Model aç (.json) — Ctrl+O">
         Aç
       </button>
-      <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
+      <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button type="button" onClick={() => fileRef.current?.click()} className={btn}>
         DXF Yükle
       </button>
@@ -284,15 +287,15 @@ export function Toolbar({ manager, history, store, exportPng, zoomToFit, layers,
       <button type="button" onClick={() => void onExportPdf()} className={btn}>
         PDF İndir
       </button>
-      <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
+      <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button
         type="button"
         onClick={() => onOpenAssistant?.()}
         title="Arki — AI tasarım yardımcın (Sor / Çiz / Render)"
-        className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 px-3 py-1.5 font-medium text-white shadow hover:opacity-90"
+        className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 py-1.5 font-semibold text-white shadow-sm transition-colors hover:bg-[var(--accent-hover)]"
       >
-        <ArkiLogo className="h-4 w-4" />
-        Arki <span className="opacity-70">AI</span>
+        <ArkiLogo className="h-[18px] w-[18px]" />
+        Arki <span className="font-normal opacity-75">AI</span>
       </button>
       <input
         ref={fileRef}

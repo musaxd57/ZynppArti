@@ -76,7 +76,7 @@ export function StatusBar({ manager, registerHover, store, selectedIds }: Status
   const summary = selectedIds.length > 0 ? selectionSummary(store, selectedIds) : '';
 
   return (
-    <div className="pointer-events-none absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-md bg-black/60 px-3 py-1 text-xs text-white/90 backdrop-blur">
+    <div className="pointer-events-none absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-3 rounded-md border border-[var(--border-hair)] bg-[var(--surface-2)] px-3 py-1 text-xs text-[var(--text-2)]">
       <span className="tabular-nums">
         {world ? `X ${m(world.x)} m   Y ${m(world.y)} m` : 'X —   Y —'}
       </span>
