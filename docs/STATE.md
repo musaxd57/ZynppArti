@@ -120,6 +120,14 @@
 
 ## GÜNLÜK
 
+### 2026-06-23 (gece-13 — DWG import + 3 collab/3B feature + hosting planı)
+- **DWG import (Faz 1 boşluğu kapandı):** `packages/io/dwg-import.ts` libredwg-web (WASM) ile DWG→DXF→importDxf; wasm `apps/web/public`'te; "CAD Yükle" .dxf+.dwg. next.config'te node: şeması düzeltmesi. Gerçek AC1021 dosyayla Node'da doğrulandı.
+- **Faz 5 kamera keyframe:** View3D'de görünüm yakala (📷) + yumuşak geçişli sunum (▶ Sunum).
+- **Faz 3 presence-seçim:** uzak kullanıcıların seçtikleri renkli kutuyla görünür (awareness + entityBounds).
+- **Faz 3 yorum/markup:** yeni Comment entity (💬 pin, "Yorum"/M aracı) — collab'la otomatik senkron; tam stack (render/bounds/hit/layer/serialize/clone).
+- **Hosting (docs/DEPLOY.md):** Web→Vercel (ücretsiz), Sync→Railway (~$5/ay); domain önerisi arki.design/zynpparti.com. Maliyet ~$5/ay+domain. (Moses hesapları açacak + domain alacak.)
+- Zincir yeşil (typecheck 9/9 · lint 9/9 · build 1/1; tüm paket testleri yeşil).
+
 ### 2026-06-23 (gece-12 — boşluk kapatma 2: 3B kesit + glTF + bloklar + yönetmelik)
 - **Faz 5:** 3B'de **clipping-plane kesit** (✂ Kesit, kesit çizgisinden CSG'siz kesim) + **glTF/GLB export** (⤓ GLB).
 - **Bloklar 12→22** (10-ajan web araştırması: kapı açılım yayı, çift kapı, araç, otopark, gardırop, komodin, yemek masası, sehpa, bulaşık mak., lavabo dolabı) + default sembol.
