@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { SiteHeader } from '@/components/marketing/SiteHeader';
+import { SiteFooter } from '@/components/marketing/SiteFooter';
 
 export const metadata: Metadata = {
   title: 'Kullanım Koşulları — Vesna',
@@ -16,16 +18,11 @@ const CONTACT_EMAIL = 'musacinar2009@gmail.com';
  */
 export default function KosullarPage() {
   return (
-    <main
-      className="mx-auto min-h-screen max-w-3xl px-6 py-12"
-      style={{ background: 'var(--surface-0, #0E0E10)', color: 'var(--text-1, #e8e8ea)' }}
-    >
-      <Link href="/app" className="text-sm hover:underline" style={{ color: 'var(--accent-text, #a5a5ff)' }}>
-        ← Uygulamaya dön
-      </Link>
-
-      <h1 className="mt-6 text-3xl font-semibold">Kullanım Koşulları</h1>
-      <p className="mt-2 text-sm" style={{ color: 'var(--text-3, #9a9aa2)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+      <SiteHeader />
+      <article className="mx-auto max-w-3xl px-6 py-16">
+      <h1 className="text-3xl font-semibold">Kullanım Koşulları</h1>
+      <p className="mt-2 text-sm" style={{ color: 'var(--text-3)' }}>
         Yürürlük tarihi: {EFFECTIVE} · Hizmet: <strong>Vesna</strong> (vesna.design)
       </p>
 
@@ -33,7 +30,7 @@ export default function KosullarPage() {
         <P>
           Bu Kullanım Koşulları (“Koşullar”), <strong>Vesna</strong> uygulamasını (“Hizmet”) kullanımınızı
           düzenler. Hizmet’i kullanarak bu Koşulları ve ayrılmaz parçası olan{' '}
-          <Link href="/gizlilik" className="hover:underline" style={{ color: 'var(--accent-text, #a5a5ff)' }}>
+          <Link href="/gizlilik" className="hover:underline" style={{ color: 'var(--accent)' }}>
             Gizlilik Politikası
           </Link>
           ’nı kabul etmiş sayılırsınız. Koşulları kabul etmiyorsanız Hizmet’i kullanmamalısınız.
@@ -104,7 +101,7 @@ export default function KosullarPage() {
           Hizmet; barındırma (Vercel, Railway) ve yapay zekâ (OpenAI, Anthropic, AkashML) gibi üçüncü taraf
           sağlayıcılara dayanır. Bu sağlayıcıların erişilebilirliği, performansı veya kendi koşulları
           tarafımızın denetimi dışındadır. İlgili veri akışı için{' '}
-          <Link href="/gizlilik" className="hover:underline" style={{ color: 'var(--accent-text, #a5a5ff)' }}>
+          <Link href="/gizlilik" className="hover:underline" style={{ color: 'var(--accent)' }}>
             Gizlilik Politikası
           </Link>
           ’na bakınız.
@@ -130,26 +127,28 @@ export default function KosullarPage() {
       <Section title="11. İletişim">
         <P>
           Koşullar hakkındaki sorularınız için:{' '}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="hover:underline" style={{ color: 'var(--accent-text, #a5a5ff)' }}>
+          <a href={`mailto:${CONTACT_EMAIL}`} className="hover:underline" style={{ color: 'var(--accent)' }}>
             {CONTACT_EMAIL}
           </a>
           .
         </P>
       </Section>
 
-      <p className="mt-10 border-t border-[var(--border-hair,#2a2a30)] pt-4 text-xs" style={{ color: 'var(--text-3, #9a9aa2)' }}>
+      <p className="mt-10 border-t pt-4 text-xs" style={{ borderColor: 'var(--border)', color: 'var(--text-3)' }}>
         Bu metin bilgilendirme amaçlıdır ve hukuki danışmanlık yerine geçmez. Ticari lansman öncesi bir hukuk
         uzmanına doğrulatılması önerilir.
       </p>
-    </main>
+      </article>
+      <SiteFooter />
+    </div>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-8">
-      <h2 className="text-xl font-semibold">{title}</h2>
-      <div className="mt-2 space-y-3 leading-relaxed" style={{ color: 'var(--text-2, #c4c4ca)' }}>
+      <h2 className="text-xl font-semibold" style={{ color: 'var(--text)' }}>{title}</h2>
+      <div className="mt-2 space-y-3 leading-relaxed" style={{ color: 'var(--text-2)' }}>
         {children}
       </div>
     </section>

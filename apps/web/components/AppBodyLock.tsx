@@ -10,7 +10,14 @@ import { useEffect } from 'react';
 export function AppBodyLock() {
   useEffect(() => {
     document.body.classList.add('app-shell');
-    return () => document.body.classList.remove('app-shell');
+    // Canvas her zaman koyu (engine renkleri koyu) → kullanıcı pazarlamada açık tema seçse bile /app koyu.
+    const el = document.documentElement;
+    const prev = el.dataset.theme;
+    el.dataset.theme = 'dark';
+    return () => {
+      document.body.classList.remove('app-shell');
+      if (prev) el.dataset.theme = prev;
+    };
   }, []);
   return null;
 }

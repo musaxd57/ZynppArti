@@ -1,11 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { RoomRedirect } from '@/components/RoomRedirect';
-import { AuthButtons } from '@/components/AuthButtons';
-import { VesnaMark } from '@/components/VesnaMark';
-
-// Clerk anahtarı varsa giriş/kayıt butonları gösterilir (yoksa gizli — anonim akış aynen çalışır).
-const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+import { SiteHeader } from '@/components/marketing/SiteHeader';
+import { SiteFooter } from '@/components/marketing/SiteFooter';
+import { CadMockup } from '@/components/marketing/CadMockup';
 
 export const metadata: Metadata = {
   title: 'Vesna — Tarayıcıda mimari tasarım, m² otomasyonu ve yapay zekâ',
@@ -13,208 +11,125 @@ export const metadata: Metadata = {
     'Vesna; tarayıcıda çalışan mimari/iç mimari çizim, otomatik mahal & m² hesabı, Türkçe yönetmelik bilen yapay zekâ asistanı, AI plan üretimi ve render platformu. Kurulum yok, link ile paylaş.',
 };
 
-/** Ana tanıtım/landing sayfası (satış yüzü). Uygulama `/app`'te. Statik server component → hızlı + SEO. */
+const btnPrimary = {
+  display: 'inline-flex', alignItems: 'center', gap: 8, padding: '13px 22px',
+  background: 'var(--accent)', color: '#fff', border: '1px solid var(--accent)',
+  borderRadius: 11, fontSize: 15, fontWeight: 600, textDecoration: 'none',
+} as const;
+const btnGhost = {
+  display: 'inline-flex', alignItems: 'center', gap: 8, padding: '13px 22px',
+  background: 'var(--bg-2)', color: 'var(--text)', border: '1px solid var(--border-2)',
+  borderRadius: 11, fontSize: 15, fontWeight: 600, textDecoration: 'none', cursor: 'pointer',
+} as const;
+
 export default function Landing() {
   return (
-    <main style={{ background: 'var(--surface-0, #0E0E10)', color: 'var(--text-1, #e8e8ea)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', lineHeight: 1.5 }}>
       <RoomRedirect />
-      {/* Üst bar */}
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <div className="flex items-center gap-2">
-          <VesnaMark size={32} />
-          <span className="text-lg font-semibold tracking-tight">Vesna</span>
-        </div>
-        <nav className="flex items-center gap-5 text-sm" style={{ color: 'var(--text-2, #c4c4ca)' }}>
-          <a href="#ozellikler" className="hidden hover:underline sm:inline">Özellikler</a>
-          <a href="#neden" className="hidden hover:underline sm:inline">Neden Vesna</a>
-          <Link href="/fiyatlandirma" className="hidden hover:underline sm:inline">Fiyatlar</Link>
-          {clerkEnabled && <AuthButtons />}
-          <Link
-            href="/app"
-            className="rounded-md px-4 py-1.5 font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ background: 'var(--accent, #5B5BD6)' }}
-          >
-            Uygulamayı Aç
-          </Link>
-        </nav>
-      </header>
+      <SiteHeader />
 
-      {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 pb-16 pt-12 text-center sm:pt-20">
-        <span
-          className="inline-block rounded-full px-3 py-1 text-xs"
-          style={{ background: 'var(--surface-2, #1c1c22)', color: 'var(--accent-text, #a5a5ff)' }}
-        >
-          Tarayıcıda çalışır · Kurulum yok · Link ile paylaş
-        </span>
-        <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl">
-          Mimari tasarımı çiz, <span style={{ color: 'var(--accent-text, #a5a5ff)' }}>hesapla</span> ve yapay zekâ ile{' '}
-          <span style={{ color: 'var(--accent-text, #a5a5ff)' }}>üret</span>.
-        </h1>
-        <p className="mx-auto mt-5 max-w-2xl text-lg" style={{ color: 'var(--text-2, #c4c4ca)' }}>
-          Vesna; tarayıcıda çalışan, gerçek zamanlı işbirlikçi bir çizim, mahal/m² otomasyonu ve yapay zekâ
-          tasarım asistanı platformudur. DWG/DXF aç, mahalleri otomatik bul, Türkçe yönetmeliğe danış,
-          tariften plan ürettir.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href="/app"
-            className="rounded-lg px-6 py-3 text-base font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ background: 'var(--accent, #5B5BD6)' }}
-          >
-            Hemen Başla — Ücretsiz
-          </Link>
-          <a
-            href="#ozellikler"
-            className="rounded-lg px-6 py-3 text-base font-medium transition-colors hover:bg-[var(--surface-2,#1c1c22)]"
-            style={{ color: 'var(--text-1, #e8e8ea)', boxShadow: 'inset 0 0 0 1px var(--border-soft, #2a2a30)' }}
-          >
-            Özellikleri gör
-          </a>
-        </div>
-        <p className="mt-4 text-xs" style={{ color: 'var(--text-3, #9a9aa2)' }}>
-          Hesap gerekmez · Çizimleriniz cihazınızda kalır
-        </p>
-      </section>
+      <main className="v-fade">
+        {/* HERO */}
+        <section style={{ position: 'relative', overflow: 'hidden', padding: '0 24px' }}>
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px)', backgroundSize: '48px 48px', maskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%,#000 40%,transparent 100%)', WebkitMaskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%,#000 40%,transparent 100%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: -120, left: '50%', transform: 'translateX(-50%)', width: 680, height: 420, background: 'radial-gradient(ellipse at center, var(--accent-soft), transparent 70%)', pointerEvents: 'none' }} />
 
-      {/* Özellikler */}
-      <section id="ozellikler" className="mx-auto max-w-6xl px-6 py-12">
-        <h2 className="text-center text-2xl font-semibold sm:text-3xl">Tek araçta, baştan sona</h2>
-        <p className="mx-auto mt-3 max-w-2xl text-center" style={{ color: 'var(--text-2, #c4c4ca)' }}>
-          AutoCAD’in çizimini, hesap tablosunun metrajını ve bir tasarım asistanının zekâsını bir araya getirir.
-        </p>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((f) => (
-            <Feature key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
-          ))}
-        </div>
-      </section>
+          <div style={{ position: 'relative', maxWidth: 880, margin: '0 auto', padding: '88px 0 56px', textAlign: 'center' }}>
+            <Link href="/fiyatlandirma" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 13px', background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 999, fontSize: 13, color: 'var(--text-2)', marginBottom: 28, textDecoration: 'none' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)' }} />
+              Türkçe yönetmelik asistanı — artık canlı
+              <span style={{ color: 'var(--text-3)' }}>→</span>
+            </Link>
+            <h1 style={{ fontSize: 'clamp(2.3rem,5.4vw,4rem)', lineHeight: 1.04, fontWeight: 600, letterSpacing: '-0.035em', margin: '0 0 22px' }}>
+              Mimari tasarımı çiz, hesapla ve<br />
+              <span style={{ color: 'var(--accent)' }}>yapay zekâ</span> ile üret.
+            </h1>
+            <p style={{ fontSize: 'clamp(1.02rem,1.6vw,1.22rem)', color: 'var(--text-2)', maxWidth: 640, margin: '0 auto 34px', lineHeight: 1.6 }}>
+              Vesna; tarayıcıda çalışan, gerçek zamanlı işbirlikçi bir çizim, mahal/m² otomasyonu ve yapay zekâ tasarım asistanı platformudur. DWG/DXF aç, mahalleri otomatik bul, Türkçe yönetmeliğe danış, tariften plan üret.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
+              <Link href="/app" className="v-btn-primary" style={btnPrimary}>Hemen Başla — Ücretsiz</Link>
+              <Link href="/#vesna-features" className="v-btn-ghost" style={btnGhost}>Özellikleri gör</Link>
+            </div>
+          </div>
 
-      {/* Neden Vesna */}
-      <section id="neden" className="mx-auto max-w-6xl px-6 py-12">
-        <div className="rounded-2xl p-8 sm:p-12" style={{ background: 'var(--surface-1, #151518)' }}>
-          <h2 className="text-2xl font-semibold sm:text-3xl">Neden Vesna?</h2>
-          <div className="mt-6 grid gap-6 sm:grid-cols-2">
-            {REASONS.map((r) => (
-              <div key={r.title}>
-                <h3 className="font-semibold" style={{ color: 'var(--accent-text, #a5a5ff)' }}>{r.title}</h3>
-                <p className="mt-1 text-sm" style={{ color: 'var(--text-2, #c4c4ca)' }}>{r.desc}</p>
+          <CadMockup />
+        </section>
+
+        {/* FEATURES */}
+        <section id="vesna-features" style={{ maxWidth: 1160, margin: '0 auto', padding: '24px 24px 96px' }}>
+          <div style={{ maxWidth: 620, marginBottom: 48 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 14 }}>Tek tuval, baştan sona</div>
+            <h2 style={{ fontSize: 'clamp(1.8rem,3.4vw,2.6rem)', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.1, margin: '0 0 14px' }}>Çizimden teslime kadar her şey burada</h2>
+            <p style={{ fontSize: '1.05rem', color: 'var(--text-2)', margin: 0, lineHeight: 1.6 }}>Dosyayı aç, mahalleri bul, yönetmeliğe danış, planı üret ve paylaş — araç değiştirmeden, kurulum yapmadan.</p>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 1, background: 'var(--border)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
+            {FEATURES.map((f) => (
+              <div key={f.title} className="v-card" style={{ background: 'var(--bg-2)', padding: 28 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 11, background: 'var(--accent-soft)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{f.icon}</svg>
+                </div>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 600, margin: '0 0 8px', letterSpacing: '-0.01em' }}>{f.title}</h3>
+                <p style={{ fontSize: '0.94rem', color: 'var(--text-2)', margin: 0, lineHeight: 1.6 }}>{f.desc}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA alt */}
-      <section className="mx-auto max-w-6xl px-6 py-16 text-center">
-        <h2 className="text-2xl font-semibold sm:text-3xl">Birkaç saniyede başla</h2>
-        <p className="mx-auto mt-3 max-w-xl" style={{ color: 'var(--text-2, #c4c4ca)' }}>
-          İndirme yok, kurulum yok. Tarayıcını aç, çizmeye başla.
-        </p>
-        <Link
-          href="/app"
-          className="mt-7 inline-block rounded-lg px-8 py-3 text-base font-semibold text-white transition-opacity hover:opacity-90"
-          style={{ background: 'var(--accent, #5B5BD6)' }}
-        >
-          Uygulamayı Aç
-        </Link>
-      </section>
+        {/* WHY VESNA */}
+        <section style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-2)' }}>
+          <div style={{ maxWidth: 1160, margin: '0 auto', padding: '80px 24px' }}>
+            <h2 style={{ fontSize: 'clamp(1.6rem,3vw,2.2rem)', fontWeight: 600, letterSpacing: '-0.03em', margin: '0 0 48px' }}>Neden Vesna</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: '40px 32px' }}>
+              {WHY.map((w, i) => (
+                <div key={w.title}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', marginBottom: 12 }}>{String(i + 1).padStart(2, '0')}</div>
+                  <h3 style={{ fontSize: '1.12rem', fontWeight: 600, margin: '0 0 8px', letterSpacing: '-0.01em' }}>{w.title}</h3>
+                  <p style={{ fontSize: '0.94rem', color: 'var(--text-2)', margin: 0, lineHeight: 1.6 }}>{w.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-      {/* Footer */}
-      <footer
-        className="border-t px-6 py-8"
-        style={{ borderColor: 'var(--border-hair, #2a2a30)', color: 'var(--text-3, #9a9aa2)' }}
-      >
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm sm:flex-row">
-          <span>© 2026 Vesna · vesna.design</span>
-          <nav className="flex items-center gap-5">
-            <Link href="/app" className="hover:underline">Uygulama</Link>
-            <Link href="/fiyatlandirma" className="hover:underline">Fiyatlar</Link>
-            <Link href="/gizlilik" className="hover:underline">Gizlilik</Link>
-            <Link href="/kosullar" className="hover:underline">Kullanım Koşulları</Link>
-          </nav>
-        </div>
-      </footer>
-    </main>
-  );
-}
+        {/* BOTTOM CTA */}
+        <section style={{ borderTop: '1px solid var(--border)' }}>
+          <div style={{ maxWidth: 1160, margin: '0 auto', padding: 24 }}>
+            <div style={{ position: 'relative', overflow: 'hidden', border: '1px solid var(--border)', borderRadius: 20, background: 'var(--bg-2)', padding: '72px 32px', textAlign: 'center' }}>
+              <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px)', backgroundSize: '40px 40px', maskImage: 'radial-gradient(ellipse 70% 80% at 50% 50%,#000,transparent)', WebkitMaskImage: 'radial-gradient(ellipse 70% 80% at 50% 50%,#000,transparent)', pointerEvents: 'none' }} />
+              <div style={{ position: 'relative' }}>
+                <h2 style={{ fontSize: 'clamp(1.8rem,3.6vw,2.7rem)', fontWeight: 600, letterSpacing: '-0.03em', margin: '0 0 16px', lineHeight: 1.1 }}>İlk planını bugün üret.</h2>
+                <p style={{ fontSize: '1.05rem', color: 'var(--text-2)', maxWidth: 520, margin: '0 auto 30px', lineHeight: 1.6 }}>Ücretsiz başla, kredi kartı gerekmez. Dosyanı aç ve birkaç dakikada mahal listeni çıkar.</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
+                  <Link href="/app" className="v-btn-primary" style={btnPrimary}>Hemen Başla — Ücretsiz</Link>
+                  <Link href="/fiyatlandirma" className="v-btn-ghost" style={{ ...btnGhost, background: 'transparent' }}>Fiyatları gör</Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
 
-function Feature({ icon, title, desc }: { icon: string; title: string; desc: string }) {
-  return (
-    <div
-      className="rounded-xl p-5 transition-colors"
-      style={{ background: 'var(--surface-1, #151518)', boxShadow: 'inset 0 0 0 1px var(--border-hair, #2a2a30)' }}
-    >
-      <div className="text-2xl">{icon}</div>
-      <h3 className="mt-3 font-semibold">{title}</h3>
-      <p className="mt-1.5 text-sm" style={{ color: 'var(--text-2, #c4c4ca)' }}>{desc}</p>
+      <SiteFooter />
     </div>
   );
 }
 
 const FEATURES = [
-  {
-    icon: '📐',
-    title: 'DWG/DXF içe aktarma',
-    desc: 'AutoCAD dosyanı tarayıcıda aç, katmanları tanı, iki nokta + gerçek mesafe ile tek tıkla ölçekle.',
-  },
-  {
-    icon: '📊',
-    title: 'Otomatik mahal & m²',
-    desc: 'Duvarlardan mahalleri otomatik bulur, canlı m² hesaplar, oda listesini Excel’e aktarır.',
-  },
-  {
-    icon: '🤖',
-    title: 'Türkçe yönetmelik asistanı',
-    desc: 'İmar, TBDY ve TS 9111’e dayalı, kaynak gösteren öneriler. Palavra değil; atıflı uyarılar.',
-  },
-  {
-    icon: '✏️',
-    title: 'Tariften plan üretimi',
-    desc: '“90 m² 3+1 daire” yaz, yapay zekâ taslak kat planını çizsin — geri alınabilir, düzenlenebilir.',
-  },
-  {
-    icon: '🖼️',
-    title: 'Plandan AI render',
-    desc: 'Atmosfer, malzeme ve ışığı tarif et; planından fotogerçekçi görsel üret.',
-  },
-  {
-    icon: '✂️',
-    title: 'Kesit & 3B önizleme',
-    desc: 'Kesit çizgisi çek, şematik kesiti gör; planını anında 3B’de incele.',
-  },
-  {
-    icon: '👥',
-    title: 'Gerçek zamanlı işbirliği',
-    desc: 'Linki paylaş, aynı çizimde birlikte çalışın. İmleçler, seçimler ve yorumlar canlı.',
-  },
-  {
-    icon: '🗂️',
-    title: 'Pafta & dışa aktarma',
-    desc: 'Pafta düzeni, metraj/maliyet ve PDF · PNG · SVG · DXF · Excel çıktıları.',
-  },
-  {
-    icon: '⚡',
-    title: 'Hızlı ve ölçeklenebilir',
-    desc: 'WebGL motoru ile büyük çizimlerde akıcı; kurulum yok, her şey tarayıcıda.',
-  },
+  { title: 'DWG/DXF içe aktarma', desc: 'AutoCAD dosyanı tarayıcıda aç, katmanları tanı, iki nokta + gerçek mesafe ile tek tıkla ölçekle.', icon: <><path d="M12 13V3M8 9l4 4 4-4" /><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></> },
+  { title: 'Otomatik mahal & m²', desc: "Duvarlardan mahalleri otomatik bulur, alanları hesaplar ve mahal listesini Excel'e aktarır.", icon: <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" /></> },
+  { title: 'Türkçe yönetmelik asistanı', desc: "İmar, TBDY ve TS 9111'e dayalı, kaynak gösteren öneriler.", icon: <><path d="M12 7v14" /><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" /></> },
+  { title: 'Tariften plan üretimi', desc: '"90 m² 3+1 daire" yaz, yapay zekâ yerleşim alternatiflerini saniyeler içinde üretsin.', icon: <path d="M9.9 15.5A2 2 0 0 0 8.5 14L2.4 12.5a.5.5 0 0 1 0-1L8.5 10A2 2 0 0 0 9.9 8.5L11.5 2.4a.5.5 0 0 1 1 0L14 8.5a2 2 0 0 0 1.4 1.4l6.1 1.6a.5.5 0 0 1 0 1L15.5 14a2 2 0 0 0-1.4 1.4l-1.6 6.1a.5.5 0 0 1-1 0z" /> },
+  { title: 'Plandan AI render', desc: 'Atmosfer, malzeme ve ışığı tarif et; fotogerçekçi görsel üret.', icon: <><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" /></> },
+  { title: 'Kesit & 3B önizleme', desc: "Kesit çek, planını anında 3B'de incele ve gez.", icon: <><path d="M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" /><path d="m3.3 7 8.7 5 8.7-5M12 22V12" /></> },
+  { title: 'Gerçek zamanlı işbirliği', desc: 'Linki paylaş, aynı çizimde birlikte çalış; imleçler ve yorumlar canlı.', icon: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" /></> },
+  { title: 'Pafta & dışa aktarma', desc: 'Pafta düzeni, metraj/maliyet ve PDF · PNG · SVG · DXF · Excel çıktısı tek akışta.', icon: <><path d="M14 2v5h5" /><path d="M4 7a2 2 0 0 1 2-2h8l6 6v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" /><path d="m9 14 2 2 4-4" /></> },
+  { title: 'Hızlı ve ölçeklenebilir', desc: 'WebGL motoru ile büyük çizimlerde akıcı; kurulum yok.', icon: <path d="M13 2 3 14h9l-1 8 10-12h-9z" /> },
 ];
 
-const REASONS = [
-  {
-    title: 'Kurulum yok, her yerde',
-    desc: 'Tek ortak payda tarayıcı. Mac, Windows, tablet — indirme/lisans derdi olmadan aç ve çiz.',
-  },
-  {
-    title: 'Türkiye’ye özel zekâ',
-    desc: 'Türkçe yönetmelik bilgisi (İmar/TBDY/TS 9111) yerli mimar için gerçek bir fark yaratır.',
-  },
-  {
-    title: 'Çiz + hesapla + üret, tek yerde',
-    desc: 'Ayrı çizim, hesap tablosu ve sunum araçları arasında gidip gelmeyi bırak.',
-  },
-  {
-    title: 'Verin sende kalır',
-    desc: 'Çizimlerin cihazında tutulur; hesap zorunluluğu yok. İstersen linkle paylaşırsın.',
-  },
+const WHY = [
+  { title: 'Kurulum yok, her yerde', desc: 'Tarayıcıda açılır; indirme, lisans ve kurulum derdi yok. Mac, Windows, tablet — fark etmez.' },
+  { title: "Türkiye'ye özel zekâ", desc: 'İmar yönetmeliği, TBDY ve TS 9111 bilen; kaynak gösteren Türkçe asistan.' },
+  { title: 'Çiz + hesapla + üret tek yerde', desc: 'Çizim, mahal/m² otomasyonu ve AI üretim aynı tuvalde; araç değiştirmeden.' },
+  { title: 'Verin sende kalır', desc: 'Projeleriniz size ait. Şeffaf gizlilik, dışa aktarma her zaman elinizde.' },
 ];

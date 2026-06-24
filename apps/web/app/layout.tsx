@@ -12,6 +12,7 @@ import { DialogHost } from '@/components/DialogHost';
 import { Toaster } from '@/components/Toaster';
 import { CalibrateDialog } from '@/components/CalibrateDialog';
 import { CommentDialog } from '@/components/CommentDialog';
+import { ThemeScript } from '@/components/ThemeScript';
 
 export const metadata: Metadata = {
   title: 'Vesna — Mimari tasarım, m² otomasyonu ve yapay zekâ',
@@ -23,7 +24,10 @@ const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const tree = (
-    <html lang="tr" className={inter.variable}>
+    <html lang="tr" className={inter.variable} data-theme="dark" suppressHydrationWarning>
+      <head>
+        <ThemeScript />
+      </head>
       <body>
         <GlobalErrorHandlers />
         <ErrorBoundary>{children}</ErrorBoundary>

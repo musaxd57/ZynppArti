@@ -1,219 +1,116 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { VesnaMark } from '@/components/VesnaMark';
+import { SiteHeader } from '@/components/marketing/SiteHeader';
+import { SiteFooter } from '@/components/marketing/SiteFooter';
 
 export const metadata: Metadata = {
   title: 'Fiyatlandırma — Vesna',
   description: 'Vesna fiyatlandırma planları: Ücretsiz, Pro ve Stüdyo. Çizim ücretsiz; yapay zekâ kotalı.',
 };
 
-/**
- * Fiyatlandırma sayfası (pazarlama). Rakamlar docs/BUSINESS-PRICING.md önerisidir (Moses onayı bekler).
- * Gerçek checkout (Paddle) auth'tan SONRA gelir → ücretli planlarda şimdilik "Yakında". Ücretsiz → /app.
- */
 export default function Fiyatlandirma() {
   return (
-    <main style={{ background: 'var(--surface-0, #0E0E10)', color: 'var(--text-1, #e8e8ea)' }}>
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Link href="/" className="flex items-center gap-2">
-          <VesnaMark size={32} />
-          <span className="text-lg font-semibold tracking-tight">Vesna</span>
-        </Link>
-        <Link
-          href="/app"
-          className="rounded-md px-4 py-1.5 font-semibold text-white transition-opacity hover:opacity-90"
-          style={{ background: 'var(--accent, #5B5BD6)' }}
-        >
-          Uygulamayı Aç
-        </Link>
-      </header>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', lineHeight: 1.5 }}>
+      <SiteHeader />
+      <main className="v-fade">
+        <section style={{ maxWidth: 1160, margin: '0 auto', padding: '80px 24px 24px', textAlign: 'center' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 14 }}>Fiyatlandırma</div>
+          <h1 style={{ fontSize: 'clamp(2rem,4vw,3rem)', fontWeight: 600, letterSpacing: '-0.03em', margin: '0 0 16px' }}>Projene göre ölçeklenen planlar</h1>
+          <p style={{ fontSize: '1.08rem', color: 'var(--text-2)', maxWidth: 560, margin: '0 auto', lineHeight: 1.6 }}>Ücretsiz keşfet, ekibinle büyü. İstediğin zaman yükselt veya iptal et.</p>
+        </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-8 pt-10 text-center">
-        <h1 className="text-3xl font-semibold sm:text-4xl">Basit, adil fiyatlandırma</h1>
-        <p className="mx-auto mt-4 max-w-2xl text-lg" style={{ color: 'var(--text-2, #c4c4ca)' }}>
-          Çizim, içe/dışa aktarma ve mahal/m² <strong>ücretsiz</strong>. Yalnızca yapay zekâyı yoğun
-          kullanırsan üst plana geçersin. Hesap gerekmeden hemen başlayabilirsin.
-        </p>
-      </section>
+        <section style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 24px 24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 20, alignItems: 'start' }}>
+            {TIERS.map((t) => (
+              <div
+                key={t.name}
+                style={{
+                  position: 'relative',
+                  border: t.popular ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                  borderRadius: 18,
+                  background: 'var(--bg-2)',
+                  padding: 32,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 24,
+                  boxShadow: t.popular ? '0 0 0 4px var(--accent-soft)' : 'none',
+                }}
+              >
+                {t.popular && (
+                  <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: 'var(--accent)', color: '#fff', fontSize: 12, fontWeight: 600, padding: '4px 13px', borderRadius: 999 }}>Popüler</div>
+                )}
+                <div>
+                  <div style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: 6 }}>{t.name}</div>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--text-2)' }}>{t.tagline}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                  <span style={{ fontSize: '2.6rem', fontWeight: 600, letterSpacing: '-0.03em' }}>{t.price}</span>
+                  <span style={{ fontSize: '0.9rem', color: 'var(--text-3)' }}>{t.period}</span>
+                </div>
+                <Link
+                  href="/app"
+                  className={t.popular ? 'v-btn-primary' : 'v-btn-ghost'}
+                  style={{
+                    textAlign: 'center', padding: 11, borderRadius: 10, fontSize: 14, fontWeight: 600, textDecoration: 'none',
+                    background: t.popular ? 'var(--accent)' : 'var(--bg-3)',
+                    color: t.popular ? '#fff' : 'var(--text)',
+                    border: t.popular ? '1px solid var(--accent)' : '1px solid var(--border-2)',
+                  }}
+                >
+                  {t.cta}
+                </Link>
+                <div style={{ height: 1, background: 'var(--border)' }} />
+                <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 13, fontSize: '0.92rem', color: 'var(--text-2)' }}>
+                  {t.features.map((f) => (
+                    <li key={f} style={{ display: 'flex', gap: 10 }}><span style={{ color: 'var(--accent)', flexShrink: 0 }}>✓</span>{f}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <p style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-3)', marginTop: 28 }}>
+            Ücretli planlar yakında açılıyor — şimdilik ücretsiz başlayabilirsin. Fiyatlar Paddle üzerinden faturalandırılır; KDV dahildir.
+          </p>
+        </section>
 
-      <section className="mx-auto grid max-w-6xl gap-5 px-6 pb-16 lg:grid-cols-3">
-        {PLANS.map((p) => (
-          <Plan key={p.name} {...p} />
-        ))}
-      </section>
-
-      <section className="mx-auto max-w-3xl px-6 pb-20">
-        <h2 className="text-center text-2xl font-semibold">Sık sorulanlar</h2>
-        <div className="mt-6 space-y-4">
-          {FAQ.map((f) => (
-            <div key={f.q} className="rounded-xl p-5" style={{ background: 'var(--surface-1, #151518)' }}>
-              <h3 className="font-semibold">{f.q}</h3>
-              <p className="mt-1.5 text-sm" style={{ color: 'var(--text-2, #c4c4ca)' }}>{f.a}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <footer
-        className="border-t px-6 py-8"
-        style={{ borderColor: 'var(--border-hair, #2a2a30)', color: 'var(--text-3, #9a9aa2)' }}
-      >
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-sm sm:flex-row">
-          <span>© 2026 Vesna · vesna.design</span>
-          <nav className="flex items-center gap-5">
-            <Link href="/" className="hover:underline">Ana sayfa</Link>
-            <Link href="/app" className="hover:underline">Uygulama</Link>
-            <Link href="/gizlilik" className="hover:underline">Gizlilik</Link>
-            <Link href="/kosullar" className="hover:underline">Koşullar</Link>
-          </nav>
-        </div>
-      </footer>
-    </main>
-  );
-}
-
-function Plan({
-  name,
-  price,
-  period,
-  desc,
-  features,
-  cta,
-  href,
-  highlighted,
-  soon,
-}: (typeof PLANS)[number]) {
-  return (
-    <div
-      className="flex flex-col rounded-2xl p-6"
-      style={{
-        background: highlighted ? 'var(--surface-2, #1c1c22)' : 'var(--surface-1, #151518)',
-        boxShadow: highlighted
-          ? 'inset 0 0 0 1.5px var(--accent, #5B5BD6)'
-          : 'inset 0 0 0 1px var(--border-hair, #2a2a30)',
-      }}
-    >
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">{name}</h3>
-        {highlighted && (
-          <span className="rounded-full px-2.5 py-0.5 text-xs font-medium text-white" style={{ background: 'var(--accent, #5B5BD6)' }}>
-            Popüler
-          </span>
-        )}
-        {soon && (
-          <span className="rounded-full px-2.5 py-0.5 text-xs" style={{ background: 'var(--surface-3, #26262e)', color: 'var(--text-2, #c4c4ca)' }}>
-            Yakında
-          </span>
-        )}
-      </div>
-      <div className="mt-4 flex items-baseline gap-1">
-        <span className="text-3xl font-semibold">{price}</span>
-        {period && <span className="text-sm" style={{ color: 'var(--text-3, #9a9aa2)' }}>{period}</span>}
-      </div>
-      <p className="mt-2 text-sm" style={{ color: 'var(--text-2, #c4c4ca)' }}>{desc}</p>
-
-      <ul className="mt-5 flex-1 space-y-2 text-sm" style={{ color: 'var(--text-2, #c4c4ca)' }}>
-        {features.map((f) => (
-          <li key={f} className="flex gap-2">
-            <span style={{ color: 'var(--accent-text, #a5a5ff)' }}>✓</span>
-            <span>{f}</span>
-          </li>
-        ))}
-      </ul>
-
-      {soon ? (
-        <span
-          className="mt-6 cursor-default rounded-lg px-4 py-2.5 text-center text-sm font-semibold"
-          style={{ background: 'var(--surface-3, #26262e)', color: 'var(--text-3, #9a9aa2)' }}
-        >
-          {cta}
-        </span>
-      ) : (
-        <Link
-          href={href}
-          className="mt-6 rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-white transition-opacity hover:opacity-90"
-          style={{ background: 'var(--accent, #5B5BD6)' }}
-        >
-          {cta}
-        </Link>
-      )}
+        <section style={{ maxWidth: 760, margin: '0 auto', padding: '72px 24px 96px' }}>
+          <h2 style={{ fontSize: 'clamp(1.5rem,3vw,2rem)', fontWeight: 600, letterSpacing: '-0.03em', margin: '0 0 32px', textAlign: 'center' }}>Sıkça sorulan sorular</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {FAQ.map((f) => (
+              <details key={f.q} className="v-details" style={{ border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg-2)' }}>
+                <summary style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '18px 20px', fontSize: '1rem', fontWeight: 600, color: 'var(--text)' }}>
+                  {f.q}<span style={{ color: 'var(--text-3)', fontSize: '1.3rem', lineHeight: 1 }}>+</span>
+                </summary>
+                <div style={{ padding: '0 20px 18px', fontSize: '0.94rem', color: 'var(--text-2)', lineHeight: 1.65 }}>{f.a}</div>
+              </details>
+            ))}
+          </div>
+        </section>
+      </main>
+      <SiteFooter />
     </div>
   );
 }
 
-const PLANS = [
+const TIERS = [
   {
-    name: 'Ücretsiz',
-    price: '₺0',
-    period: '',
-    desc: 'Başlamak ve bireysel kullanım için.',
-    features: [
-      'Sınırsız çizim ve proje',
-      'DXF/DWG içe aktarma + ölçekleme',
-      'Otomatik mahal & m² + Excel',
-      'PDF · PNG · SVG · DXF dışa aktarma',
-      'AI Sor: 20 mesaj/ay',
-      'AI Çiz: 3 plan/ay',
-      'Canlı işbirliği: 1 oda',
-    ],
-    cta: 'Ücretsiz Başla',
-    href: '/app',
-    highlighted: false,
-    soon: false,
+    name: 'Ücretsiz', tagline: 'Bireysel keşif için.', price: '₺0', period: '/ sonsuza dek', cta: 'Ücretsiz Başla', popular: false,
+    features: ['3 aktif proje', 'DWG/DXF içe aktarma', 'Otomatik mahal & m²', 'Temel 3B önizleme', 'AI: aylık deneme kotası'],
   },
   {
-    name: 'Pro',
-    price: '~$12',
-    period: '/ay',
-    desc: 'Aktif çalışan mimar ve serbest tasarımcı için.',
-    features: [
-      'Ücretsiz’deki her şey',
-      'AI Sor: 500 mesaj/ay',
-      'AI Çiz: 100 plan/ay',
-      'AI Render: 20 görsel/ay',
-      'Sınırsız canlı işbirliği',
-      'Öncelikli hız',
-    ],
-    cta: 'Yakında',
-    href: '/app',
-    highlighted: true,
-    soon: true,
+    name: 'Pro', tagline: 'Bağımsız mimarlar için.', price: '$12', period: '/ ay', cta: "Pro'ya Geç", popular: true,
+    features: ['Sınırsız proje', 'Türkçe yönetmelik asistanı', 'Tariften plan üretimi', 'Plandan AI render (aylık kota)', 'Gerçek zamanlı işbirliği (5 kişi)', 'Pafta & PDF dışa aktarma', 'Öncelikli destek'],
   },
   {
-    name: 'Stüdyo',
-    price: '~$29',
-    period: '/ay',
-    desc: 'Ofis ve ekipler için.',
-    features: [
-      'Pro’daki her şey',
-      'AI Sor & Çiz: sınırsız',
-      'AI Render: 80 görsel/ay',
-      'Ekip: 3 koltuk',
-      'Öncelikli destek',
-      'Ek render için kredi paketi',
-    ],
-    cta: 'Yakında',
-    href: '/app',
-    highlighted: false,
-    soon: true,
+    name: 'Stüdyo', tagline: 'Ekipler ve ofisler için.', price: '$29', period: '/ ay · kullanıcı', cta: "Stüdyo'yu Seç", popular: false,
+    features: ["Pro'daki her şey", 'Sınırsız işbirlikçi', 'Yüksek AI render kotası', 'Marka / şablon kütüphanesi', 'Öncelikli destek', 'Özel onboarding'],
   },
-] as const;
+];
 
 const FAQ = [
-  {
-    q: 'Ücretsiz planda neler var?',
-    a: 'Çizim, DXF/DWG içe aktarma, otomatik mahal/m², metraj ve tüm dışa aktarma biçimleri ücretsizdir. Yapay zekâ özellikleri aylık sınırlı kotayla denenebilir.',
-  },
-  {
-    q: 'Neden yapay zekâ kotalı?',
-    a: 'Yapay zekâ yanıtları ve görsel üretimi gerçek bir işlem maliyeti taşır. Bu maliyeti adil paylaşmak için AI kullanımını kotaladık; çoğu kullanıcı kota içinde kalır.',
-  },
-  {
-    q: 'Ücretli planlar ne zaman?',
-    a: 'Pro ve Stüdyo yakında açılıyor. Şimdilik ücretsiz başlayabilir, tüm temel özellikleri kullanabilirsiniz.',
-  },
-  {
-    q: 'Verilerim güvende mi?',
-    a: 'Çizimleriniz cihazınızda kalır; sunucularımızda kalıcı saklanmaz. Ayrıntı için Gizlilik Politikası sayfamıza bakın.',
-  },
-] as const;
+  { q: 'Vesna gerçekten tarayıcıda mı çalışıyor?', a: 'Evet. Hiçbir kurulum, lisans ya da eklenti gerekmez. Modern bir tarayıcı yeterli; çizim motoru WebGL ile cihazında akıcı çalışır.' },
+  { q: 'DWG/DXF dosyalarımı içe aktarabilir miyim?', a: 'AutoCAD DWG ve DXF dosyalarını açabilirsin. Katmanlar otomatik tanınır; iki nokta ve gerçek mesafeyle tek tıkla doğru ölçeğe oturtursun.' },
+  { q: 'Yapay zekâ önerileri yönetmeliğe uygun mu?', a: 'Asistan; İmar yönetmeliği, TBDY ve TS 9111 gibi kaynaklara dayalı, atıf gösteren öneriler sunar. Nihai sorumluluk projeyi yürüten mimara aittir; öneriler bir karar destek aracıdır.' },
+  { q: 'Verilerim güvende mi?', a: 'Çizimleriniz cihazınızda kalır; sunucularımızda kalıcı saklanmaz. Dışa aktarma her zaman açıktır. Ayrıntı için Gizlilik Politikası sayfamıza bakın.' },
+  { q: 'Planımı sonradan değiştirebilir veya iptal edebilir miyim?', a: 'Evet, dilediğin zaman yükselt, düşür veya iptal et. İptalde dönem sonuna kadar erişim devam eder, ek ücret alınmaz.' },
+];

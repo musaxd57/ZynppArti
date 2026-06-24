@@ -120,3 +120,67 @@ textarea {
 .msg-in {
   animation: msgIn 0.22s ease-out;
 }
+
+/* ============================================================
+ * PAZARLAMA SİTESİ TEMASI (landing/fiyat/yasal) — claude.ai/design redesign.
+ * Açık + koyu tema; toggle `data-theme`'i <html>'e yazar (ThemeToggle + ThemeScript).
+ * Uygulama (/app) HER ZAMAN koyu (AppBodyLock data-theme=dark zorlar) → panel renkleri bozulmaz.
+ * Bu değişkenler uygulamanın --surface-* tokenlarından AYRIDIR (yalnız --text-2/3/--accent paylaşılır).
+ * ============================================================ */
+:root {
+  --bg: #0a0a0c;
+  --bg-2: #101013;
+  --bg-3: #141418;
+  --bg-glass: rgba(12, 12, 15, 0.72);
+  --border: #23232a;
+  --border-2: #30303a;
+  --text: #ececf1;
+  --accent-2: #7575ec;
+  --accent-soft: rgba(91, 91, 214, 0.14);
+  --ok: #3fb984;
+  --grid: rgba(255, 255, 255, 0.035);
+}
+[data-theme='light'] {
+  --bg: #fbfbfc;
+  --bg-2: #ffffff;
+  --bg-3: #ffffff;
+  --bg-glass: rgba(251, 251, 252, 0.78);
+  --border: #e8e8ee;
+  --border-2: #dbdbe4;
+  --text: #16161b;
+  --text-2: #56565f;
+  --text-3: #8c8c96;
+  --accent-2: #4a4ac4;
+  --accent-soft: rgba(91, 91, 214, 0.08);
+  --ok: #1f9d67;
+  --grid: rgba(20, 20, 40, 0.04);
+}
+
+@keyframes vesnaFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes vesnaPulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+/* Pazarlama sayfaları: metin seçilebilir + normal kaydırma (body.app-shell yalnız /app'te kilitler). */
+.v-fade { animation: vesnaFade 0.45s ease both; }
+.v-pulse { animation: vesnaPulse 1.4s ease-in-out infinite; }
+
+/* Hover'lar (inline style React'te hover yapamaz → sınıf). */
+.v-navlink { color: var(--text-2); transition: color 0.15s ease; }
+.v-navlink:hover { color: var(--text); }
+.v-footlink { color: var(--text-2); transition: color 0.15s ease; }
+.v-footlink:hover { color: var(--text); }
+.v-icon-btn { color: var(--text-2); transition: color 0.15s ease, border-color 0.15s ease; }
+.v-icon-btn:hover { color: var(--text); border-color: var(--border-2); }
+.v-btn-primary { transition: background 0.15s ease, transform 0.15s ease; }
+.v-btn-primary:hover { background: var(--accent-2) !important; transform: translateY(-1px); }
+.v-btn-ghost { transition: border-color 0.15s ease; }
+.v-btn-ghost:hover { border-color: var(--text-3) !important; }
+.v-card { transition: background 0.2s ease; }
+.v-card:hover { background: var(--bg-3) !important; }
+.v-details summary { list-style: none; cursor: pointer; }
+.v-details summary::-webkit-details-marker { display: none; }
