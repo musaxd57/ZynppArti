@@ -40,6 +40,8 @@ export class EntityLayer {
   private lineweightPx = 1;
   /** Son uygulanan viewport — katman görünürlüğü değişince yeniden uygulamak için saklanır. */
   private lastViewport: AABB | null = null;
+  /** Şu an görünür entity'ler — artımlı cull için (yalnız değişen görünürlükleri dokun). */
+  private prevVisible = new Set<EntityId>();
   private readonly unsubscribe: () => void;
   private readonly unsubscribeLayers: () => void;
 
@@ -120,6 +122,10 @@ export class EntityLayer {
         if (e.type === 'opening' && walls.has(e.wallId)) this.upsert(e.id, false);
       }
     }
+
+    // Yeni/değişen objeler gizli oluşturulur (artımlı cull şartı); kamera oynamasa da görünür alandakiler
+    // hemen açılsın diye değişiklik sonrası cull'u yeniden uygula (artımlı → ucuz, ekran içeriğiyle sınırlı).
+    if (this.lastViewport) this.cull(this.lastViewport);
   }
 
   private upsert(id: EntityId, isNew: boolean): void {
@@ -230,6 +236,9 @@ export class EntityLayer {
       this.labelLayer.addChild(label);
       objs.push(label);
     }
+    // Görünürlük TEK kaynaktan (cull) yönetilir → yeni obje viewport dışındaysa yanlışlıkla çizilmesin
+    // diye gizli başlar; değişiklik sonrası cull (satır ~71) görünür alandakileri açar. (Artımlı cull şartı.)
+    for (const o of objs) o.visible = false;
     this.objects.set(entity.id, objs);
   }
 
@@ -272,16 +281,28 @@ export class EntityLayer {
   }
 
   /**
-   * Görünürlüğü uygular: viewport içinde VE katmanı gizli değilse görünür (Faz 1: O(n); ileride artımlı).
+   * Görünürlüğü uygular: viewport içinde VE katmanı gizli değilse görünür. ARTIMLI — yalnız bu kare
+   * görünür olması gerekenler (rbush sorgusu) + önceki karede görünür olanlar dolaşılır; tüm 500k
+   * entity DEĞİL. Spatial index'in amacı buydu (Y2). Görünürlüğü değişmeyen objeye dokunulmaz.
    */
   cull(viewport: AABB): void {
     this.lastViewport = viewport;
-    const inView = new Set(this.index.search(viewport));
-    for (const [id, objs] of this.objects) {
-      const layerHidden = this.layers.isHidden(this.store.get(id)?.layerId ?? '');
-      const visible = inView.has(id) && !layerHidden;
-      for (const o of objs) o.visible = visible;
+    const candidates = this.index.search(viewport);
+    const nowVisible = new Set<EntityId>();
+    for (const id of candidates) {
+      const objs = this.objects.get(id);
+      if (!objs) continue;
+      if (this.layers.isHidden(this.store.get(id)?.layerId ?? '')) continue; // viewport'ta ama katmanı gizli
+      nowVisible.add(id);
+      for (const o of objs) o.visible = true;
     }
+    // Önceki karede görünür olup artık görünmeyenleri (viewport'tan çıkan/gizlenen) kapat.
+    for (const id of this.prevVisible) {
+      if (nowVisible.has(id)) continue;
+      const objs = this.objects.get(id);
+      if (objs) for (const o of objs) o.visible = false;
+    }
+    this.prevVisible = nowVisible;
   }
 
   destroy(): void {
