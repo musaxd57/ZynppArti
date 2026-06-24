@@ -46,7 +46,7 @@ export default function BeforeAfter({
         <Layer src={planSrc} label="Plan görseli" tone="plan" />
       </div>
 
-      <span className="pointer-events-none absolute left-3 top-[11px] rounded-md bg-black/55 px-[9px] py-[3px] text-[10.5px] font-bold tracking-wider text-white">
+      <span className="pointer-events-none absolute left-3 top-[11px] rounded-md border border-[var(--border)] bg-[var(--bg-2)] px-[9px] py-[3px] text-[10.5px] font-bold tracking-wider text-[var(--text)]">
         PLAN
       </span>
       <span className="pointer-events-none absolute right-3 top-[11px] rounded-md bg-[var(--accent)] px-[9px] py-[3px] text-[10.5px] font-bold tracking-wider text-white">
@@ -134,7 +134,7 @@ function Layer({
           {/* sıcak gün ışığı katmanı */}
           <rect width="320" height="240" fill="url(#ba-warm)" />
         </svg>
-        <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-md bg-black/35 px-3 py-1 text-[11px] font-medium text-white/95">{label} · örnek</span>
+        <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-md border border-[var(--border)] bg-[var(--bg-2)] px-3 py-1 text-[11px] font-medium text-[var(--text-2)]">{label} · örnek</span>
       </div>
     );
   }
@@ -148,7 +148,7 @@ function Layer({
         <path d="M180 86 A26 26 0 0 0 154 112" fill="none" stroke="var(--text-3)" strokeWidth={1.5} opacity={0.7} />
         <path d="M96 130 A24 24 0 0 1 120 106" fill="none" stroke="var(--text-3)" strokeWidth={1.5} opacity={0.7} />
         <text x="108" y="78" textAnchor="middle" fill="var(--text)" fontSize="13" fontWeight="600">Salon</text>
-        <text x="108" y="94" textAnchor="middle" fill="var(--accent)" fontSize="11" fontWeight="600">32.4 m²</text>
+        <text x="108" y="94" textAnchor="middle" fill="var(--accent)" fontSize="11" fontWeight="600">28.0 m²</text>
         <text x="232" y="74" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Yatak</text>
         <text x="232" y="90" textAnchor="middle" fill="var(--text-3)" fontSize="9">16.0 m²</text>
         <text x="232" y="166" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Mutfak</text>

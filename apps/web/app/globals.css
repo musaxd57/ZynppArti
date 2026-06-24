@@ -156,7 +156,9 @@ textarea {
   --text: #16161b;
   --text-2: #50505a;
   --text-3: #6b6b78;
-  --accent-2: #4a4ac4;
+  /* Açık temada accent'i koyulaştır: beyaz üstünde #5b5bd6 ~3.6:1 (AA altı). #4848c0 ~4.7:1 (AA). */
+  --accent: #4848c0;
+  --accent-2: #3a3aae;
   --accent-soft: rgba(91, 91, 214, 0.08);
   --ok: #1f9d67;
   --grid: rgba(20, 20, 40, 0.04);

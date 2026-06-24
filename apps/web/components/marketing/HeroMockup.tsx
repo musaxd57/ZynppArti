@@ -167,12 +167,12 @@ export default function HeroMockup() {
             <PanelRow label="YAKLAŞIK MALİYET" value="₺1.407.208" />
             <PanelRow label="KESİT (ŞEMATİK)" />
             <div className="v-rise mt-auto overflow-hidden rounded-[11px] border border-[var(--border)] bg-[var(--bg-2)] shadow-[inset_0_1px_0_var(--hi)]" style={{ animationDelay: "1.9s" }}>
-              <div className="relative h-[106px]" style={{ background: "linear-gradient(160deg,#3a3357 0%,#6b5e8c 42%,#c39d7e 82%,#e8cda6 100%)" }}>
+              <div className="relative h-[106px]" style={{ background: "linear-gradient(160deg,#dcefff 0%,#e9f1ee 48%,#f4ead7 100%)" }}>
                 <div className="absolute right-4 top-3 h-[26px] w-[26px] rounded-full" style={{ background: "radial-gradient(circle,#fff6e0,rgba(255,246,224,0) 70%)" }} />
-                <div className="absolute inset-x-0 bottom-0 h-[42px]" style={{ background: "linear-gradient(180deg,transparent,rgba(18,14,28,0.55))" }} />
+                <div className="absolute inset-x-0 bottom-0 h-[42px]" style={{ background: "linear-gradient(180deg,transparent,rgba(150,135,100,0.18))" }} />
                 <div className="absolute bottom-2.5 left-3 flex gap-[5px]">
-                  <span className="h-[5px] w-[34px] rounded-full bg-white/70" />
-                  <span className="h-[5px] w-5 rounded-full bg-white/40" />
+                  <span className="h-[5px] w-[34px] rounded-full bg-[#9c8a66]/70" />
+                  <span className="h-[5px] w-5 rounded-full bg-[#9c8a66]/40" />
                 </div>
               </div>
               <div className="flex items-center justify-between px-[11px] py-[9px]">
