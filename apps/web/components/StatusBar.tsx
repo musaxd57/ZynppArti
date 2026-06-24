@@ -96,9 +96,12 @@ export function StatusBar({ manager, registerHover, store, selectedIds }: Status
         </>
       )}
       <span className="opacity-40">·</span>
-      {/* KVKK erişilebilirlik: gizlilik politikasına her zaman ulaşılabilir (yalnız bu segment tıklanır). */}
+      {/* KVKK/satış erişilebilirliği: yasal sayfalara her zaman ulaşılabilir (yalnız bu segmentler tıklanır). */}
       <Link href="/gizlilik" className="pointer-events-auto opacity-70 hover:underline hover:opacity-100">
         Gizlilik
+      </Link>
+      <Link href="/kosullar" className="pointer-events-auto opacity-70 hover:underline hover:opacity-100">
+        Koşullar
       </Link>
     </div>
   );
