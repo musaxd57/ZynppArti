@@ -20,7 +20,7 @@ export default function KosullarPage() {
       className="mx-auto min-h-screen max-w-3xl px-6 py-12"
       style={{ background: 'var(--surface-0, #0E0E10)', color: 'var(--text-1, #e8e8ea)' }}
     >
-      <Link href="/" className="text-sm hover:underline" style={{ color: 'var(--accent-text, #a5a5ff)' }}>
+      <Link href="/app" className="text-sm hover:underline" style={{ color: 'var(--accent-text, #a5a5ff)' }}>
         ← Uygulamaya dön
       </Link>
 
