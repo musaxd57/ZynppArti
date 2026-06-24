@@ -89,8 +89,11 @@ export function importDxf(text: string): DxfImportResult {
       if (e.type === 'LINE') {
         const v = (e as ILineEntity).vertices;
         if (v.length >= 2) {
-          walls.push(makeWall(tf(v[0]!), tf(v[1]!), factor, layer));
-          layers.add(layer);
+          const w = makeWall(tf(v[0]!), tf(v[1]!), factor, layer);
+          if (w) {
+            walls.push(w);
+            layers.add(layer);
+          }
         }
       } else if (e.type === 'LWPOLYLINE') {
         const pl = e as ILwpolylineEntity;
@@ -152,10 +155,10 @@ function pushPolyline(
   tf: Tf,
 ): boolean {
   for (let i = 0; i + 1 < verts.length; i++) {
-    out.push(makeWall(tf(verts[i]!), tf(verts[i + 1]!), factor, layer));
+    pushWall(out, tf(verts[i]!), tf(verts[i + 1]!), factor, layer);
   }
   if (closed && verts.length > 2) {
-    out.push(makeWall(tf(verts[verts.length - 1]!), tf(verts[0]!), factor, layer));
+    pushWall(out, tf(verts[verts.length - 1]!), tf(verts[0]!), factor, layer);
   }
   return verts.length > 0;
 }
@@ -190,20 +193,34 @@ function tessellateArc(
   let prev = at(startAngle);
   for (let i = 1; i <= steps; i++) {
     const cur = at(startAngle + (sweep * i) / steps);
-    out.push(makeWall(prev, cur, factor, layer));
+    pushWall(out, prev, cur, factor, layer);
     prev = cur;
   }
 }
 
-function makeWall(a: XY, b: XY, factor: number, layer: string): Wall {
+/** NaN/Infinity koordinat → null (bozuk DXF bounds/index'i bozmasın). */
+function makeWall(a: XY, b: XY, factor: number, layer: string): Wall | null {
+  const sx = a.x * factor;
+  const sy = a.y * factor;
+  const ex = b.x * factor;
+  const ey = b.y * factor;
+  if (!Number.isFinite(sx) || !Number.isFinite(sy) || !Number.isFinite(ex) || !Number.isFinite(ey)) {
+    return null;
+  }
   return {
     id: createEntityId(),
     type: 'wall',
     layerId: layer,
-    start: { x: a.x * factor, y: a.y * factor },
-    end: { x: b.x * factor, y: b.y * factor },
+    start: { x: sx, y: sy },
+    end: { x: ex, y: ey },
     thickness: DEFAULT_THICKNESS,
   };
+}
+
+/** makeWall + geçerliyse out'a ekle (bozuk koordinatlı segmenti atlar). */
+function pushWall(out: Wall[], a: XY, b: XY, factor: number, layer: string): void {
+  const w = makeWall(a, b, factor, layer);
+  if (w) out.push(w);
 }
 
 function makeAnnotation(

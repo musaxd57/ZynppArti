@@ -5,7 +5,7 @@ export function closestPointOnSegment(p: Vec2, a: Vec2, b: Vec2): Vec2 {
   const abx = b.x - a.x;
   const aby = b.y - a.y;
   const lenSq = abx * abx + aby * aby;
-  if (lenSq === 0) return { x: a.x, y: a.y }; // dejenere (nokta) segment
+  if (lenSq < 1e-12) return { x: a.x, y: a.y }; // dejenere/sıfıra-yakın (nokta) segment → sıfıra-bölme yok
   let t = ((p.x - a.x) * abx + (p.y - a.y) * aby) / lenSq;
   t = Math.max(0, Math.min(1, t));
   return { x: a.x + t * abx, y: a.y + t * aby };
