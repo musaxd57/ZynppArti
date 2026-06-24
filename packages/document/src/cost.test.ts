@@ -25,19 +25,31 @@ describe('estimateCost', () => {
     expect(c.total).toBe(0);
   });
 
-  it('her kalemi birim fiyatla çarpar + toplar', () => {
+  it('her kalemi birim fiyatla çarpar; tesisat alana göre eklenir; genel gider + ₺/m²', () => {
     const t: Takeoff = { ...base, floorAreaM2: 100, doorCount: 2 };
     const c = estimateCost(t);
-    expect(c.lines).toHaveLength(2);
+    // Döşeme + Kapı + Elektrik + Sıhhi (ikisi alana bağlı) = 4 kalem
+    expect(c.lines).toHaveLength(4);
     const floor = c.lines.find((l) => l.label.startsWith('Döşeme'))!;
     expect(floor.total).toBe(100 * DEFAULT_UNIT_PRICES.floorM2);
-    expect(c.total).toBe(100 * DEFAULT_UNIT_PRICES.floorM2 + 2 * DEFAULT_UNIT_PRICES.door);
+    expect(floor.category).toBe('İnce yapı');
+    const sub =
+      100 * DEFAULT_UNIT_PRICES.floorM2 +
+      2 * DEFAULT_UNIT_PRICES.door +
+      100 * DEFAULT_UNIT_PRICES.electricalM2 +
+      100 * DEFAULT_UNIT_PRICES.plumbingM2;
+    expect(c.subtotal).toBe(sub);
+    expect(c.overhead).toBeCloseTo(sub * DEFAULT_UNIT_PRICES.overheadRate, 4);
+    expect(c.total).toBeCloseTo(sub * (1 + DEFAULT_UNIT_PRICES.overheadRate), 4);
+    expect(c.perM2).toBeCloseTo(c.total / 100, 4);
   });
 
-  it('özel fiyatlar uygulanır', () => {
+  it('özel fiyatlar + genel gider oranı uygulanır', () => {
     const t: Takeoff = { ...base, wallElevationM2: 10 };
-    const c = estimateCost(t, { ...DEFAULT_UNIT_PRICES, wallMasonryM2: 1000 });
-    expect(c.total).toBe(10 * 1000);
+    const c = estimateCost(t, { ...DEFAULT_UNIT_PRICES, wallMasonryM2: 1000, overheadRate: 0.2 });
+    expect(c.subtotal).toBe(10 * 1000);
+    expect(c.total).toBeCloseTo(10000 * 1.2, 4);
+    expect(c.perM2).toBe(0); // alan yok → ₺/m² 0
   });
 });
 

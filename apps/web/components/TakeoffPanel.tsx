@@ -87,13 +87,20 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
       Adet: r.count,
     }));
     const costRows: Record<string, string | number>[] = cost.lines.map((l) => ({
+      Kategori: l.category,
       Kalem: l.label,
       Miktar: Number(l.quantity.toFixed(2)),
       Birim: l.unit,
       'Birim Fiyat (TL)': l.unitPrice,
       'Tutar (TL)': Math.round(l.total),
     }));
-    if (costRows.length) costRows.push({ Kalem: 'TOPLAM', Miktar: '', Birim: '', 'Birim Fiyat (TL)': '', 'Tutar (TL)': Math.round(cost.total) });
+    if (costRows.length) {
+      const blank = { Kategori: '', Kalem: '', Miktar: '', Birim: '', 'Birim Fiyat (TL)': '' };
+      costRows.push({ ...blank, Kalem: 'Ara toplam (imalat)', 'Tutar (TL)': Math.round(cost.subtotal) });
+      costRows.push({ ...blank, Kalem: `Genel gider + kâr (%${Math.round(cost.overheadRate * 100)})`, 'Tutar (TL)': Math.round(cost.overhead) });
+      costRows.push({ ...blank, Kalem: 'TOPLAM', 'Tutar (TL)': Math.round(cost.total) });
+      if (cost.perM2 > 0) costRows.push({ ...blank, Kalem: 'm² başına (TL/m²)', 'Tutar (TL)': Math.round(cost.perM2) });
+    }
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Metraj');
@@ -195,15 +202,38 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
         badge={formatTRY(cost.total)}
       >
         <div className="flex flex-col gap-0.5 px-1">
-          {cost.lines.map((l) => (
-            <Row key={l.label} label={`${l.label} (${num(l.quantity)} ${l.unit})`} value={formatTRY(l.total)} />
-          ))}
+          {(['Kaba yapı', 'Tesisat', 'İnce yapı'] as const).map((cat) => {
+            const group = cost.lines.filter((l) => l.category === cat);
+            if (group.length === 0) return null;
+            return (
+              <div key={cat} className="mb-0.5">
+                <div className="mt-1 text-[10px] font-semibold uppercase tracking-wide opacity-45">{cat}</div>
+                {group.map((l) => (
+                  <Row key={l.label} label={`${l.label} (${num(l.quantity)} ${l.unit})`} value={formatTRY(l.total)} />
+                ))}
+              </div>
+            );
+          })}
+          <div className="mt-1 flex justify-between border-t border-white/10 pt-1">
+            <span className="opacity-70">Ara toplam (imalat)</span>
+            <span className="tabular-nums opacity-70">{formatTRY(cost.subtotal)}</span>
+          </div>
+          <Row
+            label={`Genel gider + kâr (%${Math.round(cost.overheadRate * 100)})`}
+            value={formatTRY(cost.overhead)}
+          />
           <div className="mt-1 flex justify-between border-t border-white/10 pt-1 font-semibold">
             <span>Toplam</span>
             <span className="tabular-nums">{formatTRY(cost.total)}</span>
           </div>
+          {cost.perM2 > 0 && (
+            <div className="flex justify-between text-[11px] opacity-60">
+              <span>≈ m² başına</span>
+              <span className="tabular-nums">{formatTRY(cost.perM2)}/m²</span>
+            </div>
+          )}
           <div className="mt-1 text-[10px] leading-tight opacity-40">
-            Kaba 2026 birim fiyat tahminidir; bölge/malzemeyle değişir.
+            Kaba 2026 birim fiyat tahminidir; bölge/malzeme/işçilikle değişir. Tesisat alana yayılmış kabadır.
           </div>
         </div>
       </Panel>
