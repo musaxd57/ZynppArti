@@ -12,11 +12,20 @@ export default function HeroMockup() {
           </span>
           <span className="h-5 w-px shrink-0 bg-[var(--border)]" />
           <div className="flex shrink-0 items-center gap-0.5">
+            {/* Etiketli ilk araçlar */}
             <Tool active label="Seç"><path d="m4 4 7.07 17 2.51-7.39L21 11.07z" /></Tool>
             <Tool label="Duvar" rects />
             <Tool label="Kapı"><path d="M4 21h16M7 21V5h7a3 3 0 0 1 3 3v13" /><path d="M12 12h.01" /></Tool>
             <Tool label="Pencere"><rect x="4" y="4" width="16" height="16" rx="1" /><path d="M12 4v16M4 12h16" /></Tool>
+            {/* Gerçek app'teki diğer araçlar (ikon-only, sığması için) */}
+            <Tool label="Ölçü"><path d="M21.3 8.7 8.7 21.3a1 1 0 0 1-1.4 0l-4.6-4.6a1 1 0 0 1 0-1.4L15.3 2.7a1 1 0 0 1 1.4 0l4.6 4.6a1 1 0 0 1 0 1.4Z" /><path d="m7.5 10.5 2 2M10.5 7.5l2 2M13.5 4.5l2 2" /></Tool>
+            <Tool label="Parsel"><rect x="3" y="3" width="18" height="18" rx="1" strokeDasharray="3 3" /></Tool>
+            <Tool label="Metin"><path d="M4 7V4h16v3M9 20h6M12 4v16" /></Tool>
+            <Tool label="Pafta"><path d="M14 2v6h6M5 2h9l6 6v14H5z" /></Tool>
             <Tool label="Kesit"><path d="M3 12h18M8 6v12M16 6v12" /></Tool>
+            <Tool label="Yorum"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></Tool>
+            <Tool label="Sil"><path d="m7 21 10-10 4 4-7 7zM18 13 8 3l-5 5 10 10" /></Tool>
+            <Tool label="Ölçekle"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></Tool>
           </div>
           <span className="h-5 w-px shrink-0 bg-[var(--border)]" />
           <div className="flex shrink-0 items-center gap-1 text-[var(--text-3)]">
@@ -24,8 +33,9 @@ export default function HeroMockup() {
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="m15 14 5-5-5-5" /><path d="M20 9H9a5 5 0 0 0 0 10h3" /></svg>
           </div>
           <span className="flex-1" />
+          <span className="hidden shrink-0 px-2 py-1.5 text-xs text-[var(--text-2)] lg:inline">Kaydet</span>
           <span className="shrink-0 px-2 py-1.5 text-xs text-[var(--text-2)]">CAD Yükle</span>
-          <span className="shrink-0 px-2 py-1.5 text-xs text-[var(--text-2)]">PDF İndir</span>
+          <span className="hidden shrink-0 px-2 py-1.5 text-xs text-[var(--text-2)] lg:inline">PDF İndir</span>
           <span className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-white">
             <Sparkle width={13} height={13} className="text-white" /> Vesna AI
           </span>
@@ -155,10 +165,10 @@ export default function HeroMockup() {
 function Tool({
   label, active, rects, children,
 }: {
-  label: string; active?: boolean; rects?: boolean; children?: React.ReactNode;
+  label?: string; active?: boolean; rects?: boolean; children?: React.ReactNode;
 }) {
   return (
-    <span className={`flex items-center gap-1.5 rounded-lg px-[9px] py-1.5 text-xs ${active ? "bg-[var(--accent-soft)] font-semibold text-[var(--accent)]" : "text-[var(--text-2)]"}`}>
+    <span title={label} className={`flex items-center gap-1.5 rounded-lg px-[9px] py-1.5 text-xs ${active ? "bg-[var(--accent-soft)] font-semibold text-[var(--accent)]" : "text-[var(--text-2)]"}`}>
       {rects ? (
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><rect x="3" y="5" width="18" height="5" rx="1" /><rect x="3" y="14" width="18" height="5" rx="1" /></svg>
       ) : (

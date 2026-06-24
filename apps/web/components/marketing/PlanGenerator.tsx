@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Sparkle, Grid, Refresh } from "./Icons";
 
 const PROMPT = "90 m² 3+1 daire · geniş salon · ebeveyn banyolu";
@@ -25,6 +26,8 @@ const PLANS: Plan[] = [
         <rect x="12" y="12" width="196" height="126" fill="none" stroke="var(--text-2)" strokeWidth={3} />
         <path d="M136 12 L136 138 M136 78 L208 78" fill="none" stroke="var(--text-2)" strokeWidth={2} />
         <text x="74" y="79" textAnchor="middle" fill="var(--accent)" fontSize="11" fontWeight="600">Salon</text>
+        <text x="172" y="49" textAnchor="middle" fill="var(--text-2)" fontSize="9" fontWeight="600">Yatak</text>
+        <text x="172" y="112" textAnchor="middle" fill="var(--text-2)" fontSize="9" fontWeight="600">Mutfak</text>
       </svg>
     ),
   },
@@ -39,6 +42,9 @@ const PLANS: Plan[] = [
         <rect x="12" y="12" width="196" height="126" fill="none" stroke="var(--text-2)" strokeWidth={3} />
         <path d="M130 12 L130 138 M130 74 L208 74 M12 96 L130 96" fill="none" stroke="var(--text-2)" strokeWidth={2} />
         <text x="71" y="121" textAnchor="middle" fill="var(--accent)" fontSize="10" fontWeight="600">Ebeveyn</text>
+        <text x="71" y="58" textAnchor="middle" fill="var(--text-2)" fontSize="9" fontWeight="600">Salon</text>
+        <text x="169" y="46" textAnchor="middle" fill="var(--text-2)" fontSize="9" fontWeight="600">Yatak</text>
+        <text x="169" y="110" textAnchor="middle" fill="var(--text-2)" fontSize="9" fontWeight="600">Mutfak</text>
       </svg>
     ),
   },
@@ -53,6 +59,8 @@ const PLANS: Plan[] = [
         <rect x="12" y="12" width="196" height="126" fill="none" stroke="var(--text-2)" strokeWidth={3} />
         <path d="M12 90 L208 90 M110 90 L110 138" fill="none" stroke="var(--text-2)" strokeWidth={2} />
         <text x="110" y="55" textAnchor="middle" fill="var(--accent)" fontSize="10" fontWeight="600">Açık mutfak</text>
+        <text x="61" y="117" textAnchor="middle" fill="var(--text-2)" fontSize="9" fontWeight="600">Yatak</text>
+        <text x="159" y="117" textAnchor="middle" fill="var(--text-2)" fontSize="9" fontWeight="600">Banyo</text>
       </svg>
     ),
   },
@@ -95,7 +103,6 @@ export default function PlanGenerator() {
         <Sparkle width={18} height={18} className="shrink-0 text-[var(--accent)]" />
         <div className="min-w-[160px] flex-1 text-[15px] leading-snug text-[var(--text)]">
           {typed}
-          <span className="v-caret ml-px inline-block h-[17px] w-0.5 translate-y-[3px] bg-[var(--accent)] align-middle" />
         </div>
         <button
           onClick={() => setGenerated(true)}
@@ -153,9 +160,12 @@ export default function PlanGenerator() {
                         </span>
                       ))}
                     </div>
-                    <button className="w-full rounded-[9px] border border-[var(--border-2)] bg-[var(--bg-3)] py-[9px] text-[13px] font-semibold text-[var(--text)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]">
+                    <Link
+                      href="/app"
+                      className="block w-full rounded-[9px] border border-[var(--border-2)] bg-[var(--bg-3)] py-[9px] text-center text-[13px] font-semibold text-[var(--text)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    >
                       Bu planı seç
-                    </button>
+                    </Link>
                   </div>
                 </div>
               ))}

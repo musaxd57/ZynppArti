@@ -80,24 +80,35 @@ function Layer({
   if (src) {
     return <img src={src} alt={label} className="absolute inset-0 h-full w-full object-cover" />;
   }
+  // Görsel verilmediyse İLLÜSTRATİF içerik (hero mockup ile aynı dil): plan = çizgi kat planı,
+  // render = gradyan iç mekan sahnesi. Gerçek görsel gelince planSrc/renderSrc ile değişir.
+  if (tone === "render") {
+    return (
+      <div className="absolute inset-0" style={{ background: "linear-gradient(160deg,#3a3357 0%,#6b5e8c 42%,#c39d7e 82%,#e8cda6 100%)" }}>
+        <div className="absolute right-[14%] top-[16%] h-12 w-12 rounded-full" style={{ background: "radial-gradient(circle,#fff6e0,rgba(255,246,224,0) 70%)" }} />
+        <div className="absolute inset-x-0 bottom-0 h-1/3" style={{ background: "linear-gradient(180deg,transparent,rgba(18,14,28,0.5))" }} />
+        <div className="absolute bottom-[14%] left-[12%] flex gap-2">
+          <span className="h-2 w-16 rounded-full bg-white/70" />
+          <span className="h-2 w-9 rounded-full bg-white/40" />
+        </div>
+        <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-md bg-black/35 px-3 py-1 text-[11px] font-medium text-white/90">{label} · örnek</span>
+      </div>
+    );
+  }
   return (
-    <div
-      className="absolute inset-0 flex items-center justify-center text-[12px] text-[var(--text-3)]"
-      style={
-        tone === "render"
-          ? { background: "linear-gradient(160deg,#3a3357,#6b5e8c 45%,#c39d7e 85%,#e8cda6)" }
-          : { background: "var(--bg-3)" }
-      }
-    >
-      <span
-        className={
-          tone === "render"
-            ? "rounded-md bg-black/35 px-3 py-1.5 text-white/90"
-            : "v-grid rounded-md px-3 py-1.5"
-        }
-      >
-        {label}
-      </span>
+    <div className="v-grid absolute inset-0" style={{ background: "var(--bg-3)" }}>
+      <svg viewBox="0 0 320 240" preserveAspectRatio="xMidYMid meet" className="h-full w-full">
+        <rect x="36" y="30" width="160" height="120" fill="var(--accent-soft)" />
+        <rect x="36" y="30" width="248" height="180" fill="none" stroke="var(--text-2)" strokeWidth={4} />
+        <path d="M196 30 L196 150 M196 150 L284 150 M196 90 L240 90 M120 150 L120 210" fill="none" stroke="var(--text-2)" strokeWidth={3} />
+        <path d="M196 122 A26 26 0 0 0 170 150" fill="none" stroke="var(--text-3)" strokeWidth={1.5} opacity={0.7} />
+        <text x="116" y="88" textAnchor="middle" fill="var(--text)" fontSize="13" fontWeight="600">Salon</text>
+        <text x="116" y="104" textAnchor="middle" fill="var(--accent)" fontSize="11" fontWeight="600">32.4 m²</text>
+        <text x="240" y="64" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Yatak</text>
+        <text x="240" y="184" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Mutfak</text>
+        <text x="78" y="186" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Hol</text>
+      </svg>
+      <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-md border border-[var(--border)] bg-[var(--bg-2)] px-3 py-1 text-[11px] font-medium text-[var(--text-3)]">{label} · örnek</span>
     </div>
   );
 }
