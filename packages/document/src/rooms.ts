@@ -47,18 +47,36 @@ export class RoomManager {
     }
 
     const oldSpaces = this.store.all().filter((e): e is Space => e.type === 'space');
-    const newSpaces: Space[] = faces.map((boundary) => {
-      const c = centroid(boundary);
-      // EN YAKIN eski mahali eşle (ilk-eşleşen değil) → oda bölününce ad ataması deterministik kalır.
-      let match: Space | undefined;
-      let bestD = CENTROID_MATCH_TOL;
-      for (const s of oldSpaces) {
-        const d = dist(centroid(s.boundary), c);
-        if (d < bestD) {
-          bestD = d;
-          match = s;
-        }
+
+    // BİRE-BİR eşleştirme: her eski mahal en fazla BİR yeni yüze ad/tip/malzeme verir. Aksi halde bir oda
+    // ikiye bölününce ve iki çocuk centroid'i de eski centroid'in toleransındaysa, aynı eski mahal iki
+    // çocuğa birden kopyalanır (Y1). Açgözlü en-yakın-önce: tüm (yüz, eskiMahal) çiftlerini mesafeye göre
+    // sırala; ikisi de boştaysa eşle, ikisini de tüketilmiş işaretle.
+    const faceCentroids = faces.map((b) => centroid(b));
+    const oldValid = oldSpaces
+      .map((s, i) => ({ i, c: centroid(s.boundary), ok: s.boundary.length >= 3 }))
+      .filter((o) => o.ok);
+    const pairs: Array<{ fi: number; oi: number; d: number }> = [];
+    for (let fi = 0; fi < faces.length; fi++) {
+      if (faces[fi]!.length < 3) continue;
+      for (const o of oldValid) {
+        const d = dist(o.c, faceCentroids[fi]!);
+        if (d < CENTROID_MATCH_TOL) pairs.push({ fi, oi: o.i, d });
       }
+    }
+    pairs.sort((a, b) => a.d - b.d);
+    const matchOf = new Map<number, Space>(); // faceIdx → eski mahal
+    const usedFace = new Set<number>();
+    const usedOld = new Set<number>();
+    for (const p of pairs) {
+      if (usedFace.has(p.fi) || usedOld.has(p.oi)) continue;
+      usedFace.add(p.fi);
+      usedOld.add(p.oi);
+      matchOf.set(p.fi, oldSpaces[p.oi]!);
+    }
+
+    const newSpaces: Space[] = faces.map((boundary, fi) => {
+      const match = matchOf.get(fi);
       return {
         id: createEntityId(),
         type: 'space',

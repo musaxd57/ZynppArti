@@ -56,6 +56,27 @@ describe('RoomManager', () => {
     rm.destroy();
   });
 
+  it('oda ikiye bölününce eski ad SADECE bir çocuğa taşınır (Y1: çift kopya yok)', () => {
+    // 180×100 oda (her iki çocuk centroid'i de eski centroid'in 50 cm toleransında kalır → bire-bir şart).
+    const store = new EntityStore();
+    for (const w of [wall(0, 0, 180, 0), wall(180, 0, 180, 100), wall(180, 100, 0, 100), wall(0, 100, 0, 0)]) {
+      store.put(w);
+    }
+    const rm = new RoomManager(store);
+    expect(spaces(store)).toHaveLength(1);
+    const s = spaces(store)[0]!;
+    store.put({ ...s, name: 'Salon', roomType: 'living' });
+    // Ortadan dikey duvarla böl.
+    const mid = wall(90, 0, 90, 100);
+    store.put(mid);
+    store.emit({ added: [mid.id], updated: [], removed: [] });
+    const after = spaces(store);
+    expect(after).toHaveLength(2);
+    expect(after.filter((x) => x.name === 'Salon')).toHaveLength(1); // çift DEĞİL
+    expect(after.filter((x) => x.name === 'Mahal')).toHaveLength(1);
+    rm.destroy();
+  });
+
   it('duvar açılınca (kapalı değil) mahal kaybolur', () => {
     const store = squareStore();
     const rm = new RoomManager(store);
