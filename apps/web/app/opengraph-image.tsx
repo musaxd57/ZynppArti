@@ -44,12 +44,11 @@ export default function OgImage() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-          <div style={{ fontSize: 62, fontWeight: 700, lineHeight: 1.08, letterSpacing: -2, maxWidth: 1000 }}>
-            Mimari tasarımı çiz, hesapla ve{' '}
-            <span style={{ color: '#8a87f5' }}>yapay zekâ</span> ile üret.
+          <div style={{ fontSize: 60, fontWeight: 700, lineHeight: 1.08, letterSpacing: -2, maxWidth: 1000, color: '#f4f4f8' }}>
+            Mimari tasarımı çiz, hesapla ve yapay zekâ ile üret.
           </div>
-          <div style={{ fontSize: 28, color: '#a6a6b4', maxWidth: 920 }}>
-            Tarayıcıda çalışan çizim · otomatik mahal & m² · Türkçe yönetmelik asistanı · plan & render
+          <div style={{ display: 'flex', fontSize: 27, color: '#a6a6b4', maxWidth: 940 }}>
+            Tarayıcıda çizim · otomatik mahal & m² · Türkçe yönetmelik asistanı · plan & render
           </div>
         </div>
 
