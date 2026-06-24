@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import type { Entity, EntityStore, EntityType } from '@zynpparti/document';
 import type { ToolManager, ToolName } from '@zynpparti/tools';
 
@@ -94,6 +95,11 @@ export function StatusBar({ manager, registerHover, store, selectedIds }: Status
           <span className="text-blue-300">{summary}</span>
         </>
       )}
+      <span className="opacity-40">·</span>
+      {/* KVKK erişilebilirlik: gizlilik politikasına her zaman ulaşılabilir (yalnız bu segment tıklanır). */}
+      <Link href="/gizlilik" className="pointer-events-auto opacity-70 hover:underline hover:opacity-100">
+        Gizlilik
+      </Link>
     </div>
   );
 }
