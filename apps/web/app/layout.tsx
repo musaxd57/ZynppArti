@@ -13,8 +13,8 @@ import { CalibrateDialog } from '@/components/CalibrateDialog';
 import { CommentDialog } from '@/components/CommentDialog';
 
 export const metadata: Metadata = {
-  title: 'ZynppArti',
-  description: 'İşbirlikçi mimari tasarım platformu',
+  title: 'Vesna — Mimari tasarım, m² otomasyonu ve yapay zekâ',
+  description: 'Tarayıcıda çalışan işbirlikçi mimari tasarım, mahal/m² otomasyonu ve yapay zekâ asistanı.',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
