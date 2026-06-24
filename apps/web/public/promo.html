@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Vesna — Promo</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg:   #111113;
+  --s1:   #18191b;
+  --s2:   #212225;
+  --bd:   rgba(255,255,255,.10);
+  --acc:  #5b5bd6;
+  --abg:  rgba(91,91,214,.12);
+  --t1:   #edeef0;
+  --t2:   #b0b4ba;
+  --t3:   #777b84;
+  --grn:  #22c55e;
+  --cv:   #0f1011;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:#000;display:flex;align-items:center;justify-content:center;
+  min-height:100vh;font-family:'Inter',system-ui,sans-serif;overflow:hidden;}
+
+#stage{position:relative;width:960px;height:540px;overflow:hidden;
+  background:var(--bg);border-radius:10px;
+  box-shadow:0 0 0 1px var(--bd),0 50px 140px rgba(0,0,0,.95);}
+
+#pb{position:absolute;bottom:0;left:0;z-index:999;height:2px;width:0%;
+  background:linear-gradient(90deg,var(--acc),#818cf8);
+  box-shadow:0 0 12px var(--acc);pointer-events:none;}
+
+#ctrl{position:absolute;bottom:10px;right:10px;z-index:999;display:flex;gap:6px;}
+.xbtn{padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:500;
+  background:var(--s2);border:1px solid var(--bd);color:var(--t3);}
+.xbtn:hover{color:var(--acc);border-color:var(--acc);}
+
+/* ── SCENES ── */
+.sc{position:absolute;inset:0;opacity:0;pointer-events:none;}
+.sc.on{opacity:1;pointer-events:auto;}
+/* sinematik geçiş */
+.sc.fade-in{animation:fadeIn .55s ease forwards;}
+.sc.zoom-in{animation:zoomIn .6s cubic-bezier(.22,1,.36,1) forwards;}
+.sc.slide-up{animation:slideUp .55s cubic-bezier(.22,1,.36,1) forwards;}
+@keyframes fadeIn  {from{opacity:0}to{opacity:1}}
+@keyframes zoomIn  {from{opacity:0;scale:.97}to{opacity:1;scale:1}}
+@keyframes slideUp {from{opacity:0;translate:0 20px}to{opacity:1;translate:0 0}}
+
+/* ══ S1 — APP ══ */
+#s1{display:flex;flex-direction:column;}
+
+/* TOOLBAR */
+.tbar{flex:none;height:44px;background:var(--s2);border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;padding:0 8px;gap:1px;overflow:hidden;}
+.tb{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:4px 5px;border-radius:5px;min-width:34px;cursor:pointer;transition:background .15s;}
+.tb:hover{background:rgba(255,255,255,.06);}
+.tb.act{background:var(--abg);}
+.tb svg{width:14px;height:14px;stroke:var(--t3);fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round;}
+.tb.act svg{stroke:var(--acc);}
+.tb em{font-size:8.5px;color:var(--t3);font-style:normal;font-weight:500;}
+.tb.act em{color:var(--acc);}
+.tsep{flex:none;width:1px;height:20px;background:var(--bd);margin:0 3px;}
+.tr{margin-left:auto;display:flex;gap:3px;align-items:center;flex:none;}
+.tbtn{flex:none;padding:4px 8px;border-radius:5px;font-size:10.5px;font-weight:500;
+  color:var(--t2);background:var(--s1);border:1px solid var(--bd);white-space:nowrap;}
+.vai{flex:none;display:flex;align-items:center;gap:5px;padding:5px 12px;
+  border-radius:16px;background:var(--acc);color:#fff;font-size:12px;font-weight:600;
+  cursor:pointer;box-shadow:0 0 16px rgba(91,91,214,.3);transition:box-shadow .2s;}
+
+/* APP BODY */
+.abody{flex:1;display:flex;min-height:0;}
+
+/* LEFT PANEL */
+.lp{flex:none;width:210px;background:var(--s1);border-right:1px solid var(--bd);
+  display:flex;flex-direction:column;overflow:hidden;position:relative;}
+
+/* collapsed */
+.lp-c{display:flex;flex-direction:column;}
+.lpc{display:flex;align-items:center;gap:6px;padding:9px 12px;
+  border-bottom:1px solid var(--bd);font-size:11px;font-weight:500;color:var(--t2);flex:none;}
+.lpc .ar{font-size:9px;color:var(--t3);}
+.lpc .n{margin-left:auto;font-size:10px;color:var(--t3);background:var(--s2);
+  padding:1px 5px;border-radius:4px;}
+.lpc .sm{font-size:9px;color:var(--t3);margin-left:4px;}
+/* layers detail */
+.lyrs{padding:7px 12px;border-bottom:1px solid var(--bd);}
+.lyr{display:flex;align-items:center;gap:5px;padding:3px 0;font-size:11px;color:var(--t2);}
+.lyi{display:flex;gap:3px;}
+.lyi svg{width:11px;height:11px;stroke:var(--t3);fill:none;stroke-width:1.5;}
+.lyn{margin-left:auto;font-size:10px;color:var(--t3);background:var(--s2);padding:1px 4px;border-radius:3px;}
+/* copilot */
+.cop{padding:9px 12px;flex:1;overflow:hidden;}
+.coph{font-size:10px;font-weight:600;color:var(--t3);letter-spacing:.6px;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+.copbg{background:rgba(91,91,214,.2);color:var(--acc);font-size:9px;font-weight:700;
+  padding:1px 6px;border-radius:8px;border:1px solid rgba(91,91,214,.3);}
+.copd{font-size:10.5px;color:var(--t2);line-height:1.5;margin-bottom:6px;}
+.copd::before{content:'● ';color:var(--acc);font-size:8px;}
+.copc{font-size:9px;color:var(--t3);font-style:italic;margin-top:2px;padding-left:12px;}
+
+/* AI PANEL */
+.aip{position:absolute;inset:0;background:var(--s1);
+  display:flex;flex-direction:column;
+  transform:translateX(-100%);
+  transition:transform .4s cubic-bezier(.22,1,.36,1);}
+.aip.in{transform:translateX(0);}
+
+.aip-hdr{flex:none;display:flex;align-items:center;
+  padding:11px 14px;border-bottom:1px solid var(--bd);gap:8px;}
+.aip-emoji{font-size:20px;}
+.aip-titles{flex:1;}
+.aip-n1{font-size:13px;font-weight:600;color:var(--t1);}
+.aip-n2{font-size:10px;color:var(--t3);}
+.aip-tmz{font-size:11px;color:var(--t3);cursor:pointer;}
+.aip-x{font-size:16px;color:var(--t3);cursor:pointer;}
+
+.aip-tabs{flex:none;display:flex;gap:3px;padding:6px 8px;border-bottom:1px solid var(--bd);}
+.aip-tab{flex:1;padding:6px 0;border-radius:6px;text-align:center;
+  font-size:11px;font-weight:500;color:var(--t3);cursor:pointer;transition:background .15s,color .15s;}
+.aip-tab.act{background:var(--s2);color:var(--t1);}
+
+.aip-body{flex:1;position:relative;min-height:0;overflow:hidden;}
+.pane{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  padding:14px 12px 0;opacity:0;pointer-events:none;transition:opacity .2s;overflow:hidden;}
+.pane.act{opacity:1;pointer-events:auto;}
+
+.pe{font-size:26px;margin-bottom:9px;}
+.pi{font-size:11px;color:var(--t2);text-align:center;margin-bottom:10px;}
+.pc{width:100%;padding:6px 10px;border-radius:7px;margin-bottom:5px;
+  font-size:10.5px;color:var(--t2);background:var(--s2);border:1px solid var(--bd);
+  cursor:pointer;line-height:1.4;}
+.pp{width:100%;padding:7px 10px;border-radius:6px;margin-top:2px;
+  font-size:10.5px;color:var(--t3);background:var(--s2);border:1px solid var(--bd);
+  display:flex;align-items:center;gap:5px;}
+
+.bubble{align-self:flex-end;background:var(--acc);color:#fff;
+  font-size:11.5px;font-weight:500;padding:7px 12px;
+  border-radius:10px 10px 2px 10px;margin-top:10px;margin-bottom:6px;
+  opacity:0;transition:opacity .35s;}
+.bubble.show{opacity:1;}
+
+.ald{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--t3);
+  opacity:0;transition:opacity .3s;align-self:flex-start;}
+.ald.show{opacity:1;}
+.spin{width:11px;height:11px;border:2px solid var(--s2);border-top-color:var(--acc);
+  border-radius:50%;animation:sp .7s linear infinite;flex:none;}
+@keyframes sp{to{rotate:360deg;}}
+
+.sec-intro{width:100%;background:var(--s2);border-radius:8px;
+  padding:9px 11px;font-size:11px;color:var(--t2);margin-top:6px;flex:none;
+  opacity:0;transition:opacity .3s;}
+.sec-intro.show{opacity:1;}
+
+.secard{width:100%;background:var(--s2);border:1px solid var(--bd);
+  border-radius:8px;padding:9px 11px;margin-top:6px;cursor:pointer;flex:none;
+  opacity:0;transform:translateY(6px);
+  transition:opacity .3s,transform .3s,border-color .2s,background .2s;}
+.secard.show{opacity:1;transform:translateY(0);}
+.secard:hover{border-color:rgba(91,91,214,.45);}
+.sch{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;}
+.sct{font-size:11.5px;font-weight:600;color:var(--t1);}
+.badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;
+  background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3);}
+.scd{font-size:10px;color:var(--t2);line-height:1.4;margin-bottom:3px;}
+.scm{font-size:9.5px;color:var(--t3);}
+
+.secres{width:100%;font-size:10.5px;color:var(--t2);line-height:1.5;
+  margin-top:8px;align-self:flex-start;
+  opacity:0;transition:opacity .4s;}
+.secres.show{opacity:1;}
+.secres strong{color:var(--acc);}
+
+.aip-foot{flex:none;padding:8px 12px;border-top:1px solid var(--bd);}
+.ai-row{display:flex;gap:5px;}
+.ai-inp{flex:1;padding:7px 9px;border-radius:7px;font-size:11px;
+  color:var(--t3);background:var(--s2);border:1px solid var(--bd);}
+.ai-inp.t{color:var(--t1);}
+.ai-go{flex:none;padding:7px 11px;border-radius:7px;background:var(--acc);
+  color:#fff;font-size:12px;font-weight:600;cursor:pointer;}
+.ai-note{font-size:9px;color:var(--t3);margin-top:4px;line-height:1.4;}
+
+/* CANVAS */
+.cnv{flex:1;position:relative;background:var(--cv);overflow:hidden;min-width:0;}
+.grid{position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.038) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,.038) 1px,transparent 1px);
+  background-size:40px 40px;}
+.csvg{position:absolute;inset:0;width:100%;height:100%;}
+
+.ctr{position:absolute;top:10px;right:11px;display:flex;gap:6px;}
+.cbt{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:15px;
+  background:rgba(18,19,21,.92);border:1px solid var(--bd);
+  font-size:11px;color:var(--t1);backdrop-filter:blur(4px);cursor:pointer;}
+.ldot{width:7px;height:7px;border-radius:50%;background:var(--grn);
+  box-shadow:0 0 5px var(--grn);animation:pulse 1.3s ease infinite;flex:none;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Duvarlar — SVG attribute pathLength ile, CSS sadece style */
+.w{stroke:#ced0dc;stroke-width:7;fill:none;stroke-linecap:square;}
+.wani{opacity:0;}  /* animasyonsuz, JS ile kontrol */
+
+.rf  {fill:rgba(91,91,214,.1); opacity:0;transition:opacity .35s;}
+.rf.s{opacity:1;}
+.rfd  {fill:rgba(110,65,25,.4); opacity:0;transition:opacity .35s;}
+.rfd.s{opacity:1;}
+.rl  {fill:var(--t2);font-size:10px;font-family:Inter,sans-serif;text-anchor:middle;opacity:0;transition:opacity .3s;}
+.rl.s{opacity:1;}
+.rm  {fill:var(--t3);font-size:8.5px;font-family:Inter,sans-serif;text-anchor:middle;opacity:0;transition:opacity .3s;}
+.rm.s{opacity:1;}
+.dg  {opacity:0;transition:opacity .3s;}
+.dg.s{opacity:1;}
+.dl{stroke:#4a7fc1;stroke-width:1;fill:none;}
+.dt{stroke:#4a7fc1;stroke-width:1;}
+.dx{fill:#4a7fc1;font-size:8px;font-family:Inter,sans-serif;text-anchor:middle;}
+.dr  {stroke:var(--t2);stroke-width:1.5;fill:none;opacity:0;transition:opacity .3s;}
+.dr.s{opacity:1;}
+
+.cap{position:absolute;bottom:26px;left:50%;translate:-50% 0;
+  background:rgba(14,15,17,.92);backdrop-filter:blur(8px);
+  border:1px solid rgba(91,91,214,.25);border-radius:20px;
+  padding:5px 16px;font-size:11px;color:#a5b4fc;font-weight:500;
+  white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .3s;}
+.cap.on{opacity:1;}
+
+/* RIGHT PANEL */
+.rp{flex:none;width:258px;background:var(--s1);border-left:1px solid var(--bd);
+  display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;}
+.rps{flex:none;border-bottom:1px solid var(--bd);padding:9px 12px;}
+.rph{display:flex;align-items:center;justify-content:space-between;
+  font-size:10px;font-weight:600;color:var(--t3);letter-spacing:.7px;text-transform:uppercase;}
+.rph .n{font-size:10px;font-weight:600;color:var(--t2);background:var(--s2);padding:1px 5px;border-radius:4px;}
+.mrow{display:flex;justify-content:space-between;padding:2.5px 0;font-size:11px;color:var(--t2);}
+.mrow .m{color:var(--t1);font-weight:500;}
+.mdiv{height:1px;background:var(--bd);margin:5px 0;}
+.mtot{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--t1);padding:2px 0;}
+.mnet{display:flex;justify-content:space-between;font-size:11px;color:var(--t3);padding:1.5px 0;}
+.msub{font-size:10px;color:var(--t3);margin:4px 0 2px;}
+.excbtn{width:100%;margin-top:7px;padding:6px;background:#16a34a;color:#fff;
+  font-size:11px;font-weight:600;border-radius:5px;text-align:center;}
+.metrow{display:flex;justify-content:space-between;font-size:11px;color:var(--t2);padding:2px 0;}
+.metrow span:last-child{color:var(--t1);font-weight:500;}
+.katr{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--t2);margin-top:5px;}
+.katc{display:flex;align-items:center;gap:5px;}
+.katb{width:18px;height:18px;border-radius:3px;background:var(--s2);border:1px solid var(--bd);
+  color:var(--t2);font-size:13px;display:flex;align-items:center;justify-content:center;}
+.katv{font-size:11px;color:var(--t1);font-weight:600;}
+.metnote{font-size:9px;color:var(--t3);margin-top:4px;line-height:1.4;}
+.malv{font-size:11.5px;font-weight:600;color:var(--t2);}
+.fe{opacity:0;transition:opacity .4s;}.fe.on{opacity:1;}
+
+.sbar{flex:none;height:26px;background:var(--s2);border-top:1px solid var(--bd);
+  display:flex;align-items:center;padding:0 14px;gap:12px;font-size:10px;color:var(--t3);}
+
+/* ══ S2 — 3B ══ */
+#s2{display:flex;flex-direction:column;}
+.s2top{flex:none;height:36px;background:#0c0c0e;border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;padding:0 14px;gap:12px;}
+.s2t1{font-size:12px;font-weight:600;color:var(--t1);}
+.s2t2{font-size:11px;color:var(--t3);}
+.s2r{margin-left:auto;display:flex;gap:6px;}
+.s2b{padding:3px 9px;border-radius:4px;font-size:11px;color:var(--t2);
+  background:var(--s1);border:1px solid var(--bd);}
+.s2b.red{color:#f87171;}
+.s2body{flex:1;position:relative;overflow:hidden;
+  background:#080810;
+  display:flex;align-items:center;justify-content:center;}
+
+/* 3B model — CSS animasyonu ile döner */
+#model3d{transform-style:preserve-3d;animation:none;}
+#model3d.spin3d{animation:rot3d 8s linear infinite;}
+@keyframes rot3d{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}
+
+.s2cap{position:absolute;bottom:18px;left:50%;translate:-50% 0;
+  background:rgba(14,15,17,.92);backdrop-filter:blur(8px);
+  border:1px solid rgba(91,91,214,.25);border-radius:20px;
+  padding:5px 16px;font-size:11px;color:#a5b4fc;font-weight:500;white-space:nowrap;}
+
+/* ══ S3 — KAPANIŞ ══ */
+#s3{background:var(--bg);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;}
+.s3tag{font-size:11px;font-weight:600;color:var(--acc);letter-spacing:1.5px;text-transform:uppercase;
+  opacity:0;transition:opacity .4s;}
+.s3h{font-size:44px;font-weight:800;color:var(--t1);letter-spacing:-2px;text-align:center;
+  line-height:1.15;margin-top:14px;opacity:0;transform:translateY(14px);
+  transition:opacity .6s,transform .6s cubic-bezier(.22,1,.36,1);}
+.s3h em{color:#818cf8;font-style:normal;}
+.s3sub{font-size:14px;color:var(--t3);margin-top:12px;opacity:0;transition:opacity .5s .2s;}
+.s3cta{margin-top:28px;padding:12px 30px;background:var(--acc);color:#fff;
+  font-size:14px;font-weight:600;border-radius:30px;
+  box-shadow:0 0 40px rgba(91,91,214,.5);opacity:0;transition:opacity .5s .4s;}
+.s3url{margin-top:11px;font-size:13px;color:var(--t3);opacity:0;transition:opacity .5s .65s;}
+#s3.on .s3tag{opacity:1;}
+#s3.on .s3h{opacity:1;transform:translateY(0);}
+#s3.on .s3sub{opacity:1;}
+#s3.on .s3cta{opacity:1;}
+#s3.on .s3url{opacity:1;}
+</style>
+</head>
+<body>
+<div id="stage">
+<div id="pb"></div>
+
+<!-- ══ S1 ══ -->
+<div class="sc on" id="s1">
+  <div class="tbar">
+    <div class="tb act" id="t-sec"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-7.5 1.5-3 7z"/></svg><em>Seç</em></div>
+    <div class="tb" id="t-duv"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/></svg><em>Duvar</em></div>
+    <div class="tb"><svg viewBox="0 0 24 24"><path d="M3 21h18M7 21V8h10v13"/></svg><em>Kapı</em></div>
+    <div class="tb"><svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="8" rx="1"/><line x1="12" y1="8" x2="12" y2="16"/></svg><em>Pencere</em></div>
+    <div class="tb" id="t-olc"><svg viewBox="0 0 24 24"><path d="M4 12h16M4 8v8M20 8v8"/></svg><em>Ölçü</em></div>
+    <div class="tb"><svg viewBox="0 0 24 24"><polygon points="12,3 21,8 21,16 12,21 3,16 3,8"/></svg><em>Parsel</em></div>
+    <div class="tb"><svg viewBox="0 0 24 24"><path d="M4 7V5h16v2M12 5v14M9 19h6"/></svg><em>Metin</em></div>
+    <div class="tb"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg><em>Pafta</em></div>
+    <div class="tb"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><em>Yorum</em></div>
+    <div class="tb"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg><em>Sil</em></div>
+    <div class="tb"><svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg><em>Ölçekle</em></div>
+    <div class="tsep"></div>
+    <div class="tb" style="min-width:28px"><svg viewBox="0 0 24 24"><path d="M3 10h10a5 5 0 0 1 0 10H9"/><polyline points="3 10 7 6 3 2"/></svg></div>
+    <div class="tb" style="min-width:28px"><svg viewBox="0 0 24 24"><path d="M21 10H11a5 5 0 0 0 0 10h4"/><polyline points="21 10 17 6 21 2"/></svg></div>
+    <div class="tr">
+      <div class="tbtn">Yeni</div><div class="tbtn">Kaydet</div><div class="tbtn">Aç</div>
+      <div class="tbtn">CAD Yükle</div><div class="tbtn">DXF İndir</div>
+      <div class="tbtn">SVG İndir</div><div class="tbtn">PNG İndir</div><div class="tbtn">PDF İndir</div>
+      <div class="tsep"></div>
+      <div class="vai" id="vai">🌟 Vesna AI</div>
+    </div>
+  </div>
+
+  <div class="abody">
+    <!-- LEFT -->
+    <div class="lp">
+      <div class="lp-c" id="lp-col">
+        <div class="lpc"><span class="ar">▾</span>&nbsp;KATMANLAR<span class="n">2</span></div>
+        <div class="lyrs">
+          <div class="lyr">
+            <div class="lyi">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8" stroke-dasharray="2 2"/></svg>
+            </div>
+            <span>Mim…</span><span class="lyn">5</span>
+          </div>
+          <div class="lyr">
+            <div class="lyi">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8" stroke-dasharray="2 2"/></svg>
+            </div>
+            <span>Mah…</span><span class="lyn">1</span>
+          </div>
+        </div>
+        <div class="lpc"><span class="ar">▸</span>&nbsp;BLOKLAR</div>
+        <div class="lpc"><span class="ar">▾</span>&nbsp;COPİLOT — YÖNE…<span class="sm">1 bulgu</span></div>
+        <div class="cop">
+          <div class="copd">Toplam ~20 m² için kaba otopark tahmini: ~1 araç (bölge/kullanıma göre değişir).
+            <div class="copc">Otopark Yönetmeliği (2018, m.8/Ek-1) — her ~100 m² için ~1 otopark.</div>
+          </div>
+          <div style="font-size:9px;color:var(--t3);font-style:italic;">Bilgilendirme amaçlıdır; yürürlükteki mevzuattan doğrulayın.</div>
+        </div>
+      </div>
+
+      <!-- AI PANEL -->
+      <div class="aip" id="aip">
+        <div class="aip-hdr">
+          <span class="aip-emoji">🌟</span>
+          <div class="aip-titles"><div class="aip-n1">Vesna</div><div class="aip-n2">Tasarım yardımcın</div></div>
+          <span class="aip-tmz">Temizle</span>
+          <span class="aip-x">✕</span>
+        </div>
+        <div class="aip-tabs">
+          <div class="aip-tab" id="tab-s">🔵 Sor</div>
+          <div class="aip-tab act" id="tab-c">✏️ Çiz</div>
+          <div class="aip-tab">🎨 Render</div>
+        </div>
+        <div class="aip-body">
+          <div class="pane" id="pane-s">
+            <div class="pe">👷</div>
+            <div class="pi">Projen hakkında sor. Örnekler:</div>
+            <div class="pc">En küçük oda hangisi?</div>
+            <div class="pc">Koridor yönetmeliğe uygun mu?</div>
+            <div class="pc">Toplam alanım kaç m²?</div>
+          </div>
+          <div class="pane act" id="pane-c">
+            <div class="pe">👷</div>
+            <div class="pi">Tarif et, planı çizeyim. Örnekler:</div>
+            <div class="pc" style="text-align:left">8×10 m, 2 yatak odası, salon, mutfak ve banyo olan bir daire çiz</div>
+            <div class="pc" style="text-align:left">60 m² stüdyo daire planı</div>
+            <div class="pp">▸ 🗂 PROGRAM İLE ÇİZ</div>
+            <div class="bubble" id="bbl">100 m² 3+1 daire planı</div>
+            <div class="ald" id="ald"><div class="spin"></div>Çiz · plan üretiliyor</div>
+            <div class="sec-intro" id="si">2 alternatif plan hazır — en uyumlu üstte, birini seç.</div>
+            <div class="secard" id="sc1">
+              <div class="sch"><span class="sct">Seçenek 1</span><span class="badge">✓ uyumlu</span></div>
+              <div class="scd">Yaklaşık 100 m² 3+1 dairede geniş salon, üç yatak odası, mutfak ve koridor çözümlenmiştir.</div>
+              <div class="scm">7 oda · 6 duvar · 5 kapı — çizmek için tıkla</div>
+            </div>
+            <div class="secard" id="sc2">
+              <div class="sch"><span class="sct">Seçenek 2</span><span class="badge">✓ uyumlu</span></div>
+              <div class="scd">Yaklaşık 100 m² 3+1 dairede salon ön cephede, yatak odaları koridor etrafında gruplanmıştır.</div>
+              <div class="scm">7 oda · 6 duvar · 5 kapı — çizmek için tıkla</div>
+            </div>
+            <div class="secres" id="sr">
+              <strong>✓ 6 duvar çizildi, 7 mahal adlandırıldı, 5 kapı eklendi.</strong><br>
+              Geri almak için Ctrl+Z (önce adlar, tekrar bas → duvarlar).
+            </div>
+          </div>
+        </div>
+        <div class="aip-foot">
+          <div class="ai-row">
+            <div class="ai-inp" id="ainp">Örn: 90 m² 3+1 daire çiz</div>
+            <div class="ai-go">Çiz</div>
+          </div>
+          <div class="ai-note">AI taslak üretir (deneysel); Ctrl+Z ile geri alınır. Ölçüleri kontrol et.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CANVAS -->
+    <div class="cnv">
+      <div class="grid"></div>
+      <svg class="csvg" viewBox="0 0 510 430" id="csvg" preserveAspectRatio="xMidYMid meet">
+        <!-- oda renkleri: koyu=mutfak/salon, mavi=diğerleri -->
+        <rect class="rfd" id="rf1" x="50"  y="45"  width="140" height="155"/>
+        <rect class="rf"  id="rf2" x="190" y="45"  width="90"  height="155"/>
+        <rect class="rf"  id="rf3" x="280" y="45"  width="120" height="100"/>
+        <rect class="rfd" id="rf4" x="50"  y="200" width="140" height="165"/>
+        <rect class="rf"  id="rf5" x="190" y="200" width="90"  height="165"/>
+        <rect class="rf"  id="rf6" x="280" y="145" width="120" height="110"/>
+        <rect class="rf"  id="rf7" x="280" y="255" width="120" height="110"/>
+
+        <!-- dış çerçeve -->
+        <polyline pathLength="100" id="w0"
+          points="50,45 400,45 400,365 50,365 50,45"
+          fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
+          stroke-dasharray="100" stroke-dashoffset="100"/>
+        <!-- iç duvarlar -->
+        <line pathLength="100" id="w1" x1="190" y1="45"  x2="190" y2="365"
+          fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
+          stroke-dasharray="100" stroke-dashoffset="100"/>
+        <!-- DÜZELTİLDİ: yatay iç duvar sağ kolonu (Çocuk Odası 1) bölmesin diye x=280'de biter (x=400 değil) -->
+        <line pathLength="100" id="w2" x1="50"  y1="200" x2="280" y2="200"
+          fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
+          stroke-dasharray="100" stroke-dashoffset="100"/>
+        <line pathLength="100" id="w3" x1="280" y1="45"  x2="280" y2="365"
+          fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
+          stroke-dasharray="100" stroke-dashoffset="100"/>
+        <line pathLength="100" id="w4" x1="280" y1="145" x2="400" y2="145"
+          fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
+          stroke-dasharray="100" stroke-dashoffset="100"/>
+        <line pathLength="100" id="w5" x1="280" y1="255" x2="400" y2="255"
+          fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
+          stroke-dasharray="100" stroke-dashoffset="100"/>
+
+        <!-- kapı yayları -->
+        <g class="dr" id="da1"><path d="M190,115 Q210,115 210,95"/><line x1="190" y1="115" x2="190" y2="95"/></g>
+        <g class="dr" id="da2"><path d="M50,270  Q70,270  70,250"/><line x1="50"  y1="270" x2="50"  y2="250"/></g>
+        <g class="dr" id="da3"><path d="M190,270 Q210,270 210,250"/><line x1="190" y1="270" x2="190" y2="250"/></g>
+        <g class="dr" id="da4"><path d="M280,100 Q300,100 300,80"/><line x1="280" y1="100" x2="280" y2="80"/></g>
+        <g class="dr" id="da5"><path d="M280,205 Q300,205 300,185"/><line x1="280" y1="205" x2="280" y2="185"/></g>
+
+        <!-- ölçüler -->
+        <g class="dg" id="dg1">
+          <line class="dl" x1="50" y1="28" x2="400" y2="28"/>
+          <line class="dt" x1="50"  y1="22" x2="50"  y2="34"/>
+          <line class="dt" x1="400" y1="22" x2="400" y2="34"/>
+          <text class="dx" x="225" y="22">12.40 m</text>
+        </g>
+        <g class="dg" id="dg2">
+          <line class="dl" x1="418" y1="45" x2="418" y2="365"/>
+          <line class="dt" x1="412" y1="45"  x2="424" y2="45"/>
+          <line class="dt" x1="412" y1="365" x2="424" y2="365"/>
+          <text class="dx" x="436" y="210">11.30 m</text>
+        </g>
+
+        <!-- etiketler -->
+        <text class="rl" id="rl1" x="120" y="120">Salon</text>
+        <text class="rm" id="rm1" x="120" y="131">21,7 m²</text>
+        <text class="rl" id="rl2" x="235" y="120">Mahal</text>
+        <text class="rm" id="rm2" x="235" y="131">14,0 m²</text>
+        <text class="rl" id="rl3" x="340" y="90">Yatak Odası</text>
+        <text class="rm" id="rm3" x="340" y="101">12,0 m²</text>
+        <text class="rl" id="rl4" x="120" y="282">Mutfak</text>
+        <text class="rm" id="rm4" x="120" y="293">23,1 m²</text>
+        <text class="rl" id="rl5" x="235" y="282">Koridor</text>
+        <text class="rm" id="rm5" x="235" y="293">14,8 m²</text>
+        <text class="rl" id="rl6" x="340" y="196">Çocuk Odası 1</text>
+        <text class="rm" id="rm6" x="340" y="207">10,3 m²</text>
+        <text class="rl" id="rl7" x="340" y="306">Çocuk Odası 2</text>
+        <text class="rm" id="rm7" x="340" y="317">10,3 m²</text>
+      </svg>
+
+      <div class="ctr">
+        <div class="cbt"><div class="ldot"></div>Canlı Paylaş</div>
+        <div class="cbt">🧊 3B</div>
+      </div>
+      <div class="cap" id="cap"></div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="rp">
+      <div class="rps">
+        <div class="rph">▸ MAHAL LİSTESİ <span class="n" id="rpcnt">1</span></div>
+        <div class="fe" id="rpbody" style="margin-top:7px;">
+          <div id="rprows"></div>
+          <div class="mdiv fe" id="rpd"></div>
+          <div class="mtot fe" id="rptot"><span>Toplam</span><span id="rptv">—</span></div>
+          <div class="mnet fe" id="rpnet"><span>Net (iç)</span><span>—</span></div>
+          <div class="mnet fe" id="rpbrt"><span>Brüt</span><span>—</span></div>
+          <div class="msub fe" id="rpsub">Tipe göre</div>
+          <div class="mnet fe" id="rptp"><span>Diğer ×7</span><span>—</span></div>
+          <div class="fe" id="rpex"><div class="excbtn">Excel İndir</div></div>
+        </div>
+      </div>
+      <div class="rps fe" id="rpmet">
+        <div class="rph" style="margin-bottom:7px;">▾ METRAJ</div>
+        <div class="metrow"><span>Duvar uzunluğu</span><span>87,0 m</span></div>
+        <div class="metrow"><span>Duvar örgü</span><span>214,8 m²</span></div>
+        <div class="metrow"><span>Sıva</span><span>429,6 m²</span></div>
+        <div class="metrow"><span>Boya (duvar+tavan)</span><span>559,6 m²</span></div>
+        <div class="metrow"><span>Döşeme/şap</span><span>130,0 m²</span></div>
+        <div class="metrow"><span>Süpürgelik</span><span>130,7 m</span></div>
+        <div class="metrow"><span>Kapı / Pencere</span><span>6 / 5</span></div>
+        <div class="katr"><span>Kat yüksekliği (cm)</span>
+          <div class="katc"><div class="katb">−</div><span class="katv">270</span><div class="katb">+</div></div>
+        </div>
+        <div class="excbtn" style="margin-top:7px;">Excel İndir</div>
+        <div class="metnote">Kat/boşluk yükseklikleri ve birim fiyatlar kaba varsayımdır.</div>
+      </div>
+      <div class="rps fe" id="rpmal">
+        <div class="rph">▸ YAKLAŞIK MALİYET <span class="malv">597.760 ₺</span></div>
+      </div>
+      <div class="rps fe" id="rpkes">
+        <div class="rph">▸ KESİT (ŞEMATİK)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sbar">
+    <span id="sbxy">X — &nbsp;Y —</span><span>·</span>
+    <span id="sbt">Seç</span><span>·</span>
+    <span>Gizlilik</span><span>Koşullar</span>
+    <span style="margin-left:auto">?</span>
+  </div>
+</div><!-- /s1 -->
+
+<!-- ══ S2 — 3B ══ -->
+<div class="sc" id="s2">
+  <div class="s2top">
+    <span class="s2t1">3B Önizleme (şematik)</span>
+    <span class="s2t2">sürükle: döndür · tekerlek: yakınlaş</span>
+    <div class="s2r">
+      <div class="s2b">▶ Tur</div><div class="s2b">⌨ +Görünüm</div>
+      <div class="s2b">▶ Sunum</div><div class="s2b">↓ PNG</div>
+      <div class="s2b">↓ GLB</div><div class="s2b red">✕ Kapat</div>
+    </div>
+  </div>
+  <div class="s2body">
+    <svg id="svg3d" width="680" height="460" viewBox="0 0 680 460"
+         style="opacity:0;transition:opacity .8s;">
+
+      <!-- zemin gölgesi -->
+      <ellipse cx="340" cy="448" rx="230" ry="14" fill="rgba(0,0,0,.5)"/>
+
+      <!-- ZEMIN -->
+      <polygon points="90,350 590,350 510,428 170,428"
+        fill="#0c0c12" stroke="#181824" stroke-width="1"/>
+
+      <!-- ARKA DUVAR (en büyük yüzey, açık gri) -->
+      <polygon points="130,100 550,100 550,350 130,350"
+        fill="#b8b8cc" stroke="#d0d0e4" stroke-width="1.5"/>
+
+      <!-- SOL DUVAR -->
+      <polygon points="90,145 130,100 130,350 90,395"
+        fill="#9898a8" stroke="#b0b0c0" stroke-width="1.5"/>
+
+      <!-- SAĞ DUVAR -->
+      <polygon points="550,100 590,145 590,395 550,350"
+        fill="#888898" stroke="#a0a0b0" stroke-width="1.5"/>
+
+      <!-- TAVAN -->
+      <polygon points="130,100 550,100 590,145 90,145"
+        fill="#c4c4d8" stroke="#d4d4e8" stroke-width="1.5"/>
+
+      <!-- İÇ BÖLMELER — arka duvarda görünür çizgiler -->
+      <line x1="310" y1="100" x2="310" y2="350" stroke="#6868a0" stroke-width="3"/>
+      <line x1="278" y1="145" x2="278" y2="395" stroke="#6060a0" stroke-width="2" stroke-dasharray="6 3"/>
+
+      <line x1="430" y1="100" x2="430" y2="350" stroke="#6868a0" stroke-width="2"/>
+      <line x1="390" y1="145" x2="390" y2="395" stroke="#6060a0" stroke-width="1.5" stroke-dasharray="5 3"/>
+
+      <!-- yatay bölme — DÜZELTİLDİ: sol/orta grupta (x=430'a kadar) çizilir, sağ kolonu kesmez -->
+      <line x1="130" y1="225" x2="430" y2="225" stroke="#6060a0" stroke-width="2"/>
+      <line x1="90"  y1="272" x2="390" y2="272" stroke="#5858a0" stroke-width="1.5" stroke-dasharray="5 3"/>
+
+      <!-- sağ grupta yatay bölmeler -->
+      <line x1="430" y1="163" x2="550" y2="163" stroke="#6060a0" stroke-width="1.5"/>
+      <line x1="390" y1="197" x2="590" y2="197" stroke="#5858a0" stroke-width="1" stroke-dasharray="4 3"/>
+      <line x1="430" y1="255" x2="550" y2="255" stroke="#6060a0" stroke-width="1.5"/>
+      <line x1="390" y1="288" x2="590" y2="288" stroke="#5858a0" stroke-width="1" stroke-dasharray="4 3"/>
+
+      <!-- KAPΙ BOŞLUKLARI -->
+      <rect x="90" y="240" width="7" height="60"
+        fill="#0c0c12" stroke="#1a1a26" stroke-width="1"/>
+      <rect x="270" y="245" width="16" height="55"
+        fill="#0c0c12" stroke="#1a1a26" stroke-width="1"/>
+      <rect x="382" y="190" width="16" height="50"
+        fill="#0c0c12" stroke="#1a1a26" stroke-width="1"/>
+
+      <!-- KAPΙ/PENCERE VURGULARI -->
+      <rect x="90"  y="241" width="6" height="58" fill="#5b5bd6" opacity=".5" rx="1"/>
+      <rect x="271" y="246" width="14" height="53" fill="#5b5bd6" opacity=".45" rx="1"/>
+      <rect x="383" y="191" width="14" height="48" fill="#5b5bd6" opacity=".45" rx="1"/>
+
+      <!-- PENCERE — arka duvarda -->
+      <rect x="170" y="115" width="60" height="45" fill="rgba(91,91,214,.1)"
+        stroke="#5b5bd6" stroke-width="1.5" rx="2"/>
+      <rect x="380" y="115" width="60" height="45" fill="rgba(91,91,214,.1)"
+        stroke="#5b5bd6" stroke-width="1.5" rx="2"/>
+
+      <!-- ODA RENKLERİ -->
+      <polygon points="130,100 310,100 310,225 130,225" fill="rgba(40,25,10,.25)"/>
+      <polygon points="130,225 310,225 310,350 130,350" fill="rgba(40,25,10,.3)"/>
+      <polygon points="310,100 430,100 430,350 310,350" fill="rgba(91,91,214,.06)"/>
+      <polygon points="430,100 550,100 550,163 430,163" fill="rgba(91,91,214,.08)"/>
+      <polygon points="430,163 550,163 550,255 430,255" fill="rgba(91,91,214,.08)"/>
+      <polygon points="430,255 550,255 550,350 430,350" fill="rgba(91,91,214,.06)"/>
+
+    </svg>
+    <div class="s2cap">3B Önizleme — planından anında</div>
+  </div>
+</div>
+
+<!-- ══ S3 ══ -->
+<div class="sc" id="s3">
+  <div class="s3tag">Mimari tasarımın yeni adresi</div>
+  <div class="s3h">Tarif et.<br><em>Vesna çizsin.</em></div>
+  <div class="s3sub">Tarayıcıda · Kurulum yok · Türkçe yönetmelik</div>
+  <div class="s3cta">Uygulamayı Aç — Ücretsiz</div>
+  <div class="s3url">vesna.design</div>
+</div>
+
+<div id="ctrl">
+  <div class="xbtn" id="pp" onclick="toggleP()">⏸ Duraklat</div>
+  <div class="xbtn" onclick="restart()">↺ Baştan</div>
+</div>
+</div><!-- /stage -->
+
+<script>
+const G = id => document.getElementById(id);
+const T = [];
+let paused = false;
+
+const wait = ms => new Promise(r => {
+  const go = () => {
+    if (paused) { setTimeout(go, 60); return; }
+    const t = setTimeout(r, ms); T.push(t);
+  };
+  go();
+});
+
+function toggleP(){
+  paused = !paused;
+  G('pp').textContent = paused ? '▶ Devam' : '⏸ Duraklat';
+}
+
+function kill(){ T.forEach(clearTimeout); T.length=0; paused=false; G('pp').textContent='⏸ Duraklat'; }
+
+function pb(to, dur){
+  return new Promise(r=>{
+    const el=G('pb'), fr=parseFloat(el.style.width)||0, d=to-fr, n=40; let i=0;
+    const tick=()=>{
+      if(paused){setTimeout(tick,60);return;}
+      i++; el.style.width=(fr+d*(i/n))+'%';
+      if(i<n) setTimeout(tick,dur/n); else r();
+    };
+    setTimeout(tick,dur/n);
+  });
+}
+
+/* sinematik sahne geçişi */
+function showScene(id, anim='fade-in'){
+  document.querySelectorAll('.sc').forEach(s=>{
+    s.classList.remove('on','fade-in','zoom-in','slide-up');
+  });
+  const el = G(id);
+  el.classList.add('on', anim);
+}
+
+function cap(t){G('cap').textContent=t;G('cap').classList.add('on');}
+function nocap(){G('cap').classList.remove('on');}
+
+/* Duvar animasyonu — JS ile transition */
+function animWall(id, delay, duration){
+  return new Promise(r => {
+    setTimeout(()=>{
+      const el = G(id);
+      el.style.transition = `stroke-dashoffset ${duration}ms cubic-bezier(.4,0,.2,1)`;
+      el.style.strokeDashoffset = '0';
+      setTimeout(r, duration);
+    }, delay);
+  });
+}
+
+function resetWall(id){
+  const el = G(id);
+  if(!el) return;
+  el.style.transition = 'none';
+  el.style.strokeDashoffset = '100';
+}
+
+const mahaller = [
+  ['Salon','21,7 m²'],['Mahal','14,0 m²'],['Yatak Odası','12,0 m²'],
+  ['Mutfak','23,1 m²'],['Koridor','14,8 m²'],['Çocuk Odası 1','10,3 m²'],['Çocuk Odası 2','10,3 m²']
+];
+
+function reset(){
+  G('pb').style.width='0';
+  G('t-sec').classList.add('act'); G('t-duv').classList.remove('act'); G('t-olc').classList.remove('act');
+  G('sbxy').textContent='X —  Y —'; G('sbt').textContent='Seç';
+  G('lp-col').style.display='';
+  G('aip').classList.remove('in');
+  G('tab-s').classList.remove('act'); G('tab-c').classList.add('act');
+  G('pane-s').classList.remove('act'); G('pane-c').classList.add('act');
+  G('bbl').classList.remove('show'); G('ald').classList.remove('show');
+  G('si').classList.remove('show');
+  G('sc1').classList.remove('show'); G('sc2').classList.remove('show');
+  G('sr').classList.remove('show');
+  G('sc1').style.borderColor=''; G('sc1').style.background='';
+  G('ainp').textContent='Örn: 90 m² 3+1 daire çiz'; G('ainp').classList.remove('t');
+  ['w0','w1','w2','w3','w4','w5'].forEach(id => resetWall(id));
+  document.querySelectorAll('.rf,.rfd,.rl,.rm,.dg,.dr').forEach(e=>e.classList.remove('s'));
+  G('rprows').innerHTML=''; G('rpcnt').textContent='1';
+  G('rpbody').classList.remove('on');
+  ['rpd','rptot','rpnet','rpbrt','rpsub','rptp','rpex','rpmet','rpmal','rpkes']
+    .forEach(id=>{const e=G(id);if(e)e.classList.remove('on');});
+  G('rptv').textContent='—';
+  G('svg3d').style.opacity='0';
+  G('vai').style.transform=''; G('vai').style.boxShadow='';
+  nocap();
+}
+
+async function go(){
+  kill(); reset();
+  showScene('s1','fade-in');
+  await pb(5,700); await wait(800);
+
+  /* Vesna AI tıklanıyor — glow efekti */
+  G('vai').style.transform='scale(1.05)';
+  G('vai').style.boxShadow='0 0 32px rgba(91,91,214,.9)';
+  await wait(250);
+  G('vai').style.transform='';
+  G('vai').style.boxShadow='';
+
+  /* sol panel değişiyor */
+  G('lp-col').style.display='none';
+  G('aip').classList.add('in');
+  cap('Vesna AI açıldı — Çiz sekmesi');
+  await pb(12,500); await wait(1000);
+
+  /* prompt yazılıyor */
+  nocap();
+  G('ainp').classList.add('t');
+  const inp=G('ainp');
+  inp.textContent='';
+  for(const c of '100 m² 3+1 daire planı'){ inp.textContent+=c; await wait(40); }
+  await wait(400);
+
+  /* Çiz basıldı */
+  G('bbl').classList.add('show');
+  G('ald').classList.add('show');
+  cap('AI plan üretiyor…');
+  await pb(23,1100); await wait(1000);
+
+  /* 2 seçenek */
+  G('ald').classList.remove('show');
+  G('si').classList.add('show');
+  await wait(130);
+  G('sc1').classList.add('show');
+  await wait(160);
+  G('sc2').classList.add('show');
+  cap('2 plan hazır — Seçenek 1 seçiliyor');
+  await pb(32,600); await wait(900);
+
+  /* Seçenek 1 seçildi */
+  G('sc1').style.borderColor='rgba(91,91,214,.7)';
+  G('sc1').style.background='rgba(91,91,214,.08)';
+  G('sr').classList.add('show');
+  nocap(); cap('Duvarlar çiziliyor');
+  G('t-sec').classList.remove('act'); G('t-duv').classList.add('act');
+  G('sbt').textContent='Duvar'; G('sbxy').textContent='X 2,20  Y 9,40';
+  await wait(350);
+
+  /* DUVARLAR */
+  animWall('w0', 0,   800);
+  await pb(42,800); await wait(700);
+  animWall('w1', 0,   600); await wait(550);
+  animWall('w2', 0,   600); await wait(550);
+  animWall('w3', 0,   550);
+  animWall('w4', 100, 500);
+  await wait(500);
+  animWall('w5', 0,   500);
+  G('sbxy').textContent='X 5,40  Y 4,20';
+  await pb(52,600); await wait(400);
+
+  /* kapılar */
+  ['da1','da2','da3','da4','da5'].forEach((id,i)=>setTimeout(()=>G(id).classList.add('s'),i*100));
+  await wait(600);
+
+  /* odalar */
+  cap('Mahaller otomatik tanındı');
+  G('t-duv').classList.remove('act'); G('t-sec').classList.add('act'); G('sbt').textContent='Seç';
+  ['rf1','rf2','rf3','rf4','rf5','rf6','rf7'].forEach((id,i)=>setTimeout(()=>G(id).classList.add('s'),i*80));
+  ['rl1','rm1','rl2','rm2','rl3','rm3','rl4','rm4','rl5','rm5','rl6','rm6','rl7','rm7']
+    .forEach((id,i)=>setTimeout(()=>G(id).classList.add('s'),i*50));
+  await wait(850);
+
+  /* ölçüler */
+  cap('Ölçülendirme');
+  G('t-olc').classList.add('act'); G('sbt').textContent='Ölçü';
+  G('dg1').classList.add('s'); await wait(220); G('dg2').classList.add('s');
+  await pb(64,500); await wait(350);
+
+  /* sağ panel */
+  G('t-olc').classList.remove('act'); G('t-sec').classList.add('act'); G('sbt').textContent='Seç';
+  cap('Mahal listesi ve m² otomatik hesaplandı');
+  for(let i=0;i<mahaller.length;i++){
+    const r=document.createElement('div'); r.className='mrow';
+    r.innerHTML=`<span>${mahaller[i][0]}</span><span class="m">${mahaller[i][1]}</span>`;
+    G('rprows').appendChild(r); G('rpcnt').textContent=i+1; await wait(120);
+  }
+  G('rpbody').classList.add('on'); G('rptv').textContent='106,2 m²';
+  ['rpd','rptot','rpnet','rpbrt','rpsub','rptp','rpex']
+    .forEach((id,i)=>setTimeout(()=>G(id).classList.add('on'),i*60));
+  await pb(75,700); await wait(500);
+
+  /* metraj */
+  cap('Detaylı metraj');
+  G('rpmet').classList.add('on'); await wait(350);
+  G('rpmal').classList.add('on'); G('rpkes').classList.add('on');
+  await pb(84,500); await wait(400); nocap();
+
+  /* 3B — sinematik zoom geçişi */
+  showScene('s2','zoom-in');
+  await pb(89,400); await wait(400);
+  G('svg3d').style.opacity='1';
+  await pb(96,1300); await wait(1600);
+
+  /* kapanış — slide up */
+  showScene('s3','slide-up');
+  await pb(100,700);
+
+  /* döngü: kısa bekle, baştan */
+  await wait(3500);
+  if(!paused) go();
+}
+
+function restart(){ kill(); reset(); setTimeout(go,300); }
+window.addEventListener('load',()=>setTimeout(go,300));
+</script>
+</body>
+</html>

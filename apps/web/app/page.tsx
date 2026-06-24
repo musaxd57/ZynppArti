@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 import { Image as ImageIcon, Globe, BookOpen, Box, Shield } from "@/components/marketing/Icons";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { SiteFooter } from "@/components/marketing/SiteFooter";
-import { DemoVideo } from "@/components/marketing/DemoVideo";
+import { PromoDemo } from "@/components/marketing/PromoDemo";
 import { RoomRedirect } from "@/components/RoomRedirect";
 
 export const metadata: Metadata = {
@@ -18,11 +18,6 @@ export const metadata: Metadata = {
   description:
     "Vesna; tarayıcıda çalışan gerçek zamanlı işbirlikçi mimari çizim, otomatik mahal & m² hesabı, Türkçe yönetmelik asistanı ve AI plan/render platformu.",
 };
-
-// Demo videosu. Boşken DemoVideo dürüst "yakında" gösterir (sahte oynat düğmesi yok).
-// Video hazır olunca: '/videos/demo.mp4' (+ poster) — docs/VIDEO-PLAN.md.
-const DEMO_VIDEO = "";
-const DEMO_POSTER = "";
 
 const WHY = [
   { Icon: Globe, title: "Kurulum yok, her yerde", desc: "Tarayıcıda açılır; indirme, lisans ve kurulum derdi yok. Mac, Windows, tablet — fark etmez." },
@@ -122,17 +117,16 @@ export default function HomePage() {
       <section className="border-t border-[var(--border)] bg-[var(--bg-2)]">
         <div className="mx-auto max-w-[1000px] px-6 py-[90px] text-center">
           <Reveal className="mx-auto max-w-[600px]">
-            <div className="mb-3.5 text-[13px] font-semibold uppercase tracking-[0.04em] text-[var(--accent)]">2 dakikada</div>
+            <div className="mb-3.5 text-[13px] font-semibold uppercase tracking-[0.04em] text-[var(--accent)]">Canlı demo</div>
             <h2 className="mb-3.5 text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.1] tracking-tight">
               Vesna&apos;yı iş başında izle.
             </h2>
             <p className="text-[1.05rem] leading-relaxed text-[var(--text-2)]">
-              DWG açmaktan AI render&apos;a kadar tüm akış, tek bir tarayıcı sekmesinde.
+              Tarif et → AI plan üretsin → mahal/m², metraj ve 3B otomatik çıksın. Tek tarayıcı sekmesinde.
             </p>
           </Reveal>
           <Reveal delay={100} className="mt-10">
-            {/* Video YOKKEN dürüst "yakında" gösterir (sahte oynat düğmesi yok). Video gelince DEMO_VIDEO'yu doldur. */}
-            <DemoVideo mode="player" src={DEMO_VIDEO || undefined} poster={DEMO_POSTER || undefined} label="Vesna ürün demosu" />
+            <PromoDemo />
           </Reveal>
         </div>
       </section>
