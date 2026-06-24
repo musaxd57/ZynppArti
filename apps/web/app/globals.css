@@ -184,3 +184,35 @@ textarea {
 .v-card:hover { background: var(--bg-3) !important; }
 .v-details summary { list-style: none; cursor: pointer; }
 .v-details summary::-webkit-details-marker { display: none; }
+
+/* ===== claude.ai/design animasyonları + yardımcı sınıfları ===== */
+@keyframes vesnaIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vesnaDraw { to { stroke-dashoffset: 0; } }
+@keyframes vesnaRise { from { opacity: 0; transform: translateY(18px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes vesnaCaret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes vesnaFloat1 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(13px, -11px); } }
+@keyframes vesnaFloat2 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-11px, 12px); } }
+@keyframes vesnaMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+.v-draw { stroke-dasharray: 1560; stroke-dashoffset: 1560; animation: vesnaDraw 1.6s ease 0.2s forwards; }
+.v-draw-2 { stroke-dasharray: 900; stroke-dashoffset: 900; animation: vesnaDraw 1.4s ease 0.85s forwards; }
+.v-in { opacity: 0; animation: vesnaIn 0.7s ease 1.4s forwards; }
+.v-rise { opacity: 0; animation: vesnaRise 0.6s ease forwards; }
+.v-caret { animation: vesnaCaret 1s step-end infinite; }
+.v-float-1 { animation: vesnaFloat1 7s ease-in-out infinite; }
+.v-float-2 { animation: vesnaFloat2 8s ease-in-out infinite; }
+.v-marquee { animation: vesnaMarquee 28s linear infinite; }
+.v-page { animation: vesnaFade 0.45s ease both; }
+
+[data-reveal] { opacity: 0; transform: translateY(22px); transition: opacity 0.7s ease, transform 0.7s ease; }
+[data-reveal][data-shown] { opacity: 1; transform: none; }
+
+.v-grid {
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v-draw, .v-draw-2, .v-in, .v-rise, .v-caret, .v-float-1, .v-float-2, .v-marquee, .v-page { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+  [data-reveal] { opacity: 1; transform: none; }
+}
