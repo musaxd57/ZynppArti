@@ -121,6 +121,14 @@
 
 ## GÜNLÜK
 
+### 2026-06-24 (akşam — pazarlama redesign v2 + auth + 20-ajan QA denetimi) `feat/auth-clerk` (main'e merge bekliyor)
+- **Pazarlama sitesi (claude.ai/design v2):** zengin landing — gerçek-app HeroMockup (araç çubuğu + KATMANLAR/BLOKLAR/COPİLOT + tutarlı 5-odalı kat planı + MAHAL/METRAJ/MALİYET/KESİT + AI render kartı), Marquee, interaktif PlanGenerator, Workflow, BeforeAfter (plan↔render kaydırıcı, illüstratif), açık/koyu tema toggle, mobil hamburger menü. Tailwind v4 arbitrary-value (`bg-[var(--bg)]`) — @theme güvenilmez çıktı. `/app` daima koyu (AppBodyLock).
+- **Auth (Clerk) + Railway DB planı:** additif Clerk girişi (anahtar yoksa anonim çalışır), turbo.json'a CLERK/DATABASE_URL eklendi. ADR-0046 + docs/AUTH-SETUP.
+- **favicon (app/icon.svg) + OG görseli (opengraph-image.tsx)** — OG Satori multi-child bug'ı düzeltildi (her paylaşımda 500 verirdi).
+- **AI Çiz geometrik kapı/pencere kuralı** (dış duvar=pencere, iç=kapı) → "12 pencere" bug'ı çözüldü; özet "6 kapı, 6 pencere".
+- **20-AJAN QA DENETİMİ (10 frontend + 10 backend, workflow):** 131 bulgu, 18 doğrulanmış kritik → 4 fix turunda düzeltildi: XFF spoofing (rate-limit), extractJson string-bug (AI plan parse), light scrollbar/kontrast, dialog race (yetim promise ×3), AbortSignal `chat()`, Anthropic refüzal stream, resolved-yorum hit-test, opening t-clamp, DXF arc NaN, takeoff/svg/metrics NaN guard'ları, BeforeAfter klavye/ARIA, toolbar aria-label, mobil nav, bol try/catch (tool diyalogları + CanvasStage + Assistant). CadMockup (orphan) silindi.
+- Zincir yeşil her turda (typecheck 9/9 · ai 32 · document 109 · io 29 · engine 36 · tools 15 · lint · build). **Sıradaki: Moses tarayıcı testi + main'e merge + (sonra) auth anahtarları test.**
+
 ### 2026-06-24 (öğle-2 — fiyatlandırma sayfası + Paddle/iş modeli planı) **main'de, canlıda**
 - **Fiyatlandırma sayfası** (`/fiyatlandirma`): 3 katman (Ücretsiz / Pro ~$12 / Stüdyo ~$29) + SSS, marka uyumlu. Ücretsiz→/app; ücretli planlar **"Yakında"** (gerçek checkout auth'a bağlı). Landing nav+footer'a "Fiyatlar" linki.
 - **docs/BUSINESS-PRICING.md**: önerilen model (maliyetsiz çekirdek + kotalı AI + kredi paketi), **Paddle** (Merchant of Record — KDV/fatura Paddle'da) entegrasyon sırası ve **kritik bağımlılık: tahsilat auth'tan SONRA** (kim hangi planda → kota/gate). Rakamlar Moses onayı bekliyor (§6).
