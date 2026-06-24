@@ -81,7 +81,7 @@ export default function HeroMockup() {
               </g>
               <rect x="48" y="44" width="256" height="200" fill="var(--accent-soft)" className="v-in" />
               <rect x="48" y="44" width="464" height="312" fill="none" stroke="var(--text-2)" strokeWidth={3.5} className="v-draw" />
-              <path d="M304 44 L304 244 M304 244 L512 244 M304 150 L380 150 M180 244 L180 356" fill="none" stroke="var(--text-2)" strokeWidth={3} className="v-draw-2" />
+              <path d="M304 44 L304 244 M304 244 L512 244 M180 244 L180 356" fill="none" stroke="var(--text-2)" strokeWidth={3} className="v-draw-2" />
               <path d="M304 200 A44 44 0 0 0 260 244" fill="none" stroke="var(--text-3)" strokeWidth={1.2} opacity={0.7} />
 
               <g fill="var(--accent)">
@@ -95,7 +95,8 @@ export default function HeroMockup() {
               <text x="408" y="109" textAnchor="middle" fill="var(--text-3)" fontSize="11">16.0 m²</text>
               <text x="408" y="300" textAnchor="middle" fill="var(--text-2)" fontSize="13" fontWeight="600">Mutfak</text>
               <text x="408" y="317" textAnchor="middle" fill="var(--text-3)" fontSize="11">12.2 m²</text>
-              <text x="114" y="304" textAnchor="middle" fill="var(--text-2)" fontSize="12" fontWeight="600">Hol</text>
+              <text x="114" y="300" textAnchor="middle" fill="var(--text-2)" fontSize="12" fontWeight="600">Hol</text>
+              <text x="114" y="316" textAnchor="middle" fill="var(--text-3)" fontSize="11">8.4 m²</text>
             </svg>
 
             {/* canlı paylaş / 3B */}

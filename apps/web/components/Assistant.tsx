@@ -246,8 +246,8 @@ function applyLayout(
   walls: [number, number, number, number][],
   rooms: LayoutRoom[],
   openings: LayoutOpening[],
-): { drawn: number; named: number; openingCount: number } {
-  if (walls.length === 0) return { drawn: 0, named: 0, openingCount: 0 };
+): { drawn: number; named: number; openingCount: number; doorCount: number; windowCount: number } {
+  if (walls.length === 0) return { drawn: 0, named: 0, openingCount: 0, doorCount: 0, windowCount: 0 };
 
   // Yerleşim: parsel varsa onun sol-üst köşesine ~1 m çekmeyle; yoksa mevcut duvarların sağına;
   // hiçbiri yoksa orijine. (Üst üste binmesin / parsel içinde dursun.)
@@ -275,8 +275,26 @@ function applyLayout(
   }));
   const cmds: AddEntity[] = wallEntities.map((w) => new AddEntity(w));
 
+  // GEOMETRİK kapı/pencere kuralı: DIŞ duvar (bina çevresi/sınırlayıcı kutu kenarı) → PENCERE;
+  // İÇ duvar (oda arası) → KAPI. LLM çoğu zaman hepsini "window" yapıyor (kullanıcı gözlemi) →
+  // etiketi AI'a bırakmak yerine geometriyle belirleyip gerçekçi kapı/pencere karışımı sağlıyoruz.
+  const xs = wallEntities.flatMap((w) => [w.start.x, w.end.x]);
+  const ys = wallEntities.flatMap((w) => [w.start.y, w.end.y]);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const EDGE = 30; // cm tolerans — duvar perimetre kenarında mı
+  const near = (a: number, b: number): boolean => Math.abs(a - b) <= EDGE;
+  const isExteriorWall = (w: Wall): boolean =>
+    (near(w.start.x, minX) && near(w.end.x, minX)) ||
+    (near(w.start.x, maxX) && near(w.end.x, maxX)) ||
+    (near(w.start.y, minY) && near(w.end.y, minY)) ||
+    (near(w.start.y, maxY) && near(w.end.y, maxY));
+
   // Kapı/pencereleri en yakın duvara (≤80 cm) bağla; t = duvar üzerindeki izdüşüm oranı.
-  let openingCount = 0;
+  let doorCount = 0;
+  let windowCount = 0;
   for (const o of openings) {
     const px = o.cx + dx;
     const py = o.cy + dy;
@@ -292,6 +310,7 @@ function applyLayout(
       }
     }
     if (best && bestD <= 80) {
+      const kind: Opening['kind'] = isExteriorWall(best) ? 'window' : 'door';
       cmds.push(
         new AddEntity({
           id: createEntityId(),
@@ -300,12 +319,14 @@ function applyLayout(
           wallId: best.id,
           t: bestT,
           width: o.width,
-          kind: o.kind,
+          kind,
         } satisfies Opening),
       );
-      openingCount++;
+      if (kind === 'door') doorCount++;
+      else windowCount++;
     }
   }
+  const openingCount = doorCount + windowCount;
   history.dispatch(new BatchCommand('AI taslak plan', cmds));
 
   // Duvarlar eklenince RoomManager mahalleri senkron türetir → merkez noktasıyla ad/tip ata.
@@ -333,7 +354,7 @@ function applyLayout(
   } catch (e) {
     console.error('AI oda adlandırma atlandı (duvarlar çizildi):', e);
   }
-  return { drawn: wallEntities.length, named, openingCount };
+  return { drawn: wallEntities.length, named, openingCount, doorCount, windowCount };
 }
 
 /** Cevap üretilirken zıplayan üç nokta — "çalışıyor" hissi (tüm modlarda efektli). */
@@ -430,12 +451,16 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
   /** Seçilen planı çizer (Command ile), ekrana getirir, copilot uyum özetini daktilo efektiyle yazar. */
   const drawVariant = (v: Layout): void => {
     setVariants(null);
-    const { drawn, named, openingCount } = applyLayout(store, history, v.walls, v.rooms, v.openings);
+    const { drawn, named, openingCount, doorCount, windowCount } = applyLayout(store, history, v.walls, v.rooms, v.openings);
     if (drawn > 0) zoomToFit?.();
-    const extras = [
-      named > 0 ? `${named} mahal adlandırıldı` : '',
-      openingCount > 0 ? `${openingCount} kapı/pencere eklendi` : '',
-    ]
+    // Kapı/pencere sayısını AYRI göster (ör. "6 kapı, 6 pencere") — kullanıcı net görsün.
+    const openingText =
+      openingCount === 0
+        ? ''
+        : [doorCount > 0 ? `${doorCount} kapı` : '', windowCount > 0 ? `${windowCount} pencere` : '']
+            .filter(Boolean)
+            .join(', ') + ' eklendi';
+    const extras = [named > 0 ? `${named} mahal adlandırıldı` : '', openingText]
       .filter(Boolean)
       .join(', ');
     const undoNote =
