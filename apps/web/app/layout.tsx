@@ -15,8 +15,33 @@ import { CommentDialog } from '@/components/CommentDialog';
 import { ThemeScript } from '@/components/ThemeScript';
 
 export const metadata: Metadata = {
-  title: 'Vesna — Mimari tasarım, m² otomasyonu ve yapay zekâ',
-  description: 'Tarayıcıda çalışan işbirlikçi mimari tasarım, mahal/m² otomasyonu ve yapay zekâ asistanı.',
+  metadataBase: new URL('https://vesna.design'),
+  title: {
+    default: 'Vesna — Mimari tasarım, m² otomasyonu ve yapay zekâ',
+    template: '%s · Vesna',
+  },
+  description:
+    'Tarayıcıda çalışan işbirlikçi mimari tasarım: DWG/DXF aç, mahal/m² ve metraj otomatik çıkar, Türkçe yönetmeliğe danış, tariften AI ile plan üret. Kurulum yok.',
+  applicationName: 'Vesna',
+  keywords: [
+    'mimari tasarım', 'kat planı', 'mahal listesi', 'm² hesabı', 'metraj', 'DWG', 'DXF',
+    'AI plan', 'yapay zeka mimari', 'Türkçe yönetmelik', 'TBDY', 'TS 9111', 'iç mimari', 'tarayıcıda CAD',
+  ],
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    siteName: 'Vesna',
+    locale: 'tr_TR',
+    url: 'https://vesna.design',
+    title: 'Vesna — Mimari tasarımı çiz, hesapla ve yapay zekâ ile üret',
+    description:
+      'Tarayıcıda çizim · otomatik mahal & m² · Türkçe yönetmelik asistanı · plandan AI render.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Vesna — Tarayıcıda mimari tasarım + yapay zekâ',
+    description: 'Çiz, hesapla, yönetmeliğe danış, AI ile plan üret. Kurulum yok.',
+  },
 };
 
 // Clerk anahtarı yoksa (yerel/CI build) ClerkProvider sarmalanmaz → build kırılmaz, anonim akış çalışır.
