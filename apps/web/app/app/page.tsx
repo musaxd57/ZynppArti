@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { CanvasStage } from '@/components/CanvasStage';
+import { AppBodyLock } from '@/components/AppBodyLock';
 
 export const metadata: Metadata = {
   title: 'Vesna — Çizim',
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 export default function AppPage() {
   return (
     <main className="h-screen w-screen overflow-hidden">
+      <AppBodyLock />
       <CanvasStage />
     </main>
   );

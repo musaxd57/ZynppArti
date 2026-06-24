@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { VesnaMark } from '@/components/VesnaMark';
 
 export const metadata: Metadata = {
   title: 'Fiyatlandırma — Vesna',
@@ -15,13 +16,8 @@ export default function Fiyatlandirma() {
     <main style={{ background: 'var(--surface-0, #0E0E10)', color: 'var(--text-1, #e8e8ea)' }}>
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <Link href="/" className="flex items-center gap-2">
-          <span
-            className="grid h-8 w-8 place-items-center rounded-lg font-bold text-white"
-            style={{ background: 'var(--accent, #5B5BD6)' }}
-          >
-            V
-          </span>
-          <span className="text-lg font-semibold">Vesna</span>
+          <VesnaMark size={32} />
+          <span className="text-lg font-semibold tracking-tight">Vesna</span>
         </Link>
         <Link
           href="/app"

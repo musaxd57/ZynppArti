@@ -41,7 +41,17 @@ body {
   margin: 0;
   padding: 0;
   background: var(--bg-base);
+}
+
+/*
+ * Canvas/CAD ekranı (yalnız /app) sayfa kaydırmasını ve metin seçimini kapatır (sürükleme/çift-tık
+ * metni maviyle seçili bırakmasın, tuval rubber-band yapmasın). Pazarlama/yasal sayfalar (landing,
+ * fiyat, gizlilik) NORMAL kaydırılır ve metin seçilebilir — bu yüzden global değil, .app-shell'e bağlı.
+ */
+body.app-shell {
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 body {
@@ -59,14 +69,9 @@ body {
 }
 
 /*
- * Grafik/CAD uygulaması: araç çubuğu, paneller, tuval üstündeki yazılar fareyle SEÇİLEMEZ
- * (yoksa sürükleme/çift-tık metni maviyle seçili bırakıp "rahat bırakmıyor" hissi verir).
- * Yalnız gerçek metin girişleri (input/textarea) seçilebilir kalır — düzenleme bozulmaz.
+ * (Metin seçimi yalnız /app'te kapalı — yukarıdaki body.app-shell. Pazarlama/yasal sayfalarda metin
+ * serbestçe seçilebilir.) Yalnız gerçek metin girişleri (input/textarea) her yerde seçilebilir kalır.
  */
-body {
-  user-select: none;
-  -webkit-user-select: none;
-}
 input,
 textarea {
   user-select: text;

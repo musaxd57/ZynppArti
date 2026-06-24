@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { RoomRedirect } from '@/components/RoomRedirect';
 import { AuthButtons } from '@/components/AuthButtons';
+import { VesnaMark } from '@/components/VesnaMark';
 
 // Clerk anahtarı varsa giriş/kayıt butonları gösterilir (yoksa gizli — anonim akış aynen çalışır).
 const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
@@ -20,13 +21,8 @@ export default function Landing() {
       {/* Üst bar */}
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
-          <span
-            className="grid h-8 w-8 place-items-center rounded-lg font-bold text-white"
-            style={{ background: 'var(--accent, #5B5BD6)' }}
-          >
-            V
-          </span>
-          <span className="text-lg font-semibold">Vesna</span>
+          <VesnaMark size={32} />
+          <span className="text-lg font-semibold tracking-tight">Vesna</span>
         </div>
         <nav className="flex items-center gap-5 text-sm" style={{ color: 'var(--text-2, #c4c4ca)' }}>
           <a href="#ozellikler" className="hidden hover:underline sm:inline">Özellikler</a>
