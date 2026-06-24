@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import Reveal from "@/components/marketing/Reveal";
 import Marquee from "@/components/marketing/Marquee";
 import HeroMockup from "@/components/marketing/HeroMockup";
@@ -7,8 +6,8 @@ import PlanGenerator from "@/components/marketing/PlanGenerator";
 import FeatureGrid from "@/components/marketing/FeatureGrid";
 import Workflow from "@/components/marketing/Workflow";
 import BeforeAfter from "@/components/marketing/BeforeAfter";
-import { VesnaMark } from "@/components/marketing/VesnaMark";
-import { Image as ImageIcon } from "@/components/marketing/Icons";
+import type { Metadata } from "next";
+import { Image as ImageIcon, Globe, BookOpen, Box, Shield } from "@/components/marketing/Icons";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { SiteFooter } from "@/components/marketing/SiteFooter";
 import { DemoVideo } from "@/components/marketing/DemoVideo";
@@ -20,22 +19,16 @@ export const metadata: Metadata = {
     "Vesna; tarayıcıda çalışan gerçek zamanlı işbirlikçi mimari çizim, otomatik mahal & m² hesabı, Türkçe yönetmelik asistanı ve AI plan/render platformu.",
 };
 
-// Hero/demo videosu. Boşken DemoVideo dürüst "yakında" gösterir (sahte oynat düğmesi yok).
+// Demo videosu. Boşken DemoVideo dürüst "yakında" gösterir (sahte oynat düğmesi yok).
 // Video hazır olunca: '/videos/demo.mp4' (+ poster) — docs/VIDEO-PLAN.md.
 const DEMO_VIDEO = "";
 const DEMO_POSTER = "";
 
 const WHY = [
-  { n: "01", title: "Kurulum yok, her yerde", desc: "Tarayıcıda açılır; indirme, lisans ve kurulum derdi yok. Mac, Windows, tablet — fark etmez." },
-  { n: "02", title: "Türkiye'ye özel zekâ", desc: "İmar yönetmeliği, TBDY ve TS 9111 bilen; kaynak gösteren Türkçe asistan." },
-  { n: "03", title: "Çiz + hesapla + üret tek yerde", desc: "Çizim, mahal/m² otomasyonu ve AI üretim aynı tuvalde; araç değiştirmeden." },
-  { n: "04", title: "Verin sende kalır", desc: "Projeleriniz size ait. Şeffaf gizlilik, dışa aktarma her zaman elinizde." },
-];
-
-const LOGOS = [
-  { v: "v" as const, title: "Stilize V", note: "vektör / çatı çizgisi" },
-  { v: "compass" as const, title: "Pergel", note: "açı / ölçek" },
-  { v: "corner" as const, title: "Blueprint Köşe", note: "paftacı işareti · seçildi" },
+  { Icon: Globe, title: "Kurulum yok, her yerde", desc: "Tarayıcıda açılır; indirme, lisans ve kurulum derdi yok. Mac, Windows, tablet — fark etmez." },
+  { Icon: BookOpen, title: "Türkiye'ye özel zekâ", desc: "İmar yönetmeliği, TBDY ve TS 9111 bilen; kaynak gösteren Türkçe asistan." },
+  { Icon: Box, title: "Çiz + hesapla + üret tek yerde", desc: "Çizim, mahal/m² otomasyonu ve AI üretim aynı tuvalde; araç değiştirmeden." },
+  { Icon: Shield, title: "Verin sende kalır", desc: "Projeleriniz size ait. Şeffaf gizlilik, dışa aktarma her zaman elinizde." },
 ];
 
 export default function HomePage() {
@@ -147,45 +140,21 @@ export default function HomePage() {
       {/* NEDEN VESNA */}
       <section className="border-t border-[var(--border)] bg-[var(--bg)]">
         <div className="mx-auto max-w-[1160px] px-6 py-20">
-          <Reveal as="h2" className="mb-12 text-[clamp(1.6rem,3vw,2.2rem)] font-semibold tracking-tight">
-            Neden Vesna
+          <Reveal className="mb-11 max-w-[620px]">
+            <div className="mb-3.5 text-[13px] font-semibold uppercase tracking-[0.04em] text-[var(--accent)]">Neden Vesna</div>
+            <h2 className="text-[clamp(1.8rem,3.4vw,2.6rem)] font-semibold leading-[1.1] tracking-tight">
+              Türkiyeli mimarın işine göre tasarlandı.
+            </h2>
           </Reveal>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-x-8 gap-y-10">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4">
             {WHY.map((w, i) => (
-              <Reveal key={w.n} delay={i * 70}>
-                <div className="mb-3 text-[13px] font-semibold text-[var(--accent)]">{w.n}</div>
-                <h3 className="mb-2 text-[1.12rem] font-semibold tracking-tight">{w.title}</h3>
-                <p className="text-[0.94rem] leading-relaxed text-[var(--text-2)]">{w.desc}</p>
+              <Reveal key={w.title} delay={i * 80} className="rounded-[15px] border border-[var(--border)] bg-[var(--bg-2)] p-[26px] shadow-[inset_0_1px_0_var(--hi)]">
+                <div className="mb-[18px] flex h-10 w-10 items-center justify-center rounded-[11px] bg-[var(--accent-soft)] text-[var(--accent)]">
+                  <w.Icon width={20} height={20} />
+                </div>
+                <h3 className="mb-2 text-[1.08rem] font-semibold tracking-tight">{w.title}</h3>
+                <p className="text-[0.92rem] leading-relaxed text-[var(--text-2)]">{w.desc}</p>
               </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* LOGO ÖNERİLERİ */}
-      <section className="border-t border-[var(--border)]">
-        <div className="mx-auto max-w-[1160px] px-6 py-[72px]">
-          <div className="mb-2 text-[13px] font-semibold uppercase tracking-[0.04em] text-[var(--text-3)]">Marka</div>
-          <h2 className="mb-2 text-2xl font-semibold tracking-tight">Logo önerileri</h2>
-          <p className="mb-9 text-[0.95rem] text-[var(--text-2)]">
-            Üç minimal işaret yönü. Aktif marka: <strong className="text-[var(--text)]">Blueprint Köşe</strong>.
-          </p>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-5">
-            {LOGOS.map((l) => (
-              <div
-                key={l.v}
-                className={`flex flex-col gap-[22px] rounded-[14px] border bg-[var(--bg-2)] p-8 ${
-                  l.v === "corner" ? "border-[var(--accent)] shadow-[0_0_0_4px_var(--accent-soft)]" : "border-[var(--border)]"
-                }`}
-              >
-                <div className="flex items-center gap-[11px] text-[var(--accent)]">
-                  <VesnaMark variant={l.v} size={30} />
-                  <span className="text-[22px] font-semibold tracking-tight text-[var(--text)]">Vesna</span>
-                </div>
-                <div className="text-[13px] text-[var(--text-3)]">
-                  <span className="font-semibold text-[var(--text)]">{l.title}</span> · {l.note}
-                </div>
-              </div>
             ))}
           </div>
         </div>

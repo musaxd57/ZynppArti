@@ -128,17 +128,19 @@ textarea {
  * Bu değişkenler uygulamanın --surface-* tokenlarından AYRIDIR (yalnız --text-2/3/--accent paylaşılır).
  * ============================================================ */
 :root {
-  --bg: #0a0a0c;
-  --bg-2: #101013;
-  --bg-3: #141418;
-  --bg-glass: rgba(12, 12, 15, 0.72);
-  --border: #23232a;
-  --border-2: #30303a;
-  --text: #ececf1;
-  --accent-2: #7575ec;
-  --accent-soft: rgba(91, 91, 214, 0.14);
-  --ok: #3fb984;
-  --grid: rgba(255, 255, 255, 0.035);
+  --bg: #08080c;
+  --bg-2: #0f0f15;
+  --bg-3: #16161e;
+  --bg-glass: rgba(10, 10, 14, 0.7);
+  --border: #20202b;
+  --border-2: #30303e;
+  --text: #f4f4f8;
+  --accent-2: #7c7cf0;
+  --accent-soft: rgba(99, 99, 224, 0.17);
+  --ok: #41c08c;
+  --grid: rgba(255, 255, 255, 0.045);
+  --hi: rgba(255, 255, 255, 0.06);
+  --shadow: 0 24px 70px -28px rgba(0, 0, 0, 0.7);
 }
 [data-theme='light'] {
   --bg: #fbfbfc;
@@ -154,6 +156,17 @@ textarea {
   --accent-soft: rgba(91, 91, 214, 0.08);
   --ok: #1f9d67;
   --grid: rgba(20, 20, 40, 0.04);
+  --hi: rgba(255, 255, 255, 0.9);
+  --shadow: 0 20px 50px -24px rgba(20, 20, 45, 0.18);
+}
+
+/* Pazarlama sayfalarında (yalnız /app DIŞI) ambient ışık derinliği. .app-shell = canvas → hariç. */
+body:not(.app-shell) {
+  background-image:
+    radial-gradient(900px 620px at 12% 0%, rgba(99, 99, 224, 0.06), transparent 56%),
+    radial-gradient(760px 640px at 100% 22%, rgba(99, 99, 224, 0.05), transparent 58%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 @keyframes vesnaFade {

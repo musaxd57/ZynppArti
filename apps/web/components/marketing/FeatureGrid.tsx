@@ -30,9 +30,12 @@ export default function FeatureGrid() {
         </p>
       </Reveal>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-px overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--border)]">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-3.5">
         {FEATURES.map((f) => (
-          <div key={f.title} className="bg-[var(--bg-2)] p-7 transition-colors hover:bg-[var(--bg-3)]">
+          <div
+            key={f.title}
+            className="rounded-[15px] border border-[var(--border)] bg-[var(--bg-2)] p-7 shadow-[inset_0_1px_0_var(--hi)] transition hover:-translate-y-[3px] hover:border-[var(--border-2)] hover:shadow-[inset_0_1px_0_var(--hi),var(--shadow)]"
+          >
             <div className="mb-[18px] flex h-10 w-10 items-center justify-center rounded-[11px] bg-[var(--accent-soft)] text-[var(--accent)]">
               <f.Icon width={20} height={20} />
             </div>

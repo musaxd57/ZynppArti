@@ -17,9 +17,7 @@ export default function ThemeToggle() {
     document.documentElement.dataset.theme = t;
     try {
       localStorage.setItem("vesna-theme", t);
-    } catch {
-      /* yoksay */
-    }
+    } catch { /* yoksay */ }
     setDark(next);
   };
 

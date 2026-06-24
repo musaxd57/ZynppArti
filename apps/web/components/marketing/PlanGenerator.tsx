@@ -35,10 +35,10 @@ const PLANS: Plan[] = [
     tags: ["Ebeveyn süiti", "3+1", "90 m²"],
     plan: (
       <svg viewBox="0 0 220 150" className="block h-auto w-full">
-        <rect x="130" y="74" width="78" height="64" fill="var(--accent-soft)" />
+        <rect x="12" y="96" width="118" height="42" fill="var(--accent-soft)" />
         <rect x="12" y="12" width="196" height="126" fill="none" stroke="var(--text-2)" strokeWidth={3} />
-        <path d="M130 12 L130 138 M70 12 L70 74 M130 74 L208 74" fill="none" stroke="var(--text-2)" strokeWidth={2} />
-        <text x="169" y="110" textAnchor="middle" fill="var(--accent)" fontSize="10" fontWeight="600">Ebeveyn</text>
+        <path d="M130 12 L130 138 M130 74 L208 74 M12 96 L130 96" fill="none" stroke="var(--text-2)" strokeWidth={2} />
+        <text x="71" y="121" textAnchor="middle" fill="var(--accent)" fontSize="10" fontWeight="600">Ebeveyn</text>
       </svg>
     ),
   },
@@ -49,11 +49,10 @@ const PLANS: Plan[] = [
     tags: ["Açık mutfak", "3+1", "90 m²"],
     plan: (
       <svg viewBox="0 0 220 150" className="block h-auto w-full">
-        <rect x="12" y="12" width="100" height="78" fill="var(--accent-soft)" />
-        <rect x="112" y="12" width="96" height="78" fill="var(--accent-soft)" />
+        <rect x="12" y="12" width="196" height="78" fill="var(--accent-soft)" />
         <rect x="12" y="12" width="196" height="126" fill="none" stroke="var(--text-2)" strokeWidth={3} />
-        <path d="M112 90 L112 138 M112 90 L12 90 M112 90 L208 90" fill="none" stroke="var(--text-2)" strokeWidth={2} />
-        <text x="110" y="56" textAnchor="middle" fill="var(--accent)" fontSize="10" fontWeight="600">Açık mutfak</text>
+        <path d="M12 90 L208 90 M110 90 L110 138" fill="none" stroke="var(--text-2)" strokeWidth={2} />
+        <text x="110" y="55" textAnchor="middle" fill="var(--accent)" fontSize="10" fontWeight="600">Açık mutfak</text>
       </svg>
     ),
   },
