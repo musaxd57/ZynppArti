@@ -184,6 +184,12 @@ body:not(.app-shell) {
   background-repeat: no-repeat;
 }
 
+/* Pazarlama başlıkları DAİMA tema-uyumlu --text — miras kazaları (app-token sızması) olmasın.
+   /app (.app-shell) hariç. KRİTİK: koyu modda başlıkların okunmadığı bug'a karşı kurşun geçirmez. */
+body:not(.app-shell) :is(h1, h2, h3, h4) {
+  color: var(--text);
+}
+
 /* Seçim + klavye odağı — tema-uyumlu (her iki temada okunur). */
 ::selection {
   background: var(--accent-soft, rgba(99, 99, 224, 0.17));

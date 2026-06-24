@@ -52,6 +52,8 @@ interface AssistantProps {
   onClose: () => void;
   /** Çizimden sonra üretilen planı ekrana getirmek için (zoom extents). */
   zoomToFit?: () => void;
+  /** Landing'den `/app?ciz=...` ile gelen program → Çiz modunda istemi önceden doldur (paste). */
+  initialCiz?: string;
 }
 
 const WALL_THICKNESS = 20; // cm — AI taslağı için varsayılan duvar kalınlığı
@@ -378,7 +380,7 @@ function TypingDots({ label }: { label: string }) {
 
 const EMPTY_THREADS: Record<Mode, Msg[]> = { ask: [], draw: [], render: [] };
 
-export function Assistant({ store, history, selectedIds, open, onClose, zoomToFit }: AssistantProps) {
+export function Assistant({ store, history, selectedIds, open, onClose, zoomToFit, initialCiz }: AssistantProps) {
   const [mode, setMode] = useState<Mode>('ask');
   // Her mod KENDİ sohbetini tutar (Sor/Çiz/Render karışmaz).
   const [threads, setThreads] = useState<Record<Mode, Msg[]>>(EMPTY_THREADS);
@@ -394,6 +396,15 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
   const typingRef = useRef<number | null>(null);
   // Yazılmakta olan mesaj (m,id,full): yeni bir daktilo başlayınca öncekini TAMAMA çek (yarım kalmasın).
   const typingTargetRef = useRef<{ m: Mode; id: string; full: string } | null>(null);
+
+  // Landing'den `/app?ciz=...` ile gelen program → Çiz modunu aç + istemi YAPIŞTIR (önceden doldur).
+  // Otomatik göndermiyoruz (ücretli çağrı kullanıcı onayıyla başlasın); kullanıcı "Üret"e basar.
+  useEffect(() => {
+    if (initialCiz) {
+      setMode('draw');
+      setInput(initialCiz);
+    }
+  }, [initialCiz]);
 
   const messages = threads[mode];
   const loading = loadingMode !== null;

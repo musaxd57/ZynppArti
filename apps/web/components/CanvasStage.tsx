@@ -68,7 +68,22 @@ export function CanvasStage() {
   const [rightW, setRightW] = useState(288);
   const [leftW, setLeftW] = useState(224);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [initialCiz, setInitialCiz] = useState<string | undefined>(undefined);
   const [chromeHidden, setChromeHidden] = useState(false); // zen: sol+sağ panelleri gizle
+
+  // Landing'den `/app?ciz=<program>` ile gelindiyse: Vesna AI'ı Çiz modunda, istem YAPIŞTIRILMIŞ aç.
+  // (window.location → useSearchParams Suspense gereksinimi yok; app zaten tam istemci.)
+  useEffect(() => {
+    try {
+      const ciz = new URLSearchParams(window.location.search).get('ciz');
+      if (ciz && ciz.trim()) {
+        setInitialCiz(ciz.trim().slice(0, 300));
+        setAssistantOpen(true);
+      }
+    } catch {
+      /* yoksay */
+    }
+  }, []);
 
   // Dock genişliklerini hatırla (localStorage).
   useEffect(() => {
@@ -424,6 +439,7 @@ export function CanvasStage() {
             open={assistantOpen}
             onClose={() => setAssistantOpen(false)}
             zoomToFit={ui.zoomToFit}
+            initialCiz={initialCiz}
           />
         </>
       )}

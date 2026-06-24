@@ -201,10 +201,10 @@ export default function PlanGenerator() {
               }`}
             >
               <p className="text-[0.9rem] text-[var(--text-2)]">
-                <strong className="text-[var(--text)]">{PLANS.find((p) => p.id === selected)?.name}</strong> seçildi — bu programla uygulamada başla.
+                <strong className="text-[var(--text)]">{PLANS.find((p) => p.id === selected)?.name}</strong> seçildi — uygulamada Vesna AI bu programla, çizmeye hazır açılır.
               </p>
               <Link
-                href="/app"
+                href={`/app?ciz=${encodeURIComponent(`90 m² 3+1 daire, ${(PLANS.find((p) => p.id === selected)?.name ?? "").toLowerCase()}, ebeveyn banyolu`)}`}
                 className="inline-flex items-center gap-2 rounded-[10px] border border-[var(--accent)] bg-[var(--accent)] px-[20px] py-[11px] text-sm font-semibold text-white transition hover:-translate-y-px hover:bg-[var(--accent-2)]"
               >
                 Uygulamada aç →
