@@ -1,5 +1,5 @@
 import { BitmapText, Graphics } from 'pixi.js';
-import { hatchPattern, polygonArea, polygonCentroid } from '@zynpparti/geometry';
+import { hatchPattern, polygonArea, polygonLabelPoint } from '@zynpparti/geometry';
 import { roomTypeColor, roomTypeOf, type Material, type Space } from '@zynpparti/document';
 import { ROOM_FONT } from './charset';
 import { LINEWEIGHTS, PALETTE } from './lineweights';
@@ -62,7 +62,8 @@ export function buildSpaceLabel(space: Space): BitmapText {
     style: { fontFamily: ROOM_FONT, fontSize: LABEL_SIZE, align: 'center' },
   });
   label.anchor.set(0.5);
-  const c = polygonCentroid(space.boundary);
+  // Centroid yerine erişilemezlik-kutbu: konkav/L odada etiket komşunun üstüne binmesin (daima içeride).
+  const c = polygonLabelPoint(space.boundary);
   label.position.set(c.x, c.y);
   return label;
 }

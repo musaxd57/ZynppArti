@@ -1,5 +1,6 @@
 import type { Vec2 } from './vec2';
 import { distanceToSegment } from './segment';
+import { pointInPolygon } from './point-in-polygon';
 
 /**
  * Bir poligonun alanı (Shoelace / Gauss formülü). İşaretsiz (pozitif) değer döner,
@@ -74,4 +75,53 @@ export function distanceToPolygonBoundary(p: Vec2, polygon: readonly Vec2[]): nu
     if (d < min) min = d;
   }
   return min;
+}
+
+/**
+ * Etiket yerleştirme noktası — poligonun "erişilemezlik kutbu"na (kenarlardan en uzak iç nokta)
+ * yakın bir nokta. Centroid İÇERİDEYSE onu döner (konveks/normal odalar — ucuz). Konkav/L odada
+ * centroid dışarı (komşuya) düşebilir; bu durumda bbox üzerinde ızgara tarayıp İÇERDE + kenara en
+ * uzak noktayı bulur → etiket daima kendi mahalinin içinde durur, komşunun üstüne binmez.
+ * (3'ten az köşe → noktaların ortalaması.)
+ */
+export function polygonLabelPoint(polygon: readonly Vec2[]): Vec2 {
+  const n = polygon.length;
+  if (n < 3) {
+    let sx = 0;
+    let sy = 0;
+    for (const p of polygon) {
+      sx += p.x;
+      sy += p.y;
+    }
+    return n ? { x: sx / n, y: sy / n } : { x: 0, y: 0 };
+  }
+  const c = polygonCentroid(polygon);
+  if (pointInPolygon(c, polygon)) return c;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const p of polygon) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const N = 24;
+  const dx = (maxX - minX) / N;
+  const dy = (maxY - minY) / N;
+  let best = c;
+  let bestD = -1;
+  for (let i = 1; i < N; i++) {
+    for (let j = 1; j < N; j++) {
+      const q = { x: minX + i * dx, y: minY + j * dy };
+      if (!pointInPolygon(q, polygon)) continue;
+      const d = distanceToPolygonBoundary(q, polygon);
+      if (d > bestD) {
+        bestD = d;
+        best = q;
+      }
+    }
+  }
+  return best;
 }

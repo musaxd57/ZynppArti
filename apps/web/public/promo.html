@@ -286,10 +286,7 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
   background:#080810;
   display:flex;align-items:center;justify-content:center;}
 
-/* 3B model — CSS animasyonu ile döner */
-/* 3B şematik — hafif salınım (statik durmasın; gerçek motor değil, illüstrasyon) */
-#svg3d{animation:s2float 6s ease-in-out infinite;transform-origin:center;}
-@keyframes s2float{0%,100%{transform:translateY(0) rotate(-0.4deg)}50%{transform:translateY(-9px) rotate(0.4deg)}}
+/* S2 = gerçek 3B GIF (img#svg3d); CSS animasyonu yok — GIF kendi döner. */
 
 .s2cap{position:absolute;bottom:18px;left:50%;translate:-50% 0;
   background:rgba(14,15,17,.92);backdrop-filter:blur(8px);
@@ -641,91 +638,11 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
   </div>
 </div><!-- /s1 -->
 
-<!-- ══ S2 — 3B ══ -->
-<div class="sc" id="s2">
-  <div class="s2top">
-    <span class="s2t1">3B Önizleme (şematik)</span>
-    <span class="s2t2">planından otomatik hacim · kamera turu</span>
-    <div class="s2r">
-      <div class="s2b">▶ Tur</div><div class="s2b">⌨ +Görünüm</div>
-      <div class="s2b">▶ Sunum</div><div class="s2b">↓ PNG</div>
-      <div class="s2b">↓ GLB</div><div class="s2b red">✕ Kapat</div>
-    </div>
-  </div>
-  <div class="s2body">
-    <svg id="svg3d" width="680" height="460" viewBox="0 0 680 460"
-         style="opacity:0;transition:opacity .8s;">
-
-      <!-- zemin gölgesi -->
-      <ellipse cx="340" cy="448" rx="230" ry="14" fill="rgba(0,0,0,.5)"/>
-
-      <!-- ZEMIN -->
-      <polygon points="90,350 590,350 510,428 170,428"
-        fill="#2b2b2b" stroke="#1a1a1a" stroke-width="1"/>
-
-      <!-- ARKA DUVAR (en büyük yüzey, açık gri) -->
-      <polygon points="130,100 550,100 550,350 130,350"
-        fill="#d2d2d8" stroke="#e2e2ea" stroke-width="1.5"/>
-
-      <!-- SOL DUVAR -->
-      <polygon points="90,145 130,100 130,350 90,395"
-        fill="#a8a8b4" stroke="#c0c0cc" stroke-width="1.5"/>
-
-      <!-- SAĞ DUVAR -->
-      <polygon points="550,100 590,145 590,395 550,350"
-        fill="#88889a" stroke="#9c9cae" stroke-width="1.5"/>
-
-      <!-- TAVAN -->
-      <polygon points="130,100 550,100 590,145 90,145"
-        fill="#dadae2" stroke="#eaeaf2" stroke-width="1.5"/>
-
-      <!-- İÇ BÖLMELER — arka duvarda görünür çizgiler -->
-      <line x1="310" y1="100" x2="310" y2="350" stroke="#6868a0" stroke-width="3"/>
-      <line x1="278" y1="145" x2="278" y2="395" stroke="#6060a0" stroke-width="2" stroke-dasharray="6 3"/>
-
-      <line x1="430" y1="100" x2="430" y2="350" stroke="#6868a0" stroke-width="2"/>
-      <line x1="390" y1="145" x2="390" y2="395" stroke="#6060a0" stroke-width="1.5" stroke-dasharray="5 3"/>
-
-      <!-- yatay bölme — DÜZELTİLDİ: sol/orta grupta (x=430'a kadar) çizilir, sağ kolonu kesmez -->
-      <line x1="130" y1="225" x2="430" y2="225" stroke="#6060a0" stroke-width="2"/>
-      <line x1="90"  y1="272" x2="390" y2="272" stroke="#5858a0" stroke-width="1.5" stroke-dasharray="5 3"/>
-
-      <!-- sağ grupta yatay bölmeler -->
-      <line x1="430" y1="163" x2="550" y2="163" stroke="#6060a0" stroke-width="1.5"/>
-      <line x1="390" y1="197" x2="590" y2="197" stroke="#5858a0" stroke-width="1" stroke-dasharray="4 3"/>
-      <line x1="430" y1="255" x2="550" y2="255" stroke="#6060a0" stroke-width="1.5"/>
-      <line x1="390" y1="288" x2="590" y2="288" stroke="#5858a0" stroke-width="1" stroke-dasharray="4 3"/>
-
-      <!-- KAPΙ BOŞLUKLARI -->
-      <rect x="90" y="240" width="7" height="60"
-        fill="#0c0c12" stroke="#1a1a26" stroke-width="1"/>
-      <rect x="270" y="245" width="16" height="55"
-        fill="#0c0c12" stroke="#1a1a26" stroke-width="1"/>
-      <rect x="382" y="190" width="16" height="50"
-        fill="#0c0c12" stroke="#1a1a26" stroke-width="1"/>
-
-      <!-- KAPΙ/PENCERE VURGULARI -->
-      <rect x="90"  y="241" width="6" height="58" fill="#5b5bd6" opacity=".5" rx="1"/>
-      <rect x="271" y="246" width="14" height="53" fill="#5b5bd6" opacity=".45" rx="1"/>
-      <rect x="383" y="191" width="14" height="48" fill="#5b5bd6" opacity=".45" rx="1"/>
-
-      <!-- PENCERE — arka duvarda -->
-      <rect x="170" y="115" width="60" height="45" fill="rgba(91,91,214,.1)"
-        stroke="#5b5bd6" stroke-width="1.5" rx="2"/>
-      <rect x="380" y="115" width="60" height="45" fill="rgba(91,91,214,.1)"
-        stroke="#5b5bd6" stroke-width="1.5" rx="2"/>
-
-      <!-- ODA RENKLERİ -->
-      <polygon points="130,100 310,100 310,225 130,225" fill="rgba(40,25,10,.25)"/>
-      <polygon points="130,225 310,225 310,350 130,350" fill="rgba(40,25,10,.3)"/>
-      <polygon points="310,100 430,100 430,350 310,350" fill="rgba(91,91,214,.06)"/>
-      <polygon points="430,100 550,100 550,163 430,163" fill="rgba(91,91,214,.08)"/>
-      <polygon points="430,163 550,163 550,255 430,255" fill="rgba(91,91,214,.08)"/>
-      <polygon points="430,255 550,255 550,350 430,350" fill="rgba(91,91,214,.06)"/>
-
-    </svg>
-    <div class="s2cap">3B Önizleme — planından anında</div>
-  </div>
+<!-- ══ S2 — 3B (GERÇEK uygulamanın View3D ekran kaydı; uydurma şematik DEĞİL) ══ -->
+<div class="sc" id="s2" style="background:#141414;">
+  <img id="svg3d" src="/promo-3d.gif" alt="Vesna 3B gezinme — gerçek uygulama"
+       style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#141414;opacity:0;transition:opacity .6s;display:block;"/>
+  <div class="s2cap">Gerçek 3B — planından anında, tarayıcıda</div>
 </div>
 
 <!-- ══ S3 ══ -->
