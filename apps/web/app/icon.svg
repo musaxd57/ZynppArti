@@ -1,5 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#5B5BD6"/>
-  <path d="M7 13 L7 7 L13 7 M25 19 L25 25 L19 25" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="13" y="13" width="6" height="6" rx="1.2" fill="#fff"/>
+  <!-- Mark, kareyi tamamen doldurmasın diye ~3.5px şeffaf kenar boşluğuyla içe alındı (sekme ikonu YouTube gibi ferah görünsün). -->
+  <g transform="translate(3.5 3.5) scale(0.78125)">
+    <rect width="32" height="32" rx="7" fill="#5B5BD6"/>
+    <path d="M7 13 L7 7 L13 7 M25 19 L25 25 L19 25" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="13" y="13" width="6" height="6" rx="1.2" fill="#fff"/>
+  </g>
 </svg>

@@ -97,15 +97,44 @@ function Layer({
   // Görsel verilmediyse İLLÜSTRATİF içerik (hero mockup ile aynı dil): plan = çizgi kat planı,
   // render = gradyan iç mekan sahnesi. Gerçek görsel gelince planSrc/renderSrc ile değişir.
   if (tone === "render") {
+    // İLLÜSTRATİF iç mekân render'ı: arka duvar + büyük pencere (gün batımı) + kanepe + halı + sıcak ışık.
+    // Amaç görsel olarak NET olsun: aynı plan → fotogerçekçi salon. Gerçek görsel gelince renderSrc ile değişir.
     return (
-      <div className="absolute inset-0" style={{ background: "linear-gradient(160deg,#3a3357 0%,#6b5e8c 42%,#c39d7e 82%,#e8cda6 100%)" }}>
-        <div className="absolute right-[14%] top-[16%] h-12 w-12 rounded-full" style={{ background: "radial-gradient(circle,#fff6e0,rgba(255,246,224,0) 70%)" }} />
-        <div className="absolute inset-x-0 bottom-0 h-1/3" style={{ background: "linear-gradient(180deg,transparent,rgba(18,14,28,0.5))" }} />
-        <div className="absolute bottom-[14%] left-[12%] flex gap-2">
-          <span className="h-2 w-16 rounded-full bg-white/70" />
-          <span className="h-2 w-9 rounded-full bg-white/40" />
-        </div>
-        <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-md bg-black/35 px-3 py-1 text-[11px] font-medium text-white/90">{label} · örnek</span>
+      <div className="absolute inset-0">
+        <svg viewBox="0 0 320 240" preserveAspectRatio="xMidYMid slice" className="h-full w-full">
+          <defs>
+            <linearGradient id="ba-sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f3b06a" />
+              <stop offset="45%" stopColor="#d98a86" />
+              <stop offset="100%" stopColor="#7c6597" />
+            </linearGradient>
+            <radialGradient id="ba-warm" cx="62%" cy="48%" r="70%">
+              <stop offset="0%" stopColor="rgba(255,221,160,0.34)" />
+              <stop offset="60%" stopColor="rgba(255,221,160,0)" />
+            </radialGradient>
+          </defs>
+          {/* arka duvar + zemin */}
+          <rect width="320" height="158" fill="#2b2640" />
+          <rect y="158" width="320" height="82" fill="#3b3247" />
+          <rect y="156" width="320" height="4" fill="#211c30" />
+          {/* büyük pencere — gün batımı */}
+          <rect x="168" y="28" width="124" height="124" fill="url(#ba-sky)" />
+          <circle cx="206" cy="118" r="15" fill="#ffe7b4" opacity="0.92" />
+          <rect x="168" y="28" width="124" height="124" fill="none" stroke="#171322" strokeWidth="5" />
+          <line x1="230" y1="28" x2="230" y2="152" stroke="#171322" strokeWidth="3.5" />
+          <line x1="168" y1="90" x2="292" y2="90" stroke="#171322" strokeWidth="3.5" />
+          {/* kanepe + halı */}
+          <ellipse cx="92" cy="206" rx="82" ry="15" fill="#332b47" />
+          <rect x="22" y="150" width="116" height="30" rx="8" fill="#7a6c9e" />
+          <rect x="22" y="138" width="116" height="22" rx="9" fill="#8a7cae" />
+          <rect x="18" y="150" width="16" height="40" rx="5" fill="#6b5e8c" />
+          <rect x="126" y="150" width="16" height="40" rx="5" fill="#6b5e8c" />
+          {/* yan sehpa + lamba ışığı */}
+          <rect x="156" y="170" width="22" height="22" rx="3" fill="#4a4060" />
+          {/* sıcak ışık katmanı */}
+          <rect width="320" height="240" fill="url(#ba-warm)" />
+        </svg>
+        <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-md bg-black/40 px-3 py-1 text-[11px] font-medium text-white/90">{label} · örnek</span>
       </div>
     );
   }

@@ -47,26 +47,34 @@ export default function HeroMockup() {
           <div className="flex w-[190px] shrink-0 flex-col gap-2 border-r border-[var(--border)] bg-[var(--bg-3)] p-3">
             <PanelRow label="KATMANLAR" badge="2" />
             <PanelRow label="BLOKLAR" />
+            {/* COPİLOT = deterministik, ATIFLI yönetmelik bulguları (gerçek app'teki gibi — sohbet DEĞİL).
+                AI'a yazılan istem ayrı "Vesna AI" baloncuğunda (tuvalin üstünde, aşağıda). */}
             <div className="overflow-hidden rounded-[10px] border border-[var(--accent)] bg-[var(--bg-2)] shadow-[0_0_0_3px_var(--accent-soft),inset_0_1px_0_var(--hi)]">
               <div className="flex items-center gap-2 px-3 py-[11px]">
                 <Sparkle width={13} height={13} className="text-[var(--accent)]" />
                 <span className="flex-1 text-[11.5px] font-semibold tracking-wide text-[var(--text)]">COPİLOT</span>
-                <span className="text-[10px] font-semibold text-[var(--accent)]">8 bulgu</span>
+                <span className="text-[10px] font-semibold text-[var(--accent)]">3 bulgu</span>
               </div>
-              <div className="flex flex-col gap-2 px-3 pb-3">
-                <div className="max-w-[92%] self-end rounded-[10px_10px_3px_10px] bg-[var(--accent)] px-2.5 py-[7px] text-[11px] leading-snug text-white">90 m² 3+1 daire planı öner</div>
-                <div className="rounded-[10px_10px_10px_3px] border border-[var(--border)] bg-[var(--bg-3)] px-2.5 py-[7px] text-[11px] leading-relaxed text-[var(--text-2)]">
-                  3 oda + salon hazır. Islak hacimler şafta yakın. <span className="text-[var(--accent)]">TS 9111</span> notu eklendi.
-                </div>
-                <div className="flex items-center gap-1.5 text-[10.5px] text-[var(--accent)]">
-                  <span className="v-pulse h-[5px] w-[5px] rounded-full bg-[var(--accent)]" /> Render üretiliyor…
-                </div>
+              <div className="flex flex-col gap-1.5 px-3 pb-3">
+                <Finding ok text="Salon güney cephe — gün ışığı yeterli" cite="İmar" />
+                <Finding text="Banyo penceresiz — hava bacası gerekli" cite="TS 9111" />
+                <Finding ok text="Koridor 120 cm — erişilebilir" cite="TS 9111" />
               </div>
             </div>
           </div>
 
           {/* TUVAL */}
           <div className="v-grid relative min-w-0 flex-1 bg-[var(--bg)]">
+            {/* Vesna AI — bu planı üreten İSTEM (COPİLOT'tan ayrı; AI'a yazılan şey). */}
+            <div className="absolute bottom-3 left-3 z-10 flex max-w-[228px] items-start gap-2 rounded-xl border border-[var(--accent)] bg-[var(--bg-2)] px-2.5 py-2 shadow-[0_12px_34px_-14px_rgba(0,0,0,0.65)]">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[var(--accent)]">
+                <Sparkle width={11} height={11} className="text-white" />
+              </span>
+              <div className="min-w-0">
+                <div className="text-[9px] font-semibold uppercase tracking-wide text-[var(--accent)]">Vesna AI</div>
+                <div className="text-[11px] leading-snug text-[var(--text-2)]">“Ferah, geniş salonlu 3+1 daire çiz”</div>
+              </div>
+            </div>
             <svg viewBox="0 0 560 400" preserveAspectRatio="xMidYMid meet" className="block h-full w-full" role="img" aria-label="Örnek kat planı: Salon, Yatak Odası, Mutfak, Hol ve Banyo">
               <line x1="48" y1="26" x2="512" y2="26" stroke="var(--accent)" strokeWidth={1} opacity={0.7} />
               <line x1="48" y1="22" x2="48" y2="30" stroke="var(--accent)" strokeWidth={1} opacity={0.7} />
@@ -197,6 +205,18 @@ function PanelRow({ label, badge, value }: { label: string; badge?: string; valu
       <span className="flex-1 text-[11.5px] font-semibold tracking-wide text-[var(--text)]">{label}</span>
       {badge && <span className="text-[11px] text-[var(--text-3)]">{badge}</span>}
       {value && <span className="text-[11px] font-semibold text-[var(--accent)]">{value}</span>}
+    </div>
+  );
+}
+
+/** COPİLOT bulgu satırı — atıflı (kaynak gösteren) deterministik yönetmelik kontrolü. */
+function Finding({ ok, text, cite }: { ok?: boolean; text: string; cite: string }) {
+  return (
+    <div className="flex gap-1.5 rounded-lg bg-[var(--bg-3)] px-2 py-1.5">
+      <span className={`mt-px text-[10px] leading-none ${ok ? 'text-[var(--ok)]' : 'text-[#e0a23a]'}`}>{ok ? '✓' : '⚠'}</span>
+      <span className="text-[10.5px] leading-snug text-[var(--text-2)]">
+        {text} <span className="text-[var(--accent)]">· {cite}</span>
+      </span>
     </div>
   );
 }

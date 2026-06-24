@@ -108,7 +108,7 @@ export default function HomePage() {
               </p>
               <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-[0.85rem] text-[var(--text-3)]">
                 <ImageIcon width={14} height={14} />
-                İki katmana kendi plan &amp; render görselini verebilirsin
+                Solda çizgi planın, sağda AI render&apos;ı — kaydırıcıyla karşılaştır
               </div>
             </Reveal>
             <Reveal delay={100}>
