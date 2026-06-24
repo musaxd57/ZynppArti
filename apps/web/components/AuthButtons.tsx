@@ -19,8 +19,8 @@ export function AuthButtons() {
       <SignInButton mode="modal">
         <button
           type="button"
-          className="rounded-md px-3 py-1.5 text-sm font-medium transition-colors hover:bg-[var(--surface-2,#1c1c22)]"
-          style={{ color: 'var(--text-1, #e8e8ea)' }}
+          className="rounded-md px-3 py-1.5 text-sm font-medium transition-colors hover:bg-[rgba(128,128,128,0.15)]"
+          style={{ color: 'var(--text, #e8e8ea)' }}
         >
           Giriş Yap
         </button>
