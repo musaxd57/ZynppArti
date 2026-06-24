@@ -13,9 +13,14 @@ import { importDxf, type DxfImportResult } from './dxf-import';
  */
 const WASM_DIR = '';
 
-export async function importDwg(content: ArrayBuffer): Promise<DxfImportResult> {
+/**
+ * @param wasmDir wasm dosyasının bulunduğu dizin. Tarayıcıda **boş string** (apps/web/public
+ *   kökünden `/libredwg-web.wasm`). Node/sunucu (veya test) için node_modules'taki gerçek `wasm/`
+ *   dizini verilmeli — yoksa kütüphane FS kökünde `libredwg-web.wasm` arar ve patlar.
+ */
+export async function importDwg(content: ArrayBuffer, wasmDir: string = WASM_DIR): Promise<DxfImportResult> {
   const { LibreDwg } = await import('@mlightcad/libredwg-web');
-  const lib = await LibreDwg.create(WASM_DIR);
+  const lib = await LibreDwg.create(wasmDir);
   const dxf = lib.dwg_write_dxf(content);
   if (!dxf) throw new Error('DWG çözülemedi (dönüşüm boş döndü).');
   const text = typeof dxf === 'string' ? dxf : new TextDecoder().decode(dxf);

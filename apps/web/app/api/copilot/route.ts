@@ -4,6 +4,7 @@ import {
   askCopilotStream,
   askDesignVariants,
   renderImage,
+  OPENAI_IMAGE_MODEL,
   NoProviderError,
   type ChatMessage,
   type CopilotContext,
@@ -113,10 +114,12 @@ export async function POST(req: Request): Promise<Response> {
       return Response.json({ mode: 'render', image });
     } catch (e) {
       console.error('Render başarısız:', e);
+      // Gerçek nedeni yüzeye çıkar (model erişimi / fatura / içerik politikası) → teşhis kolaylaşsın.
+      const detail = e instanceof Error ? e.message : String(e);
+      const model = process.env.OPENAI_IMAGE_MODEL ?? OPENAI_IMAGE_MODEL;
       return Response.json(
         {
-          error:
-            'Görsel üretilemedi. Modele erişimin yoksa apps/web/.env.local içine OPENAI_IMAGE_MODEL=dall-e-3 ekleyip tekrar dene.',
+          error: `Görsel üretilemedi (model: ${model}). ${detail} — "${model}" modeline erişimin yoksa apps/web/.env.local içine OPENAI_IMAGE_MODEL=dall-e-3 ekleyip tekrar dene.`,
         },
         { status: 500 },
       );

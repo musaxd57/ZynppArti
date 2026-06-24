@@ -5,6 +5,12 @@
 
 ---
 
+## ADR-0045 — Boş AI yanıtı = başarısızlık; araç metni için `ctx.requestText`; `Comment.resolved`
+**Tarih:** 2026-06-24 · **Durum:** Kabul (YARIN §2 hızlı kazanımlar; maliyetsiz/deterministik)
+**Bağlam:** Canlı kullanımda üç küçük boşluk: (1) bir AI sağlayıcı **boş string** dönerse `askCopilot` bunu "başarı" sayıp boş baloncuk gösteriyordu (fallback tetiklenmiyordu); (2) açıklama/yorum araçları hâlâ çirkin/bloklayan `window.prompt` kullanıyordu (kalibrasyon temalı diyaloğa geçmişti, bunlar geri kalmıştı); (3) yorumlar yalnız eklenebiliyordu — düzenleme/silme/çözüldü işareti yoktu (markup'ın temel ihtiyacı).
+**Karar:** (1) `askCopilot`/`askCopilotStream` boş/yalnız-boşluk yanıtı (veya hiç parça yaymadan biten akışı) **başarısızlık** sayıp zincirdeki sıradaki sağlayıcıya düşer (+3 birim test, mock sağlayıcı). (2) `ToolContext`'e `requestText(message, initial?)` eklendi (`requestCalibration` deseni); `AnnotationTool` + `CommentTool` bunu kullanır, enjekte edilmemişse `window.prompt` yedek; akış asenkron. Web tarafında temalı `promptDialog`'a bağlanır. (3) `Comment.resolved?: boolean` (serialize/clone spread'le otomatik taşınır — format kırılmaz); çözülmüş yorum soluk gri + ✓ render edilir. Yoruma çift tık → engine `setCommentActivateHandler` → **CommentDialog** (calibrate-dialog modül-store deseni): metni düzenle / çözüldü değiştir / sil (Command'lerle: UpdateEntity/RemoveEntity).
+**Sonuç:** Boş yanıt artık sessizce yutulmuyor; metin/yorum girişi temalı; markup tam döngüye (düzenle/çöz/sil) kavuştu. Ayrıca: `importDwg(content, wasmDir?)` opsiyonel dizin alır (tarayıcıda boş='/'; Node/sunucu node_modules wasm'ını gösterir) → gerçek DWG (annotation/scaling/multileader) Node'da doğrulandı (2337 duvar + 24 metin, in→cm). Kapı/pencere "bug"ı incelendi: deterministik hat `kind`'ı uçtan uca koruyor → kod doğru, şüphe LLM etiketlemesinde; DESIGN_SYSTEM prompt'u netleştirildi. Takas yok (geriye uyumlu, salt ekleme).
+
 ## ADR-0044 — Gerçek-zamanlı işbirliği v1 temeli (Yjs + broadcast sync sunucusu)
 **Tarih:** 2026-06-23 · **Durum:** Kabul (ADR-0004'ü uygular; Moses "yap" dedi) · **Kapsam: v1 TEMEL**
 **Bağlam:** Faz 3 multiplayer (ADR-0004: Yjs-first). Moses üç büyük işi sırayla istedi; bu üçüncüsü. Tam multiplayer (Command-tabanlı undo köşe durumları, katman-döngü invariant'ı, sunucu otoritesi/kalıcılık, auth) büyük + altyapı gerektirir; bu v1 çalışan bir temel kurar.

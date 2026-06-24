@@ -26,18 +26,23 @@ export class CommentTool implements SceneTool {
 
   onPointerDown(p: ScenePointer): void {
     const at = this.ctx.snap(p.world);
-    const text = typeof window !== 'undefined' ? window.prompt('Yorum:') : null;
-    if (text == null) return;
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    const comment: Comment = {
-      id: createEntityId(),
-      type: 'comment',
-      layerId: 'comment',
-      position: at,
-      text: trimmed,
-    };
-    this.ctx.history.dispatch(new AddEntity(comment));
+    // Temalı diyalog (yoksa window.prompt yedeği). Asenkron → metin gelince iğne ekle.
+    const ask: Promise<string | null> = this.ctx.requestText
+      ? this.ctx.requestText('Yorum:')
+      : Promise.resolve(typeof window !== 'undefined' ? window.prompt('Yorum:') : null);
+    void ask.then((text) => {
+      if (text == null) return;
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      const comment: Comment = {
+        id: createEntityId(),
+        type: 'comment',
+        layerId: 'comment',
+        position: at,
+        text: trimmed,
+      };
+      this.ctx.history.dispatch(new AddEntity(comment));
+    });
   }
 
   onDeactivate(): void {
