@@ -75,46 +75,54 @@ export default function HeroMockup() {
                 <div className="text-[11px] leading-snug text-[var(--text-2)]">“Ferah, geniş salonlu 3+1 daire çiz”</div>
               </div>
             </div>
-            <svg viewBox="0 0 560 400" preserveAspectRatio="xMidYMid meet" className="block h-full w-full" role="img" aria-label="Örnek kat planı: Salon, Yatak Odası, Mutfak, Hol ve Banyo">
+            <svg viewBox="0 0 560 400" preserveAspectRatio="xMidYMid meet" className="block h-full w-full" role="img" aria-label="Örnek 3+1 kat planı: Salon, Ebeveyn, Yatak Odası, Çocuk Odası, Mutfak, Banyo ve Antre">
               <line x1="48" y1="26" x2="512" y2="26" stroke="var(--accent)" strokeWidth={1} opacity={0.7} />
               <line x1="48" y1="22" x2="48" y2="30" stroke="var(--accent)" strokeWidth={1} opacity={0.7} />
               <line x1="512" y1="22" x2="512" y2="30" stroke="var(--accent)" strokeWidth={1} opacity={0.7} />
               <rect x="266" y="18" width="46" height="16" rx="3" fill="var(--bg-2)" stroke="var(--accent)" strokeWidth={0.8} />
               <text x="289" y="29.5" textAnchor="middle" fill="var(--accent)" fontSize="10" fontWeight="600">11.60 m</text>
 
-              {/* Oda dolguları (tutarlı 5 oda; Salon seçili=accent) */}
+              {/* GERÇEK 3+1: Salon + Ebeveyn + Yatak Odası + Çocuk Odası (3 yatak) + Mutfak + Banyo + merkezi Antre.
+                  ÜST şerit: Salon | Ebeveyn | Yatak Odası — ALT şerit: Mutfak | Banyo | Antre | Çocuk Odası */}
               <g className="v-in" style={{ animationDelay: "1.2s" }}>
-                <rect x="300" y="44" width="212" height="166" fill="rgba(99,110,224,0.07)" />
-                <rect x="300" y="210" width="212" height="146" fill="rgba(64,176,150,0.08)" />
-                <rect x="48" y="244" width="128" height="112" fill="rgba(176,150,110,0.07)" />
-                <rect x="176" y="244" width="124" height="112" fill="rgba(99,110,224,0.05)" />
+                <rect x="246" y="44" width="136" height="162" fill="rgba(99,110,224,0.06)" />
+                <rect x="382" y="44" width="130" height="162" fill="rgba(99,110,224,0.045)" />
+                <rect x="48" y="206" width="120" height="150" fill="rgba(64,176,150,0.07)" />
+                <rect x="168" y="206" width="84" height="150" fill="rgba(99,110,224,0.05)" />
+                <rect x="252" y="206" width="88" height="150" fill="rgba(176,150,110,0.06)" />
+                <rect x="340" y="206" width="172" height="150" fill="rgba(99,110,224,0.045)" />
               </g>
-              <rect x="48" y="44" width="252" height="200" fill="var(--accent-soft)" className="v-in" />
+              <rect x="48" y="44" width="198" height="162" fill="var(--accent-soft)" className="v-in" />
               {/* Dış duvar */}
               <rect x="48" y="44" width="464" height="312" fill="none" stroke="var(--text-2)" strokeWidth={3.5} className="v-draw" />
-              {/* İç duvarlar: x300 dikey (sol|sağ), y244 sol-yatay (Salon altı), x176 (Hol|Banyo), y210 sağ-yatay (Yatak|Mutfak) */}
-              <path d="M300 44 L300 356 M48 244 L300 244 M176 244 L176 356 M300 210 L512 210" fill="none" stroke="var(--text-2)" strokeWidth={3} className="v-draw-2" />
-              {/* Kapı yayları (kapılar) */}
-              <path d="M300 96 A36 36 0 0 0 264 132" fill="none" stroke="var(--text-3)" strokeWidth={1.2} opacity={0.75} />
-              <path d="M112 244 A34 34 0 0 1 146 210" fill="none" stroke="var(--text-3)" strokeWidth={1.2} opacity={0.75} />
-              <path d="M300 286 A34 34 0 0 1 334 320" fill="none" stroke="var(--text-3)" strokeWidth={1.2} opacity={0.75} />
+              {/* İç duvarlar: üst dikeyler x246/x382, orta yatay y206, alt dikeyler x168/x252/x340 */}
+              <path d="M246 44 L246 206 M382 44 L382 206 M48 206 L512 206 M168 206 L168 356 M252 206 L252 356 M340 206 L340 356" fill="none" stroke="var(--text-2)" strokeWidth={3} className="v-draw-2" />
+              {/* Kapı yayları */}
+              <path d="M246 96 A32 32 0 0 0 214 128" fill="none" stroke="var(--text-3)" strokeWidth={1.2} opacity={0.7} />
+              <path d="M296 206 A30 30 0 0 1 326 236" fill="none" stroke="var(--text-3)" strokeWidth={1.2} opacity={0.7} />
+              <path d="M340 256 A28 28 0 0 1 368 284" fill="none" stroke="var(--text-3)" strokeWidth={1.2} opacity={0.7} />
+              <path d="M168 250 A28 28 0 0 1 196 278" fill="none" stroke="var(--text-3)" strokeWidth={1.2} opacity={0.7} />
 
               {/* Salon seçim köşeleri */}
               <g fill="var(--accent)">
-                <rect x="44" y="40" width="8" height="8" /><rect x="296" y="40" width="8" height="8" />
-                <rect x="44" y="240" width="8" height="8" /><rect x="296" y="240" width="8" height="8" />
+                <rect x="44" y="40" width="8" height="8" /><rect x="242" y="40" width="8" height="8" />
+                <rect x="44" y="202" width="8" height="8" /><rect x="242" y="202" width="8" height="8" />
               </g>
 
-              <text x="174" y="138" textAnchor="middle" fill="var(--text)" fontSize="14" fontWeight="600">Salon</text>
-              <text x="174" y="156" textAnchor="middle" fill="var(--accent)" fontSize="12" fontWeight="600">32.4 m²</text>
-              <text x="406" y="121" textAnchor="middle" fill="var(--text-2)" fontSize="13" fontWeight="600">Yatak Odası</text>
-              <text x="406" y="138" textAnchor="middle" fill="var(--text-3)" fontSize="11">16.0 m²</text>
-              <text x="406" y="281" textAnchor="middle" fill="var(--text-2)" fontSize="13" fontWeight="600">Mutfak</text>
-              <text x="406" y="298" textAnchor="middle" fill="var(--text-3)" fontSize="11">12.2 m²</text>
-              <text x="112" y="296" textAnchor="middle" fill="var(--text-2)" fontSize="12" fontWeight="600">Hol</text>
-              <text x="112" y="312" textAnchor="middle" fill="var(--text-3)" fontSize="10">6.8 m²</text>
-              <text x="238" y="296" textAnchor="middle" fill="var(--text-2)" fontSize="12" fontWeight="600">Banyo</text>
-              <text x="238" y="312" textAnchor="middle" fill="var(--text-3)" fontSize="10">4.5 m²</text>
+              <text x="147" y="118" textAnchor="middle" fill="var(--text)" fontSize="14" fontWeight="600">Salon</text>
+              <text x="147" y="136" textAnchor="middle" fill="var(--accent)" fontSize="12" fontWeight="600">28.0 m²</text>
+              <text x="314" y="117" textAnchor="middle" fill="var(--text-2)" fontSize="12.5" fontWeight="600">Ebeveyn</text>
+              <text x="314" y="134" textAnchor="middle" fill="var(--text-3)" fontSize="11">14.0 m²</text>
+              <text x="447" y="117" textAnchor="middle" fill="var(--text-2)" fontSize="12.5" fontWeight="600">Yatak Odası</text>
+              <text x="447" y="134" textAnchor="middle" fill="var(--text-3)" fontSize="11">12.0 m²</text>
+              <text x="108" y="283" textAnchor="middle" fill="var(--text-2)" fontSize="11.5" fontWeight="600">Mutfak</text>
+              <text x="108" y="299" textAnchor="middle" fill="var(--text-3)" fontSize="10">9.0 m²</text>
+              <text x="210" y="283" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Banyo</text>
+              <text x="210" y="299" textAnchor="middle" fill="var(--text-3)" fontSize="10">4.5 m²</text>
+              <text x="296" y="283" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Antre</text>
+              <text x="296" y="299" textAnchor="middle" fill="var(--text-3)" fontSize="10">3.5 m²</text>
+              <text x="426" y="283" textAnchor="middle" fill="var(--text-2)" fontSize="12" fontWeight="600">Çocuk Odası</text>
+              <text x="426" y="299" textAnchor="middle" fill="var(--text-3)" fontSize="10">11.0 m²</text>
             </svg>
 
             {/* canlı paylaş / 3B */}

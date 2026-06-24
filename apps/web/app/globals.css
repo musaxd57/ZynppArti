@@ -174,6 +174,9 @@ textarea {
  */
 body:not(.app-shell) {
   background-color: var(--bg);
+  /* KRİTİK: genel `body{color:var(--text-1)}` app-token'ı (HEP açık-renk) → açık rengi olmayan
+     başlıklar (h1/h2) light temada okunmuyordu. Pazarlamada tema-uyumlu --text'e geç. */
+  color: var(--text);
   background-image:
     radial-gradient(900px 620px at 12% 0%, rgba(99, 99, 224, 0.06), transparent 56%),
     radial-gradient(760px 640px at 100% 22%, rgba(99, 99, 224, 0.05), transparent 58%);
