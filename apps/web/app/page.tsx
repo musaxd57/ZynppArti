@@ -27,6 +27,7 @@ export default function Landing() {
         <nav className="flex items-center gap-5 text-sm" style={{ color: 'var(--text-2, #c4c4ca)' }}>
           <a href="#ozellikler" className="hidden hover:underline sm:inline">Özellikler</a>
           <a href="#neden" className="hidden hover:underline sm:inline">Neden Vesna</a>
+          <Link href="/fiyatlandirma" className="hidden hover:underline sm:inline">Fiyatlar</Link>
           <Link
             href="/app"
             className="rounded-md px-4 py-1.5 font-semibold text-white transition-opacity hover:opacity-90"
@@ -127,6 +128,7 @@ export default function Landing() {
           <span>© 2026 Vesna · vesna.design</span>
           <nav className="flex items-center gap-5">
             <Link href="/app" className="hover:underline">Uygulama</Link>
+            <Link href="/fiyatlandirma" className="hover:underline">Fiyatlar</Link>
             <Link href="/gizlilik" className="hover:underline">Gizlilik</Link>
             <Link href="/kosullar" className="hover:underline">Kullanım Koşulları</Link>
           </nav>
