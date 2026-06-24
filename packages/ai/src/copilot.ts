@@ -47,6 +47,12 @@ export async function askCopilot(
     if (!provider) continue;
     try {
       const answer = await provider.chat(messages, { system, maxTokens });
+      // Boş/yalnız-boşluk yanıt = başarısızlık say → sıradaki sağlayıcıya düş (boş baloncuk gösterme).
+      if (answer.trim().length === 0) {
+        lastErr = new Error(`Sağlayıcı "${name}" boş yanıt döndürdü.`);
+        console.error(`Copilot sağlayıcı "${name}" boş yanıt verdi, fallback deneniyor.`);
+        continue;
+      }
       return { answer, provider: name, model: provider.model, tier };
     } catch (e) {
       lastErr = e;
@@ -90,6 +96,12 @@ export async function askCopilotStream(
         started = true;
         onDelta(d);
       });
+      // Akış hatasız bitti ama tek bir parça bile gelmediyse = boş yanıt → sıradakine düş.
+      if (!started) {
+        lastErr = new Error(`Sağlayıcı "${name}" boş akış döndürdü.`);
+        console.error(`Copilot stream sağlayıcı "${name}" boş akış verdi, fallback deneniyor.`);
+        continue;
+      }
       return;
     } catch (e) {
       lastErr = e;
