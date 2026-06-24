@@ -14,6 +14,8 @@ const MARK_COLOR = 0xffb454;
 export class CommentTool implements SceneTool {
   private readonly preview = new Graphics();
   private cursor: Vec2 | null = null;
+  // Araç değişince artar → bekleyen yorum diyaloğu geç çözülse bile yanlış-context'e iğne eklenmez.
+  private gen = 0;
 
   constructor(private readonly ctx: ToolContext) {
     this.ctx.overlay.addChild(this.preview);
@@ -26,12 +28,14 @@ export class CommentTool implements SceneTool {
 
   onPointerDown(p: ScenePointer): void {
     const at = this.ctx.snap(p.world);
+    const myGen = this.gen;
     // Temalı diyalog (yoksa window.prompt yedeği). Asenkron → metin gelince iğne ekle.
     const ask: Promise<string | null> = this.ctx.requestText
       ? this.ctx.requestText('Yorum:')
       : Promise.resolve(typeof window !== 'undefined' ? window.prompt('Yorum:') : null);
     ask
       .then((text) => {
+        if (this.gen !== myGen) return; // araç değişti → yoksay
         if (text == null) return;
         const trimmed = text.trim();
         if (!trimmed) return;

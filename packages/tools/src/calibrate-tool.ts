@@ -16,6 +16,8 @@ export class CalibrateTool implements SceneTool {
   private readonly preview = new Graphics();
   private p1: Vec2 | null = null;
   private cursor: Vec2 | null = null;
+  // Araç değişince/Escape ile artar → bekleyen kalibrasyon diyaloğu geç çözülse bile ölçek uygulanmaz.
+  private gen = 0;
 
   constructor(private readonly ctx: ToolContext) {
     this.ctx.overlay.addChild(this.preview);
@@ -39,12 +41,14 @@ export class CalibrateTool implements SceneTool {
 
   onKeyDown(e: KeyboardEvent): void {
     if (e.key === 'Escape') {
+      this.gen++; // açık kalibrasyon diyaloğunu iptal et
       this.p1 = null;
       this.render();
     }
   }
 
   onDeactivate(): void {
+    this.gen++; // bekleyen kalibrasyon diyaloğunu geçersiz kıl
     this.p1 = null;
     this.cursor = null;
     this.preview.clear();
@@ -52,13 +56,15 @@ export class CalibrateTool implements SceneTool {
 
   private applyCalibration(a: Vec2, b: Vec2): void {
     const measured = distance(a, b);
-    if (measured === 0) return;
+    if (!(measured > 0)) return;
+    const myGen = this.gen;
     // Gerçek mesafeyi temalı diyalogtan al (yoksa window.prompt yedeği). Asenkron → sonra uygula.
     const ask: Promise<number | null> = this.ctx.requestCalibration
       ? this.ctx.requestCalibration(measured)
       : Promise.resolve(promptFallback());
     ask
       .then((real) => {
+        if (this.gen !== myGen) return; // araç değişti/iptal → ölçek uygulama
         if (real == null || !Number.isFinite(real) || real <= 0) return;
         const factor = real / measured;
         const walls = this.ctx.store.all().filter((e): e is Wall => e.type === 'wall');

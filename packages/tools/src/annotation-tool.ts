@@ -19,6 +19,9 @@ const MARK_COLOR = 0xffb454;
 export class AnnotationTool implements SceneTool {
   private readonly preview = new Graphics();
   private cursor: Vec2 | null = null;
+  // Asenkron metin diyaloğu için nesil (generation) jetonu: araç değişince (onDeactivate) artar →
+  // bekleyen diyalog geç çözülse bile artık aktif olmayan araca entity EKLENMEZ (yanlış-context yarışı).
+  private gen = 0;
 
   constructor(private readonly ctx: ToolContext) {
     this.ctx.overlay.addChild(this.preview);
@@ -31,12 +34,14 @@ export class AnnotationTool implements SceneTool {
 
   onPointerDown(p: ScenePointer): void {
     const at = this.ctx.snap(p.world);
+    const myGen = this.gen; // bu tıklamanın nesli; araç değişirse geçersiz olur
     // Temalı diyalog (yoksa window.prompt yedeği). Asenkron → metin gelince ekle.
     const ask: Promise<string | null> = this.ctx.requestText
       ? this.ctx.requestText('Metin:')
       : Promise.resolve(typeof window !== 'undefined' ? window.prompt('Metin:') : null);
     ask
       .then((text) => {
+        if (this.gen !== myGen) return; // araç değişti → bu sonucu yoksay
         if (text == null) return;
         const trimmed = text.trim();
         if (!trimmed) return;
@@ -54,6 +59,7 @@ export class AnnotationTool implements SceneTool {
   }
 
   onDeactivate(): void {
+    this.gen++; // bekleyen metin diyaloglarını geçersiz kıl
     this.cursor = null;
     this.preview.clear();
   }
