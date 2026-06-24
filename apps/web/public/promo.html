@@ -165,25 +165,25 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
 @keyframes sp{to{rotate:360deg;}}
 
 .sec-intro{width:100%;background:var(--s2);border-radius:8px;
-  padding:9px 11px;font-size:11px;color:var(--t2);margin-top:6px;flex:none;
+  padding:7px 11px;font-size:10.5px;color:var(--t2);margin-top:6px;flex:none;
   opacity:0;transition:opacity .3s;}
 .sec-intro.show{opacity:1;}
 
 .secard{width:100%;background:var(--s2);border:1px solid var(--bd);
-  border-radius:8px;padding:9px 11px;margin-top:6px;cursor:pointer;flex:none;
+  border-radius:8px;padding:7px 10px;margin-top:6px;cursor:pointer;flex:none;
   opacity:0;transform:translateY(6px);
   transition:opacity .3s,transform .3s,border-color .2s,background .2s;}
 .secard.show{opacity:1;transform:translateY(0);}
 .secard:hover{border-color:rgba(91,91,214,.45);}
-.scthumb{width:100%;height:66px;border-radius:6px;background:#0f1011;border:1px solid var(--bd);
-  margin-bottom:8px;overflow:hidden;}
+.scthumb{width:100%;height:44px;border-radius:6px;background:#0f1011;border:1px solid var(--bd);
+  margin-bottom:6px;overflow:hidden;}
 .scthumb svg{width:100%;height:100%;display:block;}
-.sch{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;}
-.sct{font-size:11.5px;font-weight:600;color:var(--t1);}
-.badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;
+.sch{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+.sct{font-size:11px;font-weight:600;color:var(--t1);}
+.badge{font-size:8.5px;font-weight:700;padding:1px 6px;border-radius:10px;
   background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3);}
-.scd{font-size:10px;color:var(--t2);line-height:1.4;margin-bottom:3px;}
-.scm{font-size:9.5px;color:var(--t3);}
+.scd{font-size:9.5px;color:var(--t2);line-height:1.35;margin-bottom:3px;}
+.scm{font-size:9px;color:var(--t3);}
 
 .secres{width:100%;font-size:10.5px;color:var(--t2);line-height:1.5;
   margin-top:8px;align-self:flex-start;
@@ -661,23 +661,23 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
 
       <!-- ZEMIN -->
       <polygon points="90,350 590,350 510,428 170,428"
-        fill="#0c0c12" stroke="#181824" stroke-width="1"/>
+        fill="#2b2b2b" stroke="#1a1a1a" stroke-width="1"/>
 
       <!-- ARKA DUVAR (en büyük yüzey, açık gri) -->
       <polygon points="130,100 550,100 550,350 130,350"
-        fill="#b8b8cc" stroke="#d0d0e4" stroke-width="1.5"/>
+        fill="#d2d2d8" stroke="#e2e2ea" stroke-width="1.5"/>
 
       <!-- SOL DUVAR -->
       <polygon points="90,145 130,100 130,350 90,395"
-        fill="#9898a8" stroke="#b0b0c0" stroke-width="1.5"/>
+        fill="#a8a8b4" stroke="#c0c0cc" stroke-width="1.5"/>
 
       <!-- SAĞ DUVAR -->
       <polygon points="550,100 590,145 590,395 550,350"
-        fill="#888898" stroke="#a0a0b0" stroke-width="1.5"/>
+        fill="#88889a" stroke="#9c9cae" stroke-width="1.5"/>
 
       <!-- TAVAN -->
       <polygon points="130,100 550,100 590,145 90,145"
-        fill="#c4c4d8" stroke="#d4d4e8" stroke-width="1.5"/>
+        fill="#dadae2" stroke="#eaeaf2" stroke-width="1.5"/>
 
       <!-- İÇ BÖLMELER — arka duvarda görünür çizgiler -->
       <line x1="310" y1="100" x2="310" y2="350" stroke="#6868a0" stroke-width="3"/>
@@ -781,7 +781,7 @@ function reset(){
   G('tab-s').classList.remove('act'); G('tab-c').classList.add('act');
   G('pane-s').classList.remove('act'); G('pane-c').classList.add('act');
   G('exc').style.display='flex';
-  G('bbl').classList.remove('show'); G('ald').classList.remove('show'); G('si').classList.remove('show');
+  G('bbl').style.display=''; G('bbl').classList.remove('show'); G('ald').classList.remove('show'); G('si').classList.remove('show');
   G('sc1').classList.remove('show'); G('sc2').classList.remove('show'); G('sr').classList.remove('show');
   G('sc1').style.borderColor=''; G('sc1').style.background='';
   G('ainp').textContent='Örn: 90 m² 3+1 daire çiz'; G('ainp').classList.remove('t');
@@ -799,7 +799,7 @@ const STEPS = [
   {t:1000,  f:()=>{ G('vai').style.boxShadow=''; G('lp-col').style.display='none'; G('aip').classList.add('in'); setCap('Vesna AI açıldı — Çiz sekmesi'); }},
   {t:2400,  f:()=>{ clrCap(); G('ainp').classList.add('t'); G('ainp').textContent='90 m² 3+1 daire planı'; }},
   {t:3400,  f:()=>{ G('exc').style.display='none'; G('bbl').classList.add('show'); G('ald').classList.add('show'); setCap('AI plan üretiyor…'); }},
-  {t:5000,  f:()=>{ G('ald').classList.remove('show'); G('si').classList.add('show'); G('sc1').classList.add('show'); G('sc2').classList.add('show'); setCap('2 plan hazır — Seçenek 1 seçiliyor'); }},
+  {t:5000,  f:()=>{ G('ald').classList.remove('show'); G('bbl').style.display='none'; G('si').classList.add('show'); G('sc1').classList.add('show'); G('sc2').classList.add('show'); setCap('2 plan hazır — Seçenek 1 seçiliyor'); }},
   {t:6800,  f:()=>{ G('sc1').style.borderColor='rgba(91,91,214,.7)'; G('sc1').style.background='rgba(91,91,214,.08)'; G('sr').classList.add('show'); setCap('Seçenek 1 çizildi — mahal & ölçü otomatik'); G('sbxy').textContent='X 5,40  Y 4,20'; drawWalls(); }},
   {t:7700,  f:()=>{ showPlan(); }},
   {t:8800,  f:()=>{ setCap('Mahal listesi ve m² otomatik'); buildRows(); G('rpbody').classList.add('on'); G('rptv').textContent='87,0 m²'; ['rpd','rptot','rpnet','rpbrt','rpsub','rptp','rpex'].forEach(id=>G(id).classList.add('on')); }},
