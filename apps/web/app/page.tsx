@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { RoomRedirect } from '@/components/RoomRedirect';
+import { AuthButtons } from '@/components/AuthButtons';
+
+// Clerk anahtarı varsa giriş/kayıt butonları gösterilir (yoksa gizli — anonim akış aynen çalışır).
+const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
 export const metadata: Metadata = {
   title: 'Vesna — Tarayıcıda mimari tasarım, m² otomasyonu ve yapay zekâ',
@@ -28,6 +32,7 @@ export default function Landing() {
           <a href="#ozellikler" className="hidden hover:underline sm:inline">Özellikler</a>
           <a href="#neden" className="hidden hover:underline sm:inline">Neden Vesna</a>
           <Link href="/fiyatlandirma" className="hidden hover:underline sm:inline">Fiyatlar</Link>
+          {clerkEnabled && <AuthButtons />}
           <Link
             href="/app"
             className="rounded-md px-4 py-1.5 font-semibold text-white transition-opacity hover:opacity-90"

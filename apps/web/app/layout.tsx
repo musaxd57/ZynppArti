@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Inter } from 'next/font/google';
+import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 
 // Premium UI tipografisi (redesign spec §2): Inter (değişken ağırlık → gövde 510).
@@ -17,8 +18,11 @@ export const metadata: Metadata = {
   description: 'Tarayıcıda çalışan işbirlikçi mimari tasarım, mahal/m² otomasyonu ve yapay zekâ asistanı.',
 };
 
+// Clerk anahtarı yoksa (yerel/CI build) ClerkProvider sarmalanmaz → build kırılmaz, anonim akış çalışır.
+const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+
 export default function RootLayout({ children }: { children: ReactNode }) {
-  return (
+  const tree = (
     <html lang="tr" className={inter.variable}>
       <body>
         <GlobalErrorHandlers />
@@ -30,4 +34,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </body>
     </html>
   );
+  // ClerkProvider yalnız anahtar varken → giriş aktif. Yoksa düz ağaç (auth'suz, ama uygulama tam çalışır).
+  return clerkEnabled ? <ClerkProvider>{tree}</ClerkProvider> : tree;
 }
