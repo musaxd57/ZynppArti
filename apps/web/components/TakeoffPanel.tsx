@@ -7,14 +7,30 @@ import {
   estimateCost,
   formatTRY,
   DEFAULT_STOREY_HEIGHT_CM,
+  DEFAULT_UNIT_PRICES,
   type Block,
   type EntityStore,
   type Opening,
   type Space,
   type Takeoff,
+  type UnitPrices,
   type Wall,
 } from '@zynpparti/document';
 import { Panel } from './Panel';
+
+const PRICES_KEY = 'vesna-unit-prices';
+/** Düzenlenebilir birim fiyat satırları (etiket + UnitPrices anahtarı + birim). */
+const PRICE_FIELDS: ReadonlyArray<{ key: keyof UnitPrices; label: string; unit: string }> = [
+  { key: 'wallMasonryM2', label: 'Duvar örgü', unit: '₺/m²' },
+  { key: 'plasterM2', label: 'Sıva', unit: '₺/m²' },
+  { key: 'electricalM2', label: 'Elektrik', unit: '₺/m²' },
+  { key: 'plumbingM2', label: 'Sıhhi', unit: '₺/m²' },
+  { key: 'paintM2', label: 'Boya', unit: '₺/m²' },
+  { key: 'floorM2', label: 'Döşeme', unit: '₺/m²' },
+  { key: 'skirtingM', label: 'Süpürgelik', unit: '₺/m' },
+  { key: 'door', label: 'Kapı', unit: '₺/ad' },
+  { key: 'window', label: 'Pencere', unit: '₺/ad' },
+];
 
 function getWalls(store: EntityStore): Wall[] {
   return store.all().filter((e): e is Wall => e.type === 'wall');
@@ -45,8 +61,43 @@ interface TakeoffPanelProps {
 export function TakeoffPanel({ store }: TakeoffPanelProps) {
   const [version, setVersion] = useState(0);
   const [storeyHeightCm, setStoreyHeightCm] = useState(DEFAULT_STOREY_HEIGHT_CM);
+  const [prices, setPrices] = useState<UnitPrices>(DEFAULT_UNIT_PRICES);
+  const [editPrices, setEditPrices] = useState(false);
 
   useEffect(() => store.subscribe(() => setVersion((v) => v + 1)), [store]);
+
+  // Birim fiyatlar localStorage'da kalıcı (kullanıcı kendi rayicini girer); bozuk kayıt → varsayılan.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PRICES_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw) as Partial<UnitPrices>;
+        setPrices((p) => ({ ...p, ...saved }));
+      }
+    } catch {
+      /* yoksay */
+    }
+  }, []);
+
+  function setPrice(key: keyof UnitPrices, value: number): void {
+    setPrices((p) => {
+      const next = { ...p, [key]: Number.isFinite(value) && value >= 0 ? value : 0 };
+      try {
+        localStorage.setItem(PRICES_KEY, JSON.stringify(next));
+      } catch {
+        /* yoksay */
+      }
+      return next;
+    });
+  }
+  function resetPrices(): void {
+    setPrices(DEFAULT_UNIT_PRICES);
+    try {
+      localStorage.removeItem(PRICES_KEY);
+    } catch {
+      /* yoksay */
+    }
+  }
 
   const t: Takeoff = useMemo(() => {
     try {
@@ -60,7 +111,7 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
     // version: store değişince yeniden hesapla
   }, [store, storeyHeightCm, version]);
 
-  const cost = useMemo(() => estimateCost(t), [t]);
+  const cost = useMemo(() => estimateCost(t, prices), [t, prices]);
 
   const isEmpty = t.wallLengthM === 0 && t.floorAreaM2 === 0 && t.blockSchedule.length === 0;
   if (isEmpty) return null;
@@ -232,8 +283,58 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
               <span className="tabular-nums">{formatTRY(cost.perM2)}/m²</span>
             </div>
           )}
+
+          <button
+            type="button"
+            onClick={() => setEditPrices((v) => !v)}
+            className="mt-1.5 self-start text-[11px] text-[var(--accent-text)] hover:underline"
+          >
+            {editPrices ? '▾ Birim fiyatları gizle' : '▸ Birim fiyatları düzenle'}
+          </button>
+          {editPrices && (
+            <div className="mt-1 rounded-md border border-white/10 bg-black/20 p-2">
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                {PRICE_FIELDS.map((f) => (
+                  <label key={f.key} className="flex items-center justify-between gap-1 text-[11px]">
+                    <span className="truncate opacity-70">{f.label}</span>
+                    <span className="flex items-center gap-0.5">
+                      <input
+                        type="number"
+                        min={0}
+                        value={prices[f.key]}
+                        onChange={(e) => setPrice(f.key, e.target.valueAsNumber)}
+                        className="w-[58px] rounded border border-white/10 bg-white/5 px-1 py-0.5 text-right tabular-nums outline-none focus:border-[var(--accent)]"
+                      />
+                      <span className="text-[9px] opacity-40">{f.unit}</span>
+                    </span>
+                  </label>
+                ))}
+                <label className="flex items-center justify-between gap-1 text-[11px]">
+                  <span className="truncate opacity-70">Genel gider+kâr</span>
+                  <span className="flex items-center gap-0.5">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={Math.round(prices.overheadRate * 100)}
+                      onChange={(e) => setPrice('overheadRate', (e.target.valueAsNumber || 0) / 100)}
+                      className="w-[58px] rounded border border-white/10 bg-white/5 px-1 py-0.5 text-right tabular-nums outline-none focus:border-[var(--accent)]"
+                    />
+                    <span className="text-[9px] opacity-40">%</span>
+                  </span>
+                </label>
+              </div>
+              <button
+                type="button"
+                onClick={resetPrices}
+                className="mt-1.5 text-[10px] opacity-50 hover:opacity-80 hover:underline"
+              >
+                Varsayılana sıfırla
+              </button>
+            </div>
+          )}
           <div className="mt-1 text-[10px] leading-tight opacity-40">
-            Kaba 2026 birim fiyat tahminidir; bölge/malzeme/işçilikle değişir. Tesisat alana yayılmış kabadır.
+            Kaba 2026 birim fiyat tahminidir; bölge/malzeme/işçilikle değişir. Fiyatları kendin düzenleyebilirsin (kaydedilir).
           </div>
         </div>
       </Panel>
