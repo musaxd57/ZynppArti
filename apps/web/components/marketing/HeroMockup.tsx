@@ -97,11 +97,31 @@ export default function HeroMockup() {
               <rect x="48" y="44" width="464" height="312" fill="none" stroke="var(--text-2)" strokeWidth={3.5} className="v-draw" />
               {/* İç duvarlar: üst dikeyler x246/x382, orta yatay y206, alt dikeyler x168/x252/x340 */}
               <path d="M246 44 L246 206 M382 44 L382 206 M48 206 L512 206 M168 206 L168 356 M252 206 L252 356 M340 206 L340 356" fill="none" stroke="var(--text-2)" strokeWidth={3} className="v-draw-2" />
-              {/* Kapı yayları */}
+              {/* Kapı yayları (iç geçişler) */}
               <path d="M246 96 A32 32 0 0 0 214 128" fill="none" stroke="var(--text-3)" strokeWidth={1.2} opacity={0.7} />
               <path d="M296 206 A30 30 0 0 1 326 236" fill="none" stroke="var(--text-3)" strokeWidth={1.2} opacity={0.7} />
               <path d="M340 256 A28 28 0 0 1 368 284" fill="none" stroke="var(--text-3)" strokeWidth={1.2} opacity={0.7} />
               <path d="M168 250 A28 28 0 0 1 196 278" fill="none" stroke="var(--text-3)" strokeWidth={1.2} opacity={0.7} />
+              <path d="M382 132 A26 26 0 0 1 408 158" fill="none" stroke="var(--text-3)" strokeWidth={1.2} opacity={0.7} />
+              <path d="M86 206 A24 24 0 0 1 110 230" fill="none" stroke="var(--text-3)" strokeWidth={1.2} opacity={0.7} />
+
+              {/* Pencereler — dış duvarda boşluk + cam çizgisi (yatay: üst/alt, dikey: sol/sağ) */}
+              <g>
+                <rect x="104" y="41" width="54" height="6" fill="var(--bg)" />
+                <line x1="104" y1="44" x2="158" y2="44" stroke="var(--accent)" strokeWidth={1.6} opacity={0.75} />
+                <rect x="420" y="41" width="50" height="6" fill="var(--bg)" />
+                <line x1="420" y1="44" x2="470" y2="44" stroke="var(--accent)" strokeWidth={1.6} opacity={0.75} />
+                <rect x="84" y="353" width="48" height="6" fill="var(--bg)" />
+                <line x1="84" y1="356" x2="132" y2="356" stroke="var(--accent)" strokeWidth={1.6} opacity={0.75} />
+                <rect x="398" y="353" width="56" height="6" fill="var(--bg)" />
+                <line x1="398" y1="356" x2="454" y2="356" stroke="var(--accent)" strokeWidth={1.6} opacity={0.75} />
+                <rect x="45" y="92" width="6" height="50" fill="var(--bg)" />
+                <line x1="48" y1="92" x2="48" y2="142" stroke="var(--accent)" strokeWidth={1.6} opacity={0.75} />
+                <rect x="509" y="84" width="6" height="46" fill="var(--bg)" />
+                <line x1="512" y1="84" x2="512" y2="130" stroke="var(--accent)" strokeWidth={1.6} opacity={0.75} />
+                <rect x="509" y="248" width="6" height="54" fill="var(--bg)" />
+                <line x1="512" y1="248" x2="512" y2="302" stroke="var(--accent)" strokeWidth={1.6} opacity={0.75} />
+              </g>
 
               {/* Salon seçim köşeleri */}
               <g fill="var(--accent)">

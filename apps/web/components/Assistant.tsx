@@ -613,7 +613,18 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
         : ['En küçük oda hangisi?', 'Koridor yönetmeliğe uygun mu?', 'Toplam alanım kaç m²?'];
 
   return (
-    <div className="fixed bottom-0 left-0 top-0 z-50 flex w-[420px] max-w-[92vw] flex-col border-r border-[var(--border-soft)] bg-[var(--overlay)] text-[var(--text-1)] shadow-2xl">
+    <>
+      {/* Çiz üretilirken: TUVAL ortasında dönen daire + "AI plan üretiyor" (sohbette gösterme — kullanıcı isteği).
+          Panel'in (420px) sağındaki tuval alanına ortalanır; tıklamayı engellemez. */}
+      {loadingMode === 'draw' && (
+        <div className="pointer-events-none fixed inset-y-0 left-[420px] right-0 z-40 hidden items-center justify-center sm:flex">
+          <div className="flex items-center gap-3 rounded-full border border-[var(--border-soft)] bg-[var(--surface-2)] px-5 py-3 text-sm font-medium text-[var(--text-1)] shadow-2xl">
+            <span className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-[var(--accent)]/30 border-t-[var(--accent)]" />
+            AI plan üretiyor…
+          </div>
+        </div>
+      )}
+      <div className="fixed bottom-0 left-0 top-0 z-50 flex w-[420px] max-w-[92vw] flex-col border-r border-[var(--border-soft)] bg-[var(--overlay)] text-[var(--text-1)] shadow-2xl">
       {/* Başlık */}
       <div className="flex items-center gap-2 border-b border-[var(--border-hair)] bg-[var(--surface-2)] px-4 py-3">
         <span className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--accent)] text-white">
@@ -760,18 +771,14 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
             ))}
           </div>
         )}
+        {/* Çiz modunda sohbet göstergesi YOK — üretim tuvalde dönen daireyle gösteriliyor (kullanıcı isteği). */}
         {loadingMode === mode &&
+          mode !== 'draw' &&
           (() => {
             const last = messages[messages.length - 1];
             // Daktilo/akış başladıysa (dolu asistan balonu) göstergeyi gizle.
             if (last?.role === 'assistant' && (last.content || last.image)) return null;
-            // Etikete mod adını da yaz → hangi sohbette çalıştığı kuşkuya yer bırakmadan belli olsun.
-            const label =
-              mode === 'draw'
-                ? 'Çiz · plan üretiliyor'
-                : mode === 'render'
-                  ? 'Render · görsel üretiliyor'
-                  : 'Sor · Vesna yazıyor';
+            const label = mode === 'render' ? 'Render · görsel üretiliyor' : 'Sor · Vesna yazıyor';
             return <TypingDots label={label} />;
           })()}
       </div>
@@ -818,5 +825,6 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
         </div>
       </div>
     </div>
+    </>
   );
 }
