@@ -6,48 +6,78 @@
 
 ---
 
-## ✅ 2026-06-23 — bugün ne yaptık (özet)
-- **CANLI YAYINA ALDIK:** `vesna.design` (Vercel) + sync sunucusu (Railway). Domain + SSL + DNS bağlandı.
-- AI adı **Arki → Vesna** (domain: vesna.design). 3 AI anahtarı Vercel'de.
-- **DWG import** eklendi (libredwg WASM) — bir tarayıcı hatası bulundu ve düzeltildi.
-- **Yorum/markup** (💬), **kamera keyframe sunumu** (3B), **presence-seçim** (canlı), **3B kesit + glTF** eklendi.
-- **Hız:** AI routing OpenAI-öncelikli yapıldı (warm ~1 sn; eskiden ~8 sn).
-- **5-ajan denetim turu** + ~11 düzeltme + 5 yeni test. Zincir yeşil, deploy edildi.
+## ✅ 2026-06-24 gece — bugün ne yaptık (özet)
+- **Promo videosu** gerçek app paritesine çekildi: mantıklı **3+1 plan + GİRİŞ KAPISI** + mutfak-koridor
+  bitişiği; scrubbable zaman-çubuğu + tıkla-duraklat; 2 seçenek görünür; **GERÇEK 3B GIF** (View3D kaydı).
+- **HeroMockup** aynı mantığa çekildi (giriş→Hol→ferah salon→3+1). **AI Çiz promptu**: zorunlu giriş kapısı +
+  gerçekçilik + bağlama uygun oda adları. **Üst-üste etiket bug'ı**: `polygonLabelPoint` (erişilemezlik kutbu).
+- **Maliyet** geliştirildi: elektrik+sıhhi tesisat + kategoriler + genel gider/kâr + ₺/m² + **düzenlenebilir
+  birim fiyatlar** (localStorage) + gerçekçi 2026 TR rayiç (~14.5k ₺/m²).
+- **2 denetim dalgası (22+13 ajan) + 1 tasarım araştırması (11 ajan, 104 ders)** koştu. Uygulandı:
+  14 quick-win (klavye/toolbar/NaN-guard/stream-flush) + **Y1** (oda bire-bir eşleştirme — çift-ad bug) +
+  **Y2** (artımlı viewport cull, 500k perf) + serialize derin doğrulama + store.emit dayanıklılık + tool
+  gen-token (async diyalog yarışı) + dxf NaN-guard + **motion token + a11y tabanı** (focus-visible,
+  reduced-motion, buton-press) + **Cmd+K ok-navigasyonu** + AuthButtons light-fix + **SEO** (robots/sitemap/OG).
+- **Wave-2 regresyon kapatma:** R1 (comment-tool gen++), R2 (cull GC + prevVisible sızıntı), H5 (maliyet NaN).
+- Hepsi yeşil (typecheck 9/9 · ~317 test · build) ve **main'e merge + canlı deploy** edildi.
 
 ---
 
-## 🌅 YARIN — yapılacaklar (öncelik sırası)
+## 🌅 YARIN — sıradaki tur (~2 saat, kök-neden kümeleri sırasıyla)
 
-### 1) Canlıda gerçek test (Moses + Claude birlikte) — ÖNCE BU
-- [ ] `vesna.design`'da **DWG dosyası yükle** → çiziliyor mu? (bugün düzeltildi, tarayıcıda doğrulanmadı)
-- [ ] **Vesna**'ya Sor/Çiz/Render → üçü de cevap veriyor mu, hız iyi mi?
-- [ ] **İki sekmede Canlı Paylaş** → imleç + seçim + çizim eşleşiyor mu?
-- [ ] Telefon/tablet'te aç → kullanılabilir mi (responsive kontrol)?
-- > Bulunan her hatayı buraya not düş, sonra düzeltiriz.
+> Kaynak: 2026-06-24 gece denetimleri. Her küme bitince typecheck+test+build yeşil → commit → main merge → push.
+> Tam raporlar: `tasks/wco1qdq91.output` (wave-2 bug), `tasks/wlinyl6yt.output` (tasarım 104 ders).
 
-### 🐞 Yarın teyit edilecek şüpheli durumlar (Moses'ın gözlemi)
-- [x] **Kapı/pencere sayımı (2026-06-24 incelendi):** Deterministik hat **uçtan uca DOĞRU** — `kind` parse → validate → applyLayout (Assistant.tsx) → 2B render (render-opening) → 3B (wall3d) → sayaç (buildContext) boyunca hiç takas/kayıp yok. Yani kod kapıyı pencere SAYMIYOR. Eğer canlıda hâlâ yanlış görünüyorsa sebep **LLM'in etiketlemesi** (iç boşluğu "window" diye üretiyor olabilir). Önlem: DESIGN_SYSTEM prompt'u kind seçimini netleştirecek şekilde güçlendirildi (iç=door, dış=window). → **Moses canlıda tekrar dene; hâlâ yanlışsa geometrik güvenlik ağı ekleriz** (iç/dış duvara göre otomatik düzelt).
-- > NOT: Çiz modu canlıda ÇALIŞIYOR ✓ (Vesna 3+1 plan çizdi: Salon×2, Yatak×2, Mutfak, Banyo).
+### KÜME 1 — Türetilmiş Space kimliği & kalıcılığı (EN YÜKSEK; tek çözüm 6 bulgu)
+**R3, H4, M5, M6, M7, M10.** `RoomManager.recompute()` her sefer YENİ ID'li space üretiyor → undo/redo,
+kaydet-aç, collab senkronu kullanıcı oda adı/tip/malzemesini kaybediyor.
+- **Çözüm:** `packages/document` **centroid-anahtarlı kalıcı `RoomPropertyMap`** (name/roomType/material);
+  recompute oradan uygular; History'ye girmez ama kaydet-aç'a **sidecar** olarak girer.
+- M5: recompute Command-dışı mutasyon (§6.3) — `RoomCommand`'a sar veya istisnayı belgele + invariant testi.
+- R3: `collab/room-labels.ts` init `initialized` bayrağı (başlangıç yarışı). M6: Toolbar.onOpenJson eşleme.
 
-### 2) Hızlı kazanımlar (maliyetsiz, düşük risk) — ✅ 2026-06-24 TAMAM
-- [x] Yorum + metin ekleme `window.prompt` yerine **temalı diyalog** (`ctx.requestText` → promptDialog).
-- [x] Yorum için **düzenle / sil / "çözüldü" işareti** — yoruma çift tık → CommentDialog (Comment.resolved; çözülmüş = soluk + ✓).
-- [x] AI: bir sağlayıcı **boş cevap** dönerse sıradakine düşsün — askCopilot/askCopilotStream boş yanıtı başarısızlık sayıyor (+3 test).
-- [x] Render modu hata netleştirme — gerçek OpenAI hatası + model id yüzeye çıkıyor (canlı doğrulama Moses'ta).
+### KÜME 2 — Hot-path tahsis/spread (500k perf)
+**M1, M2, M3, M4.** `Math.min(...xs)` spread + `.map()` ara dizi → kare başına milyonlarca tahsis.
+- `engine/entity-bounds.ts` (aabbFrom/opening/block) → inline tek-geçiş min/max.
+- `geometry/hatch.ts:77-78` clipLineToPolygon → O(n) tmin/tmax. `spatial-index.ts:45` updateBox (tek rebalance).
+- `canvas-app.ts` pointer-move `getBoundingClientRect` cache (resize'da yenile). **CSS scale bölmeyi koru (§8.1).**
 
-### 3) Faz 3 olgunlaşma (backend gerektirir — karar + bütçe)
-- [ ] Collab **kalıcılık**: oda boşalınca çizim kayboluyor (şu an v1). Hocuspocus / kalıcı y-websocket.
-- [ ] Basit **auth** (kim hangi projeye girebilir) + link izinleri (görüntüle/yorum/düzenle).
-- [ ] Multiplayer undo köşe durumları + katman döngüsü invariant'ı (ARCHITECTURE'dan).
+### KÜME 3 — AI route güvenlik + girdi doğrulama
+**H6, M8, M9, H7.** `api/copilot/route.ts` + `ai/{design,router,copilot}.ts`.
+- Hata mesajı genelleştir (ham `e.message` sızıntısı); rate-limit çok-instance + ölü cleanup + `x-real-ip` spoof.
+- `design.ts`: count [1,10] clamp · yanıt JSON kontrolü · `hint` JSON.stringify escape · summary 200 char · boş-ad reddi.
+- `router.ts`: soru `.slice(0,5000)`. **H7:** `askCopilot()`'a `signal` ekle (streaming-dışı iptal).
 
-### 4) Daha sonra (büyük/uzun)
-- [ ] AI Render hattını gerçek ControlNet "geometriyi koru" moduna taşı (paralı GPU).
-- [ ] Faz 4 üretici: bubble diagram + sınırdan tam plan üretimi.
-- [ ] Performans: 500k entity 60 FPS (culling/batching/WASM) — uzun vade.
+### KÜME 4 — serialize derin doğrulama kalan tipler
+**H1.** `serialize.ts isValidEntity` genişlet: Sheet(size/orientation/scale/title) · Annotation(height) ·
+Section(label) · Block(kind ∈ BLOCK_DEFS).
+
+### KÜME 5 — collab dayanıklılık
+**H2, H3, M11.** `sync.onRemote` → put öncesi `isValidEntity` (karantina) · echo origin `Symbol('EntitySync')` ·
+`room-labels.applyLabel` dar try · `createCollab` bağlantı-hata callback.
+
+### KÜME 6 — Erişilebilirlik (motion/focus tabanı bu tur yapıldı; kalan)
+**H8, H9, M12.** Diyalog/modal `role=dialog`+`aria-modal`+`aria-labelledby` + focus trap/restore (DialogHost,
+Calibrate, Comment, CommandPalette, ContextMenu, ShortcutsHelp; backdrop kapatma engelle). Form `<label htmlFor>`↔
+`id` (PropertiesPanel/RoomList). Toaster `role=status aria-live=polite`. CanvasStage `role=application`. Toolbar/
+BlockPalette ikon aria-label. ContextMenu ok-tuşu nav.
+
+### KÜME 7 — Tasarım araştırması yüksek-etki kalanlar (104 ders)
+Hero'yu **canlı mini-canvas** · ön-yüklü **"Vesna'yı Keşfet" örnek projesi** (boş tuvali yok et) · **/pricing
+4-kart** · **floating toolbar + bağlamsal sağ panel** (Figma UI3) · **Radix 12-step OKLCH token sistemi**.
+
+### HIZLI KAZANIMLAR (ilk yarım saat, tek-satır)
+design.ts count clamp · router.ts slice(0,5000) · route.ts hata genelleştir · validateLayout boş-ad reddi ·
+Toaster aria-live · Toolbar "CAD Yükle"/"Aç" aria-label.
+
+### ❌ YANLIŞ-POZİTİF (yapma; rapor küçülttü)
+copilot negatif-thickness/segment-epsilon/guard-sınır = kod doğru (test borcu) · `BatchCommand.invert` = güvenli ·
+`room-labels s.name !== 'Mahal'` = kasıtlı.
 
 ---
 
 ## 📌 Açık notlar / kararlar
-- Railway sync **kalıcılık tutmuyor** (bilinçli v1) → yukarıdaki 3. madde.
-- Akash GLM-5.2 yavaş (reasoning) → yalnız yedek; ana trafik OpenAI/Claude.
-- Domain `vesna.design`; ürün kod adı hâlâ ZynppArti (repo/paket adları).
+- "Clicked"/turuncu-logo promo GIF'inin İÇİNDE gömülü (ekran-kaydı aracı filigranı) → temizlemek için Moses'ın
+  o aracın "tıklamaları göster"+filigran kapalı yeni kayıt atması lazım; gelince GIF değiştirilir.
+- Railway sync **kalıcılık tutmuyor** (bilinçli v1).
+- Akash GLM yavaş → yalnız yedek. Domain `vesna.design`; repo/paket kod adı ZynppArti.
