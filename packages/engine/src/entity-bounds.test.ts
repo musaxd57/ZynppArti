@@ -76,6 +76,20 @@ describe('entityBounds', () => {
     expect(b.maxY).toBeGreaterThan(50);
   });
 
+  it('NaN/Infinity koordinatlı entity → güvenli dejenere kutu (rbush bozulmasın)', () => {
+    const badDim = {
+      id: 'd', type: 'dimension', layerId: 'd',
+      a: { x: NaN, y: 0 }, b: { x: 100, y: 0 }, offset: 10,
+    } as unknown as Parameters<typeof entityBounds>[0];
+    expect(entityBounds(badDim)).toEqual({ minX: 0, minY: 0, maxX: 0, maxY: 0 });
+
+    const badSection = {
+      id: 'sec', type: 'section', layerId: 's',
+      a: { x: 0, y: 0 }, b: { x: Infinity, y: 5 },
+    } as unknown as Parameters<typeof entityBounds>[0];
+    expect(entityBounds(badSection)).toEqual({ minX: 0, minY: 0, maxX: 0, maxY: 0 });
+  });
+
   it('sheet AABB = model boyutu (kağıt × ölçek)', () => {
     const sheet: Sheet = {
       id: 's',
