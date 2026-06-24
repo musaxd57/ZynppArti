@@ -81,7 +81,7 @@ function checkRoomMinArea(spaces: readonly Space[]): Finding[] {
     const reg = MIN_AREA_BY_TYPE[roomTypeOf(s) as keyof typeof MIN_AREA_BY_TYPE];
     if (!reg) continue;
     const area = centerlineAreaM2(s);
-    if (area < reg.min) {
+    if (area > 0 && area < reg.min) {
       out.push({
         severity: 'warning',
         message: `"${s.name}" alanı ${fmtM2(area)}; asgari ${fmtM2(reg.min)} bekleniyor.`,
@@ -220,7 +220,7 @@ function checkDoorWidth(openings: readonly Opening[]): Finding[] {
   const out: Finding[] = [];
   for (const o of openings) {
     if (o.kind !== 'door') continue;
-    if (o.width < reg.min) {
+    if (o.width > 0 && o.width < reg.min) {
       out.push({
         severity: 'warning',
         message: `Kapı net geçişi ${Math.round(o.width)} cm; erişilebilirlik için en az ${reg.min} cm önerilir.`,
@@ -271,9 +271,9 @@ function checkDaylight(spaces: readonly Space[], openings: readonly Opening[]): 
   if (windows.length === 0) return [];
   const floorM2 = spaces.reduce((s, sp) => s + centerlineAreaM2(sp), 0);
   if (floorM2 <= 0) return [];
-  const winM2 = windows.reduce((s, w) => s + (w.width / 100) * (reg.windowHeightCm / 100), 0);
+  const winM2 = windows.reduce((s, w) => s + (Math.max(0, w.width) / 100) * (reg.windowHeightCm / 100), 0);
   const ratio = winM2 / floorM2;
-  if (ratio < reg.minRatio) {
+  if (Number.isFinite(ratio) && ratio < reg.minRatio) {
     return [
       {
         severity: 'warning',
@@ -309,7 +309,7 @@ function windowsServingRoom(
     const w = wallById.get(o.wallId);
     if (!w) continue;
     const c = openingFrame(o, w).center;
-    if (distanceToPolygonBoundary(c, space.boundary) <= w.thickness / 2 + 8) served.push(o);
+    if (distanceToPolygonBoundary(c, space.boundary) <= Math.max(0, w.thickness) / 2 + 8) served.push(o);
   }
   return served;
 }
@@ -367,9 +367,9 @@ function checkRoomDaylightRatio(
     if (served.length === 0) continue; // pencere yok → presence kuralına bırak
     const roomM2 = centerlineAreaM2(s);
     if (roomM2 <= 0) continue;
-    const winM2 = served.reduce((a, o) => a + (o.width / 100) * (reg.windowHeightCm / 100), 0);
+    const winM2 = served.reduce((a, o) => a + (Math.max(0, o.width) / 100) * (reg.windowHeightCm / 100), 0);
     const ratio = winM2 / roomM2;
-    if (ratio < reg.minRatio) {
+    if (Number.isFinite(ratio) && ratio < reg.minRatio) {
       out.push({
         severity: 'info',
         message: `"${s.name}" pencere/taban ≈ %${Math.round(ratio * 100)}; doğal aydınlatma için ~%${Math.round(reg.minRatio * 100)} önerilir (kaba).`,

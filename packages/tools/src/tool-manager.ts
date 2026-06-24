@@ -180,7 +180,7 @@ export class ToolManager implements SceneTool {
     }
     if (!ctrl) {
       const k = e.key.toLowerCase();
-      if (k === 'v' || k === '1' || k === 'm') return this.setTool('select');
+      if (k === 'v' || k === '1') return this.setTool('select'); // 'm' YOK → yorum aracına ait (aşağıda)
       if (k === 'l') return this.toggleTool('wall'); // tekrar L → kapat, Seç'e dön
       if (k === 'd') return this.toggleTool('door');
       if (k === 'p') return this.toggleTool('window'); // pencere

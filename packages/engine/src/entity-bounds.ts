@@ -30,21 +30,29 @@ export function openingBounds(opening: Opening, wall: Wall): AABB {
  * Boşluk (opening) duvara bağlı olduğundan gerçek kutusu `openingBounds` ile (duvar çözülerek)
  * EntityLayer'da hesaplanır; burada güvenli dejenere kutu döner.
  */
+/** xs/ys'den AABB; NaN/Infinity varsa güvenli dejenere kutu (rbush index'i bozulmasın). */
+function aabbFrom(xs: number[], ys: number[]): AABB {
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  const maxX = Math.max(...xs);
+  const maxY = Math.max(...ys);
+  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+    return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+  }
+  return { minX, minY, maxX, maxY };
+}
+
 export function entityBounds(entity: Entity): AABB {
   switch (entity.type) {
     case 'opening':
       return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
     case 'dimension': {
       const g = dimensionGeometry(entity);
-      const xs = [g.a.x, g.b.x, g.da.x, g.db.x];
-      const ys = [g.a.y, g.b.y, g.da.y, g.db.y];
-      return { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
+      return aabbFrom([g.a.x, g.b.x, g.da.x, g.db.x], [g.a.y, g.b.y, g.da.y, g.db.y]);
     }
     case 'section': {
       // Yalnız kesim çizgisini sınırla; ok bayrakları/etiketler ekran-sabit dekordur (culling için yeterli).
-      const xs = [entity.a.x, entity.b.x];
-      const ys = [entity.a.y, entity.b.y];
-      return { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
+      return aabbFrom([entity.a.x, entity.b.x], [entity.a.y, entity.b.y]);
     }
     case 'wall': {
       const half = entity.thickness / 2;
@@ -71,9 +79,8 @@ export function entityBounds(entity: Entity): AABB {
       return { minX, minY, maxX, maxY };
     }
     case 'block': {
-      const xs = blockCorners(entity).map((p) => p.x);
-      const ys = blockCorners(entity).map((p) => p.y);
-      return { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
+      const corners = blockCorners(entity);
+      return aabbFrom(corners.map((p) => p.x), corners.map((p) => p.y));
     }
     case 'annotation': {
       const { w, h } = annotationSize(entity);

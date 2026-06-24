@@ -118,6 +118,7 @@ export function computeTakeoff(
   // Duvar düşey alanı (tek yüz) — örgü/duvar işçiliği bundan (uzunluk × yükseklik). Boşluk düşülür.
   let wallElevCm2 = walls.reduce((s, w) => s + wallLengthCm(w) * (w.height ?? h), 0);
   for (const o of openings) {
+    if (!(o.width > 0) || !Number.isFinite(o.width)) continue; // bozuk genişlik alanı zehirlemesin
     const oh = o.kind === 'door' ? DOOR_HEIGHT_CM : WINDOW_HEIGHT_CM;
     wallElevCm2 -= o.width * oh;
   }
@@ -126,6 +127,7 @@ export function computeTakeoff(
   // Sıva: iki yüz. Her duvar kendi yüksekliğiyle (yoksa kat yüksekliği). Boşluk alanı (iki yüz) düşülür.
   let plasterCm2 = walls.reduce((s, w) => s + 2 * wallLengthCm(w) * (w.height ?? h), 0);
   for (const o of openings) {
+    if (!(o.width > 0) || !Number.isFinite(o.width)) continue;
     const oh = o.kind === 'door' ? DOOR_HEIGHT_CM : WINDOW_HEIGHT_CM;
     plasterCm2 -= 2 * o.width * oh;
   }

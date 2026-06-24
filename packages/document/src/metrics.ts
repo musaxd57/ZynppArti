@@ -123,11 +123,13 @@ export function computeMetrics(spaces: readonly Space[], walls: readonly Wall[])
   const agg = new Map<RoomType, { count: number; areaM2: number }>();
 
   for (const s of spaces) {
-    const area = centerlineAreaM2(s);
+    const rawArea = centerlineAreaM2(s);
     const { netM2: n, grossM2: g } = netGrossAreaM2(s, walls);
+    // NaN/Infinity (bozuk koordinat) toplamları zehirlemesin → güvenli sıfıra düş.
+    const area = Number.isFinite(rawArea) ? rawArea : 0;
     totalM2 += area;
-    netM2 += n;
-    grossM2 += g;
+    netM2 += Number.isFinite(n) ? n : 0;
+    grossM2 += Number.isFinite(g) ? g : 0;
     const t = roomTypeOf(s);
     const cur = agg.get(t) ?? { count: 0, areaM2: 0 };
     cur.count += 1;

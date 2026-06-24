@@ -605,6 +605,10 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
             if (!chunk) continue;
             setThread('ask', (arr) => arr.map((x) => (x.id === aid ? { ...x, content: x.content + chunk } : x)));
           }
+          // Tampondaki son baytları boşalt — çok-baytlı Türkçe karakter (ç/ş/ğ/ı...) chunk sınırında
+          // bölünmüşse kaybolmasın (yanıtın son karakteri düşmesin).
+          const tail = dec.decode();
+          if (tail) setThread('ask', (arr) => arr.map((x) => (x.id === aid ? { ...x, content: x.content + tail } : x)));
         }
       }
     } catch (e) {

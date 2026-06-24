@@ -34,7 +34,7 @@ export function hatchLines(
   spacing: number,
   angle: number,
 ): HatchSegment[] {
-  if (polygon.length < 3 || spacing <= 0) return [];
+  if (polygon.length < 3 || !(spacing > 0) || !Number.isFinite(spacing)) return [];
   const d = { x: Math.cos(angle), y: Math.sin(angle) }; // çizgi yönü
   const n = { x: -Math.sin(angle), y: Math.cos(angle) }; // dik (çizgileri ötelediğimiz eksen)
 

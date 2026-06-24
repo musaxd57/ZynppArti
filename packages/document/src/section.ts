@@ -119,9 +119,10 @@ function openingAtCut(
 ): SectionOpening | undefined {
   if (!openings || openings.length === 0) return undefined;
   const wallLen = distance(wall.start, wall.end);
-  if (wallLen === 0) return undefined; // dejenere duvar → centerAlong=0, tüm openings başta sanılır
+  if (!(wallLen > 0)) return undefined; // dejenere duvar → centerAlong=0, tüm openings başta sanılır
   const cutAlong = distance(wall.start, x); // x duvar segmenti üzerinde → start'a uzaklık = konum
   for (const o of openings) {
+    if (!(o.width > 0) || !Number.isFinite(o.width)) continue; // bozuk genişlik → atla
     const centerAlong = o.t * wallLen;
     if (Math.abs(cutAlong - centerAlong) <= o.width / 2) {
       if (o.kind === 'door') {

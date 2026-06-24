@@ -28,6 +28,7 @@ const TOOLS: { name: ToolName; label: string; hotkey: string }[] = [
   { name: 'window', label: 'Pencere', hotkey: 'P' },
   { name: 'dimension', label: 'Ölçü', hotkey: 'O' },
   { name: 'parcel', label: 'Parsel', hotkey: 'R' },
+  { name: 'block', label: 'Blok', hotkey: 'B' },
   { name: 'annotation', label: 'Metin', hotkey: 'T' },
   { name: 'sheet', label: 'Pafta', hotkey: 'F' },
   { name: 'section', label: 'Kesit', hotkey: 'C' },
