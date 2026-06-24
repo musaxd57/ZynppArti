@@ -106,7 +106,8 @@ export function DemoVideo({
           type="button"
           onClick={() => {
             setStarted(true);
-            void videoRef.current?.play();
+            // play() autoplay politikası/etkileşim eksikse reddedebilir → unhandled rejection olmasın.
+            videoRef.current?.play().catch(() => {});
           }}
           aria-label="Demoyu oynat"
           style={{

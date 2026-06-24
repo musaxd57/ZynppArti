@@ -451,6 +451,17 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
   /** Seçilen planı çizer (Command ile), ekrana getirir, copilot uyum özetini daktilo efektiyle yazar. */
   const drawVariant = (v: Layout): void => {
     setVariants(null);
+    try {
+      drawVariantInner(v);
+    } catch (e) {
+      // AI taslağı çizilirken hata (bozuk geometri/dispatch) → çökme, kullanıcıya bildir + logla.
+      console.error('AI taslak çizim başarısız:', e);
+      const id = nextId();
+      setThread('draw', (arr) => [...arr, { id, role: 'assistant', content: 'Taslak çizilirken bir sorun oldu, tekrar dener misin? (Ayrıntı tarayıcı konsolunda.)' }]);
+    }
+  };
+
+  const drawVariantInner = (v: Layout): void => {
     const { drawn, named, openingCount, doorCount, windowCount } = applyLayout(store, history, v.walls, v.rooms, v.openings);
     if (drawn > 0) zoomToFit?.();
     // Kapı/pencere sayısını AYRI göster (ör. "6 kapı, 6 pencere") — kullanıcı net görsün.
