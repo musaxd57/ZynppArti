@@ -71,8 +71,14 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
     try {
       const raw = localStorage.getItem(PRICES_KEY);
       if (raw) {
-        const saved = JSON.parse(raw) as Partial<UnitPrices>;
-        setPrices((p) => ({ ...p, ...saved }));
+        const saved = JSON.parse(raw) as Record<string, unknown>;
+        // Yalnız sonlu, negatif-olmayan sayısal alanları al — bozuk kayıt NaN maliyet üretmesin (H5).
+        const clean: Record<string, number> = {};
+        for (const k of Object.keys(DEFAULT_UNIT_PRICES)) {
+          const v = saved[k];
+          if (typeof v === 'number' && Number.isFinite(v) && v >= 0) clean[k] = v;
+        }
+        setPrices((p) => ({ ...p, ...(clean as Partial<UnitPrices>) }));
       }
     } catch {
       /* yoksay */

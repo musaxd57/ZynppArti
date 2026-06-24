@@ -94,17 +94,19 @@ export function estimateCost(t: Takeoff, prices: UnitPrices = DEFAULT_UNIT_PRICE
     { label: 'Pencere', category: 'İnce yapı', quantity: t.windowCount, unit: 'adet', unitPrice: prices.window },
   ];
   const lines: CostLine[] = raw
-    .filter((l) => l.quantity > 0 && Number.isFinite(l.quantity))
+    .filter((l) => l.quantity > 0 && Number.isFinite(l.quantity) && Number.isFinite(l.unitPrice))
     .map((l) => ({ ...l, total: l.quantity * l.unitPrice }));
   const subtotal = lines.reduce((s, l) => s + l.total, 0);
-  const rate = Math.max(0, prices.overheadRate);
+  // Bozuk/elle-düzenlenmiş birim fiyat (localStorage) NaN overheadRate sızdırabilir → 0'a düş.
+  const rate = Number.isFinite(prices.overheadRate) ? Math.max(0, prices.overheadRate) : 0;
   const overhead = subtotal * rate;
   const total = subtotal + overhead;
   const perM2 = area > 0 ? total / area : 0;
   return { lines, subtotal, overhead, overheadRate: rate, total, perM2 };
 }
 
-/** TL biçimlendirme (binlik ayraçlı, kuruşsuz) — ör. 1.234.567 ₺. */
+/** TL biçimlendirme (binlik ayraçlı, kuruşsuz) — ör. 1.234.567 ₺. NaN/Infinity → "0 ₺". */
 export function formatTRY(value: number): string {
+  if (!Number.isFinite(value)) return '0 ₺';
   return `${Math.round(value).toLocaleString('tr-TR')} ₺`;
 }

@@ -42,6 +42,8 @@ export class EntityLayer {
   private lastViewport: AABB | null = null;
   /** Şu an görünür entity'ler — artımlı cull için (yalnız değişen görünürlükleri dokun). */
   private prevVisible = new Set<EntityId>();
+  /** cull için yeniden kullanılan tampon — her karede yeni Set ayırmamak için prevVisible ile takas edilir. */
+  private cullBuffer = new Set<EntityId>();
   private readonly unsubscribe: () => void;
   private readonly unsubscribeLayers: () => void;
 
@@ -255,6 +257,7 @@ export class EntityLayer {
   private removeEntity(id: EntityId): void {
     this.destroyObjects(id);
     this.index.remove(id);
+    this.prevVisible.delete(id); // silinen ID prevVisible'da kalmasın (set sınırsız büyümesin)
     this.pruneEmptyLayers();
   }
 
@@ -288,7 +291,9 @@ export class EntityLayer {
   cull(viewport: AABB): void {
     this.lastViewport = viewport;
     const candidates = this.index.search(viewport);
-    const nowVisible = new Set<EntityId>();
+    // Yeniden kullanılan tampon (her karede yeni Set ayırma → GC baskısı yok, 500k için kritik).
+    const nowVisible = this.cullBuffer;
+    nowVisible.clear();
     for (const id of candidates) {
       const objs = this.objects.get(id);
       if (!objs) continue;
@@ -302,6 +307,8 @@ export class EntityLayer {
       const objs = this.objects.get(id);
       if (objs) for (const o of objs) o.visible = false;
     }
+    // prevVisible ↔ cullBuffer takas: bu karenin görünürleri sonrakinin "önceki"si olur; eski set tampon olur.
+    this.cullBuffer = this.prevVisible;
     this.prevVisible = nowVisible;
   }
 

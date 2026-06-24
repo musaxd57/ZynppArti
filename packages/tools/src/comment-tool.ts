@@ -52,6 +52,7 @@ export class CommentTool implements SceneTool {
   }
 
   onDeactivate(): void {
+    this.gen++; // bekleyen yorum diyaloğunu geçersiz kıl (araç değişti)
     this.cursor = null;
     this.preview.clear();
   }
