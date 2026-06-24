@@ -121,6 +121,12 @@
 
 ## GÜNLÜK
 
+### 2026-06-24 (öğle — satışa hazırlık: yasal sayfalar + landing) **main'de, canlıda**
+- **Gizlilik Politikası** kısa→**15 bölümlük tam KVKK aydınlatma metni**; yeni **Kullanım Koşulları** (`/kosullar`) — AI sorumluluk reddi, veri kaybı, sorumluluk sınırı, TR hukuku. Durum çubuğunda iki link.
+- **Landing/satış sayfası** (`/` kök): hero + 9 özellik kartı + "Neden Vesna" + CTA, marka uyumlu (Inter/iris/dark), statik (SEO/hız). **Uygulama `/`→`/app`'e taşındı**; yasal back-link'ler + CTA oraya. **RoomRedirect** eski collab linklerini (`/#room=`) `/app`'e yönlendirir (kopmaz). layout/metadata → Vesna.
+- **Görsel doğrulama:** landing headless Chrome ile teyit edildi (profesyonel görünüm). Tüm rotalar 200 (`/`, `/app`, `/gizlilik`, `/kosullar`).
+- **Satışa hazırlık sıradaki adımlar (Moses kararı bekliyor):** auth (Clerk/Supabase) · bulut kayıt (backend) · ödeme+paketler (Stripe + fiyat). Kurumsal e-posta: `iletisim@vesna.design` (DNS — Moses yapacak). Zincir yeşil (typecheck 9/9 · lint 9/9 · build 1/1).
+
 ### 2026-06-24 (sabah-2 — DWG canlı test + asistan meşgul göstergesi + doküman turu) `fix/openings-and-quickwins`
 - **DWG gerçek dosya testi (Moses'ın .dwg'si):** annotation/scaling/multileader içeren mimari DWG Node'da çözüldü → **2337 duvar + 24 metin, in→cm (2.54)**, katmanlar tanındı (Arch_Section_Wall, Dim, Mleader…). `importDwg(content, wasmDir?)` opsiyonel dizin aldı (tarayıcı boş='/'; Node/sunucu node_modules wasm'ı) → **sunucu tarafı DWG yolu da açıldı**. MLEADER içeriği kısmi (libredwg sınırı), geometri sağlam.
 - **Asistan meşgul göstergesi (Moses talebi):** çalışan mod sekmesinde (Sor/Çiz/Render) canlı nokta + etikete mod adı ("Çiz · plan üretiliyor") → başka sekmedeyken bile hangi sohbetin çalıştığı belli.
