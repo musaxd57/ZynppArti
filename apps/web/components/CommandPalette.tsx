@@ -27,6 +27,7 @@ const TOOL_COMMANDS: { name: ToolName; label: string; key: string }[] = [
   { name: 'annotation', label: 'Metin', key: 'T' },
   { name: 'sheet', label: 'Pafta', key: 'F' },
   { name: 'section', label: 'Kesit', key: 'C' },
+  { name: 'comment', label: 'Yorum', key: 'M' },
   { name: 'erase', label: 'Sil', key: 'E' },
   { name: 'calibrate', label: 'Ölçekle', key: 'K' },
 ];
@@ -38,6 +39,7 @@ const TOOL_COMMANDS: { name: ToolName; label: string; key: string }[] = [
 export function CommandPalette({ manager, history, zoomToFit }: CommandPaletteProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState(0);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -76,11 +78,13 @@ export function CommandPalette({ manager, history, zoomToFit }: CommandPalettePr
 
   const q = query.trim().toLocaleLowerCase('tr');
   const results = q ? commands.filter((c) => c.label.toLocaleLowerCase('tr').includes(q)) : commands;
+  // Seçili indeks, daralan sonuçlara sığacak şekilde kıstırılır.
+  const sel = results.length ? Math.min(selected, results.length - 1) : 0;
 
-  const runFirst = (): void => {
-    const first = results[0];
-    if (first) {
-      first.run();
+  const runAt = (i: number): void => {
+    const cmd = results[i];
+    if (cmd) {
+      cmd.run();
       setOpen(false);
     }
   };
@@ -97,9 +101,19 @@ export function CommandPalette({ manager, history, zoomToFit }: CommandPalettePr
         <input
           autoFocus
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSelected(0);
+          }}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') runFirst();
+            if (e.key === 'Enter') runAt(sel);
+            else if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              setSelected(Math.min(sel + 1, results.length - 1));
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              setSelected(Math.max(sel - 1, 0));
+            }
           }}
           placeholder="Komut ara… (araç, kaydet, geri al…)"
           className="w-full bg-transparent px-4 py-3 outline-none placeholder:text-white/40"
@@ -112,11 +126,11 @@ export function CommandPalette({ manager, history, zoomToFit }: CommandPalettePr
               <button
                 key={i}
                 type="button"
-                onClick={() => {
-                  c.run();
-                  setOpen(false);
-                }}
-                className="flex w-full items-center justify-between px-4 py-2 text-left hover:bg-white/10"
+                onClick={() => runAt(i)}
+                onPointerMove={() => setSelected(i)}
+                className={`flex w-full items-center justify-between px-4 py-2 text-left ${
+                  i === sel ? 'bg-white/15' : 'hover:bg-white/10'
+                }`}
               >
                 <span>{c.label}</span>
                 {c.hint && <span className="text-xs opacity-50">{c.hint}</span>}
