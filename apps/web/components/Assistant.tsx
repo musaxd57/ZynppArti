@@ -606,11 +606,19 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
             key={m}
             type="button"
             onClick={() => setMode(m)}
-            className={`flex-1 rounded-md px-2 py-1.5 text-sm transition-colors ${
+            className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition-colors ${
               mode === m ? 'bg-white/20 font-semibold' : 'bg-white/5 text-white/70 hover:bg-white/10'
             }`}
           >
             {m === 'ask' ? '💬 Sor' : m === 'draw' ? '✏️ Çiz' : '🖼️ Render'}
+            {/* Bu mod meşgulse canlı nokta — başka sekmedeyken bile hangi sohbet çalışıyor belli olsun. */}
+            {loadingMode === m && (
+              <span
+                className="h-1.5 w-1.5 animate-pulse rounded-full"
+                style={{ background: 'var(--accent-text, #a5a5ff)' }}
+                title={`${m === 'ask' ? 'Sor' : m === 'draw' ? 'Çiz' : 'Render'} çalışıyor…`}
+              />
+            )}
           </button>
         ))}
       </div>
@@ -709,8 +717,13 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
             const last = messages[messages.length - 1];
             // Daktilo/akış başladıysa (dolu asistan balonu) göstergeyi gizle.
             if (last?.role === 'assistant' && (last.content || last.image)) return null;
+            // Etikete mod adını da yaz → hangi sohbette çalıştığı kuşkuya yer bırakmadan belli olsun.
             const label =
-              mode === 'draw' ? 'Plan üretiliyor' : mode === 'render' ? 'Görsel üretiliyor' : 'Vesna yazıyor';
+              mode === 'draw'
+                ? 'Çiz · plan üretiliyor'
+                : mode === 'render'
+                  ? 'Render · görsel üretiliyor'
+                  : 'Sor · Vesna yazıyor';
             return <TypingDots label={label} />;
           })()}
       </div>
