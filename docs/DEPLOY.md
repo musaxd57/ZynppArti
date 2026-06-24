@@ -48,3 +48,37 @@ AI'nın adı **Arki**, ürün **ZynppArti**. Öneriler (uygunluk değişir, kont
 ## NOT — olgun collab için sonra
 Şu anki sync **kalıcılık tutmaz** (oda boşalınca kaybolur) ve **auth yok**. Üretimde:
 Hocuspocus (kalıcı y-websocket) + basit token auth + blob/DB persistence eklenir (ayrı iş).
+
+---
+
+## RUNBOOK — "Bir şey patladı, ne yaparım?"
+
+> Canlı: **web** = Vercel (`vesna.design`), **sync** = Railway. İkisi bağımsız: biri düşse diğeri çalışır
+> (sync düşerse uygulama tek-kullanıcı modda çalışmaya devam eder; yalnız "Canlı Paylaş" kopar).
+
+### Ortam değişkenleri (nerede, ne işe yarar)
+| Değişken | Yer | Tarayıcıya gider mi? | İşlev |
+|---|---|---|---|
+| `OPENAI_API_KEY` | Vercel env | ❌ (server route) | Sor/Çiz fallback + **Render** (görsel) |
+| `ANTHROPIC_API_KEY` | Vercel env | ❌ | Karmaşık/yönetmelik soruları (Claude) |
+| `AKASHML_API_KEY` | Vercel env | ❌ | Ucuz yedek (GLM, yavaş) |
+| `OPENAI_IMAGE_MODEL` | Vercel env (ops.) | ❌ | Render modeli (vars. `gpt-image-1`; erişim yoksa `dall-e-3`) |
+| `NEXT_PUBLIC_COLLAB_WS` | Vercel env | ✅ (public) | Railway sync URL'i (`wss://…`) |
+| `*_MODEL` (ops.) | Vercel env | ❌ | Sağlayıcı model id override |
+
+### Belirti → teşhis → çözüm
+- **AI hiç cevap vermiyor (Sor/Çiz):** `/api/copilot` 503 = hiç anahtar yok → Vercel env'de en az bir `*_API_KEY` dolu mu? · 500 = sağlayıcılar düştü → Vercel **Functions log**'una bak (hangi sağlayıcı, hata ne). Boş yanıt artık otomatik sıradakine düşer (ADR-0045).
+- **Render çalışmıyor:** Hata mesajı artık gerçek nedeni + model id'yi söyler (ADR-0045). "model_not_found / no access" → `OPENAI_IMAGE_MODEL=dall-e-3` ekle. "billing" → OpenAI hesabına bakiye. "content_policy" → prompt'u yumuşat.
+- **Canlı Paylaş bağlanmıyor (pill "kopuk"):** Railway servisi ayakta mı (Railway dashboard → Deploys/Logs)? · `NEXT_PUBLIC_COLLAB_WS` **wss://** ile mi (http değil)? · Railway uyku/limit? Yeniden deploy.
+- **Çizim kayboldu (collab):** Beklenen — sync v1 **kalıcılık tutmaz** (oda boşalınca gider). Veri kaybı değil: kullanıcı **Kaydet** (JSON) ile yerelde tutar. Kalıcılık = ayrı iş (yukarı).
+- **Sayfa beyaz / "stale manifest" 500 (yalnız dev):** `.next` sil + `pnpm dev`. Üretimde Vercel cache → **Redeploy** (Vercel dashboard).
+
+### Rollback
+- **Vercel:** Deployments → çalışan eski deploy → **Promote to Production** (anında geri al).
+- **Railway:** Deployments → eski başarılı deploy → **Redeploy**.
+- **Kod:** `main`'i son iyi commit'e `git revert` (force-push'tan kaçın — canlı branch).
+
+### Sağlık kontrolü (hızlı)
+- Web: `vesna.design` açılıyor + tuval çiziliyor mu?
+- AI: Sor moduna "merhaba" → cevap geliyor mu (hangi hız)?
+- Sync: iki sekme Canlı Paylaş → imleç/çizim eşleşiyor mu?

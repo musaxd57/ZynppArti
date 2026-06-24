@@ -121,6 +121,12 @@
 
 ## GÜNLÜK
 
+### 2026-06-24 (sabah-2 — DWG canlı test + asistan meşgul göstergesi + doküman turu) `fix/openings-and-quickwins`
+- **DWG gerçek dosya testi (Moses'ın .dwg'si):** annotation/scaling/multileader içeren mimari DWG Node'da çözüldü → **2337 duvar + 24 metin, in→cm (2.54)**, katmanlar tanındı (Arch_Section_Wall, Dim, Mleader…). `importDwg(content, wasmDir?)` opsiyonel dizin aldı (tarayıcı boş='/'; Node/sunucu node_modules wasm'ı) → **sunucu tarafı DWG yolu da açıldı**. MLEADER içeriği kısmi (libredwg sınırı), geometri sağlam.
+- **Asistan meşgul göstergesi (Moses talebi):** çalışan mod sekmesinde (Sor/Çiz/Render) canlı nokta + etikete mod adı ("Çiz · plan üretiliyor") → başka sekmedeyken bile hangi sohbetin çalıştığı belli.
+- **Doküman turu (Moses "hepsini bitir"):** **SECURITY.md** + **COMPLIANCE.md** (KVKK/GDPR) tohumdan büyütüldü (canlı ürün riski: gizlilik politikası + yurtdışı AI aktarımı eksik); **DEPLOY.md** runbook (env tablosu + belirti→çözüm + rollback); **FILE-FORMATS.md** oluşturuldu (zynpparti-model zarfı + import/export matrisi); **IDEAS.md** oluşturuldu (STATE backlog'u taşındı); **DECISIONS ADR-0045**; **CLAUDE.md §2** canlı duruma çekildi.
+- Zincir yeşil (typecheck 9/9 · lint 9/9 · build 1/1).
+
 ### 2026-06-24 (sabah — YARIN §2 hızlı kazanımlar + kapı/pencere bug incelemesi) `fix/openings-and-quickwins`
 - **🐞 Kapı/pencere bug incelendi → KODDA YOK:** Moses "kapılar pencere sayılıyor" gözlemini doğruladım: deterministik hat (design.ts parse → validateLayout → applyLayout → render-opening 2B → wall3d 3B → buildContext sayaç) **uçtan uca `kind`'ı koruyor, takas yok.** Sonuç: kod doğru; yanlışlık varsa **LLM etiketlemesi**. Önlem: DESIGN_SYSTEM prompt'u (iç boşluk=door, dış=window; "iç boşluğu window yapma") güçlendirildi. Canlı tekrar yanlışsa geometrik güvenlik ağı eklenecek.
 - **AI boş-cevap fallback:** `askCopilot`/`askCopilotStream` artık boş/yalnız-boşluk yanıtı (veya hiç parça yaymayan akışı) **başarısızlık** sayıp sıradaki sağlayıcıya düşüyor (eskiden boş string "başarı"ydı → boş baloncuk). +3 test (mock sağlayıcı). ai testleri 29→32.

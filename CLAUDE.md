@@ -54,7 +54,7 @@ Rayon'un kanıtlanmış formülünü koruyoruz (2D öncelikli, tarayıcı öncel
 
 > Bu bölüm sadece **tek satır** özet içerir; gerçek durum `docs/STATE.md`'de.
 
-**Faz 1 TAMAM + Faz 2A/2B TAMAM.** (Çizim/import/mahal + canlı metrik + deterministik Türkçe yönetmelik copilot'u; ayrıca blok/metin/pafta/metraj/çoklu-seçim vb. maliyetsiz ekstralar — ADR-0019. Sıradaki maliyetli AI (render + LLM) **ertelendi**. Detay: `docs/STATE.md`.)
+**🚀 CANLI YAYINDA** (`vesna.design` — Vercel web + Railway sync). **Faz 1–2 TAMAM** (çizim/import/mahal + canlı metrik + atıflı Türkçe yönetmelik copilot'u + **paralı AI açıldı**: 3-sağlayıcı router'lı doğal-dil copilot/Sor + Çiz + Render). **Faz 3 v1** (Yjs presence/seçim/yorum — kalıcılık+auth yok), **Faz 4/5 önizleme** (AI üretici + 3B/kesit/glTF/kamera). AI adı **Vesna**. Detay + sınırlar: `docs/STATE.md`. Yayın/runbook: `docs/DEPLOY.md`.
 
 ---
 
