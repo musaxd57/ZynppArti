@@ -98,15 +98,20 @@ function Layer({
   return (
     <div className="v-grid absolute inset-0" style={{ background: "var(--bg-3)" }}>
       <svg viewBox="0 0 320 240" preserveAspectRatio="xMidYMid meet" className="h-full w-full">
-        <rect x="36" y="30" width="160" height="120" fill="var(--accent-soft)" />
+        {/* Tutarlı 4 oda: x180 dikey, sol y130 yatay (Salon|Hol), sağ y120 yatay (Yatak|Mutfak) */}
+        <rect x="36" y="30" width="144" height="100" fill="var(--accent-soft)" />
         <rect x="36" y="30" width="248" height="180" fill="none" stroke="var(--text-2)" strokeWidth={4} />
-        <path d="M196 30 L196 150 M196 150 L284 150 M196 90 L240 90 M120 150 L120 210" fill="none" stroke="var(--text-2)" strokeWidth={3} />
-        <path d="M196 122 A26 26 0 0 0 170 150" fill="none" stroke="var(--text-3)" strokeWidth={1.5} opacity={0.7} />
-        <text x="116" y="88" textAnchor="middle" fill="var(--text)" fontSize="13" fontWeight="600">Salon</text>
-        <text x="116" y="104" textAnchor="middle" fill="var(--accent)" fontSize="11" fontWeight="600">32.4 m²</text>
-        <text x="240" y="64" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Yatak</text>
-        <text x="240" y="184" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Mutfak</text>
-        <text x="78" y="186" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Hol</text>
+        <path d="M180 30 L180 210 M36 130 L180 130 M180 120 L284 120" fill="none" stroke="var(--text-2)" strokeWidth={3} />
+        <path d="M180 86 A26 26 0 0 0 154 112" fill="none" stroke="var(--text-3)" strokeWidth={1.5} opacity={0.7} />
+        <path d="M96 130 A24 24 0 0 1 120 106" fill="none" stroke="var(--text-3)" strokeWidth={1.5} opacity={0.7} />
+        <text x="108" y="78" textAnchor="middle" fill="var(--text)" fontSize="13" fontWeight="600">Salon</text>
+        <text x="108" y="94" textAnchor="middle" fill="var(--accent)" fontSize="11" fontWeight="600">32.4 m²</text>
+        <text x="232" y="74" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Yatak</text>
+        <text x="232" y="90" textAnchor="middle" fill="var(--text-3)" fontSize="9">16.0 m²</text>
+        <text x="232" y="166" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Mutfak</text>
+        <text x="232" y="182" textAnchor="middle" fill="var(--text-3)" fontSize="9">12.2 m²</text>
+        <text x="108" y="172" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Hol</text>
+        <text x="108" y="188" textAnchor="middle" fill="var(--text-3)" fontSize="9">9.0 m²</text>
       </svg>
       <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-md border border-[var(--border)] bg-[var(--bg-2)] px-3 py-1 text-[11px] font-medium text-[var(--text-3)]">{label} · örnek</span>
     </div>
