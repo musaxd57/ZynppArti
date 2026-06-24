@@ -35,17 +35,18 @@ export interface UnitPrices {
   readonly overheadRate: number;
 }
 
-// Kaba 2026 tohum değerleri (Türkiye, malzeme+işçilik dahil). Bölge/marka ile ±%50 oynar.
+// Kaba 2026 tohum değerleri (Türkiye, malzeme+işçilik dahil; iyi-finişli konut ~₺14-15 bin/m²
+// mertebesinde çıkar). Bölge/marka/lüks ile ±%50 oynar; kullanıcı panelden kendi rayicini girebilir.
 export const DEFAULT_UNIT_PRICES: UnitPrices = {
-  wallMasonryM2: 650,
-  plasterM2: 280,
-  electricalM2: 600,
-  plumbingM2: 700,
-  paintM2: 170,
-  floorM2: 1150,
-  skirtingM: 200,
-  door: 9000,
-  window: 13000,
+  wallMasonryM2: 1300,
+  plasterM2: 500,
+  electricalM2: 1400,
+  plumbingM2: 1600,
+  paintM2: 320,
+  floorM2: 2800,
+  skirtingM: 400,
+  door: 18000,
+  window: 24000,
   overheadRate: 0.15,
 };
 
