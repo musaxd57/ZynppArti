@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { runCopilotChecks } from '@zynpparti/copilot';
 import {
   AddEntity,
@@ -378,6 +378,21 @@ function TypingDots({ label }: { label: string }) {
   );
 }
 
+/**
+ * Sohbet metnindeki basit markdown'ı işler: `**kalın**` → <strong>. (LLM çıktısı ham `**...**`
+ * yıldızlarıyla görünüyordu.) Bağımlılık yok, dangerouslySetInnerHTML yok (XSS güvenli) — metni
+ * parçalara bölüp yalnız bold'u sarmalar. Satır sonları whitespace-pre-wrap ile korunur.
+ */
+function renderRich(text: string): ReactNode {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((p, i) =>
+    p.length > 4 && p.startsWith('**') && p.endsWith('**') ? (
+      <strong key={i}>{p.slice(2, -2)}</strong>
+    ) : (
+      p
+    ),
+  );
+}
+
 const EMPTY_THREADS: Record<Mode, Msg[]> = { ask: [], draw: [], render: [] };
 
 export function Assistant({ store, history, selectedIds, open, onClose, zoomToFit, initialCiz }: AssistantProps) {
@@ -614,10 +629,10 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
 
   return (
     <>
-      {/* Çiz üretilirken: TUVAL ortasında dönen daire + "AI plan üretiyor" (sohbette gösterme — kullanıcı isteği).
-          Panel'in (420px) sağındaki tuval alanına ortalanır; tıklamayı engellemez. */}
+      {/* Çiz üretilirken: tuval alanının ALT-ORTASINda dönen daire + "AI plan üretiyor" (tam ortada
+          "mal gibi" durmasın — kullanıcı isteği). Panel'in (420px) sağındaki alana, alta hizalı. */}
       {loadingMode === 'draw' && (
-        <div className="pointer-events-none fixed inset-y-0 left-[420px] right-0 z-40 hidden items-center justify-center sm:flex">
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 left-[420px] z-40 hidden items-end justify-center pb-12 sm:flex">
           <div className="flex items-center gap-3 rounded-full border border-[var(--border-soft)] bg-[var(--surface-2)] px-5 py-3 text-sm font-medium text-[var(--text-1)] shadow-2xl">
             <span className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-[var(--accent)]/30 border-t-[var(--accent)]" />
             AI plan üretiyor…
@@ -722,7 +737,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
               m.role === 'user' ? 'self-end bg-blue-600 text-white' : 'self-start bg-white/10 text-white/95'
             }`}
           >
-            <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
+            <div className="whitespace-pre-wrap leading-relaxed">{renderRich(m.content)}</div>
             {m.image && (
               <>
                 <img
@@ -778,7 +793,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
             const last = messages[messages.length - 1];
             // Daktilo/akış başladıysa (dolu asistan balonu) göstergeyi gizle.
             if (last?.role === 'assistant' && (last.content || last.image)) return null;
-            const label = mode === 'render' ? 'Render · görsel üretiliyor' : 'Sor · Vesna yazıyor';
+            const label = mode === 'render' ? 'Görsel üretiliyor…' : 'Yanıt hazırlanıyor…';
             return <TypingDots label={label} />;
           })()}
       </div>
