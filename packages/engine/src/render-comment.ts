@@ -3,27 +3,40 @@ import { COMMENT_PIN, COMMENT_TEXT_HEIGHT, type Comment } from '@zynpparti/docum
 import { ROOM_FONT } from './charset';
 
 const PIN_COLOR = 0xffb454; // amber (yorum sıcaklığı)
+const RESOLVED_COLOR = 0x5a6072; // soluk gri (çözülmüş yorum = "kapalı")
 const DOT_COLOR = 0x15171c;
 
 /**
  * Yorum/markup iğnesini çizer: amber bir 💬 baloncuk (kuyruğu `position` noktasında) + sağında
- * yorum metni. Dünya uzayında (cm) → zoom'la ölçeklenir. labelLayer'a eklenir.
+ * yorum metni. Çözülmüş yorum soluk gri + ✓ ön ekiyle çizilir. Dünya uzayında (cm) → zoom'la
+ * ölçeklenir. labelLayer'a eklenir.
  */
 export function buildComment(c: Comment): Container {
   const g = new Container();
   const s = COMMENT_PIN;
+  const color = c.resolved ? RESOLVED_COLOR : PIN_COLOR;
   const bubble = new Graphics();
   // Baloncuk gövdesi (üst-solda), kuyruk aşağıda (0,0) = iğne noktası.
-  bubble.roundRect(0, -s, s, s * 0.8, 5).fill({ color: PIN_COLOR });
-  bubble.poly([3, -s * 0.2, 11, -s * 0.2, 3, 0]).fill({ color: PIN_COLOR });
-  for (const dx of [7, 13, 19]) bubble.circle(dx, -s * 0.6, 1.6).fill({ color: DOT_COLOR });
+  bubble.roundRect(0, -s, s, s * 0.8, 5).fill({ color });
+  bubble.poly([3, -s * 0.2, 11, -s * 0.2, 3, 0]).fill({ color });
+  if (c.resolved) {
+    // Çözüldü onayı: baloncuk üstünde küçük ✓.
+    bubble
+      .moveTo(5, -s * 0.55)
+      .lineTo(8, -s * 0.3)
+      .lineTo(15, -s * 0.7)
+      .stroke({ width: 1.6, color: DOT_COLOR });
+  } else {
+    for (const dx of [7, 13, 19]) bubble.circle(dx, -s * 0.6, 1.6).fill({ color: DOT_COLOR });
+  }
   g.addChild(bubble);
 
   const t = new BitmapText({
-    text: c.text,
+    text: c.resolved ? `✓ ${c.text}` : c.text,
     style: { fontFamily: ROOM_FONT, fontSize: COMMENT_TEXT_HEIGHT, align: 'left' },
   });
-  t.tint = PIN_COLOR;
+  t.tint = color;
+  t.alpha = c.resolved ? 0.7 : 1;
   t.anchor.set(0, 0);
   t.position.set(s + 6, -s);
   g.addChild(t);

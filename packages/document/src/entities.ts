@@ -159,6 +159,8 @@ export interface Comment extends EntityBase {
   readonly type: 'comment';
   readonly position: Vec2;
   readonly text: string;
+  /** Çözüldü işareti — true ise yorum "kapalı" (soluk/işaretli çizilir). Varsayılan: açık. */
+  readonly resolved?: boolean;
 }
 
 /**

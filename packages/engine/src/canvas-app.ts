@@ -1,7 +1,7 @@
 import { Application, Container, Graphics } from 'pixi.js';
 import type { Vec2 } from '@zynpparti/geometry';
 import { pointInPolygon } from '@zynpparti/geometry';
-import { pointInAnnotation, type EntityId, type EntityStore } from '@zynpparti/document';
+import { commentSize, pointInAnnotation, type EntityId, type EntityStore } from '@zynpparti/document';
 import { type Camera, DEFAULT_CAMERA, screenToWorld, zoomAt, clamp } from './transform';
 import { EntityLayer } from './entity-layer';
 import type { AABB, SpatialIndex } from './spatial-index';
@@ -29,6 +29,8 @@ export interface CanvasHandle {
   setSpaceActivateHandler(cb: (id: EntityId) => void): void;
   /** Bir açıklama metnine çift tıklanınca çağrılacak handler (ör. metin düzenleme). */
   setAnnotationActivateHandler(cb: (id: EntityId) => void): void;
+  /** Bir yoruma çift tıklanınca çağrılacak handler (düzenle/çözüldü/sil menüsü). */
+  setCommentActivateHandler(cb: (id: EntityId) => void): void;
   /** İmleç hareket ettikçe dünya koordinatını (cm), tuvalden çıkınca null bildirir (durum çubuğu). */
   setHoverHandler(cb: (world: Vec2 | null) => void): void;
   /** Sağ-tık (contextmenu) olunca ekran koordinatını bildirir (bağlam menüsü). */
@@ -84,6 +86,7 @@ export async function createCanvasApp(
   let activeTool: SceneTool | null = null;
   let spaceActivate: ((id: EntityId) => void) | null = null;
   let annotationActivate: ((id: EntityId) => void) | null = null;
+  let commentActivate: ((id: EntityId) => void) | null = null;
   let hoverCb: ((world: Vec2 | null) => void) | null = null;
   let contextMenuCb: ((screenX: number, screenY: number) => void) | null = null;
 
@@ -194,7 +197,7 @@ export async function createCanvasApp(
   // Çift tık → yerinde düzenleme (aktif araçtan bağımsız; CLAUDE.md UX cilası):
   // mahal içinde → ad düzenle; açıklama metninde → metin düzenle.
   function onDblClick(e: MouseEvent): void {
-    if (!spaceActivate && !annotationActivate) return;
+    if (!spaceActivate && !annotationActivate && !commentActivate) return;
     const world = screenToWorld(pointerPos(e), camera);
     const ids = entityLayer.index.search({
       minX: world.x,
@@ -213,6 +216,17 @@ export async function createCanvasApp(
         e.preventDefault();
         annotationActivate(id);
         return;
+      }
+      if (commentActivate && ent?.type === 'comment') {
+        // Yorum baloncuğu position'ın YUKARISINDA → kutu testi (hit-test ile aynı).
+        const { w, h } = commentSize(ent);
+        const px = ent.position.x;
+        const py = ent.position.y;
+        if (world.x >= px && world.x <= px + w && world.y >= py - h && world.y <= py) {
+          e.preventDefault();
+          commentActivate(id);
+          return;
+        }
       }
     }
   }
@@ -316,6 +330,9 @@ export async function createCanvasApp(
     },
     setAnnotationActivateHandler(cb: (id: EntityId) => void): void {
       annotationActivate = cb;
+    },
+    setCommentActivateHandler(cb: (id: EntityId) => void): void {
+      commentActivate = cb;
     },
     setHoverHandler(cb: (world: Vec2 | null) => void): void {
       hoverCb = cb;
