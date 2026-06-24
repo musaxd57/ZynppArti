@@ -37,3 +37,8 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# Agent doğrulama artıkları (workflow verify ajanlarının yazdığı geçici test dosyaları)
+test_*_bug*.js
+test_*_bug*.mjs
+dup_*_check.test.ts
