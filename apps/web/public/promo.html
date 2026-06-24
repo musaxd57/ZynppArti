@@ -27,17 +27,26 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
   background:var(--bg);border-radius:10px;
   box-shadow:0 0 0 1px var(--bd),0 50px 140px rgba(0,0,0,.95);}
 
-#pb{position:absolute;bottom:0;left:0;z-index:999;height:2px;width:0%;
-  background:linear-gradient(90deg,var(--acc),#818cf8);
-  box-shadow:0 0 12px var(--acc);pointer-events:none;}
-
-#ctrl{position:absolute;bottom:10px;right:10px;z-index:999;display:flex;gap:6px;}
-.xbtn{padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:500;
-  background:var(--s2);border:1px solid var(--bd);color:var(--t3);}
-.xbtn:hover{color:var(--acc);border-color:var(--acc);}
+/* Zaman çubuğu (scrubbable) — alt kenar; sürükle/tıkla = geri-ileri sar */
+#seek{position:absolute;bottom:0;left:0;right:0;height:14px;z-index:999;cursor:pointer;
+  display:flex;align-items:flex-end;}
+#seektrack{position:relative;width:100%;height:4px;background:rgba(255,255,255,.12);transition:height .12s;}
+#seek:hover #seektrack{height:6px;}
+#seekfill{position:absolute;left:0;top:0;bottom:0;width:0%;
+  background:linear-gradient(90deg,var(--acc),#818cf8);box-shadow:0 0 10px var(--acc);}
+#seekknob{position:absolute;top:50%;width:11px;height:11px;border-radius:50%;background:#fff;
+  transform:translate(-50%,-50%);box-shadow:0 1px 4px rgba(0,0,0,.5);opacity:0;transition:opacity .12s;}
+#seek:hover #seekknob{opacity:1;}
+#playhint{position:absolute;inset:0;z-index:200;display:grid;place-items:center;pointer-events:none;opacity:0;transition:opacity .25s;}
+#playhint.show{opacity:1;}
+#playhint span{display:grid;place-items:center;width:62px;height:62px;border-radius:50%;
+  background:rgba(20,20,28,.7);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.18);
+  color:#fff;font-size:24px;}
+/* anlık sarma (scrub) sırasında geçişleri kapat */
+.notrans *{transition:none!important;animation:none!important;}
 
 /* ── SCENES ── */
-.sc{position:absolute;inset:0;opacity:0;pointer-events:none;}
+.sc{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .5s ease;}
 .sc.on{opacity:1;pointer-events:auto;}
 /* sinematik geçiş */
 .sc.fade-in{animation:fadeIn .55s ease forwards;}
@@ -342,7 +351,8 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
 </head>
 <body>
 <div id="stage">
-<div id="pb"></div>
+<div id="playhint"><span id="phicon">▶</span></div>
+<div id="seek"><div id="seektrack"><div id="seekfill"></div><div id="seekknob"></div></div></div>
 
 <!-- ══ S1 ══ -->
 <div class="sc on" id="s1">
@@ -449,7 +459,7 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
               </svg></div>
               <div class="sch"><span class="sct">Seçenek 1</span><span class="badge">✓ uyumlu</span></div>
               <div class="scd">Yaklaşık 90 m² 3+1 dairede geniş salon, ebeveyn ve iki çocuk odası, mutfak, banyo merkezî koridor etrafında çözümlenmiştir.</div>
-              <div class="scm">7 oda · 6 duvar · 6 kapı + 4 pencere — çizmek için tıkla</div>
+              <div class="scm">7 oda · 6 duvar · 7 kapı + 4 pencere — çizmek için tıkla</div>
             </div>
             <div class="secard" id="sc2">
               <div class="scthumb"><svg viewBox="0 0 160 88" preserveAspectRatio="none">
@@ -462,10 +472,10 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
               </svg></div>
               <div class="sch"><span class="sct">Seçenek 2</span><span class="badge">✓ uyumlu</span></div>
               <div class="scd">Yaklaşık 90 m² 3+1 dairede salon ön cephede; yatak odaları koridor boyunca, ıslak hacimler bir arada gruplanmıştır.</div>
-              <div class="scm">7 oda · 6 duvar · 6 kapı + 4 pencere — çizmek için tıkla</div>
+              <div class="scm">7 oda · 6 duvar · 7 kapı + 4 pencere — çizmek için tıkla</div>
             </div>
             <div class="secres" id="sr">
-              <strong>✓ 6 duvar çizildi, 7 mahal adlandırıldı, 6 kapı + 4 pencere eklendi.</strong><br>
+              <strong>✓ 6 duvar çizildi, 7 mahal adlandırıldı, 7 kapı + 4 pencere eklendi (1 giriş + 6 iç).</strong><br>
               Geri almak için Ctrl+Z (önce adlar, tekrar bas → duvarlar).
             </div>
           </div>
@@ -484,57 +494,66 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
     <div class="cnv">
       <div class="grid"></div>
       <svg class="csvg" viewBox="0 0 510 430" id="csvg" preserveAspectRatio="xMidYMid meet">
-        <!-- MANTIKLI 3+1: Salon EN BÜYÜK (sol-üst). Koridor merkezde, tüm odalara dağıtır.
-             Sol: Salon(üst)+Mutfak(alt) · Orta: Koridor(üst)+Banyo(alt) · Sağ: Ebeveyn+2 Çocuk odası -->
-        <rect class="rf"  id="rf1" x="50"  y="45"  width="150" height="180"/>
-        <rect class="rf"  id="rf2" x="200" y="225" width="80"  height="140"/>
-        <rect class="rf"  id="rf3" x="280" y="45"  width="120" height="125"/>
-        <rect class="rfd" id="rf4" x="50"  y="225" width="150" height="140"/>
-        <rect class="rf"  id="rf5" x="200" y="45"  width="80"  height="180"/>
-        <rect class="rf"  id="rf6" x="280" y="170" width="120" height="97"/>
-        <rect class="rf"  id="rf7" x="280" y="267" width="120" height="98"/>
+        <!-- MANTIKLI 3+1 (3 dikey zon): SOL=ıslak+yaşam (Salon/Mutfak/Banyo) · ORTA=Antre/koridor omurga
+             · SAĞ=3 yatak odası. GİRİŞ KAPISI (da0) alt cepheden antreye; antre tüm odalara dağıtır. -->
+        <rect class="rf"  id="rf1" x="50"  y="45"  width="140" height="185"/>
+        <rect class="rfd" id="rf4" x="50"  y="230" width="140" height="80"/>
+        <rect class="rf"  id="rf2" x="50"  y="310" width="140" height="55"/>
+        <rect class="rf"  id="rf5" x="190" y="45"  width="55"  height="320"/>
+        <rect class="rf"  id="rf3" x="245" y="45"  width="155" height="122"/>
+        <rect class="rf"  id="rf6" x="245" y="167" width="155" height="99"/>
+        <rect class="rf"  id="rf7" x="245" y="266" width="155" height="99"/>
 
         <!-- dış çerçeve -->
         <polyline pathLength="100" id="w0"
           points="50,45 400,45 400,365 50,365 50,45"
           fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
           stroke-dasharray="100" stroke-dashoffset="100"/>
-        <!-- iç duvarlar (6 duvar): w1 düşey x200, w2 yatay y225 (Salon|Mutfak + Koridor|Banyo),
-             w3 düşey x280, w4 yatay y170 (sağ üst), w5 yatay y267 (sağ alt) -->
-        <line pathLength="100" id="w1" x1="200" y1="45"  x2="200" y2="365"
+        <!-- iç duvarlar (6): w1 koridor sol (x190), w3 koridor sağ (x245),
+             w2 Salon|Mutfak (y230), w4 Mutfak|Banyo (y310), w5 Ebeveyn|Çocuk1 (y167), w6 Çocuk1|Çocuk2 (y266) -->
+        <line pathLength="100" id="w1" x1="190" y1="45"  x2="190" y2="365"
           fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
           stroke-dasharray="100" stroke-dashoffset="100"/>
-        <line pathLength="100" id="w2" x1="50"  y1="225" x2="280" y2="225"
+        <line pathLength="100" id="w3" x1="245" y1="45"  x2="245" y2="365"
           fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
           stroke-dasharray="100" stroke-dashoffset="100"/>
-        <line pathLength="100" id="w3" x1="280" y1="45"  x2="280" y2="365"
+        <line pathLength="100" id="w2" x1="50"  y1="230" x2="190" y2="230"
           fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
           stroke-dasharray="100" stroke-dashoffset="100"/>
-        <line pathLength="100" id="w4" x1="280" y1="170" x2="400" y2="170"
+        <line pathLength="100" id="w4" x1="50"  y1="310" x2="190" y2="310"
           fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
           stroke-dasharray="100" stroke-dashoffset="100"/>
-        <line pathLength="100" id="w5" x1="280" y1="267" x2="400" y2="267"
+        <line pathLength="100" id="w5" x1="245" y1="167" x2="400" y2="167"
+          fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
+          stroke-dasharray="100" stroke-dashoffset="100"/>
+        <line pathLength="100" id="w6" x1="245" y1="266" x2="400" y2="266"
           fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
           stroke-dasharray="100" stroke-dashoffset="100"/>
 
-        <!-- kapılar (6) — hepsi KORİDOR'a açılır (mantıklı sirkülasyon) -->
-        <g class="dr" id="da1"><path d="M200,110 Q180,110 180,90"/><line x1="200" y1="110" x2="200" y2="90"/></g>
-        <g class="dr" id="da2"><path d="M110,225 Q110,245 90,245"/><line x1="110" y1="225" x2="90" y2="225"/></g>
-        <g class="dr" id="da3"><path d="M245,225 Q245,205 225,205"/><line x1="245" y1="225" x2="225" y2="225"/></g>
-        <g class="dr" id="da4"><path d="M280,95 Q300,95 300,75"/><line x1="280" y1="95" x2="280" y2="75"/></g>
-        <g class="dr" id="da5"><path d="M280,212 Q300,212 300,232"/><line x1="280" y1="212" x2="280" y2="232"/></g>
-        <g class="dr" id="da6"><path d="M280,312 Q300,312 300,332"/><line x1="280" y1="312" x2="280" y2="332"/></g>
+        <!-- GİRİŞ KAPISI (da0) — alt dış cephede, antreye açılır (accent vurgulu) -->
+        <g class="dr" id="da0">
+          <rect x="197" y="362" width="46" height="6" fill="#0f1011"/>
+          <path d="M205,365 Q205,335 235,335" stroke="#7c8cf0"/>
+          <line x1="205" y1="365" x2="205" y2="335" stroke="#7c8cf0"/>
+        </g>
+        <!-- iç kapılar (6) — hepsi antreye açılır -->
+        <g class="dr" id="da1"><path d="M190,155 Q210,155 210,135"/><line x1="190" y1="155" x2="190" y2="135"/></g>
+        <g class="dr" id="da4"><path d="M190,285 Q210,285 210,265"/><line x1="190" y1="285" x2="190" y2="265"/></g>
+        <g class="dr" id="da2"><path d="M190,350 Q210,350 210,330"/><line x1="190" y1="350" x2="190" y2="330"/></g>
+        <g class="dr" id="da3"><path d="M245,90 Q225,90 225,110"/><line x1="245" y1="90" x2="245" y2="110"/></g>
+        <g class="dr" id="da5"><path d="M245,205 Q225,205 225,225"/><line x1="245" y1="205" x2="245" y2="225"/></g>
+        <g class="dr" id="da6"><path d="M245,305 Q225,305 225,325"/><line x1="245" y1="305" x2="245" y2="325"/></g>
 
-        <!-- pencereler (4) — dış cephede boşluk + cam çizgisi -->
+        <!-- pencereler (4) — dış cephede; 3 yatak odası + salon + mutfak pencereli, banyo şaft -->
         <g class="dg" id="wins">
-          <rect x="47" y="95" width="6" height="55" fill="#0f1011"/>
-          <line x1="50" y1="95" x2="50" y2="150" stroke="#6e8fd6" stroke-width="2"/>
-          <rect x="315" y="42" width="60" height="6" fill="#0f1011"/>
-          <line x1="315" y1="45" x2="375" y2="45" stroke="#6e8fd6" stroke-width="2"/>
-          <rect x="397" y="200" width="6" height="50" fill="#0f1011"/>
-          <line x1="400" y1="200" x2="400" y2="250" stroke="#6e8fd6" stroke-width="2"/>
-          <rect x="90" y="362" width="60" height="6" fill="#0f1011"/>
-          <line x1="90" y1="365" x2="150" y2="365" stroke="#6e8fd6" stroke-width="2"/>
+          <rect x="47" y="95" width="6" height="60" fill="#0f1011"/>
+          <line x1="50" y1="95" x2="50" y2="155" stroke="#6e8fd6" stroke-width="2"/>
+          <rect x="47" y="250" width="6" height="50" fill="#0f1011"/>
+          <line x1="50" y1="250" x2="50" y2="300" stroke="#6e8fd6" stroke-width="2"/>
+          <rect x="290" y="42" width="60" height="6" fill="#0f1011"/>
+          <line x1="290" y1="45" x2="350" y2="45" stroke="#6e8fd6" stroke-width="2"/>
+          <rect x="397" y="290" width="6" height="55" fill="#0f1011"/>
+          <line x1="400" y1="290" x2="400" y2="345" stroke="#6e8fd6" stroke-width="2"/>
         </g>
 
         <!-- ölçüler -->
@@ -552,20 +571,20 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
         </g>
 
         <!-- etiketler -->
-        <text class="rl" id="rl1" x="125" y="130">Salon</text>
-        <text class="rm" id="rm1" x="125" y="142">26,0 m²</text>
-        <text class="rl" id="rl5" x="240" y="130">Koridor</text>
-        <text class="rm" id="rm5" x="240" y="142">9,0 m²</text>
-        <text class="rl" id="rl3" x="340" y="102">Ebeveyn Y.O.</text>
-        <text class="rm" id="rm3" x="340" y="114">14,0 m²</text>
-        <text class="rl" id="rl4" x="125" y="298">Mutfak</text>
-        <text class="rm" id="rm4" x="125" y="310">13,0 m²</text>
-        <text class="rl" id="rl2" x="240" y="298">Banyo</text>
-        <text class="rm" id="rm2" x="240" y="310">5,0 m²</text>
-        <text class="rl" id="rl6" x="340" y="213">Çocuk Odası 1</text>
-        <text class="rm" id="rm6" x="340" y="225">11,5 m²</text>
-        <text class="rl" id="rl7" x="340" y="311">Çocuk Odası 2</text>
-        <text class="rm" id="rm7" x="340" y="323">11,5 m²</text>
+        <text class="rl" id="rl1" x="120" y="135">Salon</text>
+        <text class="rm" id="rm1" x="120" y="147">21,0 m²</text>
+        <text class="rl" id="rl4" x="120" y="268">Mutfak</text>
+        <text class="rm" id="rm4" x="120" y="280">9,0 m²</text>
+        <text class="rl" id="rl2" x="120" y="339" style="font-size:9px">Banyo</text>
+        <text class="rm" id="rm2" x="120" y="349" style="font-size:8px">6,0 m²</text>
+        <text class="rl" id="rl5" x="217" y="200" style="font-size:9px">Antre</text>
+        <text class="rm" id="rm5" x="217" y="211" style="font-size:7.5px">11,0 m²</text>
+        <text class="rl" id="rl3" x="322" y="100">Ebeveyn Y.O.</text>
+        <text class="rm" id="rm3" x="322" y="112">15,0 m²</text>
+        <text class="rl" id="rl6" x="322" y="212">Çocuk Odası 1</text>
+        <text class="rm" id="rm6" x="322" y="224">12,5 m²</text>
+        <text class="rl" id="rl7" x="322" y="311">Çocuk Odası 2</text>
+        <text class="rm" id="rm7" x="322" y="323">12,5 m²</text>
       </svg>
 
       <div class="ctr">
@@ -598,7 +617,7 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
         <div class="metrow"><span>Boya (duvar+tavan)</span><span>559,6 m²</span></div>
         <div class="metrow"><span>Döşeme/şap</span><span>130,0 m²</span></div>
         <div class="metrow"><span>Süpürgelik</span><span>130,7 m</span></div>
-        <div class="metrow"><span>Kapı / Pencere</span><span>6 / 4</span></div>
+        <div class="metrow"><span>Kapı / Pencere</span><span>7 / 4</span></div>
         <div class="katr"><span>Kat yüksekliği (cm)</span>
           <div class="katc"><div class="katb">−</div><span class="katv">270</span><div class="katb">+</div></div>
         </div>
@@ -727,204 +746,113 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
   </div>
 </div>
 
-<div id="ctrl">
-  <div class="xbtn" id="pp" onclick="toggleP()">⏸ Duraklat</div>
-  <div class="xbtn" onclick="restart()">↺ Baştan</div>
-</div>
 </div><!-- /stage -->
 
 <script>
 const G = id => document.getElementById(id);
-const T = [];
-let paused = false;
 
-const wait = ms => new Promise(r => {
-  const go = () => {
-    if (paused) { setTimeout(go, 60); return; }
-    const t = setTimeout(r, ms); T.push(t);
-  };
-  go();
-});
-
-function toggleP(){
-  paused = !paused;
-  G('pp').textContent = paused ? '▶ Devam' : '⏸ Duraklat';
-}
-
-function kill(){ T.forEach(clearTimeout); T.length=0; paused=false; G('pp').textContent='⏸ Duraklat'; }
-
-function pb(to, dur){
-  return new Promise(r=>{
-    const el=G('pb'), fr=parseFloat(el.style.width)||0, d=to-fr, n=40; let i=0;
-    const tick=()=>{
-      if(paused){setTimeout(tick,60);return;}
-      i++; el.style.width=(fr+d*(i/n))+'%';
-      if(i<n) setTimeout(tick,dur/n); else r();
-    };
-    setTimeout(tick,dur/n);
-  });
-}
-
-/* sinematik sahne geçişi */
-function showScene(id, anim='fade-in'){
-  document.querySelectorAll('.sc').forEach(s=>{
-    s.classList.remove('on','fade-in','zoom-in','slide-up');
-  });
-  const el = G(id);
-  el.classList.add('on', anim);
-}
-
-function cap(t){G('cap').textContent=t;G('cap').classList.add('on');}
-function nocap(){G('cap').classList.remove('on');}
-
-/* Duvar animasyonu — JS ile transition */
-function animWall(id, delay, duration){
-  return new Promise(r => {
-    setTimeout(()=>{
-      const el = G(id);
-      el.style.transition = `stroke-dashoffset ${duration}ms cubic-bezier(.4,0,.2,1)`;
-      el.style.strokeDashoffset = '0';
-      setTimeout(r, duration);
-    }, delay);
-  });
-}
-
-function resetWall(id){
-  const el = G(id);
-  if(!el) return;
-  el.style.transition = 'none';
-  el.style.strokeDashoffset = '100';
-}
-
+// Mahal listesi (3+1: Salon + 3 yatak odası). Toplam = 87,0 m².
 const mahaller = [
-  ['Salon','26,0 m²'],['Koridor','9,0 m²'],['Ebeveyn Y.O.','14,0 m²'],
-  ['Mutfak','13,0 m²'],['Banyo','5,0 m²'],['Çocuk Odası 1','11,5 m²'],['Çocuk Odası 2','11,5 m²']
+  ['Salon','21,0 m²'],['Mutfak','9,0 m²'],['Antre','11,0 m²'],['Banyo','6,0 m²'],
+  ['Ebeveyn Y.O.','15,0 m²'],['Çocuk Odası 1','12,5 m²'],['Çocuk Odası 2','12,5 m²']
 ];
+const WALLS = ['w0','w1','w2','w3','w4','w5','w6'];
+const PLAN = ['rf1','rf2','rf3','rf4','rf5','rf6','rf7',
+  'da0','da1','da2','da3','da4','da5','da6','wins','dg1','dg2',
+  'rl1','rm1','rl2','rm2','rl3','rm3','rl4','rm4','rl5','rm5','rl6','rm6','rl7','rm7'];
+
+function scene(id){ ['s1','s2','s3'].forEach(s=>G(s).classList.remove('on')); G(id).classList.add('on'); }
+function setCap(t){ G('cap').textContent=t; G('cap').classList.add('on'); }
+function clrCap(){ G('cap').classList.remove('on'); }
+function drawWalls(){ WALLS.forEach(id=>{const e=G(id); e.style.transition='stroke-dashoffset 600ms cubic-bezier(.25,.1,.25,1)'; e.style.strokeDashoffset='0';}); }
+function showPlan(){ PLAN.forEach(id=>{ const e=G(id); if(e) e.classList.add('s'); }); }
+function buildRows(){
+  G('rprows').innerHTML='';
+  mahaller.forEach(m=>{ const r=document.createElement('div'); r.className='mrow';
+    r.innerHTML='<span>'+m[0]+'</span><span class="m">'+m[1]+'</span>'; G('rprows').appendChild(r); });
+  G('rpcnt').textContent=mahaller.length;
+}
 
 function reset(){
-  G('pb').style.width='0';
+  scene('s1');
   G('t-sec').classList.add('act'); G('t-duv').classList.remove('act'); G('t-olc').classList.remove('act');
-  G('sbxy').textContent='X —  Y —'; G('sbt').textContent='Seç';
-  G('lp-col').style.display='';
-  G('aip').classList.remove('in');
+  G('sbxy').textContent='X —  Y —'; G('sbt').textContent='Seç';
+  G('lp-col').style.display=''; G('aip').classList.remove('in');
   G('tab-s').classList.remove('act'); G('tab-c').classList.add('act');
   G('pane-s').classList.remove('act'); G('pane-c').classList.add('act');
   G('exc').style.display='flex';
-  G('bbl').classList.remove('show'); G('ald').classList.remove('show');
-  G('si').classList.remove('show');
-  G('sc1').classList.remove('show'); G('sc2').classList.remove('show');
-  G('sr').classList.remove('show');
+  G('bbl').classList.remove('show'); G('ald').classList.remove('show'); G('si').classList.remove('show');
+  G('sc1').classList.remove('show'); G('sc2').classList.remove('show'); G('sr').classList.remove('show');
   G('sc1').style.borderColor=''; G('sc1').style.background='';
   G('ainp').textContent='Örn: 90 m² 3+1 daire çiz'; G('ainp').classList.remove('t');
-  ['w0','w1','w2','w3','w4','w5'].forEach(id => resetWall(id));
+  WALLS.forEach(id=>{const e=G(id); e.style.transition='none'; e.style.strokeDashoffset='100';});
   document.querySelectorAll('.rf,.rfd,.rl,.rm,.dg,.dr').forEach(e=>e.classList.remove('s'));
-  G('rprows').innerHTML=''; G('rpcnt').textContent='1';
-  G('rpbody').classList.remove('on');
-  ['rpd','rptot','rpnet','rpbrt','rpsub','rptp','rpex','rpmet','rpmal','rpkes']
-    .forEach(id=>{const e=G(id);if(e)e.classList.remove('on');});
-  G('rptv').textContent='—';
-  G('svg3d').style.opacity='0';
-  G('vai').style.transform=''; G('vai').style.boxShadow='';
-  nocap();
+  G('rprows').innerHTML=''; G('rpcnt').textContent='1'; G('rpbody').classList.remove('on');
+  ['rpd','rptot','rpnet','rpbrt','rpsub','rptp','rpex','rpmet','rpmal','rpkes'].forEach(id=>{const e=G(id); if(e) e.classList.remove('on');});
+  G('rptv').textContent='—'; G('svg3d').style.opacity='0';
+  G('vai').style.boxShadow=''; clrCap();
 }
 
-async function go(){
-  kill(); reset();
-  showScene('s1','fade-in');
-  await pb(5,700); await wait(800);
+// ── ZAMAN ÇİZELGESİ — her adım belirli t'de (ms) bir DURUM kurar (idempotent → ileri/geri sarılabilir) ──
+const STEPS = [
+  {t:600,   f:()=>{ G('vai').style.boxShadow='0 0 32px rgba(91,91,214,.9)'; }},
+  {t:1000,  f:()=>{ G('vai').style.boxShadow=''; G('lp-col').style.display='none'; G('aip').classList.add('in'); setCap('Vesna AI açıldı — Çiz sekmesi'); }},
+  {t:2400,  f:()=>{ clrCap(); G('ainp').classList.add('t'); G('ainp').textContent='90 m² 3+1 daire planı'; }},
+  {t:3400,  f:()=>{ G('exc').style.display='none'; G('bbl').classList.add('show'); G('ald').classList.add('show'); setCap('AI plan üretiyor…'); }},
+  {t:5000,  f:()=>{ G('ald').classList.remove('show'); G('si').classList.add('show'); G('sc1').classList.add('show'); G('sc2').classList.add('show'); setCap('2 plan hazır — Seçenek 1 seçiliyor'); }},
+  {t:6800,  f:()=>{ G('sc1').style.borderColor='rgba(91,91,214,.7)'; G('sc1').style.background='rgba(91,91,214,.08)'; G('sr').classList.add('show'); setCap('Seçenek 1 çizildi — mahal & ölçü otomatik'); G('sbxy').textContent='X 5,40  Y 4,20'; drawWalls(); }},
+  {t:7700,  f:()=>{ showPlan(); }},
+  {t:8800,  f:()=>{ setCap('Mahal listesi ve m² otomatik'); buildRows(); G('rpbody').classList.add('on'); G('rptv').textContent='87,0 m²'; ['rpd','rptot','rpnet','rpbrt','rpsub','rptp','rpex'].forEach(id=>G(id).classList.add('on')); }},
+  {t:9900,  f:()=>{ setCap('Detaylı metraj & maliyet'); G('rpmet').classList.add('on'); G('rpmal').classList.add('on'); G('rpkes').classList.add('on'); }},
+  {t:11200, f:()=>{ clrCap(); scene('s2'); }},
+  {t:11600, f:()=>{ G('svg3d').style.opacity='1'; }},
+  {t:15400, f:()=>{ scene('s3'); }},
+];
+const TOTAL = 19500;
 
-  /* Vesna AI tıklanıyor — glow efekti */
-  G('vai').style.transform='scale(1.05)';
-  G('vai').style.boxShadow='0 0 32px rgba(91,91,214,.9)';
-  await wait(250);
-  G('vai').style.transform='';
-  G('vai').style.boxShadow='';
+let cur=0, lastApplied=-1, playing=false, raf=null, lastTs=0, hintT=null, seeking=false;
 
-  /* sol panel değişiyor */
-  G('lp-col').style.display='none';
-  G('aip').classList.add('in');
-  cap('Vesna AI açıldı — Çiz sekmesi');
-  await pb(12,500); await wait(1000);
-
-  /* prompt yazılıyor */
-  nocap();
-  G('ainp').classList.add('t');
-  const inp=G('ainp');
-  inp.textContent='';
-  for(const c of '90 m² 3+1 daire planı'){ inp.textContent+=c; await wait(34); }
-  await wait(400);
-
-  /* Çiz basıldı — örnek chip'leri gizle (kartlara yer aç) */
-  G('exc').style.display='none';
-  G('bbl').classList.add('show');
-  G('ald').classList.add('show');
-  cap('AI plan üretiyor…');
-  await pb(23,1100); await wait(1000);
-
-  /* 2 seçenek */
-  G('ald').classList.remove('show');
-  G('si').classList.add('show');
-  await wait(130);
-  G('sc1').classList.add('show');
-  await wait(160);
-  G('sc2').classList.add('show');
-  cap('2 plan hazır — Seçenek 1 seçiliyor');
-  await pb(32,600); await wait(900);
-
-  /* Seçenek 1 seçildi → PLAN ANINDA DÜŞER (sıralı çizim yok — kullanıcı isteği) */
-  G('sc1').style.borderColor='rgba(91,91,214,.7)';
-  G('sc1').style.background='rgba(91,91,214,.08)';
-  G('sr').classList.add('show');
-  nocap(); cap('Seçenek 1 çizildi — mahal & ölçü otomatik');
-  G('sbt').textContent='Seç'; G('sbxy').textContent='X 5,40  Y 4,20';
-  await wait(300);
-
-  /* Tüm duvarlar BİRLİKTE, hızlı */
-  ['w0','w1','w2','w3','w4','w5'].forEach(id => animWall(id, 0, 550));
-  await pb(56,550); await wait(500);
-
-  /* Odalar + etiketler + kapılar + pencereler + ölçüler — HEPSİ BİRLİKTE düşer */
-  ['rf1','rf2','rf3','rf4','rf5','rf6','rf7',
-   'da1','da2','da3','da4','da5','da6','wins','dg1','dg2',
-   'rl1','rm1','rl2','rm2','rl3','rm3','rl4','rm4','rl5','rm5','rl6','rm6','rl7','rm7']
-    .forEach(id => G(id).classList.add('s'));
-  await pb(66,400); await wait(650);
-
-  /* sağ panel */
-  cap('Mahal listesi ve m² otomatik hesaplandı');
-  for(let i=0;i<mahaller.length;i++){
-    const r=document.createElement('div'); r.className='mrow';
-    r.innerHTML=`<span>${mahaller[i][0]}</span><span class="m">${mahaller[i][1]}</span>`;
-    G('rprows').appendChild(r); G('rpcnt').textContent=i+1; await wait(120);
+function applyUpTo(target){
+  target = Math.max(0, Math.min(TOTAL, target));
+  if(target < lastApplied){
+    document.documentElement.classList.add('notrans');
+    reset();
+    STEPS.forEach(s=>{ if(s.t<=target) s.f(); });
+    void document.body.offsetHeight;
+    document.documentElement.classList.remove('notrans');
+  } else {
+    STEPS.forEach(s=>{ if(s.t>lastApplied && s.t<=target) s.f(); });
   }
-  G('rpbody').classList.add('on'); G('rptv').textContent='90,0 m²';
-  ['rpd','rptot','rpnet','rpbrt','rpsub','rptp','rpex']
-    .forEach((id,i)=>setTimeout(()=>G(id).classList.add('on'),i*60));
-  await pb(75,700); await wait(500);
-
-  /* metraj */
-  cap('Detaylı metraj');
-  G('rpmet').classList.add('on'); await wait(350);
-  G('rpmal').classList.add('on'); G('rpkes').classList.add('on');
-  await pb(84,500); await wait(400); nocap();
-
-  /* 3B — sinematik zoom geçişi */
-  showScene('s2','zoom-in');
-  await pb(89,400); await wait(400);
-  G('svg3d').style.opacity='1';
-  await pb(96,1300); await wait(1600);
-
-  /* kapanış — slide up */
-  showScene('s3','slide-up');
-  await pb(100,700);
-
-  /* döngü: kısa bekle, baştan */
-  await wait(3500);
-  if(!paused) go();
+  lastApplied = target;
+  const p = (target/TOTAL*100);
+  G('seekfill').style.width = p+'%';
+  G('seekknob').style.left = p+'%';
 }
 
-function restart(){ kill(); reset(); setTimeout(go,300); }
-window.addEventListener('load',()=>setTimeout(go,300));
+function loop(){
+  if(!playing) return;
+  cur += 33;            // sabit artış (~30fps) — virtual-time + gerçek tarayıcı uyumlu
+  if(cur>=TOTAL){ cur=TOTAL; applyUpTo(cur); stop(); return; }
+  applyUpTo(cur);
+  raf=setTimeout(loop, 33);
+}
+function play(){ if(playing) return; if(cur>=TOTAL){ cur=0; applyUpTo(0); } playing=true; G('phicon').textContent='❚❚'; hintFlash(); raf=setTimeout(loop, 33); }
+function stop(){ playing=false; if(raf) clearTimeout(raf); G('phicon').textContent='▶'; hintFlash(); }
+function toggle(){ playing ? stop() : play(); }
+function hintFlash(){ G('playhint').classList.add('show'); clearTimeout(hintT); hintT=setTimeout(()=>G('playhint').classList.remove('show'),550); }
+
+// SEEK — sürükle/tıkla = geri-ileri sar
+function seekAt(clientX){ const r=G('seek').getBoundingClientRect(); const pp=Math.max(0,Math.min(1,(clientX-r.left)/r.width)); cur=pp*TOTAL; applyUpTo(cur); }
+G('seek').addEventListener('pointerdown', e=>{ seeking=true; try{G('seek').setPointerCapture(e.pointerId);}catch(_){} seekAt(e.clientX); e.stopPropagation(); });
+G('seek').addEventListener('pointermove', e=>{ if(seeking) seekAt(e.clientX); });
+window.addEventListener('pointerup', ()=>{ seeking=false; });
+
+// TIKLA-DURAKLAT — videoya (tuval/sahne) tıkla → oynat/durdur (seekbar ve linkler hariç)
+G('stage').addEventListener('click', e=>{ if(e.target.closest('#seek')||e.target.closest('a')) return; toggle(); });
+
+reset(); applyUpTo(0);
+window.addEventListener('load', ()=>{ cur=0; lastApplied=-1; applyUpTo(0); play(); });
+
 </script>
 </body>
 </html>
