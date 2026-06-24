@@ -40,7 +40,9 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background: var(--bg-base);
+  /* Tema-uyumlu kök zemin: kaydırınca/overscroll'da koyu html sızmasın (açık temada beyaz kalsın).
+     /app data-theme=dark zorladığı için orada --bg koyu (#08080c) — canvas zaten üstünde. */
+  background: var(--bg);
 }
 
 /*
@@ -178,10 +180,11 @@ body:not(.app-shell) {
   /* KRİTİK: genel `body{color:var(--text-1)}` app-token'ı (HEP açık-renk) → açık rengi olmayan
      başlıklar (h1/h2) light temada okunmuyordu. Pazarlamada tema-uyumlu --text'e geç. */
   color: var(--text);
+  /* NOT: background-attachment:fixed KALDIRILDI — kaydırınca sabit zemin scrollanan bölgeyi boyamayıp
+     arkadaki koyu html'i gösteriyordu (açık temada siyah bantlar). Gradyanlar üst-ambient olarak akar. */
   background-image:
     radial-gradient(900px 620px at 12% 0%, rgba(99, 99, 224, 0.06), transparent 56%),
     radial-gradient(760px 640px at 100% 22%, rgba(99, 99, 224, 0.05), transparent 58%);
-  background-attachment: fixed;
   background-repeat: no-repeat;
 }
 
