@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 /**
@@ -9,6 +9,15 @@ import Link from 'next/link';
  */
 export function MobileNav() {
   const [open, setOpen] = useState(false);
+  // Escape ile kapat (a11y): açık menü klavyeyle kapatılabilmeli.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
   const linkCls =
     'block rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-2)] transition hover:bg-[var(--bg-3)] hover:text-[var(--text)]';
   return (
