@@ -154,8 +154,8 @@ textarea {
   --border: #e8e8ee;
   --border-2: #dbdbe4;
   --text: #16161b;
-  --text-2: #56565f;
-  --text-3: #8c8c96;
+  --text-2: #50505a;
+  --text-3: #6b6b78;
   --accent-2: #4a4ac4;
   --accent-soft: rgba(91, 91, 214, 0.08);
   --ok: #1f9d67;
@@ -164,7 +164,6 @@ textarea {
   --shadow: 0 20px 50px -24px rgba(20, 20, 45, 0.18);
   --sb-thumb: rgba(20, 20, 40, 0.22);
   --sb-thumb-hover: rgba(20, 20, 40, 0.38);
-  --text-3: #6b6b78;
   --danger: #d92d2d;
 }
 
