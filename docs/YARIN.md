@@ -26,14 +26,14 @@
 - > Bulunan her hatayı buraya not düş, sonra düzeltiriz.
 
 ### 🐞 Yarın teyit edilecek şüpheli durumlar (Moses'ın gözlemi)
-- [ ] **Kapı/pencere sayımı:** Vesna'nın çizdiği planda (3+1, 90 m²) sanki **kapılar pencere olarak sayılıyor** olabilir (Moses emin değil, 2026-06-23 akşamı gözlem). Kontrol: AI üretici `openings` `kind` ataması (design.ts/applyLayout) + metrik panelindeki "Kapı/Pencere" sayacı (buildContext) doğru mu? Çizilen openings gerçekten door/window olarak mı işaretleniyor?
+- [x] **Kapı/pencere sayımı (2026-06-24 incelendi):** Deterministik hat **uçtan uca DOĞRU** — `kind` parse → validate → applyLayout (Assistant.tsx) → 2B render (render-opening) → 3B (wall3d) → sayaç (buildContext) boyunca hiç takas/kayıp yok. Yani kod kapıyı pencere SAYMIYOR. Eğer canlıda hâlâ yanlış görünüyorsa sebep **LLM'in etiketlemesi** (iç boşluğu "window" diye üretiyor olabilir). Önlem: DESIGN_SYSTEM prompt'u kind seçimini netleştirecek şekilde güçlendirildi (iç=door, dış=window). → **Moses canlıda tekrar dene; hâlâ yanlışsa geometrik güvenlik ağı ekleriz** (iç/dış duvara göre otomatik düzelt).
 - > NOT: Çiz modu canlıda ÇALIŞIYOR ✓ (Vesna 3+1 plan çizdi: Salon×2, Yatak×2, Mutfak, Banyo).
 
-### 2) Hızlı kazanımlar (maliyetsiz, düşük risk)
-- [ ] Yorum + metin ekleme `window.prompt` yerine **temalı diyalog** (calibrate gibi).
-- [ ] Yorum için **düzenle / sil / "çözüldü" işareti** (şimdilik sadece ekleniyor).
-- [ ] AI: bir sağlayıcı **boş cevap** dönerse sıradakine düşsün (şu an boş string "başarı" sayılıyor).
-- [ ] Render modu canlıda gerçekten çalışıyor mu — değilse OPENAI_IMAGE ayarını netle.
+### 2) Hızlı kazanımlar (maliyetsiz, düşük risk) — ✅ 2026-06-24 TAMAM
+- [x] Yorum + metin ekleme `window.prompt` yerine **temalı diyalog** (`ctx.requestText` → promptDialog).
+- [x] Yorum için **düzenle / sil / "çözüldü" işareti** — yoruma çift tık → CommentDialog (Comment.resolved; çözülmüş = soluk + ✓).
+- [x] AI: bir sağlayıcı **boş cevap** dönerse sıradakine düşsün — askCopilot/askCopilotStream boş yanıtı başarısızlık sayıyor (+3 test).
+- [x] Render modu hata netleştirme — gerçek OpenAI hatası + model id yüzeye çıkıyor (canlı doğrulama Moses'ta).
 
 ### 3) Faz 3 olgunlaşma (backend gerektirir — karar + bütçe)
 - [ ] Collab **kalıcılık**: oda boşalınca çizim kayboluyor (şu an v1). Hocuspocus / kalıcı y-websocket.

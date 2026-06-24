@@ -10,7 +10,7 @@
 **🚀 CANLI YAYINDA:** Web `https://vesna.design` (Vercel) + sync `wss://zynpparti-production.up.railway.app` (Railway). 3 AI anahtarı Vercel env'de; AI adı **Vesna**.
 **Faz:** 2 (AI copilot ✅) + Faz 4 erken önizleme (AI üretici ✅) + Faz 1 DWG import ✅ + Faz 3 (presence+seçim+yorum) + Faz 5 (3B+kesit+glTF+kamera keyframe) önizleme.
 **Branch:** `main` (güncel + push'lu, Vercel/Railway buradan otomatik deploy).
-**Durum:** Üç sağlayıcı router (ADR-0042) **hız-öncelikli** güncellendi: basit/orta→**OpenAI** (~1.3sn), karmaşık/yönetmelik→**Claude** (~2.7sn), **Akash yedek** (GLM-5.2 reasoning ~8sn yavaş). **Test: ~313.**
+**Durum:** Üç sağlayıcı router (ADR-0042) **hız-öncelikli** güncellendi: basit/orta→**OpenAI** (~1.3sn), karmaşık/yönetmelik→**Claude** (~2.7sn), **Akash yedek** (GLM-5.2 reasoning ~8sn yavaş). **Test: ~316.** Son tur (2026-06-24, `fix/openings-and-quickwins`, **main'e merge Moses onayı bekliyor**): YARIN §2 hızlı kazanımları + kapı/pencere bug incelemesi (kod doğru çıktı, prompt güçlendirildi).
 
 **AI ÇALIŞIYOR (canlı):** Üst araç çubuğu **Vesna** → Sor/Çiz/Render. Sağlayıcı adı UI'da gizli. Anahtarlar yalnız Vercel env (sunucu route `/api/copilot`, tarayıcıya sızmaz; `@zynpparti/ai` client'a import edilmez). Deploy: `docs/DEPLOY.md`.
 
@@ -120,6 +120,14 @@
 ---
 
 ## GÜNLÜK
+
+### 2026-06-24 (sabah — YARIN §2 hızlı kazanımlar + kapı/pencere bug incelemesi) `fix/openings-and-quickwins`
+- **🐞 Kapı/pencere bug incelendi → KODDA YOK:** Moses "kapılar pencere sayılıyor" gözlemini doğruladım: deterministik hat (design.ts parse → validateLayout → applyLayout → render-opening 2B → wall3d 3B → buildContext sayaç) **uçtan uca `kind`'ı koruyor, takas yok.** Sonuç: kod doğru; yanlışlık varsa **LLM etiketlemesi**. Önlem: DESIGN_SYSTEM prompt'u (iç boşluk=door, dış=window; "iç boşluğu window yapma") güçlendirildi. Canlı tekrar yanlışsa geometrik güvenlik ağı eklenecek.
+- **AI boş-cevap fallback:** `askCopilot`/`askCopilotStream` artık boş/yalnız-boşluk yanıtı (veya hiç parça yaymayan akışı) **başarısızlık** sayıp sıradaki sağlayıcıya düşüyor (eskiden boş string "başarı"ydı → boş baloncuk). +3 test (mock sağlayıcı). ai testleri 29→32.
+- **Temalı metin/yorum diyaloğu:** AnnotationTool + CommentTool `window.prompt` yerine `ctx.requestText` (temalı promptDialog) kullanıyor; yoksa window.prompt yedek. Asenkron akış.
+- **Yorum düzenle/sil/çözüldü:** Yoruma çift tık → **CommentDialog** (calibrate-dialog deseni): metni düzenle, "çözüldü" işaretle, sil. `Comment.resolved` (serialize/clone spread ile otomatik); çözülmüş yorum soluk gri + ✓. Engine `setCommentActivateHandler` (dblclick → iğne kutu hit-test).
+- **Render hata netleştirme:** /api/copilot render hatası gerçek OpenAI mesajını + model id'yi yüzeye çıkarıyor (model erişimi/fatura/içerik teşhisi kolaylaştı).
+- Zincir yeşil (typecheck 9/9 · lint 9/9 · ~316 test · web build 1/1). **Tarayıcı doğrulaması (yorum diyaloğu, çözüldü işareti, metin diyaloğu) + main'e merge Moses'ta.**
 
 ### 2026-06-23 (gece-14 — CANLI YAYIN + hız routing + 5-ajan denetim turu)
 - **🚀 YAYINDA:** Web → Vercel (`vesna.design` + `zynpp-arti-web.vercel.app`), Sync → Railway (`zynpparti-production.up.railway.app`, Root Directory=apps/sync). AI anahtarları Vercel env; `NEXT_PUBLIC_COLLAB_WS=wss://...railway.app`. AI ismi **Arki→Vesna** (domain). turbo.json'a build env'leri eklendi.
