@@ -177,6 +177,14 @@ body:not(.app-shell) {
   background-repeat: no-repeat;
 }
 
+/* Seçim + klavye odağı — tema-uyumlu (her iki temada okunur). */
+::selection {
+  background: var(--accent-soft, rgba(99, 99, 224, 0.17));
+}
+::-moz-selection {
+  background: var(--accent-soft, rgba(99, 99, 224, 0.17));
+}
+
 @keyframes vesnaFade {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: none; }

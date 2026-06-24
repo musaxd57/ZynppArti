@@ -89,7 +89,10 @@ export function netGrossAreaM2(
     deltaCm2 += (len * edgeWallThickness(a, b, walls)) / 2;
   }
   const deltaM2 = deltaCm2 / CM2_PER_M2;
-  return { netM2: Math.max(0, center - deltaM2), grossM2: center + deltaM2 };
+  // NaN/Infinity (bozuk koordinat/kalınlık) panele/Excel'e sızmasın → güvenli sıfıra düş.
+  const safeCenter = Number.isFinite(center) ? center : 0;
+  const safeDelta = Number.isFinite(deltaM2) ? deltaM2 : 0;
+  return { netM2: Math.max(0, safeCenter - safeDelta), grossM2: safeCenter + safeDelta };
 }
 
 export interface RoomTypeBreakdown {
