@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { VesnaWordmark } from './VesnaMark';
 import ThemeToggle from './ThemeToggle';
+import { MobileNav } from './MobileNav';
 import { AuthButtons } from '@/components/AuthButtons';
 
 const LOGO = 'corner' as const; // Kullanıcı seçimi: Blueprint Köşe
@@ -31,10 +32,11 @@ export function SiteHeader() {
           {clerkEnabled && <AuthButtons />}
           <Link
             href="/app"
-            className="inline-flex items-center gap-1.5 rounded-[10px] border border-[var(--accent)] bg-[var(--accent)] px-[15px] py-[9px] text-sm font-semibold text-white transition hover:-translate-y-px hover:bg-[var(--accent-2)]"
+            className="hidden items-center gap-1.5 rounded-[10px] border border-[var(--accent)] bg-[var(--accent)] px-[15px] py-[9px] text-sm font-semibold text-white transition hover:-translate-y-px hover:bg-[var(--accent-2)] sm:inline-flex"
           >
             Uygulamayı Aç
           </Link>
+          <MobileNav />
         </div>
       </div>
     </header>

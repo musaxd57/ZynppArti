@@ -67,7 +67,7 @@ export default function HeroMockup() {
 
           {/* TUVAL */}
           <div className="v-grid relative min-w-0 flex-1 bg-[var(--bg)]">
-            <svg viewBox="0 0 560 400" preserveAspectRatio="xMidYMid meet" className="block h-full w-full">
+            <svg viewBox="0 0 560 400" preserveAspectRatio="xMidYMid meet" className="block h-full w-full" role="img" aria-label="Örnek kat planı: Salon, Yatak Odası, Mutfak, Hol ve Banyo">
               <line x1="48" y1="26" x2="512" y2="26" stroke="var(--accent)" strokeWidth={1} opacity={0.7} />
               <line x1="48" y1="22" x2="48" y2="30" stroke="var(--accent)" strokeWidth={1} opacity={0.7} />
               <line x1="512" y1="22" x2="512" y2="30" stroke="var(--accent)" strokeWidth={1} opacity={0.7} />

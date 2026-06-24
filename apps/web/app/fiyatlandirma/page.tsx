@@ -140,7 +140,7 @@ export default function PricingPage() {
         <div className="flex flex-col gap-3">
           {FAQ.map((item) => (
             <details key={item.q} className="group rounded-xl border border-[var(--border)] bg-[var(--bg-2)]">
-              <summary className="flex cursor-pointer items-center justify-between gap-4 px-5 py-[18px] text-base font-semibold marker:hidden [&::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer items-center justify-between gap-4 rounded-xl px-5 py-[18px] text-base font-semibold outline-none marker:hidden focus-visible:ring-2 focus-visible:ring-[var(--accent)] [&::-webkit-details-marker]:hidden">
                 {item.q}
                 <span className="text-[1.3rem] leading-none text-[var(--text-3)] transition group-open:rotate-45">+</span>
               </summary>

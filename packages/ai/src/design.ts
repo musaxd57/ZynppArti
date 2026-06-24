@@ -156,12 +156,15 @@ function validateLayout(parsed: unknown): Layout | null {
     const oo = o as Record<string, unknown>;
     const kind = oo.kind === 'door' || oo.kind === 'window' ? oo.kind : null;
     if (!kind || !num(oo.cx) || !num(oo.cy)) continue;
-    const width = num(oo.width) && oo.width > 0 ? Math.min(oo.width, 1000) : kind === 'door' ? 90 : 120;
+    // Asgari makul genişlik 50cm; altındaki (ör. 0.5) çizim hatasıdır → tipe göre varsayılana düş.
+    const width =
+      num(oo.width) && oo.width >= 50 ? Math.min(oo.width, 1000) : kind === 'door' ? 90 : 120;
     openings.push({ kind, cx: oo.cx, cy: oo.cy, width });
     if (openings.length >= 200) break; // güvenlik sınırı
   }
 
-  const summary = typeof obj.summary === 'string' ? obj.summary : 'Taslak plan üretildi.';
+  const rawSummary = typeof obj.summary === 'string' ? obj.summary.trim() : '';
+  const summary = rawSummary.length > 0 ? rawSummary : 'Taslak plan üretildi.';
   return { summary, walls, rooms, openings };
 }
 
