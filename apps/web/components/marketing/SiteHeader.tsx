@@ -33,7 +33,7 @@ export function SiteHeader() {
         }}
       >
         <Link href="/" aria-label="Vesna ana sayfa" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'var(--text)' }}>
-          <VesnaMark size={26} />
+          <VesnaMark size={30} />
           <span style={{ fontSize: 19, fontWeight: 600, letterSpacing: '-0.02em' }}>Vesna</span>
         </Link>
 

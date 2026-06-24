@@ -19,7 +19,7 @@ export function SiteFooter() {
       >
         <div style={{ maxWidth: 280 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
-            <VesnaMark size={22} />
+            <VesnaMark size={26} />
             <span style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text)' }}>Vesna</span>
           </div>
           <p style={{ fontSize: '0.88rem', color: 'var(--text-3)', lineHeight: 1.6, margin: 0 }}>

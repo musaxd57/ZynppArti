@@ -6,8 +6,8 @@
  */
 export type LogoVariant = 'v' | 'compass' | 'corner';
 
-/** Tek yerden değiştir: aktif logo varyantı. */
-export const DEFAULT_LOGO: LogoVariant = 'v';
+/** Tek yerden değiştir: aktif logo varyantı. (Moses seçimi: blueprint köşe.) */
+export const DEFAULT_LOGO: LogoVariant = 'corner';
 
 export function VesnaMark({
   size = 26,
@@ -41,11 +41,12 @@ export function VesnaMark({
     );
   }
   if (variant === 'corner') {
+    // Blueprint köşe — iki köşe parantezi + ortada dolu kare. Dengeli + biraz daha belirgin.
     return (
-      <svg {...common} strokeWidth="2.4">
-        <path d="M7 13 L7 7 L13 7" />
-        <path d="M25 19 L25 25 L19 25" />
-        <rect x="13.5" y="13.5" width="5" height="5" rx="1" fill="var(--accent)" stroke="none" />
+      <svg {...common} strokeWidth="2.5">
+        <path d="M6 13 L6 6 L13 6" />
+        <path d="M26 19 L26 26 L19 26" />
+        <rect x="13" y="13" width="6" height="6" rx="1.3" fill="var(--accent)" stroke="none" />
       </svg>
     );
   }
