@@ -12,9 +12,9 @@ import type { ToolContext } from './context';
 const MARK_COLOR = 0xffb454;
 
 /**
- * Açıklama/metin aracı: tıkla → metni gir → o noktaya etiket ekle. Metin `window.prompt` ile
- * alınır (CalibrateTool ile aynı basit yaklaşım; ileride yerinde düzenleme UI'ı gelir).
- * Etiketler 'annotation' katmanına eklenir → LayerPanel'den gizlenebilir.
+ * Açıklama/metin aracı: tıkla → metni gir → o noktaya etiket ekle. Metin temalı diyalogtan
+ * (`ctx.requestText`) alınır; enjekte edilmemişse `window.prompt`'a düşer. Diyalog asenkron →
+ * metin gelince entity eklenir. Etiketler 'annotation' katmanına eklenir → LayerPanel'den gizlenebilir.
  */
 export class AnnotationTool implements SceneTool {
   private readonly preview = new Graphics();
@@ -31,19 +31,24 @@ export class AnnotationTool implements SceneTool {
 
   onPointerDown(p: ScenePointer): void {
     const at = this.ctx.snap(p.world);
-    const text = typeof window !== 'undefined' ? window.prompt('Metin:') : null;
-    if (text == null) return;
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    const annotation: Annotation = {
-      id: createEntityId(),
-      type: 'annotation',
-      layerId: 'annotation',
-      position: at,
-      text: trimmed,
-      height: DEFAULT_ANNOTATION_HEIGHT,
-    };
-    this.ctx.history.dispatch(new AddEntity(annotation));
+    // Temalı diyalog (yoksa window.prompt yedeği). Asenkron → metin gelince ekle.
+    const ask: Promise<string | null> = this.ctx.requestText
+      ? this.ctx.requestText('Metin:')
+      : Promise.resolve(typeof window !== 'undefined' ? window.prompt('Metin:') : null);
+    void ask.then((text) => {
+      if (text == null) return;
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      const annotation: Annotation = {
+        id: createEntityId(),
+        type: 'annotation',
+        layerId: 'annotation',
+        position: at,
+        text: trimmed,
+        height: DEFAULT_ANNOTATION_HEIGHT,
+      };
+      this.ctx.history.dispatch(new AddEntity(annotation));
+    });
   }
 
   onDeactivate(): void {

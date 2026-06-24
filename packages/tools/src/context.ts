@@ -32,6 +32,11 @@ export interface ToolContext {
    * Uygulama temalı bir diyalog gösterir; yoksa tool `window.prompt`'a düşer.
    */
   requestCalibration?(measured: number): Promise<number | null>;
+  /**
+   * Serbest metin ister (açıklama/yorum girişi). Uygulama temalı diyalog gösterir; yoksa tool
+   * `window.prompt`'a düşer. İptal=null. `initial` = düzenleme için ön-değer.
+   */
+  requestText?(message: string, initial?: string): Promise<string | null>;
 }
 
 const SNAP_PX = 12; // ekran pikseli yarıçapı (tam nokta yakalama)

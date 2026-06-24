@@ -163,6 +163,7 @@ export function CanvasStage() {
           }
         },
         requestCalibration, // ölçek için temalı diyalog (window.prompt yerine)
+        requestText: (message, initial) => promptDialog(message, initial ?? ''), // metin/yorum için temalı diyalog
       });
       h.setActiveTool(manager);
       // Mahal içine çift tık → Seç moduna geç + o mahalin adını düzenlemeye odaklan.
