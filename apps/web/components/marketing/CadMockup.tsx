@@ -4,17 +4,17 @@
  */
 export function CadMockup() {
   const toolIcon = { width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' } as const;
+  // Dış genişlik/padding'i ebeveyn verir (hero sarmalı) → burada yalnız çerçeveli kart.
   return (
-    <div style={{ position: 'relative', maxWidth: 1060, margin: '0 auto', paddingBottom: 96 }}>
-      <div
-        style={{
-          border: '1px solid var(--border)',
-          borderRadius: 16,
-          background: 'var(--bg-2)',
-          boxShadow: '0 40px 120px -40px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.01)',
-          overflow: 'hidden',
-        }}
-      >
+    <div
+      style={{
+        border: '1px solid var(--border)',
+        borderRadius: 16,
+        background: 'var(--bg-2)',
+        boxShadow: '0 40px 120px -40px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.01)',
+        overflow: 'hidden',
+      }}
+    >
         {/* pencere çubuğu */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-3)' }}>
           <div style={{ display: 'flex', gap: 7 }}>
@@ -95,7 +95,6 @@ export function CadMockup() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
 

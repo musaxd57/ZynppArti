@@ -4,6 +4,12 @@ import { RoomRedirect } from '@/components/RoomRedirect';
 import { SiteHeader } from '@/components/marketing/SiteHeader';
 import { SiteFooter } from '@/components/marketing/SiteFooter';
 import { CadMockup } from '@/components/marketing/CadMockup';
+import { DemoVideo } from '@/components/marketing/DemoVideo';
+
+// Hero demo videosu. Boşken DemoVideo dürüst yedeği (CadMockup illüstrasyonu) gösterir.
+// Video hazır olunca: '/videos/hero.mp4' yaz (+ poster) — docs/VIDEO-PLAN.md.
+const HERO_VIDEO = '';
+const HERO_POSTER = '';
 
 export const metadata: Metadata = {
   title: 'Vesna — Tarayıcıda mimari tasarım, m² otomasyonu ve yapay zekâ',
@@ -53,7 +59,16 @@ export default function Landing() {
             </div>
           </div>
 
-          <CadMockup />
+          {/* Hero medyası: video varsa oynatıcı, yoksa dürüst ürün illüstrasyonu (CadMockup). */}
+          <div style={{ position: 'relative', maxWidth: 1060, margin: '0 auto', padding: '0 0 96px' }}>
+            <DemoVideo
+              mode="player"
+              src={HERO_VIDEO || undefined}
+              poster={HERO_POSTER || undefined}
+              label="Vesna ürün demosu"
+              fallback={<CadMockup />}
+            />
+          </div>
         </section>
 
         {/* FEATURES */}
