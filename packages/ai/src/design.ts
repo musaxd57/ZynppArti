@@ -79,14 +79,28 @@ function num(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= MAX_COORD;
 }
 
-/** LLM metninden ilk dengeli {...} JSON bloğunu çıkarıp ayrıştırır (markdown/önek metne toleranslı). */
+/**
+ * LLM metninden ilk dengeli {...} JSON bloğunu çıkarıp ayrıştırır (markdown/önek metne toleranslı).
+ * STRING-FARKINDA: bir string literal içindeki `}` (ör. summary "salon } var") derinliği yanlışlıkla
+ * sıfırlayıp geçerli planı `null` döndürmesin diye in-string + backslash-escape durumunu izler.
+ */
 function extractJson(text: string): unknown | null {
   const start = text.indexOf('{');
   if (start < 0) return null;
   let depth = 0;
+  let inStr = false;
+  let esc = false;
   for (let i = start; i < text.length; i++) {
-    if (text[i] === '{') depth++;
-    else if (text[i] === '}') {
+    const ch = text[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === '\\') esc = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') inStr = true;
+    else if (ch === '{') depth++;
+    else if (ch === '}') {
       depth--;
       if (depth === 0) {
         try {

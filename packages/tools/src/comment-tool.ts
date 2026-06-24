@@ -30,19 +30,21 @@ export class CommentTool implements SceneTool {
     const ask: Promise<string | null> = this.ctx.requestText
       ? this.ctx.requestText('Yorum:')
       : Promise.resolve(typeof window !== 'undefined' ? window.prompt('Yorum:') : null);
-    void ask.then((text) => {
-      if (text == null) return;
-      const trimmed = text.trim();
-      if (!trimmed) return;
-      const comment: Comment = {
-        id: createEntityId(),
-        type: 'comment',
-        layerId: 'comment',
-        position: at,
-        text: trimmed,
-      };
-      this.ctx.history.dispatch(new AddEntity(comment));
-    });
+    ask
+      .then((text) => {
+        if (text == null) return;
+        const trimmed = text.trim();
+        if (!trimmed) return;
+        const comment: Comment = {
+          id: createEntityId(),
+          type: 'comment',
+          layerId: 'comment',
+          position: at,
+          text: trimmed,
+        };
+        this.ctx.history.dispatch(new AddEntity(comment));
+      })
+      .catch((err) => console.error('Yorum metni isteği başarısız:', err));
   }
 
   onDeactivate(): void {

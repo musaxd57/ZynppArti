@@ -35,20 +35,22 @@ export class AnnotationTool implements SceneTool {
     const ask: Promise<string | null> = this.ctx.requestText
       ? this.ctx.requestText('Metin:')
       : Promise.resolve(typeof window !== 'undefined' ? window.prompt('Metin:') : null);
-    void ask.then((text) => {
-      if (text == null) return;
-      const trimmed = text.trim();
-      if (!trimmed) return;
-      const annotation: Annotation = {
-        id: createEntityId(),
-        type: 'annotation',
-        layerId: 'annotation',
-        position: at,
-        text: trimmed,
-        height: DEFAULT_ANNOTATION_HEIGHT,
-      };
-      this.ctx.history.dispatch(new AddEntity(annotation));
-    });
+    ask
+      .then((text) => {
+        if (text == null) return;
+        const trimmed = text.trim();
+        if (!trimmed) return;
+        const annotation: Annotation = {
+          id: createEntityId(),
+          type: 'annotation',
+          layerId: 'annotation',
+          position: at,
+          text: trimmed,
+          height: DEFAULT_ANNOTATION_HEIGHT,
+        };
+        this.ctx.history.dispatch(new AddEntity(annotation));
+      })
+      .catch((err) => console.error('Metin diyaloğu hatası:', err));
   }
 
   onDeactivate(): void {

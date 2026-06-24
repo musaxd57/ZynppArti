@@ -84,7 +84,8 @@ textarea {
  */
 * {
   scrollbar-width: thin; /* Firefox */
-  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  /* Tema-değişkenli: koyu temada beyaz-sönük, açık temada koyu-sönük (yoksa light'ta beyaz-üstüne-beyaz görünmez). */
+  scrollbar-color: var(--sb-thumb, rgba(255, 255, 255, 0.18)) transparent;
 }
 *::-webkit-scrollbar {
   width: 10px;
@@ -94,13 +95,13 @@ textarea {
   background: transparent;
 }
 *::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.16);
+  background-color: var(--sb-thumb, rgba(255, 255, 255, 0.16));
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.32);
+  background-color: var(--sb-thumb-hover, rgba(255, 255, 255, 0.32));
 }
 *::-webkit-scrollbar-corner {
   background: transparent;
@@ -141,6 +142,9 @@ textarea {
   --grid: rgba(255, 255, 255, 0.045);
   --hi: rgba(255, 255, 255, 0.06);
   --shadow: 0 24px 70px -28px rgba(0, 0, 0, 0.7);
+  --sb-thumb: rgba(255, 255, 255, 0.16);
+  --sb-thumb-hover: rgba(255, 255, 255, 0.32);
+  --danger: #ff6b6b;
 }
 [data-theme='light'] {
   --bg: #fbfbfc;
@@ -158,6 +162,10 @@ textarea {
   --grid: rgba(20, 20, 40, 0.04);
   --hi: rgba(255, 255, 255, 0.9);
   --shadow: 0 20px 50px -24px rgba(20, 20, 45, 0.18);
+  --sb-thumb: rgba(20, 20, 40, 0.22);
+  --sb-thumb-hover: rgba(20, 20, 40, 0.38);
+  --text-3: #6b6b78;
+  --danger: #d92d2d;
 }
 
 /* Pazarlama sayfalarında (yalnız /app DIŞI) ambient ışık derinliği. .app-shell = canvas → hariç. */

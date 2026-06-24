@@ -171,7 +171,17 @@ function tessellateArc(
   out: Wall[],
   tf: Tf,
 ): void {
-  if (!(radius > 0)) return;
+  // Bozuk DXF: NaN/Infinity merkez/yarıçap/açı → NaN duvar üretip bounds/index'i bozar. Hepsini ele.
+  if (
+    !(radius > 0) ||
+    !Number.isFinite(radius) ||
+    !Number.isFinite(center.x) ||
+    !Number.isFinite(center.y) ||
+    !Number.isFinite(startAngle) ||
+    !Number.isFinite(endAngle)
+  ) {
+    return;
+  }
   let sweep = endAngle - startAngle;
   if (sweep <= 0) sweep += Math.PI * 2; // CCW normalize (kapalı çember için 2π)
   const steps = Math.max(2, Math.ceil(sweep / ARC_STEP));

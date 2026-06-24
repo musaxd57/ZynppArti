@@ -36,6 +36,7 @@ export function subscribeCommentRequest(fn: () => void): () => void {
 /** Handler çağırır: mevcut yorum metni + çözüldü durumunu ver; kullanıcının kararı döner. */
 export function requestCommentAction(text: string, resolved: boolean): Promise<CommentResult> {
   return new Promise((resolve) => {
+    current?.resolve(null); // bekleyen istek varsa yetim bırakma
     current = { text, resolved, resolve };
     emit();
   });

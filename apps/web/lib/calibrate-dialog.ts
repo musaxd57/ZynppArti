@@ -33,6 +33,7 @@ export function subscribeCalibrate(fn: () => void): () => void {
 /** Tool çağırır: ölçülen mesafeyi ver, gerçek cm (veya iptal=null) döner. */
 export function requestCalibration(measured: number): Promise<number | null> {
   return new Promise((resolve) => {
+    current?.resolve(null); // bekleyen istek varsa yetim bırakma
     current = { measured, resolve };
     emit();
   });

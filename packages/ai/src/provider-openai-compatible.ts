@@ -38,7 +38,10 @@ export function openAICompatibleProvider(cfg: OpenAICompatConfig): AiProvider {
       else params.max_tokens = max;
       if (cfg.temperature !== undefined) params.temperature = cfg.temperature;
 
-      const res = await client.chat.completions.create(params);
+      const res = await client.chat.completions.create(
+        params,
+        opts.signal ? { signal: opts.signal } : undefined,
+      );
       return (res.choices[0]?.message?.content ?? '').trim() || 'Yanıt üretilemedi (boş döndü).';
     },
 

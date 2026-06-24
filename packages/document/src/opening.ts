@@ -26,8 +26,11 @@ export function openingFrame(o: Opening, wall: Wall): OpeningFrame {
   const len = Math.hypot(sx, sy) || 1;
   const dx = sx / len;
   const dy = sy / len;
-  const cx = wall.start.x + sx * o.t;
-  const cy = wall.start.y + sy * o.t;
+  // t∈[0,1] savunması: bozuk/elle düzenlenmiş modelde (serialize derin doğrulama yapmaz) duvar
+  // dışına taşmasın.
+  const t = Number.isFinite(o.t) ? Math.max(0, Math.min(1, o.t)) : 0.5;
+  const cx = wall.start.x + sx * t;
+  const cy = wall.start.y + sy * t;
   const half = o.width / 2;
   return {
     center: { x: cx, y: cy },

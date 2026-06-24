@@ -20,6 +20,8 @@ let current: DialogState | null = null;
 const listeners = new Set<() => void>();
 
 function set(s: DialogState | null): void {
+  // Bekleyen bir diyalog üzerine YENİ biri açılırsa eskinin promise'ini null ile çöz (yetim/asılı kalmasın).
+  if (s && current) current.resolve(null);
   current = s;
   for (const fn of listeners) fn();
 }

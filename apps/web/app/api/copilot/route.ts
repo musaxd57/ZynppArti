@@ -37,9 +37,17 @@ const RATE_WINDOW_MS = 60_000; // / dakika
 const rateHits = new Map<string, number[]>();
 
 function clientIp(req: Request): string {
-  const xf = req.headers.get('x-forwarded-for');
-  if (xf) return xf.split(',')[0]!.trim();
-  return req.headers.get('x-real-ip') ?? 'local';
+  // GÜVENLİK: x-forwarded-for SPOOF'lanabilir — saldırgan kendi XFF başlığını gönderip sol (orijinal
+  // istemci) girdileri uydurabilir; sahte IP'lerle rate-limit'i atlayıp sınırsız ÜCRETLİ AI çağrısı
+  // yapabilir. Vercel gerçek bağlantı IP'sini güvenilir `x-real-ip`'e koyar (ve XFF'in EN SAĞINA ekler).
+  // → x-real-ip önce; yoksa XFF'in en sağ (Vercel'in gördüğü) girdisi; o da yoksa 'local'.
+  const real = req.headers.get('x-real-ip')?.trim();
+  if (real) return real;
+  const parts = (req.headers.get('x-forwarded-for') ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts.length > 0 ? parts[parts.length - 1]! : 'local';
 }
 
 /** İstek geçerli mi (sınırı aşmadı mı)? Aşarsa false. Eski kayıtları temizler. */

@@ -178,26 +178,36 @@ export function CanvasStage() {
       h.setAnnotationActivateHandler((id) => {
         const ent = store.get(id);
         if (ent?.type !== 'annotation') return;
-        void promptDialog('Metin:', ent.text).then((next) => {
-          if (next == null) return;
-          const trimmed = next.trim();
-          if (!trimmed || trimmed === ent.text) return;
-          history.dispatch(new UpdateEntity({ ...ent, text: trimmed }));
-        });
+        promptDialog('Metin:', ent.text)
+          .then((next) => {
+            if (next == null) return;
+            const trimmed = next.trim();
+            if (!trimmed || trimmed === ent.text) return;
+            history.dispatch(new UpdateEntity({ ...ent, text: trimmed }));
+          })
+          .catch((err) => {
+            console.error('Açıklama düzenleme diyaloğu hatası:', err);
+            toast('Diyalog açılamadı.', 'error');
+          });
       });
       // Yoruma çift tık → temalı diyalog: metin düzenle / çözüldü işaretle / sil.
       h.setCommentActivateHandler((id) => {
         const ent = store.get(id);
         if (ent?.type !== 'comment') return;
-        void requestCommentAction(ent.text, ent.resolved ?? false).then((res) => {
-          if (!res) return;
-          if ('delete' in res) {
-            history.dispatch(new RemoveEntity(id));
-            return;
-          }
-          const changed = res.text !== ent.text || res.resolved !== (ent.resolved ?? false);
-          if (changed) history.dispatch(new UpdateEntity({ ...ent, text: res.text, resolved: res.resolved }));
-        });
+        requestCommentAction(ent.text, ent.resolved ?? false)
+          .then((res) => {
+            if (!res) return;
+            if ('delete' in res) {
+              history.dispatch(new RemoveEntity(id));
+              return;
+            }
+            const changed = res.text !== ent.text || res.resolved !== (ent.resolved ?? false);
+            if (changed) history.dispatch(new UpdateEntity({ ...ent, text: res.text, resolved: res.resolved }));
+          })
+          .catch((err) => {
+            console.error('Yorum diyaloğu hatası:', err);
+            toast('Diyalog açılamadı.', 'error');
+          });
       });
       // Tek motor hover handler'ı → kayıtlı tüm dinleyicilere dağıt (StatusBar + presence).
       h.setHoverHandler((w) => {

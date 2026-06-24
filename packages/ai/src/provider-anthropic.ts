@@ -16,14 +16,17 @@ export function anthropicProvider(apiKey: string, model: string = ANTHROPIC_DEFA
     name: 'anthropic',
     model,
     async chat(messages: readonly ChatMessage[], opts: ChatOptions): Promise<string> {
-      const res = await client.messages.create({
-        model,
-        max_tokens: opts.maxTokens ?? 6000,
-        thinking: { type: 'adaptive' },
-        output_config: { effort: 'low' },
-        ...(opts.system ? { system: opts.system } : {}),
-        messages: messages.map((m) => ({ role: m.role, content: m.content })),
-      });
+      const res = await client.messages.create(
+        {
+          model,
+          max_tokens: opts.maxTokens ?? 6000,
+          thinking: { type: 'adaptive' },
+          output_config: { effort: 'low' },
+          ...(opts.system ? { system: opts.system } : {}),
+          messages: messages.map((m) => ({ role: m.role, content: m.content })),
+        },
+        opts.signal ? { signal: opts.signal } : undefined,
+      );
 
       if (res.stop_reason === 'refusal') {
         return 'Bu soruya güvenlik nedeniyle yanıt veremiyorum.';
@@ -56,7 +59,13 @@ export function anthropicProvider(apiKey: string, model: string = ANTHROPIC_DEFA
       );
       stream.on('text', (delta) => onDelta(delta));
       const final = await stream.finalMessage();
-      if (final.stop_reason === 'refusal') return 'Bu soruya güvenlik nedeniyle yanıt veremiyorum.';
+      if (final.stop_reason === 'refusal') {
+        // Refüzalde text deltası gelmez → onDelta'yı elle çağır ki askCopilotStream "started=true"
+        // görsün ve SESSİZCE başka sağlayıcıya düşmesin (refüzal kasıtlı; aktarılmalı).
+        const msg = 'Bu soruya güvenlik nedeniyle yanıt veremiyorum.';
+        onDelta(msg);
+        return msg;
+      }
       const text = final.content
         .filter((b): b is Anthropic.TextBlock => b.type === 'text')
         .map((b) => b.text)

@@ -57,14 +57,16 @@ export class CalibrateTool implements SceneTool {
     const ask: Promise<number | null> = this.ctx.requestCalibration
       ? this.ctx.requestCalibration(measured)
       : Promise.resolve(promptFallback());
-    void ask.then((real) => {
-      if (real == null || !Number.isFinite(real) || real <= 0) return;
-      const factor = real / measured;
-      const walls = this.ctx.store.all().filter((e): e is Wall => e.type === 'wall');
-      if (walls.length === 0) return;
-      const cmds = walls.map((w) => new UpdateEntity(this.scaleWall(w, factor, a)));
-      this.ctx.history.dispatch(new BatchCommand('Ölçekle', cmds));
-    });
+    ask
+      .then((real) => {
+        if (real == null || !Number.isFinite(real) || real <= 0) return;
+        const factor = real / measured;
+        const walls = this.ctx.store.all().filter((e): e is Wall => e.type === 'wall');
+        if (walls.length === 0) return;
+        const cmds = walls.map((w) => new UpdateEntity(this.scaleWall(w, factor, a)));
+        this.ctx.history.dispatch(new BatchCommand('Ölçekle', cmds));
+      })
+      .catch((err) => console.error('Kalibrasyon diyaloğu başarısız:', err));
   }
 
   private scaleWall(w: Wall, f: number, o: Vec2): Wall {
