@@ -121,6 +121,13 @@
 
 ## GÜNLÜK
 
+### 2026-06-24 (öğle-2 — fiyatlandırma sayfası + Paddle/iş modeli planı) **main'de, canlıda**
+- **Fiyatlandırma sayfası** (`/fiyatlandirma`): 3 katman (Ücretsiz / Pro ~$12 / Stüdyo ~$29) + SSS, marka uyumlu. Ücretsiz→/app; ücretli planlar **"Yakında"** (gerçek checkout auth'a bağlı). Landing nav+footer'a "Fiyatlar" linki.
+- **docs/BUSINESS-PRICING.md**: önerilen model (maliyetsiz çekirdek + kotalı AI + kredi paketi), **Paddle** (Merchant of Record — KDV/fatura Paddle'da) entegrasyon sırası ve **kritik bağımlılık: tahsilat auth'tan SONRA** (kim hangi planda → kota/gate). Rakamlar Moses onayı bekliyor (§6).
+- **Ödeme sağlayıcı kararı:** Moses'ın mevcut **Paddle** hesabı (başka site için kurulu, doğrulanmış) Vesna için de kullanılacak — yeni ürün olarak eklenir. Stripe yerine Paddle (vergi/fatura kolaylığı).
+- **Kurumsal e-posta beklemede:** Namecheap hesabı geçici kilitli (risk doğrulaması; descriptor `NAME-CHEAP.COM* WOMLLQ` ile açtırılacak). Email acil değil; iletişimde Gmail kalıyor.
+- Zincir yeşil (typecheck 9/9 · lint 9/9 · build 1/1; /fiyatlandirma derlendi). Dev-mode CSS yarışı yüzünden yerel screenshot stilsiz çıktı — production'da tam stilli (landing aynı yöntemle doğru render).
+
 ### 2026-06-24 (öğle — satışa hazırlık: yasal sayfalar + landing) **main'de, canlıda**
 - **Gizlilik Politikası** kısa→**15 bölümlük tam KVKK aydınlatma metni**; yeni **Kullanım Koşulları** (`/kosullar`) — AI sorumluluk reddi, veri kaybı, sorumluluk sınırı, TR hukuku. Durum çubuğunda iki link.
 - **Landing/satış sayfası** (`/` kök): hero + 9 özellik kartı + "Neden Vesna" + CTA, marka uyumlu (Inter/iris/dark), statik (SEO/hız). **Uygulama `/`→`/app`'e taşındı**; yasal back-link'ler + CTA oraya. **RoomRedirect** eski collab linklerini (`/#room=`) `/app`'e yönlendirir (kopmaz). layout/metadata → Vesna.
