@@ -73,6 +73,22 @@ describe('serializeModel / deserializeModel', () => {
     expect(back.map((e: Entity) => e.id)).toEqual(['w1', 'a1']);
   });
 
+  it('NaN/bozuk alanlı entity atlanır (derin doğrulama)', () => {
+    const json = JSON.stringify({
+      format: 'zynpparti-model',
+      version: 1,
+      entities: [
+        wall, // sağlam
+        { id: 'b1', type: 'wall', layerId: 'l', start: { x: NaN, y: 0 }, end: { x: 1, y: 1 }, thickness: 10 }, // NaN koord
+        { id: 'b2', type: 'wall', layerId: 'l', start: { x: 0, y: 0 }, end: { x: 1, y: 1 } }, // thickness yok
+        { id: 'b3', type: 'space', layerId: 'l', name: 'X', boundary: [{ x: 0, y: 0 }, { x: 1, y: 1 }] }, // <3 köşe
+        { id: 'b4', type: 'opening', layerId: 'l', wallId: 'w', kind: 'door', t: 0.5, width: 'çok' }, // width sayı değil
+      ],
+    });
+    const back = deserializeModel(json);
+    expect(back.map((e: Entity) => e.id)).toEqual(['w1']); // yalnız sağlam olan kalır
+  });
+
   it('boş model round-trip', () => {
     expect(deserializeModel(serializeModel([]))).toEqual([]);
   });

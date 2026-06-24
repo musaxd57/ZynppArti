@@ -55,9 +55,13 @@ export function deserializeModel(json: string): Entity[] {
     throw new Error('Model dosyası tanınmadı (zynpparti-model değil).');
   }
   const out: Entity[] = [];
+  let skipped = 0;
   for (const raw of parsed['entities']) {
     if (isValidEntity(raw)) out.push(raw);
+    else skipped++;
   }
+  // Atlanan entity'ler sessizce kaybolmasın — bozuk/elle-düzenlenmiş dosya teşhisi için logla.
+  if (skipped > 0) console.warn(`deserializeModel: ${skipped} geçersiz entity atlandı (bozuk alan).`);
   return out;
 }
 
@@ -65,14 +69,60 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
 
-/** Minimal yapısal doğrulama: ortak alanlar + bilinen tip. (Derin alan doğrulaması yapılmaz.) */
+function isFiniteNum(v: unknown): v is number {
+  return typeof v === 'number' && Number.isFinite(v);
+}
+
+/** Geçerli {x,y} — ikisi de sonlu sayı (NaN/Infinity koordinat indeksi/geometriyi bozar). */
+function isVec2(v: unknown): boolean {
+  return isRecord(v) && isFiniteNum(v['x']) && isFiniteNum(v['y']);
+}
+
+function isVec2Array(v: unknown, min: number): boolean {
+  return Array.isArray(v) && v.length >= min && v.every(isVec2);
+}
+
+/**
+ * Yapısal + TİP-BAZLI alan doğrulaması. Ortak alanların yanında her tipin taşıyıcı alanlarını
+ * (koordinat/sayı/ad) doğrular → NaN/eksik alanlı entity belleğe (ve rbush/metraj/maliyet hesabına)
+ * sızmaz. Geçersiz entity yüklemede atlanır (toleranslı kısmi-bozulma).
+ */
 function isValidEntity(v: unknown): v is Entity {
   if (!isRecord(v)) return false;
   const type = v['type'];
-  return (
-    typeof v['id'] === 'string' &&
-    typeof v['layerId'] === 'string' &&
-    typeof type === 'string' &&
-    VALID_TYPES.has(type as EntityType)
-  );
+  if (
+    typeof v['id'] !== 'string' ||
+    typeof v['layerId'] !== 'string' ||
+    typeof type !== 'string' ||
+    !VALID_TYPES.has(type as EntityType)
+  ) {
+    return false;
+  }
+  switch (type as EntityType) {
+    case 'wall':
+      return isVec2(v['start']) && isVec2(v['end']) && isFiniteNum(v['thickness']);
+    case 'space':
+      return typeof v['name'] === 'string' && isVec2Array(v['boundary'], 3);
+    case 'parcel':
+      return isVec2Array(v['boundary'], 3);
+    case 'opening':
+      return (
+        typeof v['wallId'] === 'string' &&
+        (v['kind'] === 'door' || v['kind'] === 'window') &&
+        isFiniteNum(v['t']) &&
+        isFiniteNum(v['width'])
+      );
+    case 'dimension':
+    case 'section':
+      return isVec2(v['a']) && isVec2(v['b']);
+    case 'block':
+      return typeof v['kind'] === 'string' && isVec2(v['position']) && isFiniteNum(v['rotation']);
+    case 'sheet':
+      return isVec2(v['position']);
+    case 'annotation':
+    case 'comment':
+      return isVec2(v['position']) && typeof v['text'] === 'string';
+    default:
+      return false;
+  }
 }
