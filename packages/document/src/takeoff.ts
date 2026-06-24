@@ -75,6 +75,7 @@ function schedule(openings: readonly Opening[], kind: Opening['kind']): Schedule
   const byWidth = new Map<number, number>();
   for (const o of openings) {
     if (o.kind !== kind) continue;
+    if (!(o.width > 0) || !Number.isFinite(o.width)) continue; // negatif/sıfır/NaN genişlik çizelgeye girmesin
     const w = Math.round(o.width);
     byWidth.set(w, (byWidth.get(w) ?? 0) + 1);
   }

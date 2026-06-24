@@ -26,7 +26,7 @@ const CONTACT_EMAIL = 'musacinar2009@gmail.com';
  */
 export default function GizlilikPage() {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+    <div className="v-page" style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
       <SiteHeader />
       <article className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="text-3xl font-semibold">Gizlilik Politikası ve KVKK Aydınlatma Metni</h1>

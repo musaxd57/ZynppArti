@@ -281,14 +281,14 @@ export function Toolbar({
         );
       })}
       <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
-      <button type="button" onClick={() => history.undo()} className={btn} title="Geri al (Ctrl+Z)">
+      <button type="button" onClick={() => history.undo()} className={btn} title="Geri al (Ctrl+Z)" aria-label="Geri al">
         <Undo2 className="h-[18px] w-[18px]" />
       </button>
-      <button type="button" onClick={() => history.redo()} className={btn} title="İleri al (Ctrl+Shift+Z)">
+      <button type="button" onClick={() => history.redo()} className={btn} title="İleri al (Ctrl+Shift+Z)" aria-label="İleri al">
         <Redo2 className="h-[18px] w-[18px]" />
       </button>
       <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
-      <button type="button" onClick={zoomToFit} className={btn} title="İçeriğe sığdır (Home)">
+      <button type="button" onClick={zoomToFit} className={btn} title="İçeriğe sığdır (Home)" aria-label="İçeriğe sığdır">
         <Maximize className="h-[18px] w-[18px]" />
       </button>
       <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
@@ -321,6 +321,7 @@ export function Toolbar({
         type="button"
         onClick={() => onToggleChrome?.()}
         title={chromeHidden ? 'Panelleri göster' : 'Panelleri gizle (sadece çalışma alanı)'}
+        aria-label={chromeHidden ? 'Panelleri göster' : 'Panelleri gizle'}
         aria-pressed={chromeHidden}
         className={`ml-auto ${btn} ${chromeHidden ? 'bg-[var(--accent-bg)] text-[var(--accent-text)]' : ''}`}
       >

@@ -16,7 +16,7 @@ export function AppBodyLock() {
     el.dataset.theme = 'dark';
     return () => {
       document.body.classList.remove('app-shell');
-      if (prev) el.dataset.theme = prev;
+      el.dataset.theme = prev || 'dark';
     };
   }, []);
   return null;

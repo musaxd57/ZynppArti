@@ -53,10 +53,24 @@ export default function BeforeAfter({
         RENDER
       </span>
 
-      {/* tutamak */}
+      {/* tutamak — klavye + ARIA erişilebilir (WCAG 2.1.1 / 4.1.3) */}
       <div
         onPointerDown={onDown}
-        className="absolute bottom-0 top-0 z-10 flex w-11 -translate-x-1/2 cursor-ew-resize touch-none items-center justify-center"
+        role="slider"
+        tabIndex={0}
+        aria-label="Plan ve render karşılaştırma kaydırıcısı"
+        aria-valuemin={6}
+        aria-valuemax={94}
+        aria-valuenow={Math.round(pct)}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowLeft') setPct((p) => Math.max(6, p - 4));
+          else if (e.key === 'ArrowRight') setPct((p) => Math.min(94, p + 4));
+          else if (e.key === 'Home') setPct(6);
+          else if (e.key === 'End') setPct(94);
+          else return;
+          e.preventDefault();
+        }}
+        className="absolute bottom-0 top-0 z-10 flex w-11 -translate-x-1/2 cursor-ew-resize touch-none items-center justify-center outline-none focus-visible:[&>div:last-child]:ring-2 focus-visible:[&>div:last-child]:ring-[var(--accent)]"
         style={{ left: `${pct}%` }}
       >
         <div className="absolute bottom-0 top-0 w-0.5 bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.1)]" />

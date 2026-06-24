@@ -321,8 +321,13 @@ export class SelectTool implements SceneTool {
       case 'wall':
         return [entity.start, entity.end];
       case 'dimension': {
-        const d = dimensionGeometry(entity);
-        return [d.a, d.b, d.mid]; // uç, uç, offset
+        try {
+          const d = dimensionGeometry(entity);
+          return [d.a, d.b, d.mid]; // uç, uç, offset
+        } catch (e) {
+          console.error('dimensionGeometry başarısız, basit uçlara düşülüyor:', e);
+          return [entity.a, entity.b];
+        }
       }
       case 'parcel':
         return [...entity.boundary];

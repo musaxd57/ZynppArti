@@ -119,6 +119,7 @@ function openingAtCut(
 ): SectionOpening | undefined {
   if (!openings || openings.length === 0) return undefined;
   const wallLen = distance(wall.start, wall.end);
+  if (wallLen === 0) return undefined; // dejenere duvar → centerAlong=0, tüm openings başta sanılır
   const cutAlong = distance(wall.start, x); // x duvar segmenti üzerinde → start'a uzaklık = konum
   for (const o of openings) {
     const centerAlong = o.t * wallLen;

@@ -163,7 +163,7 @@ export default function HeroMockup() {
                 <span className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--text)]">
                   <Sparkle width={12} height={12} className="text-[var(--accent)]" /> AI render
                 </span>
-                <span className="text-[10px] font-semibold text-[var(--ok)]">hazır · 4.2s</span>
+                <span className="text-[10px] font-semibold text-[var(--ok)]">hazır</span>
               </div>
             </div>
           </div>

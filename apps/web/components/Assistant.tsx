@@ -209,7 +209,8 @@ function scoreLayout(v: Layout): number | null {
       thickness: WALL_THICKNESS,
     }));
     return runCopilotChecks(spaces, walls, [], []).filter((f) => f.severity !== 'info').length;
-  } catch {
+  } catch (e) {
+    console.warn('scoreLayout doğrulaması başarısız (varyant puanlanmadı):', e);
     return null;
   }
 }

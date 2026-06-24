@@ -149,6 +149,7 @@ function computeBounds(entities: readonly Entity[], walls: Map<EntityId, Wall>):
   let maxX = -Infinity;
   let maxY = -Infinity;
   const add = (p: Vec2): void => {
+    if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return; // NaN/Infinity nokta bounds'u bozmasın
     if (p.x < minX) minX = p.x;
     if (p.y < minY) minY = p.y;
     if (p.x > maxX) maxX = p.x;
@@ -199,7 +200,7 @@ function computeBounds(entities: readonly Entity[], walls: Map<EntityId, Wall>):
         break;
     }
   }
-  if (!Number.isFinite(minX)) return null;
+  if (![minX, minY, maxX, maxY].every(Number.isFinite)) return null;
   return { minX, minY, maxX, maxY };
 }
 
