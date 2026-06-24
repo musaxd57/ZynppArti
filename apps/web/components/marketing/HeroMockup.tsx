@@ -56,9 +56,9 @@ export default function HeroMockup() {
                 <span className="text-[10px] font-semibold text-[var(--accent)]">3 bulgu</span>
               </div>
               <div className="flex flex-col gap-1.5 px-3 pb-3">
-                <Finding ok text="Salon güney cephe — gün ışığı yeterli" cite="İmar" />
-                <Finding text="Banyo penceresiz — hava bacası gerekli" cite="TS 9111" />
-                <Finding ok text="Koridor 120 cm — erişilebilir" cite="TS 9111" />
+                <Finding ok text="3+1 · tüm odalar asgari ölçüde" cite="İmar" />
+                <Finding text="Banyo penceresiz — havalandırma şaftı" cite="TS 9111" />
+                <Finding ok text="Geçiş genişliği ≥ 120 cm" cite="TS 9111" />
               </div>
             </div>
           </div>
@@ -75,7 +75,7 @@ export default function HeroMockup() {
                 <div className="text-[11px] leading-snug text-[var(--text-2)]">“Ferah, geniş salonlu 3+1 daire çiz”</div>
               </div>
             </div>
-            <svg viewBox="0 0 560 400" preserveAspectRatio="xMidYMid meet" className="block h-full w-full" role="img" aria-label="Örnek 3+1 kat planı: Salon, Ebeveyn, Yatak Odası, Çocuk Odası, Mutfak, Banyo ve Antre">
+            <svg viewBox="0 0 560 400" preserveAspectRatio="xMidYMid meet" className="block h-full w-full" role="img" aria-label="Örnek 3+1 kat planı: Salon, Ebeveyn, Yatak Odası, Çocuk Odası, Mutfak, Banyo ve Hol">
               <line x1="48" y1="26" x2="512" y2="26" stroke="var(--accent)" strokeWidth={1} opacity={0.7} />
               <line x1="48" y1="22" x2="48" y2="30" stroke="var(--accent)" strokeWidth={1} opacity={0.7} />
               <line x1="512" y1="22" x2="512" y2="30" stroke="var(--accent)" strokeWidth={1} opacity={0.7} />
@@ -119,8 +119,8 @@ export default function HeroMockup() {
               <text x="108" y="299" textAnchor="middle" fill="var(--text-3)" fontSize="10">9.0 m²</text>
               <text x="210" y="283" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Banyo</text>
               <text x="210" y="299" textAnchor="middle" fill="var(--text-3)" fontSize="10">4.5 m²</text>
-              <text x="296" y="283" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Antre</text>
-              <text x="296" y="299" textAnchor="middle" fill="var(--text-3)" fontSize="10">3.5 m²</text>
+              <text x="296" y="283" textAnchor="middle" fill="var(--text-2)" fontSize="11" fontWeight="600">Hol</text>
+              <text x="296" y="299" textAnchor="middle" fill="var(--text-3)" fontSize="10">5.0 m²</text>
               <text x="426" y="283" textAnchor="middle" fill="var(--text-2)" fontSize="12" fontWeight="600">Çocuk Odası</text>
               <text x="426" y="299" textAnchor="middle" fill="var(--text-3)" fontSize="10">11.0 m²</text>
             </svg>
