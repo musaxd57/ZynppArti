@@ -156,6 +156,7 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
                 title="Tip rengi (tuvaldeki mahal ile aynı)"
               />
               <input
+                key={s.name}
                 ref={(el) => {
                   inputs.current.set(s.id, el);
                 }}

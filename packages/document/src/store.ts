@@ -56,6 +56,14 @@ export class EntityStore {
 
   /** Abonelere bir değişikliği bildir. (History, komut uygulandıktan sonra çağırır.) */
   emit(change: StoreChange): void {
-    for (const listener of this.listeners) listener(change);
+    // Bir listener throw ederse diğerleri (render/oda-yöneticisi/metraj) çalışmaya devam etsin —
+    // tek bir hatalı abone tüm uygulamayı (canlı güncelleme) kilitlemesin.
+    for (const listener of this.listeners) {
+      try {
+        listener(change);
+      } catch (err) {
+        console.error('EntityStore: bir değişiklik aboneliği hata verdi (diğerleri sürüyor).', err);
+      }
+    }
   }
 }
