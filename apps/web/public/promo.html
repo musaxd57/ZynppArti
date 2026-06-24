@@ -275,9 +275,9 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
   display:flex;align-items:center;justify-content:center;}
 
 /* 3B model — CSS animasyonu ile döner */
-#model3d{transform-style:preserve-3d;animation:none;}
-#model3d.spin3d{animation:rot3d 8s linear infinite;}
-@keyframes rot3d{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}
+/* 3B şematik — hafif salınım (statik durmasın; gerçek motor değil, illüstrasyon) */
+#svg3d{animation:s2float 6s ease-in-out infinite;transform-origin:center;}
+@keyframes s2float{0%,100%{transform:translateY(0) rotate(-0.4deg)}50%{transform:translateY(-9px) rotate(0.4deg)}}
 
 .s2cap{position:absolute;bottom:18px;left:50%;translate:-50% 0;
   background:rgba(14,15,17,.92);backdrop-filter:blur(8px);
@@ -285,22 +285,54 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
   padding:5px 16px;font-size:11px;color:#a5b4fc;font-weight:500;white-space:nowrap;}
 
 /* ══ S3 — KAPANIŞ ══ */
-#s3{background:var(--bg);display:flex;flex-direction:column;
-  align-items:center;justify-content:center;}
-.s3tag{font-size:11px;font-weight:600;color:var(--acc);letter-spacing:1.5px;text-transform:uppercase;
-  opacity:0;transition:opacity .4s;}
-.s3h{font-size:44px;font-weight:800;color:var(--t1);letter-spacing:-2px;text-align:center;
-  line-height:1.15;margin-top:14px;opacity:0;transform:translateY(14px);
-  transition:opacity .6s,transform .6s cubic-bezier(.22,1,.36,1);}
-.s3h em{color:#818cf8;font-style:normal;}
-.s3sub{font-size:14px;color:var(--t3);margin-top:12px;opacity:0;transition:opacity .5s .2s;}
-.s3cta{margin-top:28px;padding:12px 30px;background:var(--acc);color:#fff;
-  font-size:14px;font-weight:600;border-radius:30px;
-  box-shadow:0 0 40px rgba(91,91,214,.5);opacity:0;transition:opacity .5s .4s;}
-.s3url{margin-top:11px;font-size:13px;color:var(--t3);opacity:0;transition:opacity .5s .65s;}
+#s3{background:var(--bg);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.s3-aurora{position:absolute;inset:0;background:
+  radial-gradient(620px 420px at 50% 34%,rgba(91,91,214,.24),transparent 70%),
+  radial-gradient(500px 360px at 78% 80%,rgba(129,140,248,.12),transparent 70%);
+  animation:s3float 7s ease-in-out infinite;}
+@keyframes s3float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.s3-grid{position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.032) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.032) 1px,transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(ellipse 72% 62% at 50% 46%,#000 35%,transparent 78%);
+  mask-image:radial-gradient(ellipse 72% 62% at 50% 46%,#000 35%,transparent 78%);}
+.s3-inner{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;}
+.s3-badge{width:64px;height:64px;border-radius:17px;background:var(--acc);color:#fff;
+  display:grid;place-items:center;box-shadow:0 14px 44px rgba(91,91,214,.55);
+  opacity:0;transform:translateY(16px) scale(.88);
+  transition:opacity .55s,transform .55s cubic-bezier(.22,1,.36,1);}
+.s3-badge svg{width:38px;height:38px;}
+.s3tag{font-size:11px;font-weight:700;color:var(--acc);letter-spacing:1.8px;text-transform:uppercase;
+  margin-top:18px;opacity:0;transition:opacity .4s .1s;}
+.s3h{font-size:46px;font-weight:800;color:var(--t1);letter-spacing:-2px;
+  line-height:1.12;margin-top:12px;opacity:0;transform:translateY(14px);
+  transition:opacity .6s .15s,transform .6s .15s cubic-bezier(.22,1,.36,1);}
+.s3h em{color:#818cf8;font-style:normal;position:relative;}
+.s3h em::after{content:'';position:absolute;left:0;right:0;bottom:2px;height:3px;border-radius:2px;
+  background:linear-gradient(90deg,var(--acc),#818cf8);transform:scaleX(0);transform-origin:left;
+  transition:transform .6s .55s cubic-bezier(.22,1,.36,1);}
+.s3sub{font-size:14.5px;color:var(--t2);margin-top:14px;max-width:440px;opacity:0;transition:opacity .5s .3s;}
+.s3-pills{display:flex;gap:8px;margin-top:16px;}
+.s3-pill{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2);
+  background:var(--s2);border:1px solid var(--bd);border-radius:14px;padding:5px 11px;
+  opacity:0;transform:translateY(8px);transition:opacity .4s,transform .4s;}
+.s3-pill svg{width:12px;height:12px;stroke:var(--acc);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.s3cta{display:flex;align-items:center;gap:8px;margin-top:26px;padding:13px 32px;background:var(--acc);color:#fff;
+  font-size:14.5px;font-weight:600;border-radius:30px;box-shadow:0 0 40px rgba(91,91,214,.5);
+  opacity:0;transition:opacity .5s .5s;animation:ctaBreath 2.6s ease-in-out 1.2s infinite;}
+.s3cta svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+@keyframes ctaBreath{0%,100%{box-shadow:0 0 36px rgba(91,91,214,.45)}50%{box-shadow:0 0 56px rgba(91,91,214,.8)}}
+.s3url{display:flex;align-items:center;gap:7px;margin-top:13px;font-size:13px;color:var(--t3);opacity:0;transition:opacity .5s .65s;}
+.s3url .dot{width:7px;height:7px;border-radius:50%;background:var(--grn);box-shadow:0 0 6px var(--grn);animation:pulse 1.3s ease infinite;}
+#s3.on .s3-badge{opacity:1;transform:translateY(0) scale(1);}
 #s3.on .s3tag{opacity:1;}
 #s3.on .s3h{opacity:1;transform:translateY(0);}
+#s3.on .s3h em::after{transform:scaleX(1);}
 #s3.on .s3sub{opacity:1;}
+#s3.on .s3-pill{opacity:1;transform:translateY(0);}
+#s3.on .s3-pill:nth-child(1){transition-delay:.5s;}
+#s3.on .s3-pill:nth-child(2){transition-delay:.6s;}
+#s3.on .s3-pill:nth-child(3){transition-delay:.7s;}
 #s3.on .s3cta{opacity:1;}
 #s3.on .s3url{opacity:1;}
 </style>
@@ -363,7 +395,7 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
         <div class="lpc"><span class="ar">▸</span>&nbsp;BLOKLAR</div>
         <div class="lpc"><span class="ar">▾</span>&nbsp;COPİLOT — YÖNE…<span class="sm">1 bulgu</span></div>
         <div class="cop">
-          <div class="copd">Toplam ~20 m² için kaba otopark tahmini: ~1 araç (bölge/kullanıma göre değişir).
+          <div class="copd">Toplam ~90 m² için kaba otopark tahmini: ~1 araç (bölge/kullanıma göre değişir).
             <div class="copc">Otopark Yönetmeliği (2018, m.8/Ek-1) — her ~100 m² için ~1 otopark.</div>
           </div>
           <div style="font-size:9px;color:var(--t3);font-style:italic;">Bilgilendirme amaçlıdır; yürürlükteki mevzuattan doğrulayın.</div>
@@ -397,21 +429,21 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
             <div class="pc" style="text-align:left">8×10 m, 2 yatak odası, salon, mutfak ve banyo olan bir daire çiz</div>
             <div class="pc" style="text-align:left">60 m² stüdyo daire planı</div>
             <div class="pp">▸ 🗂 PROGRAM İLE ÇİZ</div>
-            <div class="bubble" id="bbl">100 m² 3+1 daire planı</div>
+            <div class="bubble" id="bbl">90 m² 3+1 daire planı</div>
             <div class="ald" id="ald"><div class="spin"></div>Çiz · plan üretiliyor</div>
             <div class="sec-intro" id="si">2 alternatif plan hazır — en uyumlu üstte, birini seç.</div>
             <div class="secard" id="sc1">
               <div class="sch"><span class="sct">Seçenek 1</span><span class="badge">✓ uyumlu</span></div>
-              <div class="scd">Yaklaşık 100 m² 3+1 dairede geniş salon, üç yatak odası, mutfak ve koridor çözümlenmiştir.</div>
-              <div class="scm">7 oda · 6 duvar · 5 kapı — çizmek için tıkla</div>
+              <div class="scd">Yaklaşık 90 m² 3+1 dairede geniş salon, ebeveyn ve iki çocuk odası, mutfak, banyo merkezî koridor etrafında çözümlenmiştir.</div>
+              <div class="scm">7 oda · 6 duvar · 6 kapı + 4 pencere — çizmek için tıkla</div>
             </div>
             <div class="secard" id="sc2">
               <div class="sch"><span class="sct">Seçenek 2</span><span class="badge">✓ uyumlu</span></div>
-              <div class="scd">Yaklaşık 100 m² 3+1 dairede salon ön cephede, yatak odaları koridor etrafında gruplanmıştır.</div>
-              <div class="scm">7 oda · 6 duvar · 5 kapı — çizmek için tıkla</div>
+              <div class="scd">Yaklaşık 90 m² 3+1 dairede salon ön cephede; yatak odaları koridor boyunca, ıslak hacimler bir arada gruplanmıştır.</div>
+              <div class="scm">7 oda · 6 duvar · 6 kapı + 4 pencere — çizmek için tıkla</div>
             </div>
             <div class="secres" id="sr">
-              <strong>✓ 6 duvar çizildi, 7 mahal adlandırıldı, 5 kapı eklendi.</strong><br>
+              <strong>✓ 6 duvar çizildi, 7 mahal adlandırıldı, 6 kapı + 4 pencere eklendi.</strong><br>
               Geri almak için Ctrl+Z (önce adlar, tekrar bas → duvarlar).
             </div>
           </div>
@@ -430,74 +462,88 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
     <div class="cnv">
       <div class="grid"></div>
       <svg class="csvg" viewBox="0 0 510 430" id="csvg" preserveAspectRatio="xMidYMid meet">
-        <!-- oda renkleri: koyu=mutfak/salon, mavi=diğerleri -->
-        <rect class="rfd" id="rf1" x="50"  y="45"  width="140" height="155"/>
-        <rect class="rf"  id="rf2" x="190" y="45"  width="90"  height="155"/>
-        <rect class="rf"  id="rf3" x="280" y="45"  width="120" height="100"/>
-        <rect class="rfd" id="rf4" x="50"  y="200" width="140" height="165"/>
-        <rect class="rf"  id="rf5" x="190" y="200" width="90"  height="165"/>
-        <rect class="rf"  id="rf6" x="280" y="145" width="120" height="110"/>
-        <rect class="rf"  id="rf7" x="280" y="255" width="120" height="110"/>
+        <!-- MANTIKLI 3+1: Salon EN BÜYÜK (sol-üst). Koridor merkezde, tüm odalara dağıtır.
+             Sol: Salon(üst)+Mutfak(alt) · Orta: Koridor(üst)+Banyo(alt) · Sağ: Ebeveyn+2 Çocuk odası -->
+        <rect class="rf"  id="rf1" x="50"  y="45"  width="150" height="180"/>
+        <rect class="rf"  id="rf2" x="200" y="225" width="80"  height="140"/>
+        <rect class="rf"  id="rf3" x="280" y="45"  width="120" height="125"/>
+        <rect class="rfd" id="rf4" x="50"  y="225" width="150" height="140"/>
+        <rect class="rf"  id="rf5" x="200" y="45"  width="80"  height="180"/>
+        <rect class="rf"  id="rf6" x="280" y="170" width="120" height="97"/>
+        <rect class="rf"  id="rf7" x="280" y="267" width="120" height="98"/>
 
         <!-- dış çerçeve -->
         <polyline pathLength="100" id="w0"
           points="50,45 400,45 400,365 50,365 50,45"
           fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
           stroke-dasharray="100" stroke-dashoffset="100"/>
-        <!-- iç duvarlar -->
-        <line pathLength="100" id="w1" x1="190" y1="45"  x2="190" y2="365"
+        <!-- iç duvarlar (6 duvar): w1 düşey x200, w2 yatay y225 (Salon|Mutfak + Koridor|Banyo),
+             w3 düşey x280, w4 yatay y170 (sağ üst), w5 yatay y267 (sağ alt) -->
+        <line pathLength="100" id="w1" x1="200" y1="45"  x2="200" y2="365"
           fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
           stroke-dasharray="100" stroke-dashoffset="100"/>
-        <!-- DÜZELTİLDİ: yatay iç duvar sağ kolonu (Çocuk Odası 1) bölmesin diye x=280'de biter (x=400 değil) -->
-        <line pathLength="100" id="w2" x1="50"  y1="200" x2="280" y2="200"
+        <line pathLength="100" id="w2" x1="50"  y1="225" x2="280" y2="225"
           fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
           stroke-dasharray="100" stroke-dashoffset="100"/>
         <line pathLength="100" id="w3" x1="280" y1="45"  x2="280" y2="365"
           fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
           stroke-dasharray="100" stroke-dashoffset="100"/>
-        <line pathLength="100" id="w4" x1="280" y1="145" x2="400" y2="145"
+        <line pathLength="100" id="w4" x1="280" y1="170" x2="400" y2="170"
           fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
           stroke-dasharray="100" stroke-dashoffset="100"/>
-        <line pathLength="100" id="w5" x1="280" y1="255" x2="400" y2="255"
+        <line pathLength="100" id="w5" x1="280" y1="267" x2="400" y2="267"
           fill="none" stroke="#ced0dc" stroke-width="7" stroke-linecap="square"
           stroke-dasharray="100" stroke-dashoffset="100"/>
 
-        <!-- kapı yayları -->
-        <g class="dr" id="da1"><path d="M190,115 Q210,115 210,95"/><line x1="190" y1="115" x2="190" y2="95"/></g>
-        <g class="dr" id="da2"><path d="M50,270  Q70,270  70,250"/><line x1="50"  y1="270" x2="50"  y2="250"/></g>
-        <g class="dr" id="da3"><path d="M190,270 Q210,270 210,250"/><line x1="190" y1="270" x2="190" y2="250"/></g>
-        <g class="dr" id="da4"><path d="M280,100 Q300,100 300,80"/><line x1="280" y1="100" x2="280" y2="80"/></g>
-        <g class="dr" id="da5"><path d="M280,205 Q300,205 300,185"/><line x1="280" y1="205" x2="280" y2="185"/></g>
+        <!-- kapılar (6) — hepsi KORİDOR'a açılır (mantıklı sirkülasyon) -->
+        <g class="dr" id="da1"><path d="M200,110 Q180,110 180,90"/><line x1="200" y1="110" x2="200" y2="90"/></g>
+        <g class="dr" id="da2"><path d="M110,225 Q110,245 90,245"/><line x1="110" y1="225" x2="90" y2="225"/></g>
+        <g class="dr" id="da3"><path d="M245,225 Q245,205 225,205"/><line x1="245" y1="225" x2="225" y2="225"/></g>
+        <g class="dr" id="da4"><path d="M280,95 Q300,95 300,75"/><line x1="280" y1="95" x2="280" y2="75"/></g>
+        <g class="dr" id="da5"><path d="M280,212 Q300,212 300,232"/><line x1="280" y1="212" x2="280" y2="232"/></g>
+        <g class="dr" id="da6"><path d="M280,312 Q300,312 300,332"/><line x1="280" y1="312" x2="280" y2="332"/></g>
+
+        <!-- pencereler (4) — dış cephede boşluk + cam çizgisi -->
+        <g class="dg" id="wins">
+          <rect x="47" y="95" width="6" height="55" fill="#0f1011"/>
+          <line x1="50" y1="95" x2="50" y2="150" stroke="#6e8fd6" stroke-width="2"/>
+          <rect x="315" y="42" width="60" height="6" fill="#0f1011"/>
+          <line x1="315" y1="45" x2="375" y2="45" stroke="#6e8fd6" stroke-width="2"/>
+          <rect x="397" y="200" width="6" height="50" fill="#0f1011"/>
+          <line x1="400" y1="200" x2="400" y2="250" stroke="#6e8fd6" stroke-width="2"/>
+          <rect x="90" y="362" width="60" height="6" fill="#0f1011"/>
+          <line x1="90" y1="365" x2="150" y2="365" stroke="#6e8fd6" stroke-width="2"/>
+        </g>
 
         <!-- ölçüler -->
         <g class="dg" id="dg1">
           <line class="dl" x1="50" y1="28" x2="400" y2="28"/>
           <line class="dt" x1="50"  y1="22" x2="50"  y2="34"/>
           <line class="dt" x1="400" y1="22" x2="400" y2="34"/>
-          <text class="dx" x="225" y="22">12.40 m</text>
+          <text class="dx" x="225" y="22">10.00 m</text>
         </g>
         <g class="dg" id="dg2">
           <line class="dl" x1="418" y1="45" x2="418" y2="365"/>
           <line class="dt" x1="412" y1="45"  x2="424" y2="45"/>
           <line class="dt" x1="412" y1="365" x2="424" y2="365"/>
-          <text class="dx" x="436" y="210">11.30 m</text>
+          <text class="dx" x="436" y="210">9.00 m</text>
         </g>
 
         <!-- etiketler -->
-        <text class="rl" id="rl1" x="120" y="120">Salon</text>
-        <text class="rm" id="rm1" x="120" y="131">21,7 m²</text>
-        <text class="rl" id="rl2" x="235" y="120">Mahal</text>
-        <text class="rm" id="rm2" x="235" y="131">14,0 m²</text>
-        <text class="rl" id="rl3" x="340" y="90">Yatak Odası</text>
-        <text class="rm" id="rm3" x="340" y="101">12,0 m²</text>
-        <text class="rl" id="rl4" x="120" y="282">Mutfak</text>
-        <text class="rm" id="rm4" x="120" y="293">23,1 m²</text>
-        <text class="rl" id="rl5" x="235" y="282">Koridor</text>
-        <text class="rm" id="rm5" x="235" y="293">14,8 m²</text>
-        <text class="rl" id="rl6" x="340" y="196">Çocuk Odası 1</text>
-        <text class="rm" id="rm6" x="340" y="207">10,3 m²</text>
-        <text class="rl" id="rl7" x="340" y="306">Çocuk Odası 2</text>
-        <text class="rm" id="rm7" x="340" y="317">10,3 m²</text>
+        <text class="rl" id="rl1" x="125" y="130">Salon</text>
+        <text class="rm" id="rm1" x="125" y="142">26,0 m²</text>
+        <text class="rl" id="rl5" x="240" y="130">Koridor</text>
+        <text class="rm" id="rm5" x="240" y="142">9,0 m²</text>
+        <text class="rl" id="rl3" x="340" y="102">Ebeveyn Y.O.</text>
+        <text class="rm" id="rm3" x="340" y="114">14,0 m²</text>
+        <text class="rl" id="rl4" x="125" y="298">Mutfak</text>
+        <text class="rm" id="rm4" x="125" y="310">13,0 m²</text>
+        <text class="rl" id="rl2" x="240" y="298">Banyo</text>
+        <text class="rm" id="rm2" x="240" y="310">5,0 m²</text>
+        <text class="rl" id="rl6" x="340" y="213">Çocuk Odası 1</text>
+        <text class="rm" id="rm6" x="340" y="225">11,5 m²</text>
+        <text class="rl" id="rl7" x="340" y="311">Çocuk Odası 2</text>
+        <text class="rm" id="rm7" x="340" y="323">11,5 m²</text>
       </svg>
 
       <div class="ctr">
@@ -518,7 +564,7 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
           <div class="mnet fe" id="rpnet"><span>Net (iç)</span><span>—</span></div>
           <div class="mnet fe" id="rpbrt"><span>Brüt</span><span>—</span></div>
           <div class="msub fe" id="rpsub">Tipe göre</div>
-          <div class="mnet fe" id="rptp"><span>Diğer ×7</span><span>—</span></div>
+          <div class="mnet fe" id="rptp"><span>Yatak ×3 · Salon ×1 · Islak ×1</span><span>—</span></div>
           <div class="fe" id="rpex"><div class="excbtn">Excel İndir</div></div>
         </div>
       </div>
@@ -530,7 +576,7 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
         <div class="metrow"><span>Boya (duvar+tavan)</span><span>559,6 m²</span></div>
         <div class="metrow"><span>Döşeme/şap</span><span>130,0 m²</span></div>
         <div class="metrow"><span>Süpürgelik</span><span>130,7 m</span></div>
-        <div class="metrow"><span>Kapı / Pencere</span><span>6 / 5</span></div>
+        <div class="metrow"><span>Kapı / Pencere</span><span>6 / 4</span></div>
         <div class="katr"><span>Kat yüksekliği (cm)</span>
           <div class="katc"><div class="katb">−</div><span class="katv">270</span><div class="katb">+</div></div>
         </div>
@@ -558,7 +604,7 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
 <div class="sc" id="s2">
   <div class="s2top">
     <span class="s2t1">3B Önizleme (şematik)</span>
-    <span class="s2t2">sürükle: döndür · tekerlek: yakınlaş</span>
+    <span class="s2t2">planından otomatik hacim · kamera turu</span>
     <div class="s2r">
       <div class="s2b">▶ Tur</div><div class="s2b">⌨ +Görünüm</div>
       <div class="s2b">▶ Sunum</div><div class="s2b">↓ PNG</div>
@@ -643,11 +689,21 @@ body{background:#000;display:flex;align-items:center;justify-content:center;
 
 <!-- ══ S3 ══ -->
 <div class="sc" id="s3">
-  <div class="s3tag">Mimari tasarımın yeni adresi</div>
-  <div class="s3h">Tarif et.<br><em>Vesna çizsin.</em></div>
-  <div class="s3sub">Tarayıcıda · Kurulum yok · Türkçe yönetmelik</div>
-  <div class="s3cta">Uygulamayı Aç — Ücretsiz</div>
-  <div class="s3url">vesna.design</div>
+  <div class="s3-aurora"></div>
+  <div class="s3-grid"></div>
+  <div class="s3-inner">
+    <div class="s3-badge"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" fill="currentColor"/><path d="M4.5 9.5a7.5 7.5 0 0 1 15 0Z" fill="#ffb454"/><rect x="3.4" y="9" width="17.2" height="1.7" rx="0.85" fill="#ffb454"/><rect x="11.2" y="3.6" width="1.6" height="2.2" rx="0.8" fill="#ffb454"/><circle cx="9.3" cy="13.3" r="1.25" fill="#15171c"/><circle cx="14.7" cy="13.3" r="1.25" fill="#15171c"/><path d="M9.5 16.4q2.5 2 5 0" stroke="#15171c" stroke-width="1.4" stroke-linecap="round" fill="none"/><circle cx="8" cy="15.4" r="1" fill="#ffb454" opacity="0.4"/></svg></div>
+    <div class="s3tag">Mimari tasarımın yeni adresi</div>
+    <div class="s3h">Tarif et. <em>Vesna</em> çizsin.</div>
+    <div class="s3sub">Plandan 3B'ye, metrajdan yönetmeliğe — hepsi tek araçta, tarayıcıda.</div>
+    <div class="s3-pills">
+      <span class="s3-pill"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>Tarayıcıda</span>
+      <span class="s3-pill"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Kurulum yok</span>
+      <span class="s3-pill"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3 7.5-8 9-5-1.5-8-4.5-8-9V6z"/></svg>Türkçe yönetmelik</span>
+    </div>
+    <div class="s3cta">Uygulamayı Aç <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+    <div class="s3url"><span class="dot"></span>vesna.design · şimdi ücretsiz</div>
+  </div>
 </div>
 
 <div id="ctrl">
@@ -720,8 +776,8 @@ function resetWall(id){
 }
 
 const mahaller = [
-  ['Salon','21,7 m²'],['Mahal','14,0 m²'],['Yatak Odası','12,0 m²'],
-  ['Mutfak','23,1 m²'],['Koridor','14,8 m²'],['Çocuk Odası 1','10,3 m²'],['Çocuk Odası 2','10,3 m²']
+  ['Salon','26,0 m²'],['Koridor','9,0 m²'],['Ebeveyn Y.O.','14,0 m²'],
+  ['Mutfak','13,0 m²'],['Banyo','5,0 m²'],['Çocuk Odası 1','11,5 m²'],['Çocuk Odası 2','11,5 m²']
 ];
 
 function reset(){
@@ -773,7 +829,7 @@ async function go(){
   G('ainp').classList.add('t');
   const inp=G('ainp');
   inp.textContent='';
-  for(const c of '100 m² 3+1 daire planı'){ inp.textContent+=c; await wait(40); }
+  for(const c of '90 m² 3+1 daire planı'){ inp.textContent+=c; await wait(34); }
   await wait(400);
 
   /* Çiz basıldı */
@@ -814,8 +870,8 @@ async function go(){
   await pb(52,600); await wait(400);
 
   /* kapılar */
-  ['da1','da2','da3','da4','da5'].forEach((id,i)=>setTimeout(()=>G(id).classList.add('s'),i*100));
-  await wait(600);
+  ['da1','da2','da3','da4','da5','da6','wins'].forEach((id,i)=>setTimeout(()=>G(id).classList.add('s'),i*90));
+  await wait(650);
 
   /* odalar */
   cap('Mahaller otomatik tanındı');
@@ -839,7 +895,7 @@ async function go(){
     r.innerHTML=`<span>${mahaller[i][0]}</span><span class="m">${mahaller[i][1]}</span>`;
     G('rprows').appendChild(r); G('rpcnt').textContent=i+1; await wait(120);
   }
-  G('rpbody').classList.add('on'); G('rptv').textContent='106,2 m²';
+  G('rpbody').classList.add('on'); G('rptv').textContent='90,0 m²';
   ['rpd','rptot','rpnet','rpbrt','rpsub','rptp','rpex']
     .forEach((id,i)=>setTimeout(()=>G(id).classList.add('on'),i*60));
   await pb(75,700); await wait(500);
