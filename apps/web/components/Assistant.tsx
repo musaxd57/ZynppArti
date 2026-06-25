@@ -77,6 +77,8 @@ interface AssistantProps {
   zoomToFit?: () => void;
   /** Üretilen planın yerleşeceği dünya noktası (ekran merkezi) — "baktığın yere çiz". */
   placePoint?: () => { x: number; y: number } | null;
+  /** Kamerayı belirli bir kutuya odakla — üretilen planı (büyük paftaya değil) plana sığdırmak için. */
+  zoomToBounds?: (b: { minX: number; minY: number; maxX: number; maxY: number }) => void;
   /** Landing'den `/app?ciz=...` ile gelen program → Çiz modunda istemi önceden doldur (paste). */
   initialCiz?: string;
 }
@@ -275,7 +277,14 @@ function applyLayout(
   rooms: LayoutRoom[],
   openings: LayoutOpening[],
   target?: { x: number; y: number } | null,
-): { drawn: number; named: number; openingCount: number; doorCount: number; windowCount: number } {
+): {
+  drawn: number;
+  named: number;
+  openingCount: number;
+  doorCount: number;
+  windowCount: number;
+  bounds?: { minX: number; minY: number; maxX: number; maxY: number };
+} {
   if (walls.length === 0) return { drawn: 0, named: 0, openingCount: 0, doorCount: 0, windowCount: 0 };
 
   // Yerleşim: parsel varsa onun sol-üst köşesine ~1 m çekmeyle; yoksa `target` (kullanıcının baktığı
@@ -391,7 +400,14 @@ function applyLayout(
   } catch (e) {
     console.error('AI oda adlandırma atlandı (duvarlar çizildi):', e);
   }
-  return { drawn: wallEntities.length, named, openingCount, doorCount, windowCount };
+  return {
+    drawn: wallEntities.length,
+    named,
+    openingCount,
+    doorCount,
+    windowCount,
+    bounds: { minX, minY, maxX, maxY }, // konan planın sınırları → ona zoom (zoomToFit büyük paftaya sığmasın)
+  };
 }
 
 /** Cevap üretilirken zıplayan üç nokta — "çalışıyor" hissi (tüm modlarda efektli). */
@@ -429,7 +445,7 @@ function renderRich(text: string): ReactNode {
 
 const EMPTY_THREADS: Record<Mode, Msg[]> = { ask: [], draw: [], render: [] };
 
-export function Assistant({ store, history, selectedIds, open, onClose, zoomToFit, placePoint, initialCiz }: AssistantProps) {
+export function Assistant({ store, history, selectedIds, open, onClose, zoomToFit, placePoint, zoomToBounds, initialCiz }: AssistantProps) {
   const [mode, setMode] = useState<Mode>('ask');
   // Her mod KENDİ sohbetini tutar (Sor/Çiz/Render karışmaz).
   const [threads, setThreads] = useState<Record<Mode, Msg[]>>(EMPTY_THREADS);
@@ -524,8 +540,12 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
   };
 
   const drawVariantInner = (v: Layout): void => {
-    const { drawn, named, openingCount, doorCount, windowCount } = applyLayout(store, history, v.walls, v.rooms, v.openings, placePoint?.());
-    if (drawn > 0) zoomToFit?.();
+    const { drawn, named, openingCount, doorCount, windowCount, bounds } = applyLayout(store, history, v.walls, v.rooms, v.openings, placePoint?.());
+    // Konan plana zoom (büyük pafta varsa zoomToFit hepsine sığıp planı minik bırakmasın); yoksa eski yol.
+    if (drawn > 0) {
+      if (bounds && zoomToBounds) zoomToBounds(bounds);
+      else zoomToFit?.();
+    }
     // Kapı/pencere sayısını AYRI göster (ör. "6 kapı, 6 pencere") — kullanıcı net görsün.
     const openingText =
       openingCount === 0

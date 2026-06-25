@@ -495,6 +495,7 @@ export function CanvasStage() {
               const b = ui.viewportBounds();
               return { x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2 };
             }}
+            zoomToBounds={ui.zoomToBounds}
             initialCiz={initialCiz}
           />
         </>
