@@ -11,6 +11,7 @@ import { createEntityId, type Annotation, type Wall } from '@zynpparti/document'
 
 const DEFAULT_THICKNESS = 15; // cm — DXF çizgilerinde kalınlık yok, varsayılan atanır
 const DEFAULT_TEXT_HEIGHT = 25; // cm — metin yüksekliği yoksa
+const MAX_TEXT_HEIGHT = 2000; // cm — bozuk MTEXT (ör. 1e9) zoom/bounds'u ele geçirmesin diye tavan
 const ARC_STEP = Math.PI / 12; // ~15° → eğri başına segment çözünürlüğü
 const MAX_INSERT_DEPTH = 6; // iç içe blok özyineleme sınırı (döngüsel referans koruması)
 
@@ -232,10 +233,13 @@ function makeAnnotation(
   layer: string,
 ): Annotation | null {
   const value = (text ?? '').trim();
-  if (!pos || value === '') return null;
+  // Konum sonlu değilse (bozuk DXF) atla — NaN konum bounds/index'i bozar (makeWall ile tutarlı).
+  if (!pos || value === '' || !Number.isFinite(pos.x) || !Number.isFinite(pos.y)) return null;
   // Gerçek yükseklik kaynak biriminde → cm'ye ölçekle (×factor). Varsayılan ZATEN cm → ölçekleme.
   // (Aksi halde mm dosyada factor=0.1 ile varsayılan 25 cm → 2,5 cm'ye düşüp metin görünmez olurdu.)
-  const h = height && height > 0 ? height * factor : DEFAULT_TEXT_HEIGHT;
+  // Tavan: bozuk MTEXT'in devasa height'i (zoom/bounds'u ele geçirir) MAX_TEXT_HEIGHT'e kırpılır.
+  const scaled = height && height > 0 ? height * factor : DEFAULT_TEXT_HEIGHT;
+  const h = Math.min(Math.max(scaled, 1), MAX_TEXT_HEIGHT);
   return {
     id: createEntityId(),
     type: 'annotation',

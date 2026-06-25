@@ -50,6 +50,20 @@ describe('importDxf', () => {
     expect(a.height).toBeCloseTo(30);
   });
 
+  it('bozuk TEXT yüksekliği (devasa) tavanla kırpılır (zoom/bounds ele geçmesin)', () => {
+    const dxf = [
+      '0', 'SECTION', '2', 'ENTITIES',
+      '0', 'TEXT', '8', 'NOT',
+      '10', '0.0', '20', '0.0', '30', '0.0',
+      '40', '1000000000.0', // 1e9 — bozuk
+      '1', 'X',
+      '0', 'ENDSEC', '0', 'EOF',
+    ].join('\n');
+    const a = importDxf(dxf).annotations[0]!;
+    expect(a.height).toBeLessThanOrEqual(2000);
+    expect(a.height).toBeGreaterThan(0);
+  });
+
   it('CIRCLE → segmentlenmiş duvarlar (kapalı, çok parça)', () => {
     const dxf = [
       '0', 'SECTION', '2', 'ENTITIES',
