@@ -21,6 +21,8 @@ export interface CanvasHandle {
   readonly layers: LayerState;
   /** Bir ekran pikselinin kaç dünya birimi olduğu (zoom'a göre tolerans ölçekleme). */
   pixelSize(): number;
+  /** Görünür dünya-uzayı kutusu (ekrandaki alan). Snapping'i görünür geometriyle sınırlamak için. */
+  viewportBounds(): AABB;
   /** Aktif aracı ayarla (null = araç yok, yalnız gezinme). */
   setActiveTool(tool: SceneTool | null): void;
   /** Tuval imlecini ayarla (araç başına; pan/space geçici olarak geçersiz kılar). */
@@ -316,6 +318,7 @@ export async function createCanvasApp(
     overlay,
     layers,
     pixelSize: () => 1 / camera.zoom,
+    viewportBounds,
     exportPng: async () => {
       // WebGL bağlamı kaybı / extract desteklenmemesi → anlamlı hata (çağıran yakalar).
       try {

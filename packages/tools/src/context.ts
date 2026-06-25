@@ -2,7 +2,7 @@ import type { Container } from 'pixi.js';
 import type { Vec2 } from '@zynpparti/geometry';
 import { distance, closestPointOnSegment, segmentIntersection } from '@zynpparti/geometry';
 import type { Entity, EntityId, EntityStore, History } from '@zynpparti/document';
-import type { SnapHint, SnapPointKind, SpatialIndex } from '@zynpparti/engine';
+import type { AABB, SnapHint, SnapPointKind, SpatialIndex } from '@zynpparti/engine';
 
 /**
  * Araçların ihtiyaç duyduğu servisler. Web uygulaması bunu kurar ve `ToolManager`'a verir.
@@ -124,11 +124,18 @@ function nearestAxis(
   world: Vec2,
   axis: 'x' | 'y',
   tol: number,
+  vp: AABB | null,
 ): { value: number; ref: Vec2 } | null {
+  // Şerit, dik eksende GÖRÜNÜR alanla sınırlanır (yoksa ±BIG): hizalama yalnız ekrandaki geometriye
+  // bakar → çok büyük modelde şerit tüm modeli değil yalnız viewport bandını döndürür (perf).
+  const loY = vp ? vp.minY : -BIG;
+  const hiY = vp ? vp.maxY : BIG;
+  const loX = vp ? vp.minX : -BIG;
+  const hiX = vp ? vp.maxX : BIG;
   const box =
     axis === 'x'
-      ? { minX: world.x - tol, maxX: world.x + tol, minY: -BIG, maxY: BIG }
-      : { minX: -BIG, maxX: BIG, minY: world.y - tol, maxY: world.y + tol };
+      ? { minX: world.x - tol, maxX: world.x + tol, minY: loY, maxY: hiY }
+      : { minX: loX, maxX: hiX, minY: world.y - tol, maxY: world.y + tol };
   let best: { value: number; ref: Vec2 } | null = null;
   let bestD = tol;
   for (const id of index.search(box)) {
@@ -151,14 +158,15 @@ function nearestAxis(
  * hizalaması** (yatay/dikey kılavuz), (3) ızgara. Yarıçaplar ekran-sabit → her zoom'da aynı his.
  * `onSnap` gösterge için zengin ipucu (nokta + kılavuz segmentleri) yayınlar.
  *
- * Not: hizalama, şerit (strip) rbush aramasıyla bulunur; çok büyük modellerde şerit çok aday
- * döndürebilir — gerekirse ileride aday sınırı/kademeli arama eklenir (PERFORMANCE.md).
+ * Not: hizalama şeridi `viewport` verilirse GÖRÜNÜR alanla sınırlanır (çok büyük modelde tüm modeli
+ * değil yalnız ekrandaki bandı tarar — perf). Verilmezse ±BIG (eski davranış).
  */
 export function createSnapper(
   store: EntityStore,
   index: SpatialIndex,
   pixelSize: () => number,
   onSnap?: (hint: SnapHint) => void,
+  viewport?: () => AABB | null,
 ): (world: Vec2) => Vec2 {
   return (world: Vec2): Vec2 => {
     const px = pixelSize();
@@ -231,8 +239,9 @@ export function createSnapper(
 
     // 2) Eksen hizalama (yoksa 3) ızgara). Eksenler bağımsız: biri hizalanırken diğeri ızgaraya düşebilir.
     const aTol = ALIGN_PX * px;
-    const vx = nearestAxis(store, index, world, 'x', aTol);
-    const hy = nearestAxis(store, index, world, 'y', aTol);
+    const vp = viewport?.() ?? null;
+    const vx = nearestAxis(store, index, world, 'x', aTol, vp);
+    const hy = nearestAxis(store, index, world, 'y', aTol, vp);
     const snapped: Vec2 = {
       x: vx ? vx.value : Math.round(world.x / SNAP_GRID) * SNAP_GRID,
       y: hy ? hy.value : Math.round(world.y / SNAP_GRID) * SNAP_GRID,

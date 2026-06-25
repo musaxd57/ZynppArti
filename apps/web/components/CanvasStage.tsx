@@ -174,8 +174,12 @@ export function CanvasStage() {
         index: h.index,
         overlay: h.overlay,
         pixelSize: h.pixelSize,
-        snap: createSnapper(store, h.index, h.pixelSize, (hint) =>
-          snapIndicator.show(hint, h.pixelSize()),
+        snap: createSnapper(
+          store,
+          h.index,
+          h.pixelSize,
+          (hint) => snapIndicator.show(hint, h.pixelSize()),
+          h.viewportBounds, // hizalama yalnız görünür geometriye (büyük modelde perf)
         ),
         isLayerHidden: (id) => h.layers.isHidden(id),
         isLayerLocked: (id) => h.layers.isLocked(id),
