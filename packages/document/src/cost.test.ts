@@ -51,11 +51,30 @@ describe('estimateCost', () => {
     expect(c.total).toBeCloseTo(10000 * 1.2, 4);
     expect(c.perM2).toBe(0); // alan yok → ₺/m² 0
   });
+
+  it('bozuk (NaN) birim fiyatlı kalem atlanır (localStorage bozulması sızmasın)', () => {
+    const t: Takeoff = { ...base, floorAreaM2: 50 };
+    const c = estimateCost(t, { ...DEFAULT_UNIT_PRICES, floorM2: NaN });
+    expect(c.lines.some((l) => l.label.startsWith('Döşeme'))).toBe(false); // NaN fiyat → kalem yok
+    expect(Number.isFinite(c.total)).toBe(true); // toplam NaN'a düşmez
+  });
+
+  it('bozuk (NaN) genel gider oranı → 0 (toplam = ara toplam)', () => {
+    const t: Takeoff = { ...base, floorAreaM2: 10 };
+    const c = estimateCost(t, { ...DEFAULT_UNIT_PRICES, overheadRate: NaN });
+    expect(c.overheadRate).toBe(0);
+    expect(c.total).toBe(c.subtotal);
+  });
 });
 
 describe('formatTRY', () => {
   it('binlik ayraçlı + ₺ son ek', () => {
     expect(formatTRY(1234567)).toBe('1.234.567 ₺');
     expect(formatTRY(0)).toBe('0 ₺');
+  });
+
+  it('NaN/Infinity → "0 ₺" (bozuk değer panele sızmaz)', () => {
+    expect(formatTRY(NaN)).toBe('0 ₺');
+    expect(formatTRY(Infinity)).toBe('0 ₺');
   });
 });
