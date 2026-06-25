@@ -112,9 +112,27 @@ export function findFaces(segments: readonly Segment[], snapTol = 1, minArea = 1
   }
   for (const list of adj.values()) list.sort((a, b) => a.ang - b.ang);
 
+  // 3b. Bağlı bileşenler (union-find). Kopuk iç döngüler (ör. bir mahalin İÇİNDE serbest duran
+  // kapalı kolon/çekirdek halkası) ayrı bir bileşendir; her bileşenin KENDİ dış sınırı vardır.
+  // Tek global "en büyük yüz = dış sınır" varsayımı yalnız bir bileşeni atar → diğer bileşenlerin
+  // dış halkaları hayalet (çift) mahal olarak kalırdı. Bileşen başına dış sınırı atmak bunu çözer.
+  const parent = Array.from({ length: verts.length }, (_, i) => i);
+  const find = (x: number): number => {
+    let r = x;
+    while (parent[r] !== r) r = parent[r]!;
+    while (parent[x] !== r) {
+      const next = parent[x]!;
+      parent[x] = r;
+      x = next;
+    }
+    return r;
+  };
+  for (const [u, v] of edges) parent[find(u)] = find(v);
+
   // 4. Half-edge dolaşımı → yüzler.
   const visited = new Set<string>();
   const rings: Vec2[][] = [];
+  const ringComp: number[] = []; // her ring'in bağlı bileşeni (dış-sınır atımı bileşen başına)
   const nextHalf = (u: number, v: number): [number, number] => {
     const list = adj.get(v)!;
     const idx = list.findIndex((e) => e.to === u); // ters kenar v->u
@@ -137,19 +155,27 @@ export function findFaces(segments: readonly Segment[], snapTol = 1, minArea = 1
       [u, v] = nextHalf(u, v);
       if (++guard > edges.length * 4 + 8) break; // güvenlik
     } while (!(u === u0 && v === v0));
-    if (ring.length >= 3) rings.push(ring.map((i) => verts[i]!));
+    if (ring.length >= 3) {
+      ringComp.push(find(ring[0]!));
+      rings.push(ring.map((i) => verts[i]!));
+    }
   }
 
-  // 5. Dış sınırı (en büyük |alan|) at; kalanları minArea ile süz, CCW'ye normalize et.
+  // 5. Her bağlı bileşenin dış sınırını (o bileşendeki en büyük |alan|) at; kalanları minArea ile
+  // süz, CCW'ye normalize et. (Tek bileşenli — yaygın — planda bu, eski "tek en-büyüğü at" ile birebir aynı.)
   const faces = rings
-    .map((poly) => ({ poly, area: polygonArea(poly), signed: signedArea(poly) }))
+    .map((poly, idx) => ({ poly, comp: ringComp[idx]!, area: polygonArea(poly), signed: signedArea(poly) }))
     .filter((f) => f.area >= minArea);
   if (faces.length === 0) return [];
-  let outer = 0;
-  for (let i = 1; i < faces.length; i++) if (faces[i]!.area > faces[outer]!.area) outer = i;
+  const outerByComp = new Map<number, number>(); // bileşen → o bileşendeki en büyük alanlı yüz indeksi
+  faces.forEach((f, i) => {
+    const cur = outerByComp.get(f.comp);
+    if (cur === undefined || f.area > faces[cur]!.area) outerByComp.set(f.comp, i);
+  });
+  const outers = new Set(outerByComp.values());
 
   return faces
-    .filter((_, i) => i !== outer)
+    .filter((_, i) => !outers.has(i))
     .map((f) => (f.signed < 0 ? [...f.poly].reverse() : f.poly));
 }
 

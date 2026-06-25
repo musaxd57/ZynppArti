@@ -60,6 +60,19 @@ describe('findFaces', () => {
     expect(faces).toHaveLength(0);
   });
 
+  it('kopuk iç döngü (serbest kolon/çekirdek) mahali ÇİFT SAYMAZ', () => {
+    // 200×200 dış kare + içinde DOKUNMAYAN serbest 40×40 kapalı halka (iki ayrı bağlı bileşen).
+    // Hata (bileşen-farkında değilken): iç halka iki kez çıkar (CCW+CW) → çift hayalet mahal.
+    const segs: Segment[] = [
+      ...box(0, 0, 200, 200), // dış (40000)
+      ...box(80, 80, 120, 120), // serbest iç halka (1600), dışa bağlı değil
+    ];
+    const faces = findFaces(segs);
+    const areas = faces.map((f) => Math.round(polygonArea(f))).sort((a, b) => a - b);
+    expect(faces).toHaveLength(2); // 3 değil — iç halka tek kez
+    expect(areas).toEqual([1600, 40000]);
+  });
+
   it('snaps near-coincident endpoints to still close the room', () => {
     const faces = findFaces([
       { a: vec2(0, 0), b: vec2(100, 0) },
