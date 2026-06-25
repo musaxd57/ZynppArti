@@ -66,4 +66,22 @@ describe('wallBoxesWithOpenings', () => {
     // yüksekliğini kullanır (eskiden 3B 220, kesit 210 → tutarsızdı).
     expect(out.some((b) => b.baseHeight === DEFAULT_WINDOW_HEAD_CM)).toBe(true); // lento
   });
+
+  it('kapı yüksekliği = duvar yüksekliği → lento bandı DÜŞER (yalnız iki dolu yan parça)', () => {
+    const w = { ...wall(0, 0, 400, 0), id: 'w1' };
+    // Duvar 210 = DOOR_HEIGHT → lento yüksekliği h-210 = 0 < 1 → box() erken döner (negatif/sıfır kutu yok).
+    const out = wallBoxesWithOpenings([w], [op('w1', 0.5, 100, 'door')], 210);
+    expect(out).toHaveLength(2); // [0,150] ve [250,400] dolu; lento yok
+    expect(out.every((b) => b.baseHeight === 0 && b.height === 210)).toBe(true);
+  });
+
+  it('duvar ucundaki boşluk duvar sınırına kırpılır (uç taşması yok)', () => {
+    const w = { ...wall(0, 0, 400, 0), id: 'w1' };
+    // t=1 (uç) + genişlik 100 → [350,400]'e kırpılır (a=max(0,350), b=min(400,450)).
+    const out = wallBoxesWithOpenings([w], [op('w1', 1, 100, 'window')], 280);
+    // En sağ uçta dolu parça olmamalı (boşluk duvar sonuna dayandı); tüm kutular len≤400 içinde.
+    for (const b of out) {
+      expect(b.cx + b.length / 2).toBeLessThanOrEqual(400.001);
+    }
+  });
 });
