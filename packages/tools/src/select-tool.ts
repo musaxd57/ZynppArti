@@ -82,9 +82,11 @@ export class SelectTool implements SceneTool {
     this.shiftDown = !!p.shiftKey;
 
     // 1) Tek seçimde, seçili entity'nin tutamacına basıldıysa → tutamaç sürüklemesi.
+    // Kilit/gizli katmandaki entity'nin tutamacı sürüklenemez (entity seçimden ÖNCE kilitlenmiş
+    // olabilir → seçim kalır ama düzenleme reddedilmeli). Denetim bulgusu (lock bypass).
     if (this.selectedIds.size === 1) {
       const sel = this.firstSelectedEntity();
-      if (sel) {
+      if (sel && !this.skip(sel.layerId)) {
         const idx = this.hitHandle(sel, p.world);
         if (idx >= 0) {
           this.dragHandle = { entity: sel, index: idx };
@@ -191,7 +193,7 @@ export class SelectTool implements SceneTool {
     } else if ((e.key === 'x' || e.key === 'X') && this.selectedIds.size === 1) {
       // Seçili tek bloku 90° döndür (BlockTool yerleştirmesindeki 'x' ile tutarlı).
       const sel = this.firstSelectedEntity();
-      if (sel?.type === 'block') {
+      if (sel?.type === 'block' && !this.skip(sel.layerId)) {
         this.ctx.history.dispatch(
           new UpdateEntity({ ...sel, rotation: (sel.rotation + Math.PI / 2) % (Math.PI * 2) }),
         );
@@ -216,7 +218,7 @@ export class SelectTool implements SceneTool {
   private nudge(dx: number, dy: number): void {
     const movable = [...this.selectedIds]
       .map((id) => this.ctx.store.get(id))
-      .filter((e): e is Entity => !!e && isClonable(e));
+      .filter((e): e is Entity => !!e && isClonable(e) && !this.skip(e.layerId));
     if (movable.length === 0) return;
     const cmds = movable.map((e) => new UpdateEntity(offsetEntity(e, dx, dy)));
     this.ctx.history.dispatch(cmds.length === 1 ? cmds[0]! : new BatchCommand('İt', cmds));
@@ -228,7 +230,7 @@ export class SelectTool implements SceneTool {
     const toRemove = new Set<EntityId>();
     for (const id of ids) {
       const e = this.ctx.store.get(id);
-      if (!e) continue;
+      if (!e || this.skip(e.layerId)) continue; // kilitli/gizli katman silinemez (lock bypass)
       toRemove.add(id);
       if (e.type === 'wall') {
         for (const o of this.ctx.store.all()) {
@@ -282,9 +284,10 @@ export class SelectTool implements SceneTool {
   }
 
   private captureMoveOriginals(): void {
+    // Kilitli/gizli katmandaki entity sürüklenerek taşınamaz (lock bypass — denetim bulgusu).
     this.moveOriginals = [...this.selectedIds]
       .map((id) => this.ctx.store.get(id))
-      .filter((e): e is Entity => !!e && isClonable(e));
+      .filter((e): e is Entity => !!e && isClonable(e) && !this.skip(e.layerId));
   }
 
   /** Kutu içindeki seçilebilir entity'ler (mahaller hariç; gizli/kilitli katman atlanır). */
