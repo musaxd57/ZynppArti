@@ -106,6 +106,24 @@ describe('RoomManager', () => {
     rm.destroy();
   });
 
+  it('çok büyük modelde (>8000 duvar) mahal türetmeyi atlar (O(n²) donma koruması)', () => {
+    // 8001 kısa kopuk duvar — findFaces çağrılsaydı dakikalarca sürerdi; guard atlar → hızlı + 0 mahal.
+    const store = new EntityStore();
+    for (let i = 0; i < 8001; i++) {
+      store.put({
+        id: `bw${i}`,
+        type: 'wall',
+        layerId: 'default',
+        start: { x: i * 10, y: 0 },
+        end: { x: i * 10 + 5, y: 0 },
+        thickness: 10,
+      });
+    }
+    const rm = new RoomManager(store); // recompute çağrılır ama guard ile atlanır
+    expect(spaces(store)).toHaveLength(0); // mahal türetilmedi
+    rm.destroy();
+  });
+
   it('destroy sonrası değişikliklere tepki vermez', () => {
     const store = squareStore();
     const rm = new RoomManager(store);

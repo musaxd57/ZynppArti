@@ -5,6 +5,13 @@ import { AddEntity, RemoveEntity } from './command';
 import { createEntityId } from './id';
 
 const CENTROID_MATCH_TOL = 50; // cm — eski mahalin adını yeni yüze taşımak için
+/**
+ * Mahal bulma (findFaces) segment-çiftleri üzerinde O(n²) çalışır → çok büyük modelde (ör. 500k duvar)
+ * UI'yi dakikalarca dondurur. Bu eşiğin üstünde otomatik mahal türetmeyi ATLA (mahaller türetilmez ama
+ * çizim/pan/zoom akıcı kalır). Gerçek planlar bunun çok altında; perf/stres testini de mümkün kılar.
+ * (İleride planar-faces spatial-hash ile hızlanınca yükseltilir — PERFORMANCE.md.)
+ */
+const MAX_FACE_WALLS = 8000;
 
 /**
  * Duvarlardan mahalleri otomatik bulur ve store'u günceller (ENGINEERING-NOTES §1).
@@ -35,6 +42,13 @@ export class RoomManager {
   recompute(): void {
     const walls = this.store.all().filter((e): e is Wall => e.type === 'wall');
     this.knownWalls = new Set(walls.map((w) => w.id));
+
+    // Çok büyük modelde findFaces (O(n²)) UI'yi dondurur → mahal türetmeyi atla (çizim akıcı kalır).
+    // Nadir (gerçek planlar çok altında) → tek uyarı yeterli, spam değil.
+    if (walls.length > MAX_FACE_WALLS) {
+      console.warn(`RoomManager: ${walls.length} duvar > ${MAX_FACE_WALLS} → mahal türetme atlandı (perf).`);
+      return;
+    }
 
     const segments: Segment[] = walls.map((w) => ({ a: w.start, b: w.end }));
     let faces: Vec2[][];
