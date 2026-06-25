@@ -161,6 +161,8 @@ export interface Comment extends EntityBase {
   readonly text: string;
   /** Çözüldü işareti — true ise yorum "kapalı" (soluk/işaretli çizilir). Varsayılan: açık. */
   readonly resolved?: boolean;
+  /** Boyut çarpanı (baloncuk + metin ölçeği). Atanmazsa 1. Kullanıcı panelden ayarlar. */
+  readonly size?: number;
 }
 
 /**

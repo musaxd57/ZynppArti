@@ -6,6 +6,7 @@ import {
   WALL_MATERIALS,
   type Annotation,
   type Block,
+  type Comment,
   type EntityStore,
   type History,
   type Opening,
@@ -157,6 +158,39 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
               onChange={(ev) => {
                 const hh = Number(ev.target.value);
                 if (Number.isFinite(hh) && hh > 0) history.dispatch(new UpdateEntity({ ...a, height: hh }));
+              }}
+              className={numCls}
+            />
+          </label>
+        </div>
+      </Panel>
+    );
+  }
+
+  if (e.type === 'comment') {
+    const c = e as Comment;
+    return (
+      <Panel title="Özellikler — Yorum" widthClass="w-full">
+        <div className="flex flex-col gap-1">
+          <input
+            defaultValue={c.text}
+            onBlur={(ev) => {
+              const txt = ev.target.value.trim();
+              if (txt && txt !== c.text) history.dispatch(new UpdateEntity({ ...c, text: txt }));
+            }}
+            className="rounded bg-white/10 px-2 py-1 text-sm outline-none focus:bg-white/20"
+          />
+          <label className={labelCls}>
+            <span className="opacity-70">Boyut (×)</span>
+            <input
+              type="number"
+              min={0.3}
+              max={5}
+              step={0.25}
+              defaultValue={c.size ?? 1}
+              onChange={(ev) => {
+                const sz = Number(ev.target.value);
+                if (Number.isFinite(sz) && sz > 0) history.dispatch(new UpdateEntity({ ...c, size: sz }));
               }}
               className={numCls}
             />

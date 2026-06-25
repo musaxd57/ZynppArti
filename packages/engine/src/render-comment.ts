@@ -1,5 +1,5 @@
 import { BitmapText, Container, Graphics } from 'pixi.js';
-import { COMMENT_PIN, COMMENT_TEXT_HEIGHT, type Comment } from '@zynpparti/document';
+import { COMMENT_PIN, COMMENT_TEXT_HEIGHT, commentScale, type Comment } from '@zynpparti/document';
 import { ROOM_FONT } from './charset';
 
 const PIN_COLOR = 0xffb454; // amber (yorum sıcaklığı)
@@ -13,6 +13,9 @@ const DOT_COLOR = 0x15171c;
  */
 export function buildComment(c: Comment): Container {
   const g = new Container();
+  // Baloncuk + metin bir iç container'da kurulur, sonra boyut çarpanıyla ölçeklenir (kuyruk 0,0'da
+  // kalır = iğne noktası). Çarpanı tüm geometriye tek tek dağıtmak yerine container scale kullanılır.
+  const inner = new Container();
   const s = COMMENT_PIN;
   const color = c.resolved ? RESOLVED_COLOR : PIN_COLOR;
   const bubble = new Graphics();
@@ -29,7 +32,7 @@ export function buildComment(c: Comment): Container {
   } else {
     for (const dx of [7, 13, 19]) bubble.circle(dx, -s * 0.6, 1.6).fill({ color: DOT_COLOR });
   }
-  g.addChild(bubble);
+  inner.addChild(bubble);
 
   const t = new BitmapText({
     text: c.resolved ? `✓ ${c.text}` : c.text,
@@ -39,8 +42,10 @@ export function buildComment(c: Comment): Container {
   t.alpha = c.resolved ? 0.7 : 1;
   t.anchor.set(0, 0);
   t.position.set(s + 6, -s);
-  g.addChild(t);
+  inner.addChild(t);
 
+  inner.scale.set(commentScale(c)); // kullanıcı boyut çarpanı (iğne noktası 0,0 sabit)
+  g.addChild(inner);
   g.position.set(c.position.x, c.position.y);
   return g;
 }
