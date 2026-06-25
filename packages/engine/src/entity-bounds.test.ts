@@ -88,6 +88,13 @@ describe('entityBounds', () => {
       a: { x: 0, y: 0 }, b: { x: Infinity, y: 5 },
     } as unknown as Parameters<typeof entityBounds>[0];
     expect(entityBounds(badSection)).toEqual({ minX: 0, minY: 0, maxX: 0, maxY: 0 });
+
+    // Poligon (parcel/space) yolu da NaN'da dejenere olmalı (tek-geçiş aabbOfPoints).
+    const badParcel: Parcel = {
+      id: 'p', type: 'parcel', layerId: 'site',
+      boundary: [{ x: 0, y: 0 }, { x: NaN, y: 10 }, { x: 10, y: 10 }],
+    };
+    expect(entityBounds(badParcel)).toEqual({ minX: 0, minY: 0, maxX: 0, maxY: 0 });
   });
 
   it('sheet AABB = model boyutu (kağıt × ölçek)', () => {

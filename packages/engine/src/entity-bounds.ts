@@ -11,18 +11,34 @@ import {
 } from '@zynpparti/document';
 import type { AABB } from './spatial-index';
 
+type Pt = { readonly x: number; readonly y: number };
+
+/**
+ * Noktalardan TEK GEÇİŞTE AABB — `Math.min(...spread)` ve `.map()` ara dizileri YOK (hot-path:
+ * her insert + her sürükle-kare'sinde `index.update` için çağrılır; 500k entity'de tahsis baskısını
+ * azaltır). Herhangi bir koordinat NaN/Infinity ise güvenli dejenere kutu döner (rbush'ı bozmaz;
+ * 99a504c'deki kilitli NaN-safe davranışını korur). `pad` kenar boşluğu (ör. duvar yarı-kalınlığı).
+ */
+function aabbOfPoints(pts: readonly Pt[], pad = 0): AABB {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const p of pts) {
+    if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+  }
+  if (!Number.isFinite(minX)) return { minX: 0, minY: 0, maxX: 0, maxY: 0 }; // boş dizi
+  return { minX: minX - pad, minY: minY - pad, maxX: maxX + pad, maxY: maxY + pad };
+}
+
 /** Boşluğun (kapı/pencere) duvardan türetilmiş AABB'si. Duvar çözümü gerektiğinden ayrı. */
 export function openingBounds(opening: Opening, wall: Wall): AABB {
   const f = openingFrame(opening, wall);
-  const half = wall.thickness / 2;
-  const xs = [f.a.x, f.b.x];
-  const ys = [f.a.y, f.b.y];
-  return {
-    minX: Math.min(...xs) - half,
-    minY: Math.min(...ys) - half,
-    maxX: Math.max(...xs) + half,
-    maxY: Math.max(...ys) + half,
-  };
+  return aabbOfPoints([f.a, f.b], wall.thickness / 2);
 }
 
 /**
@@ -30,29 +46,17 @@ export function openingBounds(opening: Opening, wall: Wall): AABB {
  * Boşluk (opening) duvara bağlı olduğundan gerçek kutusu `openingBounds` ile (duvar çözülerek)
  * EntityLayer'da hesaplanır; burada güvenli dejenere kutu döner.
  */
-/** xs/ys'den AABB; NaN/Infinity varsa güvenli dejenere kutu (rbush index'i bozulmasın). */
-function aabbFrom(xs: number[], ys: number[]): AABB {
-  const minX = Math.min(...xs);
-  const minY = Math.min(...ys);
-  const maxX = Math.max(...xs);
-  const maxY = Math.max(...ys);
-  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
-    return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
-  }
-  return { minX, minY, maxX, maxY };
-}
-
 export function entityBounds(entity: Entity): AABB {
   switch (entity.type) {
     case 'opening':
       return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
     case 'dimension': {
       const g = dimensionGeometry(entity);
-      return aabbFrom([g.a.x, g.b.x, g.da.x, g.db.x], [g.a.y, g.b.y, g.da.y, g.db.y]);
+      return aabbOfPoints([g.a, g.b, g.da, g.db]);
     }
     case 'section': {
       // Yalnız kesim çizgisini sınırla; ok bayrakları/etiketler ekran-sabit dekordur (culling için yeterli).
-      return aabbFrom([entity.a.x, entity.b.x], [entity.a.y, entity.b.y]);
+      return aabbOfPoints([entity.a, entity.b]);
     }
     case 'wall': {
       const half = entity.thickness / 2;
@@ -64,24 +68,10 @@ export function entityBounds(entity: Entity): AABB {
       };
     }
     case 'space':
-    case 'parcel': {
-      let minX = Infinity;
-      let minY = Infinity;
-      let maxX = -Infinity;
-      let maxY = -Infinity;
-      for (const p of entity.boundary) {
-        minX = Math.min(minX, p.x);
-        minY = Math.min(minY, p.y);
-        maxX = Math.max(maxX, p.x);
-        maxY = Math.max(maxY, p.y);
-      }
-      if (!Number.isFinite(minX)) return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
-      return { minX, minY, maxX, maxY };
-    }
-    case 'block': {
-      const corners = blockCorners(entity);
-      return aabbFrom(corners.map((p) => p.x), corners.map((p) => p.y));
-    }
+    case 'parcel':
+      return aabbOfPoints(entity.boundary);
+    case 'block':
+      return aabbOfPoints(blockCorners(entity));
     case 'annotation': {
       const { w, h } = annotationSize(entity);
       return {
