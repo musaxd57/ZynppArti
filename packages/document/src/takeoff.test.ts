@@ -57,9 +57,27 @@ describe('computeTakeoff', () => {
   });
 
   it('kapı sıva alanından (iki yüz) düşülür', () => {
-    // 500 cm duvar h=270 = 27 m²; 90cm×210cm kapı iki yüz = 2×0,9×2,1 = 3,78 m² düşer
-    const t = computeTakeoff([wall('a', 0, 0, 500, 0)], [], [door('d', 90)], [], { storeyHeightCm: 270 });
+    // 500 cm duvar h=270 = 27 m²; 90cm×210cm kapı iki yüz = 2×0,9×2,1 = 3,78 m² düşer.
+    // Kapı KENDİ duvarında olmalı (door wallId='w') — duvarı 'w' kuruyoruz ki boşluk o duvardan düşülsün
+    // (orphan boşluk artık düşülmez; süpürgelik testiyle tutarlı, çapraz-bulaşma yok).
+    const t = computeTakeoff([wall('w', 0, 0, 500, 0)], [], [door('d', 90)], [], { storeyHeightCm: 270 });
     expect(t.plasterAreaM2).toBeCloseTo(27 - 3.78, 5);
+  });
+
+  it('bir duvardaki AŞIRI geniş boşluk komşu duvarın örgüsünü çalmaz (duvar-bazlı clamp)', () => {
+    // Kısa duvar 'w' (100cm) + üstünde devasa kapı (500cm) → o duvarın örgüsü 0; komşu 500cm duvar etkilenmez.
+    const short = wall('w', 0, 0, 100, 0);
+    const long = wall('b', 0, 100, 500, 100);
+    const t = computeTakeoff([short, long], [], [door('d', 500)], [], { storeyHeightCm: 270 });
+    expect(t.wallElevationM2).toBeCloseTo(13.5, 5); // yalnız long: 5m×2,7; short = max(0, …) = 0
+  });
+
+  it('NaN duvar yüksekliği metrajı zehirlemez (sonlu kalır, kat yüksekliğine düşer)', () => {
+    const bad: Wall = { ...wall('w', 0, 0, 500, 0), height: NaN };
+    const t = computeTakeoff([bad], [], [], [], { storeyHeightCm: 270 });
+    expect(Number.isFinite(t.wallElevationM2)).toBe(true);
+    expect(Number.isFinite(t.plasterAreaM2)).toBe(true);
+    expect(t.plasterAreaM2).toBeCloseTo(27, 5); // NaN → 270 kullanılır
   });
 
   it('döşeme = mahal alanı, süpürgelik = çevre − odanın kapı genişlikleri', () => {

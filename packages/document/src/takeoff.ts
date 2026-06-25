@@ -129,49 +129,49 @@ export function computeTakeoff(
   blocks: readonly Block[] = [],
   opts: TakeoffOptions = { storeyHeightCm: DEFAULT_STOREY_HEIGHT_CM },
 ): Takeoff {
-  const h = opts.storeyHeightCm;
+  // Kat yüksekliği NaN/≤0 ise varsayılana düş (bozuk opts metrajı zehirlemesin).
+  const h = Number.isFinite(opts.storeyHeightCm) && opts.storeyHeightCm > 0 ? opts.storeyHeightCm : DEFAULT_STOREY_HEIGHT_CM;
+  // Duvar yüksekliği/uzunluğu NaN-güvenli: bozuk height (NaN/≤0) → kat yüksekliği; bozuk uzunluk → 0.
+  const safeH = (w: Wall): number =>
+    Number.isFinite(w.height) && (w.height as number) > 0 ? (w.height as number) : h;
+  const safeLen = (w: Wall): number => {
+    const l = wallLengthCm(w);
+    return Number.isFinite(l) && l > 0 ? l : 0;
+  };
 
-  const wallLenCm = walls.reduce((s, w) => s + wallLengthCm(w), 0);
+  const wallLenCm = walls.reduce((s, w) => s + safeLen(w), 0);
 
-  // Duvar düşey alanı (tek yüz) — örgü/duvar işçiliği bundan (uzunluk × yükseklik). Boşluk düşülür.
-  let wallElevCm2 = walls.reduce((s, w) => s + wallLengthCm(w) * (w.height ?? h), 0);
+  // Boşluk (kapı/pencere) alanlarını DUVAR BAZINDA topla → her duvar yalnız KENDİ boşluğunu düşer,
+  // dar bir duvardaki büyük boşluk komşu duvarların alanını "çalmaz" (eski global-akümülatör hatası).
+  const openingCutByWall = new Map<string, number>();
   for (const o of openings) {
     if (!(o.width > 0) || !Number.isFinite(o.width)) continue; // bozuk genişlik alanı zehirlemesin
     const oh = o.kind === 'door' ? DOOR_HEIGHT_CM : WINDOW_HEIGHT_CM;
-    wallElevCm2 -= o.width * oh;
+    openingCutByWall.set(o.wallId, (openingCutByWall.get(o.wallId) ?? 0) + o.width * oh);
   }
-  wallElevCm2 = Math.max(0, wallElevCm2);
 
   // Sıva: İÇ yüzler vs DIŞ CEPHE ayrı (araştırma 2026-06-25 — Türk metrajında farklı poz/birim fiyat).
-  // Bir duvarın kaç ODAYA komşu olduğuna bak (orta noktası oda sınırına yakın mı): 1 → ÇEVRE duvarı
-  // (1 iç yüz + 1 dış cephe yüzü); 2+ → İÇ bölme (2 iç yüz); 0 → serbest/oda-öncesi (2 iç yüz say).
-  // Boşluk alanı her iki ilgili yüzden düşülür. Toplam yüzey eskiyle aynı; yalnız iç/dış ayrılıyor.
+  // Bir duvarın kaç ODAYA komşu olduğuna bak: 1 → ÇEVRE duvarı (1 iç + 1 dış yüz); 2+/0 → 2 iç yüz.
   const borderCount = new Map<string, number>();
   for (const w of walls) borderCount.set(w.id, wallBorderCount(w, spaces));
   const faces = (id: string, w: Wall): { i: number; e: number } => {
     const c = borderCount.get(id) ?? wallBorderCount(w, spaces);
     return c === 1 ? { i: 1, e: 1 } : { i: 2, e: 0 };
   };
+
+  // Tek geçiş: her duvarın tek-yüz NET alanı (yükseklik×uzunluk − kendi boşluğu, duvar-bazlı clamp≥0).
+  let wallElevCm2 = 0;
   let interiorPlasterCm2 = 0;
   let facadePlasterCm2 = 0;
   for (const w of walls) {
+    const net = Math.max(0, safeLen(w) * safeH(w) - (openingCutByWall.get(w.id) ?? 0));
     const f = faces(w.id, w);
-    const a = wallLengthCm(w) * (w.height ?? h);
-    interiorPlasterCm2 += f.i * a;
-    facadePlasterCm2 += f.e * a;
+    wallElevCm2 += net; // örgü = tek yüz net
+    interiorPlasterCm2 += f.i * net;
+    facadePlasterCm2 += f.e * net;
   }
-  const wallByIdP = new Map(walls.map((w) => [w.id, w]));
-  for (const o of openings) {
-    if (!(o.width > 0) || !Number.isFinite(o.width)) continue;
-    const oh = o.kind === 'door' ? DOOR_HEIGHT_CM : WINDOW_HEIGHT_CM;
-    const w = wallByIdP.get(o.wallId);
-    // Duvarı bilinmiyorsa eski davranış: 2 iç yüzden düş (kaba; orphan boşluk).
-    const f = w ? faces(o.wallId, w) : { i: 2, e: 0 };
-    interiorPlasterCm2 -= f.i * o.width * oh;
-    facadePlasterCm2 -= f.e * o.width * oh;
-  }
-  const plasterCm2 = Math.max(0, interiorPlasterCm2); // "Sıva" = iç sıva
-  const facadeCm2 = Math.max(0, facadePlasterCm2);
+  const plasterCm2 = interiorPlasterCm2; // "Sıva" = iç sıva (zaten ≥0)
+  const facadeCm2 = facadePlasterCm2;
 
   const floorCm2 = spaces.reduce((s, sp) => s + polygonArea(sp.boundary), 0);
   // Boya = duvar yüzleri (sıva alanı) + tavan (mahal alanı). Tavan boyası ayrıca sayılır.
