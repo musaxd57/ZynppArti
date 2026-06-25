@@ -43,11 +43,14 @@ export interface CanvasHandle {
   zoomToFit(): void;
   /** Kamerayı verilen dünya-uzayı kutusuna odaklar (pafta "Git" navigasyonu). */
   zoomToBounds(b: AABB): void;
+  /** Boş sayfa (grid karesi) sayısını ayarla — kareler yan yana dizilir + ekrana sığdırılır. */
+  setPageCount(n: number): void;
   destroy: () => void;
 }
 
 const GRID_SPACING = 50; // dünya birimi (cm)
 const GRID_EXTENT = 5000;
+const GRID_PAGE_GAP = 1000; // sayfalar arası boşluk (cm) — çok-sayfa düzeninde
 const MIN_ZOOM = 0.05;
 const MAX_ZOOM = 40;
 const ZOOM_SENSITIVITY = 0.0015;
@@ -75,7 +78,7 @@ export async function createCanvasApp(
 
   const world = new Container();
   app.stage.addChild(world);
-  const redrawGrid = buildGrid(world);
+  const grid = buildGrid(world);
 
   const layers = new LayerState();
   const entityLayer = new EntityLayer(store, layers);
@@ -105,7 +108,7 @@ export async function createCanvasApp(
     world.scale.set(camera.zoom);
     const pixelSize = 1 / camera.zoom;
     entityLayer.updateLineweights(pixelSize); // ekran-sabit konturlar (yalnız zoom değişince)
-    redrawGrid(pixelSize);
+    grid.redraw(pixelSize);
     entityLayer.cull(viewportBounds());
   }
 
@@ -257,6 +260,18 @@ export async function createCanvasApp(
     if (b) zoomToBounds(b);
   }
 
+  /** Sayfa (boş grid karesi) sayısını ayarla + tüm sayfaları ekrana sığdır. */
+  function setPageCount(n: number): void {
+    grid.setPages(n);
+    const pages = Math.max(1, Math.floor(n));
+    zoomToBounds({
+      minX: -GRID_EXTENT,
+      minY: -GRID_EXTENT,
+      maxX: pageCenterX(pages - 1) + GRID_EXTENT,
+      maxY: GRID_EXTENT,
+    });
+  }
+
   function onWheel(e: WheelEvent): void {
     e.preventDefault();
     const pivot = pointerPos(e);
@@ -336,6 +351,7 @@ export async function createCanvasApp(
     },
     zoomToFit,
     zoomToBounds,
+    setPageCount,
     setSpaceActivateHandler(cb: (id: EntityId) => void): void {
       spaceActivate = cb;
     },
@@ -387,34 +403,67 @@ export async function createCanvasApp(
  */
 const GRID_MAJOR_EVERY = 2; // her 2. çizgi (= 1 m) ana çizgi
 
-function buildGrid(target: Container): (pixelSize: number) => void {
+/** Bir sayfanın (grid karesi) merkez x-ofseti — sayfa 0 origin'de, sonrakiler sağa dizilir. */
+function pageCenterX(i: number): number {
+  return i * (2 * GRID_EXTENT + GRID_PAGE_GAP);
+}
+
+/**
+ * Izgara + sayfa(lar). Her "sayfa" bir grid karesidir (kullanıcının boş tuvalde gördüğü kare).
+ * `setPages(n)` ile sayfa sayısı artırılır → kareler yan yana dizilir (her biri kenarlıklı). Sayfa
+ * kavramı kasıtlı SADE: antet/ölçek yok (pafta değil) — kullanıcı "boş sayfa" çoğaltmak istiyor.
+ */
+function buildGrid(target: Container): { redraw: (pixelSize: number) => void; setPages: (n: number) => void } {
   const minor = new Graphics();
   const major = new Graphics();
   const axes = new Graphics();
-  target.addChild(minor, major, axes);
+  const frame = new Graphics(); // sayfa kenarlıkları
+  target.addChild(minor, major, axes, frame);
 
   let lastPx = -1;
-  return (pixelSize: number): void => {
-    if (Math.abs(pixelSize - lastPx) < 1e-9) return;
+  let pages = 1;
+
+  const draw = (pixelSize: number): void => {
     lastPx = pixelSize;
     const step = GRID_SPACING * GRID_MAJOR_EVERY;
-
     minor.clear();
     major.clear();
-    for (let x = -GRID_EXTENT; x <= GRID_EXTENT; x += GRID_SPACING) {
-      const g = x % step === 0 ? major : minor;
-      g.moveTo(x, -GRID_EXTENT).lineTo(x, GRID_EXTENT);
-    }
-    for (let y = -GRID_EXTENT; y <= GRID_EXTENT; y += GRID_SPACING) {
-      const g = y % step === 0 ? major : minor;
-      g.moveTo(-GRID_EXTENT, y).lineTo(GRID_EXTENT, y);
+    axes.clear();
+    frame.clear();
+
+    for (let i = 0; i < pages; i++) {
+      const cx = pageCenterX(i);
+      const x0 = cx - GRID_EXTENT;
+      const x1 = cx + GRID_EXTENT;
+      for (let x = x0; x <= x1; x += GRID_SPACING) {
+        const g = (x - x0) % step === 0 ? major : minor;
+        g.moveTo(x, -GRID_EXTENT).lineTo(x, GRID_EXTENT);
+      }
+      for (let y = -GRID_EXTENT; y <= GRID_EXTENT; y += GRID_SPACING) {
+        const g = (y + GRID_EXTENT) % step === 0 ? major : minor;
+        g.moveTo(x0, y).lineTo(x1, y);
+      }
+      // Sayfa kenarlığı (her sayfanın sınırı belli olsun).
+      frame.rect(x0, -GRID_EXTENT, 2 * GRID_EXTENT, 2 * GRID_EXTENT);
     }
     minor.stroke({ width: LINEWEIGHTS.hairline * pixelSize, color: PALETTE.grid });
     major.stroke({ width: LINEWEIGHTS.hairline * pixelSize, color: PALETTE.gridMajor });
+    frame.stroke({ width: LINEWEIGHTS.thin * pixelSize, color: PALETTE.gridMajor });
 
-    axes.clear();
+    // Eksenler yalnız ilk sayfada (origin).
     axes.moveTo(-GRID_EXTENT, 0).lineTo(GRID_EXTENT, 0);
     axes.moveTo(0, -GRID_EXTENT).lineTo(0, GRID_EXTENT);
     axes.stroke({ width: LINEWEIGHTS.thin * pixelSize, color: PALETTE.axis });
+  };
+
+  return {
+    redraw(pixelSize: number): void {
+      if (Math.abs(pixelSize - lastPx) < 1e-9) return;
+      draw(pixelSize);
+    },
+    setPages(n: number): void {
+      pages = Math.max(1, Math.floor(n));
+      draw(lastPx > 0 ? lastPx : 1);
+    },
   };
 }

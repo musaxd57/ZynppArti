@@ -9,7 +9,7 @@ import {
   type CanvasHandle,
 } from '@zynpparti/engine';
 import type { CollabHandle } from '@zynpparti/collab';
-import { EntityStore, History, RoomManager, RemoveEntity, UpdateEntity, sheetModelSize, deserializeModel, makeSheet, createEntityId } from '@zynpparti/document';
+import { EntityStore, History, RoomManager, RemoveEntity, UpdateEntity, deserializeModel } from '@zynpparti/document';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
 import { seedDemo } from '@/lib/demo-seed';
 import { Toolbar } from './Toolbar';
@@ -57,8 +57,10 @@ export function CanvasStage() {
     zoomToFit: () => void;
     zoomToBounds: CanvasHandle['zoomToBounds'];
     viewportBounds: CanvasHandle['viewportBounds'];
+    setPageCount: CanvasHandle['setPageCount'];
   } | null>(null);
   const [collab, setCollab] = useState<CollabHandle | null>(null);
+  const [pageCount, setPageCount] = useState(1); // boş sayfa (grid karesi) sayısı — kullanıcı çoğaltır
   // Hover olaylarını çoğa dağıt (StatusBar + presence). Tek motor handler'ı → çok dinleyici.
   const hoverListenersRef = useRef(new Set<(w: { x: number; y: number } | null) => void>());
   const registerHover = useCallback((cb: (w: { x: number; y: number } | null) => void) => {
@@ -173,13 +175,8 @@ export function CanvasStage() {
       }
     } else if (!startEmpty) {
       seedDemo(store); // geçici demo duvarlar (yalnız demo/baypas modunda)
-    } else {
-      // Yeni boş proje: açılışta 1 PAFTA (sayfa) gelir — kullanıcının gördüğü "büyük kare" budur.
-      // Panelden "+ Pafta ekle" ile çoğaltılır (AutoCAD'de layout/pafta eklemek gibi). Origin'de ortalı.
-      const def = makeSheet({ x: 0, y: 0 }, { sheetNo: '1' });
-      const { w, h } = sheetModelSize({ ...def, id: 'tmp' });
-      store.put({ ...makeSheet({ x: -w / 2, y: -h / 2 }, { sheetNo: '1' }), id: createEntityId() });
     }
+    // Yeni boş proje (startEmpty): hiçbir şey ekleme — boş sayfa(lar) tuvalde (grid) zaten görünür.
 
     let handle: CanvasHandle | undefined;
     let manager: ToolManager | undefined;
@@ -193,7 +190,6 @@ export function CanvasStage() {
         return;
       }
       handle = h;
-      if (startEmpty) h.zoomToFit(); // yeni proje: açılıştaki paftayı (büyük kareyi) ekrana sığdır
       const history = new History(store);
       // Mahalleri otomatik bul (engine entity katmanı abone olduktan sonra).
       rooms = new RoomManager(store);
@@ -284,6 +280,7 @@ export function CanvasStage() {
         zoomToFit: h.zoomToFit,
         zoomToBounds: h.zoomToBounds,
         viewportBounds: h.viewportBounds,
+        setPageCount: h.setPageCount,
       });
     }).catch((err) => {
       // PixiJS init başarısız (WebGL yok/bellek) → sonsuz "yükleniyor" yerine hata göster.
@@ -425,6 +422,39 @@ export function CanvasStage() {
               <PerfHud store={ui.store} history={ui.history} />
             </div>
           )}
+          {/* Boş sayfa sayısı: kullanıcının gördüğü grid karesini çoğaltır (− / +). Yan yana dizilir. */}
+          {ui && (
+            <div className="absolute bottom-3 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full border border-[var(--border-soft)] bg-[var(--surface-2)]/90 px-2 py-1 text-[13px] text-[var(--text-1)] shadow-lg backdrop-blur">
+              <button
+                type="button"
+                onClick={() => {
+                  const n = Math.max(1, pageCount - 1);
+                  setPageCount(n);
+                  ui.setPageCount(n);
+                }}
+                disabled={pageCount <= 1}
+                className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-[var(--surface-3)] disabled:opacity-40"
+                title="Sayfa çıkar"
+                aria-label="Sayfa çıkar"
+              >
+                −
+              </button>
+              <span className="min-w-[64px] text-center tabular-nums">{pageCount} sayfa</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const n = pageCount + 1;
+                  setPageCount(n);
+                  ui.setPageCount(n);
+                }}
+                className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-[var(--surface-3)]"
+                title="Sayfa ekle"
+                aria-label="Sayfa ekle"
+              >
+                +
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Sağ dock genişlik tutamacı. Zen modda gizlenir. */}
@@ -456,14 +486,7 @@ export function CanvasStage() {
             />
             <TakeoffPanel store={ui.store} />
             <SectionPanel store={ui.store} history={ui.history} selectedIds={selectedIds} />
-            <SheetPanel
-              store={ui.store}
-              history={ui.history}
-              onZoomTo={(s) => {
-                const { w, h } = sheetModelSize(s);
-                ui.zoomToBounds({ minX: s.position.x, minY: s.position.y, maxX: s.position.x + w, maxY: s.position.y + h });
-              }}
-            />
+            <SheetPanel store={ui.store} history={ui.history} />
           </div>
         )}
 
