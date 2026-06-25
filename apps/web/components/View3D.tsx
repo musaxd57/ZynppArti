@@ -83,6 +83,9 @@ export function View3D({ store }: { store: EntityStore }) {
       let theta = Math.PI / 4;
       let phi = Math.PI / 3.2;
       let radius = span * 1.9;
+      // ON-DEMAND render: sahne statikken GPU'yu boşuna çalıştırma (fan/pil). Bir şey değişince
+      // (kamera/clip/resize/tur/spin) bayrak set edilir, loop yalnız o zaman renderer.render çağırır.
+      let needsRender = true;
       const updateCam = (): void => {
         cam.position.set(
           target.x + radius * Math.sin(phi) * Math.cos(theta),
@@ -90,6 +93,7 @@ export function View3D({ store }: { store: EntityStore }) {
           target.z + radius * Math.sin(phi) * Math.sin(theta),
         );
         cam.lookAt(target);
+        needsRender = true;
       };
       updateCam();
 
@@ -181,6 +185,7 @@ export function View3D({ store }: { store: EntityStore }) {
       clipRef.current = (on: boolean): void => {
         const planes = on && sectionPlane ? [sectionPlane] : [];
         for (const m of allMats) m.clippingPlanes = planes;
+        needsRender = true;
       };
       clipRef.current(false); // başlangıç: kapalı
       setHasSection(!!sectionPlane);
@@ -221,6 +226,7 @@ export function View3D({ store }: { store: EntityStore }) {
         renderer.setSize(w2, h2);
         cam.aspect = w2 / h2;
         cam.updateProjectionMatrix();
+        needsRender = true;
       };
       window.addEventListener('resize', onResize);
 
@@ -245,7 +251,11 @@ export function View3D({ store }: { store: EntityStore }) {
           theta += 0.004; // otomatik tur (sunum hissi)
           updateCam();
         }
-        renderer.render(scene, cam);
+        // Yalnız bir şey değiştiyse render et (statikte GPU boşta → fan/pil korunur).
+        if (needsRender) {
+          renderer.render(scene, cam);
+          needsRender = false;
+        }
       };
       loop();
 
