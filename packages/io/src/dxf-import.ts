@@ -88,7 +88,8 @@ export function importDxf(text: string): DxfImportResult {
     try {
       if (e.type === 'LINE') {
         const v = (e as ILineEntity).vertices;
-        if (v.length >= 2) {
+        // Bozuk LINE (vertices yok / <2 nokta) throw'a düşmesin → açıkça guard'la (Array.isArray).
+        if (Array.isArray(v) && v.length >= 2) {
           const w = makeWall(tf(v[0]!), tf(v[1]!), factor, layer);
           if (w) {
             walls.push(w);

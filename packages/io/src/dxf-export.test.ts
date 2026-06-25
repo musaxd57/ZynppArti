@@ -135,4 +135,46 @@ describe('exportDxf', () => {
     expect(dxf.split('\n').filter((l) => l === 'LINE')).toHaveLength(3);
     expect(dxf.split('\n').filter((l) => l === 'TEXT')).toHaveLength(1);
   });
+
+  // DXF satır-bazlı format → metin/katman içindeki newline tüm dosyayı bozar (escaping bug fix).
+  it('mahal adındaki newline dosyayı BOZMAZ (kontrol karakteri boşluğa indirilir)', () => {
+    const space: Space = {
+      id: 's',
+      type: 'space',
+      layerId: 'rooms',
+      name: 'Salon\n(net)',
+      boundary: [
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+        { x: 100, y: 100 },
+      ],
+    };
+    const dxf = exportDxf([space]);
+    const lines = dxf.split('\n');
+    // "(net)" kendi başına bir satır olmamalı (olsaydı group code olarak ayrıştırılıp dosyayı bozardı).
+    expect(lines).not.toContain('(net)');
+    expect(dxf).toContain('Salon (net)'); // newline → boşluk
+  });
+
+  it('katman adındaki yasak/kontrol karakterleri _ ile değişir', () => {
+    const dxf = exportDxf([wall('a', 0, 0, 100, 0, 'Arch/Wall:1')]);
+    expect(dxf).toContain('Arch_Wall_1');
+    expect(dxf).not.toContain('Arch/Wall:1');
+  });
+
+  it('çok-satırlı açıklama her satırı ayrı TEXT yapar, gömülü newline kalmaz', () => {
+    const ann: Annotation = {
+      id: 'an',
+      type: 'annotation',
+      layerId: 'annotation',
+      position: { x: 0, y: 0 },
+      text: 'Üst kat\r\nplan',
+      height: 20,
+    };
+    const dxf = exportDxf([ann]);
+    // \r\n iki satıra bölünür ('Üst kat' ve 'plan'); hiçbir TEXT değeri \r içermemeli.
+    expect(dxf).not.toMatch(/\r/);
+    expect(dxf).toContain('Üst kat');
+    expect(dxf).toContain('plan');
+  });
 });

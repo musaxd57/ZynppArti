@@ -77,7 +77,7 @@ export function exportDxf(entities: readonly Entity[]): string {
 function line(out: string[], layer: string, a: Vec2, b: Vec2): void {
   out.push(
     '0', 'LINE',
-    '8', layer,
+    '8', sanitizeLayer(layer),
     '10', fmt(a.x), '20', fmt(a.y), '30', '0',
     '11', fmt(b.x), '21', fmt(b.y), '31', '0',
   );
@@ -85,18 +85,35 @@ function line(out: string[], layer: string, a: Vec2, b: Vec2): void {
 
 function polyline(out: string[], layer: string, pts: readonly Vec2[], closed: boolean): void {
   if (pts.length === 0) return;
-  out.push('0', 'LWPOLYLINE', '8', layer, '90', String(pts.length), '70', closed ? '1' : '0');
+  out.push('0', 'LWPOLYLINE', '8', sanitizeLayer(layer), '90', String(pts.length), '70', closed ? '1' : '0');
   for (const p of pts) out.push('10', fmt(p.x), '20', fmt(p.y));
 }
 
 function text(out: string[], layer: string, pos: Vec2, height: number, value: string): void {
   out.push(
     '0', 'TEXT',
-    '8', layer,
+    '8', sanitizeLayer(layer),
     '10', fmt(pos.x), '20', fmt(pos.y), '30', '0',
     '40', fmt(height),
-    '1', value,
+    '1', sanitizeText(value),
   );
+}
+
+/**
+ * KRİTİK: DXF, group code + değer çiftlerini SATIR SATIR yazar (`out.join('\n')`). Bir TEXT
+ * değeri ya da katman adı gömülü `\n`/`\r` içerirse, satır ikiye bölünür ve ikinci yarı bir group
+ * code olarak ayrıştırılır → o noktadan sonrası TÜM dosya bozulur. Kontrol karakterlerini boşluğa indir.
+ */
+function sanitizeText(s: string): string {
+  // eslint-disable-next-line no-control-regex
+  return s.replace(/[\x00-\x1f]/g, ' ');
+}
+
+/** Katman adı: kontrol karakterleri + AutoCAD'in yasakladığı karakterler (< > / \ " : ; ? * | = ,) → '_'. */
+function sanitizeLayer(s: string): string {
+  // eslint-disable-next-line no-control-regex
+  const cleaned = s.replace(/[\x00-\x1f<>/\\":;?*|=,]/g, '_').trim();
+  return cleaned.length > 0 ? cleaned : '0';
 }
 
 function fmt(n: number): string {
