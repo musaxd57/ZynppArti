@@ -126,8 +126,17 @@ export function Toolbar({
   }
 
   async function onExportPng(): Promise<void> {
+    // PNG extract (GPU okuma) AĞIR olabilir → önce anında "hazırlanıyor" bilgisi (kullanıcı feedback alsın).
+    toast('PNG hazırlanıyor…', 'info', 1500);
     try {
-      download(await exportPng(), 'zynpparti.png');
+      const dataUrl = await exportPng();
+      // Devasa base64 data-URL'i (data:image/png;base64,...) blob object-URL'e çevir: indirme HAFİF olur
+      // ve başarı toast'ı güvenilir görünür. (DXF/SVG zaten blob URL kullanıyor → toast'ları çıkıyordu;
+      // PNG dev data-URL + ağır extract sonrası toast render'ını yarıştırıp yutuyordu — denetim bulgusu.)
+      const blob = await (await fetch(dataUrl)).blob();
+      const url = URL.createObjectURL(blob);
+      download(url, 'zynpparti.png');
+      URL.revokeObjectURL(url);
       toast('PNG indirildi.', 'success');
     } catch (err) {
       console.error('PNG export başarısız:', err);
