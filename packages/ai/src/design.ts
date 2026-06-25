@@ -88,6 +88,10 @@ export const DESIGN_SYSTEM = [
 const MAX_WALLS = 600;
 /** Azami koordinat büyüklüğü (cm) — ~10 km; bunun ötesi saçma + zoom/indeks'i bozar. */
 const MAX_COORD = 1_000_000;
+/** Azami oda etiketi — taslak için fazlasıyla yeter; aşırısı istemcide oda-başına point-in-polygon'u dondurur. */
+const MAX_ROOMS = 300;
+/** Azami özet uzunluğu — modelin devasa summary döndürüp istemci/yanıtı şişirmesini engeller. */
+const MAX_SUMMARY = 280;
 
 /** Bir sayının geçerli, sonlu ve makul büyüklükte koordinat olduğunu doğrular. */
 function num(v: unknown): v is number {
@@ -154,14 +158,17 @@ function validateLayout(parsed: unknown): Layout | null {
   for (const r of rawRooms) {
     if (typeof r !== 'object' || r === null) continue;
     const rr = r as Record<string, unknown>;
-    if (typeof rr.name === 'string' && num(rr.cx) && num(rr.cy)) {
+    // Boş/yalnız-boşluk ad reddedilir (adsız mahal üretmesin); ad 60 karaktere sınırlanır.
+    const name = typeof rr.name === 'string' ? rr.name.trim() : '';
+    if (name.length > 0 && num(rr.cx) && num(rr.cy)) {
       rooms.push({
-        name: rr.name,
+        name: name.slice(0, 60),
         type: typeof rr.type === 'string' ? rr.type : undefined,
         cx: rr.cx,
         cy: rr.cy,
       });
     }
+    if (rooms.length >= MAX_ROOMS) break; // aşırı/saldırgan çıktı → UI'yi (point-in-polygon × oda) dondurma
   }
 
   const rawOpenings = Array.isArray(obj.openings) ? obj.openings : [];
@@ -178,7 +185,7 @@ function validateLayout(parsed: unknown): Layout | null {
     if (openings.length >= 200) break; // güvenlik sınırı
   }
 
-  const rawSummary = typeof obj.summary === 'string' ? obj.summary.trim() : '';
+  const rawSummary = typeof obj.summary === 'string' ? obj.summary.trim().slice(0, MAX_SUMMARY) : '';
   const summary = rawSummary.length > 0 ? rawSummary : 'Taslak plan üretildi.';
   return { summary, walls, rooms, openings };
 }

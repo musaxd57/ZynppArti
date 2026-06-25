@@ -56,6 +56,28 @@ describe('parseLayout', () => {
     expect(out!.rooms).toHaveLength(0);
     expect(out!.summary).toBe('Taslak plan üretildi.');
   });
+
+  // KÜME 3 — LLM çıktısı sertleştirme (boş-ad / aşırı oda / devasa summary)
+  it('boş/yalnız-boşluk adlı odayı reddeder, adı kırpar', () => {
+    const out = parseLayout(
+      '{"walls":[[0,0,100,0]],"rooms":[{"name":"   ","cx":1,"cy":1},{"name":"Salon","cx":2,"cy":2}]}',
+    );
+    expect(out!.rooms).toHaveLength(1);
+    expect(out!.rooms[0]!.name).toBe('Salon');
+  });
+
+  it('aşırı oda sayısını sınırlar (≤300, UI donma koruması)', () => {
+    const rooms = Array.from({ length: 500 }, (_, i) => ({ name: `O${i}`, cx: i, cy: 0 }));
+    const out = parseLayout(JSON.stringify({ walls: [[0, 0, 100, 0]], rooms }));
+    expect(out!.rooms.length).toBeLessThanOrEqual(300);
+  });
+
+  it('devasa summary kırpılır (≤280)', () => {
+    const out = parseLayout(
+      JSON.stringify({ summary: 'x'.repeat(5000), walls: [[0, 0, 100, 0]], rooms: [] }),
+    );
+    expect(out!.summary.length).toBeLessThanOrEqual(280);
+  });
 });
 
 describe('parseLayouts (varyantlar)', () => {

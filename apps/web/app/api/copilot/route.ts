@@ -66,6 +66,76 @@ function allowRequest(ip: string, now: number): boolean {
   return true;
 }
 
+/**
+ * `context` istemciden gelir ve `formatContext` (prompt.ts) ile DOĞRUDAN sistem prompt'una gömülür.
+ * Doğrulanmazsa iki risk var: (1) devasa diziler/metinler → token maliyeti patlar (MAX_TOTAL_CONTENT
+ * yalnız `messages`'ı bağlar, context'i DEĞİL); (2) sistem-prompt injection (persona/model-gizliliği
+ * kuralını ezme). Bu fonksiyon dizileri ve metinleri sınırlar, geçersiz alanları düşürür. (Denetim bulgusu.)
+ */
+const CTX_MAX_ROOMS = 200;
+const CTX_MAX_METRICS = 50;
+const CTX_MAX_FINDINGS = 50;
+const CTX_STR = 200; // genel metin alanı sınırı (oda adı/metrik/atıf)
+
+function clampStr(v: unknown, max: number): string | undefined {
+  return typeof v === 'string' ? v.slice(0, max) : undefined;
+}
+
+function sanitizeContext(raw: unknown): CopilotContext {
+  if (typeof raw !== 'object' || raw === null) return {};
+  const o = raw as Record<string, unknown>;
+  const ctx: {
+    rooms?: { name: string; type?: string; areaM2: number }[];
+    metrics?: string[];
+    findings?: { severity: string; message: string; citation: string }[];
+    selection?: string;
+  } = {};
+
+  if (Array.isArray(o['rooms'])) {
+    ctx.rooms = o['rooms']
+      .slice(0, CTX_MAX_ROOMS)
+      .map((r) => {
+        if (typeof r !== 'object' || r === null) return null;
+        const rr = r as Record<string, unknown>;
+        const name = clampStr(rr['name'], 80);
+        if (name === undefined) return null;
+        const area = typeof rr['areaM2'] === 'number' && Number.isFinite(rr['areaM2']) ? rr['areaM2'] : 0;
+        const type = clampStr(rr['type'], 40);
+        return { name, areaM2: area, ...(type ? { type } : {}) };
+      })
+      .filter((r): r is { name: string; type?: string; areaM2: number } => r !== null);
+  }
+
+  if (Array.isArray(o['metrics'])) {
+    ctx.metrics = o['metrics']
+      .slice(0, CTX_MAX_METRICS)
+      .map((m) => clampStr(m, CTX_STR))
+      .filter((m): m is string => m !== undefined);
+  }
+
+  if (Array.isArray(o['findings'])) {
+    ctx.findings = o['findings']
+      .slice(0, CTX_MAX_FINDINGS)
+      .map((f) => {
+        if (typeof f !== 'object' || f === null) return null;
+        const ff = f as Record<string, unknown>;
+        const message = clampStr(ff['message'], 300);
+        if (message === undefined) return null;
+        return {
+          severity: clampStr(ff['severity'], 20) ?? 'info',
+          message,
+          citation: clampStr(ff['citation'], CTX_STR) ?? '',
+        };
+      })
+      .filter((f): f is { severity: string; message: string; citation: string } => f !== null);
+  }
+
+  const selection = clampStr(o['selection'], 500);
+  if (selection) ctx.selection = selection;
+
+  return ctx;
+}
+
 /** Gelen ham mesajları güvenli ChatMessage[]'e indirger (rol+metin doğrulama + boyut sınırı). */
 function parseMessages(raw: unknown): ChatMessage[] | null {
   if (!Array.isArray(raw) || raw.length === 0) return null;
@@ -149,7 +219,7 @@ export async function POST(req: Request): Promise<Response> {
       return Response.json({ error: 'Geçerli "messages" gerekli.' }, { status: 400 });
     }
   }
-  const context = ((body as { context?: unknown })?.context ?? {}) as CopilotContext;
+  const context = sanitizeContext((body as { context?: unknown })?.context);
 
   const providers = buildProviders({
     AI_PROVIDER: process.env.AI_PROVIDER,
