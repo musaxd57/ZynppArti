@@ -33,6 +33,7 @@ import { LayerPanel } from './LayerPanel';
 import { BlockPalette } from './BlockPalette';
 import { StatusBar } from './StatusBar';
 import { ShortcutsHelp } from './ShortcutsHelp';
+import { PerfHud, isPerfEnabled } from './PerfHud';
 
 /** Presence imleç renkleri (kullanıcı clientID'sine göre döner) — accent/semantik tonlar. */
 const PRESENCE_COLORS = [0x5b5bd6, 0xffb454, 0x71d083, 0xff9592, 0x4fd1e0, 0xe05bd6, 0xf5d90a];
@@ -380,6 +381,12 @@ export function CanvasStage() {
             <div className="absolute right-3 top-3 z-40 flex items-center gap-2">
               <CollabControl store={ui.store} onHandle={setCollab} />
               <View3D store={ui.store} />
+            </div>
+          )}
+          {/* Perf ölçüm paneli — yalnız ?perf ile (dev). Canlıda görünmez. */}
+          {ui && isPerfEnabled() && (
+            <div className="absolute bottom-3 left-3 z-40">
+              <PerfHud store={ui.store} history={ui.history} />
             </div>
           )}
         </div>
