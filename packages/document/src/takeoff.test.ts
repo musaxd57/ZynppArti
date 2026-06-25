@@ -50,11 +50,29 @@ describe('computeTakeoff', () => {
     expect(t.plasterAreaM2).toBeCloseTo(27 - 3.78, 5);
   });
 
-  it('döşeme = mahal alanı, süpürgelik = çevre − kapı genişlikleri', () => {
-    const t = computeTakeoff([], [squareSpace], [door('d', 90)]);
+  it('döşeme = mahal alanı, süpürgelik = çevre − odanın kapı genişlikleri', () => {
+    // Kapı, odanın ALT kenarındaki duvarda (orta) → o odanın süpürgeliğinden düşülür.
+    const bottom = wall('w', 0, 0, 400, 0);
+    const t = computeTakeoff([bottom], [squareSpace], [door('d', 90)]);
     expect(t.floorAreaM2).toBeCloseTo(16, 6); // 4×4
     // çevre 1600 cm = 16 m; kapı 90 cm = 0,9 m düşer → 15,1
     expect(t.skirtingM).toBeCloseTo(15.1, 6);
+  });
+
+  it('duvarı modelde olmayan kapı süpürgelikten DÜŞÜLMEZ (hangi odaya değdiği bilinemez)', () => {
+    // door('d') wallId='w' ama walls=[] → eşleşme yok → 16 m (kesilmez). Eski global davranışın düzeltmesi.
+    const t = computeTakeoff([], [squareSpace], [door('d', 90)]);
+    expect(t.skirtingM).toBeCloseTo(16, 6);
+  });
+
+  it('paylaşılan iç kapı İKİ odanın da süpürgeliğinden düşülür (araştırma kararı)', () => {
+    // İki 400×400 oda, ortak duvar x=400'de; kapı ortak duvarın ortasında (t=0.5 → (400,200)).
+    const left: Space = { ...squareSpace, id: 'L', boundary: [{ x: 0, y: 0 }, { x: 400, y: 0 }, { x: 400, y: 400 }, { x: 0, y: 400 }] };
+    const right: Space = { ...squareSpace, id: 'R', boundary: [{ x: 400, y: 0 }, { x: 800, y: 0 }, { x: 800, y: 400 }, { x: 400, y: 400 }] };
+    const shared = wall('w', 400, 0, 400, 400);
+    const t = computeTakeoff([shared], [left, right], [door('d', 90)]);
+    // Her oda çevresi 16 m; ortak kapı her ikisinden de 0,9 düşer → (16−0,9)×2 = 30,2
+    expect(t.skirtingM).toBeCloseTo(30.2, 5);
   });
 
   it('kapı/pencere çizelgesi genişliğe göre gruplanır', () => {

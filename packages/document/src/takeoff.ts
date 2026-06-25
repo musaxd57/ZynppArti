@@ -1,4 +1,4 @@
-import { polygonArea } from '@zynpparti/geometry';
+import { polygonArea, distanceToPolygonBoundary } from '@zynpparti/geometry';
 import { BLOCK_DEFS, type BlockKind } from './block';
 import type { Block, Opening, Space, Wall } from './entities';
 import { wallMaterialById } from './wall-material';
@@ -137,18 +137,32 @@ export function computeTakeoff(
   // Boya = duvar yüzleri (sıva alanı) + tavan (mahal alanı). Tavan boyası ayrıca sayılır.
   const paintCm2 = plasterCm2 + floorCm2;
 
-  // Süpürgelik: mahal çevreleri − kapı genişlikleri.
+  // Süpürgelik: ODA-BAZLI çevre − o odanın duvarındaki kapı genişlikleri (araştırma 2026-06-25).
+  // Kapı süpürgeliği keser, pencere kesmez. Paylaşılan iç kapı İKİ odanın da çevresinde → iki kez
+  // düşülür (her odanın kendi süpürgelik koşusu kesilir = DOĞRU). Dış kapı tek odada → bir kez.
+  // Kapının hangi odaya değdiği: kapı orta noktası (duvar üstünde t) o odanın sınırına duvar
+  // yarı-kalınlığı + pay kadar yakınsa (copilot windowsServingRoom ile aynı kaba eşleştirme).
+  const wallById = new Map(walls.map((w) => [w.id, w]));
   let skirtingCm = 0;
   for (const sp of spaces) {
     const b = sp.boundary;
+    let perim = 0;
     for (let i = 0; i < b.length; i++) {
       const a = b[i]!;
       const c = b[(i + 1) % b.length]!;
-      skirtingCm += Math.hypot(c.x - a.x, c.y - a.y);
+      perim += Math.hypot(c.x - a.x, c.y - a.y);
     }
+    let doorCut = 0;
+    for (const o of openings) {
+      if (o.kind !== 'door' || !(o.width > 0) || !Number.isFinite(o.width)) continue;
+      const w = wallById.get(o.wallId);
+      if (!w) continue;
+      const mx = w.start.x + o.t * (w.end.x - w.start.x);
+      const my = w.start.y + o.t * (w.end.y - w.start.y);
+      if (distanceToPolygonBoundary({ x: mx, y: my }, b) <= w.thickness / 2 + 8) doorCut += o.width;
+    }
+    skirtingCm += Math.max(0, perim - doorCut);
   }
-  for (const o of openings) if (o.kind === 'door') skirtingCm -= o.width;
-  skirtingCm = Math.max(0, skirtingCm);
 
   return {
     wallLengthM: wallLenCm / 100,
