@@ -36,6 +36,13 @@ export class EntityLayer {
   private readonly objects = new Map<EntityId, Container[]>();
   /** Ekran-sabit konturları zoom değişince yeniden çizen kapamalar (lineweight hiyerarşisi). */
   private readonly redrawables = new Map<EntityId, (pixelSize: number) => void>();
+  /**
+   * Boşluk binding TERS indeksi: duvar id → o duvara bağlı boşluk id'leri (+ her boşluğun mevcut
+   * duvarı). Duvar değişince (her sürükle-kare'sinde) bağlı boşlukları O(boşluk) ile yeniden çizmek
+   * için — eskiden `store.all()` ile O(n) tüm modeli tarıyordu (500k entity'de drag jank). (Denetim/perf.)
+   */
+  private readonly openingsByWall = new Map<EntityId, Set<EntityId>>();
+  private readonly openingWall = new Map<EntityId, EntityId>();
   /** Son uygulanan pixelSize (= 1/zoom); yalnız değişince konturlar yenilenir. */
   private lineweightPx = 1;
   /** Son uygulanan viewport — katman görünürlüğü değişince yeniden uygulamak için saklanır. */
@@ -115,15 +122,12 @@ export class EntityLayer {
     for (const id of change.added) this.upsert(id, true);
     for (const id of change.updated) this.upsert(id, false);
 
-    // Binding: duvar eklendi/değişti → bağlı boşlukları yeniden çiz + indeksle (konum duvardan türer).
-    const walls = new Set(
-      [...change.added, ...change.updated].filter((id) => this.store.get(id)?.type === 'wall'),
-    );
-    if (walls.size > 0) {
-      for (const e of this.store.all()) {
-        if (e.type === 'opening' && walls.has(e.wallId)) this.upsert(e.id, false);
-      }
-    }
+    // Binding: duvar eklendi/değişti → SADECE o duvarlara bağlı boşlukları yeniden çiz (ters indeks).
+    // (Eskiden store.all() ile tüm model taranıyordu → 500k entity'de her drag-kare O(n); şimdi O(boşluk).)
+    for (const id of change.added) this.reupsertOpeningsOf(id);
+    for (const id of change.updated) this.reupsertOpeningsOf(id);
+
+    // (helper aşağıda)
 
     // Yeni/değişen objeler gizli oluşturulur (artımlı cull şartı); kamera oynamasa da görünür alandakiler
     // hemen açılsın diye değişiklik sonrası cull'u yeniden uygula (artımlı → ucuz, ekran içeriğiyle sınırlı).
@@ -139,9 +143,27 @@ export class EntityLayer {
     else this.index.update(id, box);
   }
 
+  /** id bir DUVARSA ona bağlı boşlukları yeniden çiz/indeksle (konum duvardan türer). Ters indeks → O(boşluk). */
+  private reupsertOpeningsOf(wallId: EntityId): void {
+    const ops = this.openingsByWall.get(wallId);
+    if (!ops || ops.size === 0) return;
+    for (const oid of [...ops]) this.upsert(oid, false);
+  }
+
+  /** Boşluğu ters indekse işle (duvarı değiştiyse eski duvardan çıkar). */
+  private trackOpening(id: EntityId, wallId: EntityId): void {
+    const prev = this.openingWall.get(id);
+    if (prev !== undefined && prev !== wallId) this.openingsByWall.get(prev)?.delete(id);
+    this.openingWall.set(id, wallId);
+    let set = this.openingsByWall.get(wallId);
+    if (!set) this.openingsByWall.set(wallId, (set = new Set()));
+    set.add(id);
+  }
+
   /** Entity'nin görsellerini (sil-yeniden kur) ilgili z-katmanlarına yerleştirir. */
   private render(entity: Entity): void {
     this.destroyObjects(entity.id);
+    if (entity.type === 'opening') this.trackOpening(entity.id, entity.wallId); // ters indeks (init + upsert)
     const objs: Container[] = [];
     const px = this.lineweightPx;
     if (entity.type === 'wall') {
@@ -255,6 +277,12 @@ export class EntityLayer {
   }
 
   private removeEntity(id: EntityId): void {
+    // Boşluksa ters indeksten çıkar (set sınırsız büyümesin / sarkık binding kalmasın).
+    const boundWall = this.openingWall.get(id);
+    if (boundWall !== undefined) {
+      this.openingsByWall.get(boundWall)?.delete(id);
+      this.openingWall.delete(id);
+    }
     this.destroyObjects(id);
     this.index.remove(id);
     this.prevVisible.delete(id); // silinen ID prevVisible'da kalmasın (set sınırsız büyümesin)
