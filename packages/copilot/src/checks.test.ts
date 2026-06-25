@@ -159,31 +159,8 @@ describe('runCopilotChecks — çekme mesafesi (İmar, parsel)', () => {
   });
 });
 
-describe('runCopilotChecks — doğal aydınlatma (İmar)', () => {
-  const win = (id: string, width: number): import('@zynpparti/document').Opening => ({
-    id,
-    type: 'opening',
-    layerId: 'default',
-    wallId: 'w',
-    t: 0.5,
-    width,
-    kind: 'window',
-  });
-
-  it('yetersiz pencere → atıflı uyarı', () => {
-    // 16 m² oda, 1 pencere 120cm×140cm = 1,68 m² → %10,5? -> aslında 1.68/16=%10.5 yeterli.
-    // Daha küçük pencere: 80cm → 0.8×1.4=1.12 m² / 16 = %7 < %10 → uyarı
-    const findings = nonInfo(runCopilotChecks([rect('Oda', 'living', 400, 400)], [], [win('P', 80)]));
-    expect(findings).toHaveLength(1);
-    expect(findings[0]!.severity).toBe('warning');
-    // Daylight 1/10 oranı yönetmelikte nicel değil → atıf "İyi pratik" (denetim güncellendi).
-    expect(findings[0]!.citation).toContain('pratik');
-  });
-
-  it('pencere yokken aydınlatma uyarısı verilmez', () => {
-    expect(nonInfo(runCopilotChecks([rect('Oda', 'living', 400, 400)], [], []))).toHaveLength(0);
-  });
-});
+// NOT: Bina-geneli "doğal aydınlatma" testi kaldırıldı — bina-geneli checkDaylight kasıtlı silindi
+// (mahal-bazlı presence + oran kuralları yeterli; bkz. checks.ts notu + "mahal başına aydınlatma" testleri).
 
 describe('runCopilotChecks — otopark (Otopark Yönetmeliği, info)', () => {
   it('toplam alandan kaba otopark tahmini verir', () => {
@@ -423,7 +400,7 @@ describe('runCopilotChecks — mahal başına aydınlatma oranı (İmar, info)',
     // 400×400 = 16 m²; 80cm pencere → 0,8×1,4 = 1,12 m² → %7 < %10
     const salon = rect('Salon', 'living', 400, 400);
     const bottom = wall('wb', 0, 0, 400, 0);
-    // Mahal-başına bulguyu izole et (entityId'li); bina-düzeyi checkDaylight de "pencere/taban" der.
+    // Mahal-başına bulgu (entityId'li). (Bina-geneli daylight kaldırıldı; artık tek "pencere/taban" kaynağı bu.)
     const f = runCopilotChecks([salon], [bottom], [windowOn('p', 'wb', 0.5, 80)]).filter(
       (x) => x.message.includes('pencere/taban') && x.entityId === 'Salon',
     );

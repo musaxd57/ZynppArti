@@ -265,25 +265,12 @@ function checkSetback(walls: readonly Wall[], parcels: readonly Parcel[]): Findi
  * Doğal aydınlatma (İmar) — bina düzeyinde pencere alanı / taban alanı oranı (KABA).
  * Pencere yoksa nag etmez (kullanıcı henüz pencere koymamış olabilir).
  */
-function checkDaylight(spaces: readonly Space[], openings: readonly Opening[]): Finding[] {
-  const reg = DAYLIGHT_REGULATION;
-  const windows = openings.filter((o) => o.kind === 'window');
-  if (windows.length === 0) return [];
-  const floorM2 = spaces.reduce((s, sp) => s + centerlineAreaM2(sp), 0);
-  if (floorM2 <= 0) return [];
-  const winM2 = windows.reduce((s, w) => s + (Math.max(0, w.width) / 100) * (reg.windowHeightCm / 100), 0);
-  const ratio = winM2 / floorM2;
-  if (Number.isFinite(ratio) && ratio < reg.minRatio) {
-    return [
-      {
-        severity: 'warning',
-        message: `Doğal aydınlatma (kaba): pencere/taban ≈ %${Math.round(ratio * 100)}; en az ~%${Math.round(reg.minRatio * 100)} beklenir.`,
-        citation: `${reg.source} — ${reg.rule}`,
-      },
-    ];
-  }
-  return [];
-}
+// NOT: Eski bina-geneli `checkDaylight` (tüm taban alanına bakan kaba toplam) KALDIRILDI. Doğal
+// aydınlatma gereği yönetmelikçe MAHAL bazlıdır (IBC §1204.2 "room served"; İmar piyes-bazlı): aşırı
+// camlı bir salon, karanlık bir yatak odasını telafi edemez → bina toplamı hem teknik olarak yanlış
+// hem de mahal-bazlı bulgularla çift uyarı oluyordu (Solibri/UpCodes deseni: kural×eleman başına tek
+// bulgu). Artık yalnız mahal-bazlı: presence `checkRoomDaylight` + oran `checkRoomDaylightRatio`.
+// (Araştırma kararı 2026-06-25.)
 
 /** Doğal ışık için pencere gereken yaşam mahalleri. */
 const HABITABLE_FOR_DAYLIGHT = new Set(['living', 'sleeping', 'kitchen']);
@@ -348,8 +335,7 @@ function checkRoomDaylight(
  * taban alanı oranı İmar ~1/10'unun altındaysa hatırlatır (kaba; pencere yüksekliği varsayımı). Pencere
  * yoksa fire etmez (presence `checkRoomDaylight`'te) → mahal başına çakışma yok.
  *
- * `checkDaylight` (bina geneli, uyarı) ile kasıtlı tamamlayıcıdır: bu bulgu MAHAL bazlı + tıklanabilir
- * (entityId) + info; bina-düzeyi tüm taban alanına bakar (tip atanmamış modelde de çalışan kaba toplam).
+ * Mahal bazlı + tıklanabilir (entityId) + info. (Bina-geneli toplam kasıtlı kaldırıldı — yukarıdaki nota bak.)
  */
 function checkRoomDaylightRatio(
   spaces: readonly Space[],
@@ -448,7 +434,6 @@ export function runCopilotChecks(
     ...checkBathroomAccess(spaces),
     ...checkDoorWidth(openings),
     ...checkCeilingHeight(walls),
-    ...checkDaylight(spaces, openings),
     ...checkRoomDaylight(spaces, walls, openings),
     ...checkRoomDaylightRatio(spaces, walls, openings),
     ...checkWetRoomVentilation(spaces, walls, openings),
