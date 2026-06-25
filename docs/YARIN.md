@@ -16,7 +16,17 @@ export guard'ları · io text clamp · **sync sunucu sertleştirme** · paste→
 
 ---
 
-## 🌅 YARIN — sonraki tur (öncelik sırası)
+## ✅ 2026-06-25 akşam — Moses'ın 5-görevi YAPILDI (aynı branch, +13 commit)
+- **render hata sızıntısı (A):** sade kategori döner, ham mesaj sunucu logunda.
+- **perf turu:** `?perf` HUD + RoomManager cap + reverse-index + nearestAxis viewport + duvar hatch build/stroke.
+- **3B GPU-fan:** View3D on-demand render. **slab-mirror:** analiz → matematik hizalı, değiştirilmedi (Moses L-oda ile teyit etsin).
+- **domain:** sıva iç/dış · süpürgelik oda-bazlı · daylight oda-başına · calibrate tüm-çizim (hepsi web-araştırma kaynaklı).
+- Test 359, zincir yeşil. **Kalan (Moses):** branch merge + tarayıcı doğrulaması (?perf 50k FPS, 3B fan, kalibrasyon,
+  maliyet kırılımı, slab-mirror L-oda). Follow-up: render-space/sheet hatch ayrımı (az entity), findFaces hole-subtraction.
+
+---
+
+## 🌅 ESKİ — sonraki tur planı (çoğu yukarıda yapıldı; kalan a11y + çekirdek)
 
 > Bunlar bugün **bilinçli yapılmadı**: ya tarayıcı doğrulaması, ya 500k-ölçek testi, ya ürün kararı gerek.
 > Körlemesine değiştirip canlıyı/çekirdeği riske atmak yerine flag'lendi (hatasızlık önceliği).
