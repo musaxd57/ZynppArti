@@ -32,6 +32,10 @@ export function buildSheet(sheet: Sheet, pixelSize: number): Container {
     color: SHEET_INNER,
     alpha: 0.7,
   });
+  c.addChild(g);
+
+  // Sade sayfa ("− N sayfa +" ile çoğaltılan boş sayfa): antet/başlık çizme — sadece sayfa çerçevesi.
+  if (sheet.plain) return c;
 
   // Antet kutusu + bölme çizgileri.
   const tb = sheetTitleBlock(sheet);
@@ -42,7 +46,6 @@ export function buildSheet(sheet: Sheet, pixelSize: number): Container {
       .lineTo(tb.x + tb.w, tb.y + i * rowH)
       .stroke({ width: LINEWEIGHTS.hairline * pixelSize, color: SHEET_INNER, alpha: 0.6 });
   }
-  c.addChild(g);
 
   // Antet metinleri (dünya-ölçekli; satır yüksekliğinin ~%55'i).
   const fontSize = rowH * 0.55;

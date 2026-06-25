@@ -56,6 +56,8 @@ export interface SheetOpts {
   project?: string;
   date?: string;
   sheetNo?: string;
+  /** Sade sayfa: antet yok, pafta panelinde gizli ("− N sayfa +" ile çoğaltılan boş sayfa). */
+  plain?: boolean;
 }
 
 /** Paylaşılan pafta factory (id hariç) — varsayılanlar + override. SheetTool ve panel "+ ekle" kullanır. */
@@ -71,6 +73,7 @@ export function makeSheet(position: Vec2, opts: SheetOpts = {}): Omit<Sheet, 'id
     ...(opts.project ? { project: opts.project } : {}),
     ...(opts.date ? { date: opts.date } : {}),
     ...(opts.sheetNo ? { sheetNo: opts.sheetNo } : {}),
+    ...(opts.plain ? { plain: true } : {}),
   };
 }
 

@@ -119,6 +119,11 @@ export interface Sheet extends EntityBase {
   readonly date?: string;
   /** Pafta numarası (ör. "1/5"). */
   readonly sheetNo?: string;
+  /**
+   * Sade sayfa modu: true ise antet/başlık çizilmez ve pafta panelinde gösterilmez — kullanıcının
+   * "− N sayfa +" ile çoğalttığı düz boş sayfa (kaydolur + PDF'e girer, ama pafta arayüzü yoktur).
+   */
+  readonly plain?: boolean;
 }
 
 /**

@@ -155,6 +155,7 @@ export function Toolbar({
   }
 
   async function onExportPng(): Promise<void> {
+    if (blockExportIfEmpty()) return;
     // PNG extract (GPU okuma) AĞIR olabilir → önce anında "hazırlanıyor" bilgisi (kullanıcı feedback alsın).
     toast('PNG hazırlanıyor…', 'info', 1500);
     try {
@@ -179,6 +180,7 @@ export function Toolbar({
    * Vektör (svg2pdf, keskin baskı); pafta-yok yolunda hata olursa raster yedeğe düşer.
    */
   async function onExportPdf(): Promise<void> {
+    if (blockExportIfEmpty()) return;
     const sheets = store
       .all()
       .filter((e): e is Sheet => e.type === 'sheet')
@@ -287,7 +289,20 @@ export function Toolbar({
     return store.all().filter((ent) => !layers?.isHidden(ent.layerId));
   }
 
+  /** Dışa aktarılacak görünür ÇİZİM var mı? Sayfa/pafta çerçevesi ve yorum "çizim" sayılmaz. */
+  function hasDrawableContent(): boolean {
+    return visibleEntities().some((e) => e.type !== 'sheet' && e.type !== 'comment');
+  }
+
+  /** Çizim boşsa export'u engelle + açıklayıcı uyarı göster. Dönüş true = boş (çağıran return etmeli). */
+  function blockExportIfEmpty(): boolean {
+    if (hasDrawableContent()) return false;
+    toast('Sayfa boş — dışa aktarmadan önce duvar, oda gibi bir şeyler çiz.', 'info', 4500);
+    return true;
+  }
+
   function onExportDxf(): void {
+    if (blockExportIfEmpty()) return;
     const blob = new Blob([exportDxf(visibleEntities())], { type: 'application/dxf' });
     const url = URL.createObjectURL(blob);
     download(url, `${projectFileBase()}.dxf`);
@@ -335,6 +350,7 @@ export function Toolbar({
   }
 
   function onExportSvg(): void {
+    if (blockExportIfEmpty()) return;
     const blob = new Blob([exportSvg(visibleEntities())], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     download(url, `${projectFileBase()}.svg`);

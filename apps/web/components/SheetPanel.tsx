@@ -15,7 +15,8 @@ import {
 import { Panel } from './Panel';
 
 function getSheets(store: EntityStore): Sheet[] {
-  return store.all().filter((e): e is Sheet => e.type === 'sheet');
+  // Sade sayfalar (plain) bu panelde GÖSTERİLMEZ — onlar "− N sayfa +" ile yönetilir (antet/panel yok).
+  return store.all().filter((e): e is Sheet => e.type === 'sheet' && e.plain !== true);
 }
 
 interface SheetPanelProps {

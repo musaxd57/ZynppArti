@@ -9,7 +9,20 @@ import {
   type CanvasHandle,
 } from '@zynpparti/engine';
 import type { CollabHandle } from '@zynpparti/collab';
-import { EntityStore, History, RoomManager, RemoveEntity, UpdateEntity, deserializeModel } from '@zynpparti/document';
+import {
+  EntityStore,
+  History,
+  RoomManager,
+  AddEntity,
+  RemoveEntity,
+  UpdateEntity,
+  deserializeModel,
+  makeSheet,
+  createEntityId,
+  nextSheetPosition,
+  sheetModelSize,
+  type Sheet,
+} from '@zynpparti/document';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
 import { seedDemo } from '@/lib/demo-seed';
 import { Toolbar } from './Toolbar';
@@ -57,7 +70,6 @@ export function CanvasStage() {
     zoomToFit: () => void;
     zoomToBounds: CanvasHandle['zoomToBounds'];
     viewportBounds: CanvasHandle['viewportBounds'];
-    setPageCount: CanvasHandle['setPageCount'];
   } | null>(null);
   const [collab, setCollab] = useState<CollabHandle | null>(null);
   const [pageCount, setPageCount] = useState(1); // boş sayfa (grid karesi) sayısı — kullanıcı çoğaltır
@@ -96,6 +108,16 @@ export function CanvasStage() {
   useEffect(() => {
     loadProjectName();
   }, []);
+
+  // Sayfa sayacı = dokümandaki SADE sayfa (plain sheet) sayısı. Store değişince güncellenir
+  // (ekle/çıkar/aç/undo hepsi yansır). Sayfalar gerçek entity → kaydolur + PDF'e girer.
+  useEffect(() => {
+    if (!ui) return;
+    const refresh = (): void =>
+      setPageCount(ui.store.all().filter((e): e is Sheet => e.type === 'sheet' && e.plain === true).length);
+    refresh();
+    return ui.store.subscribe(refresh);
+  }, [ui]);
 
   // Dock genişliklerini hatırla (localStorage).
   useEffect(() => {
@@ -175,8 +197,13 @@ export function CanvasStage() {
       }
     } else if (!startEmpty) {
       seedDemo(store); // geçici demo duvarlar (yalnız demo/baypas modunda)
+    } else {
+      // Yeni boş proje: 1 SADE SAYFA (plain sheet) ile başla — kullanıcının çoğaltacağı boş sayfa.
+      // Origin'de ortalı. Pafta arayüzü yok (plain); kaydolur + PDF'e girer. "− N sayfa +" çoğaltır.
+      const probe = { ...makeSheet({ x: 0, y: 0 }, { plain: true }), id: 'tmp' } as Sheet;
+      const { w, h } = sheetModelSize(probe);
+      store.put({ ...makeSheet({ x: -w / 2, y: -h / 2 }, { plain: true, sheetNo: '1' }), id: createEntityId() });
     }
-    // Yeni boş proje (startEmpty): hiçbir şey ekleme — boş sayfa(lar) tuvalde (grid) zaten görünür.
 
     let handle: CanvasHandle | undefined;
     let manager: ToolManager | undefined;
@@ -190,6 +217,7 @@ export function CanvasStage() {
         return;
       }
       handle = h;
+      if (startEmpty) h.zoomToFit(); // yeni proje: açılıştaki boş sayfayı ekrana sığdır
       const history = new History(store);
       // Mahalleri otomatik bul (engine entity katmanı abone olduktan sonra).
       rooms = new RoomManager(store);
@@ -280,7 +308,6 @@ export function CanvasStage() {
         zoomToFit: h.zoomToFit,
         zoomToBounds: h.zoomToBounds,
         viewportBounds: h.viewportBounds,
-        setPageCount: h.setPageCount,
       });
     }).catch((err) => {
       // PixiJS init başarısız (WebGL yok/bellek) → sonsuz "yükleniyor" yerine hata göster.
@@ -422,15 +449,19 @@ export function CanvasStage() {
               <PerfHud store={ui.store} history={ui.history} />
             </div>
           )}
-          {/* Boş sayfa sayısı: kullanıcının gördüğü grid karesini çoğaltır (− / +). Yan yana dizilir. */}
+          {/* Boş sayfa sayısı: GERÇEK sade-sayfa (plain sheet) ekler/çıkarır (Command → kaydolur + PDF'e
+              girer + undo). Yan yana dizilir; PDF'e yalnız DOLU (içinde çizim olan) sayfalar gider. */}
           {ui && (
             <div className="absolute bottom-3 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full border border-[var(--border-soft)] bg-[var(--surface-2)]/90 px-2 py-1 text-[13px] text-[var(--text-1)] shadow-lg backdrop-blur">
               <button
                 type="button"
                 onClick={() => {
-                  const n = Math.max(1, pageCount - 1);
-                  setPageCount(n);
-                  ui.setPageCount(n);
+                  const plains = ui.store
+                    .all()
+                    .filter((e): e is Sheet => e.type === 'sheet' && e.plain === true)
+                    .sort((a, b) => a.position.x - b.position.x);
+                  const last = plains[plains.length - 1];
+                  if (last && plains.length > 1) ui.history.dispatch(new RemoveEntity(last.id));
                 }}
                 disabled={pageCount <= 1}
                 className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-[var(--surface-3)] disabled:opacity-40"
@@ -443,9 +474,12 @@ export function CanvasStage() {
               <button
                 type="button"
                 onClick={() => {
-                  const n = pageCount + 1;
-                  setPageCount(n);
-                  ui.setPageCount(n);
+                  const plains = ui.store.all().filter((e): e is Sheet => e.type === 'sheet' && e.plain === true);
+                  const pos = nextSheetPosition(plains);
+                  ui.history.dispatch(
+                    new AddEntity({ ...makeSheet(pos, { plain: true, sheetNo: String(plains.length + 1) }), id: createEntityId() }),
+                  );
+                  ui.zoomToFit(); // yeni eklenen sayfa görünür olsun
                 }}
                 className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-[var(--surface-3)]"
                 title="Sayfa ekle"
