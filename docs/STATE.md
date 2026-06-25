@@ -127,7 +127,8 @@ Moses'ın büyük özellik isteği (5-agent haritalama + didik didik). Hepsi mai
 - **Karşılama ekranı (AppGate + StartScreen):** açılışta "Yeni proje" (isim→boş tuval) / "Aç" (.json→isim dosyadan). Collab `#room=` + `?ciz=` baypas (linkler bozulmaz). Yeni=boş (seedDemo `lib/app-start` köprüsüyle koşullu). Production-build screenshot ile doğrulandı.
 - **Çoklu pafta:** `sheet.ts` saf helper'lar (makeSheet/nextSheetPosition/nextSheetNo +6 test). SheetPanel = yönetici: "+ Pafta ekle" (üst üste binmeyen oto-yerleşim + oto numara), "1/N yenile", "Git" (paftaya zoom). engine `zoomToBounds` eklendi.
 - **AI "Çiz" yerleştirme:** plan viewport-merkeze (baktığın yere) gelir + konan plana zoom (H1 fix). applyLayout `target`+`bounds`.
-- Flag (sonraki): çok-sayfa PDF (M5), AI tam tıkla-bırak ghost (engine point-pick).
+- **Moses follow-up (kafa karışıklığı çözüldü — "büyük kare"):** Moses açılıştaki kareyi sayfa sanıyordu; o aslında ızgaraydı (`±GRID_EXTENT`, çoğaltılamaz). → **yeni proje açılışta otomatik 1 PAFTA (sayfa) + zoomToFit**; büyük kare artık çoğaltılabilir sayfa. Paftalar paneli açık-varsayılan. **Çok-sayfa PDF: her DOLU pafta = 1 sayfa** (boş paftalar atlanır; `exportSvg` opsiyonel `region`/viewBox ile pafta bölgesi kırpılır). **Yorum boyutu ayarlanabilir** (`Comment.size`, commentScale 0.3–5, PropertiesPanel). **Playwright ile uçtan-uca doğrulandı** (aç→1 pafta antetli; +ekle×2→3 pafta yan yana, 1/N).
+- Flag (sonraki): AI tam tıkla-bırak ghost (engine point-pick); pafta antetinin PDF sayfasına gömülmesi; çok-A1/A0 paftalarda zoomToFit-vs-büyük-pafta.
 
 ### 2026-06-25 (akşam — Moses'ın 5-görev turu, aynı branch) `feat/autonomous-13h-2026-06-25`
 Moses döndü, flag'lediğim 5 maddeyi onayladı/karar verdi → hepsi yapıldı (her biri yeşil + commit + push):
