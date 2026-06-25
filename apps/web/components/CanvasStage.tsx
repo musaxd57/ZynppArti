@@ -56,6 +56,7 @@ export function CanvasStage() {
     pixelSize: CanvasHandle['pixelSize'];
     zoomToFit: () => void;
     zoomToBounds: CanvasHandle['zoomToBounds'];
+    viewportBounds: CanvasHandle['viewportBounds'];
   } | null>(null);
   const [collab, setCollab] = useState<CollabHandle | null>(null);
   // Hover olaylarını çoğa dağıt (StatusBar + presence). Tek motor handler'ı → çok dinleyici.
@@ -274,6 +275,7 @@ export function CanvasStage() {
         pixelSize: h.pixelSize,
         zoomToFit: h.zoomToFit,
         zoomToBounds: h.zoomToBounds,
+        viewportBounds: h.viewportBounds,
       });
     }).catch((err) => {
       // PixiJS init başarısız (WebGL yok/bellek) → sonsuz "yükleniyor" yerine hata göster.
@@ -489,6 +491,10 @@ export function CanvasStage() {
             open={assistantOpen}
             onClose={() => setAssistantOpen(false)}
             zoomToFit={ui.zoomToFit}
+            placePoint={() => {
+              const b = ui.viewportBounds();
+              return { x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2 };
+            }}
             initialCiz={initialCiz}
           />
         </>

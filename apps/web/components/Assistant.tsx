@@ -75,6 +75,8 @@ interface AssistantProps {
   onClose: () => void;
   /** Çizimden sonra üretilen planı ekrana getirmek için (zoom extents). */
   zoomToFit?: () => void;
+  /** Üretilen planın yerleşeceği dünya noktası (ekran merkezi) — "baktığın yere çiz". */
+  placePoint?: () => { x: number; y: number } | null;
   /** Landing'den `/app?ciz=...` ile gelen program → Çiz modunda istemi önceden doldur (paste). */
   initialCiz?: string;
 }
@@ -272,11 +274,12 @@ function applyLayout(
   walls: [number, number, number, number][],
   rooms: LayoutRoom[],
   openings: LayoutOpening[],
+  target?: { x: number; y: number } | null,
 ): { drawn: number; named: number; openingCount: number; doorCount: number; windowCount: number } {
   if (walls.length === 0) return { drawn: 0, named: 0, openingCount: 0, doorCount: 0, windowCount: 0 };
 
-  // Yerleşim: parsel varsa onun sol-üst köşesine ~1 m çekmeyle; yoksa mevcut duvarların sağına;
-  // hiçbiri yoksa orijine. (Üst üste binmesin / parsel içinde dursun.)
+  // Yerleşim: parsel varsa onun sol-üst köşesine ~1 m çekmeyle; yoksa `target` (kullanıcının baktığı
+  // ekran merkezi) — plan "istediğin yere/baktığın yere" gelir; o da yoksa mevcut duvarların sağına.
   const all = store.all();
   const parcels = all.filter((e): e is Parcel => e.type === 'parcel');
   const existing = all.filter((e): e is Wall => e.type === 'wall');
@@ -286,6 +289,14 @@ function applyLayout(
     const pts = parcels.flatMap((p) => p.boundary);
     dx = Math.min(...pts.map((p) => p.x)) + 100;
     dy = Math.min(...pts.map((p) => p.y)) + 100;
+  } else if (target) {
+    // Planın kendi sol-üst köşesi `target`'a otursun (layout (0,0) varsaymadan — kesin konum).
+    const rawMinX = Math.min(...walls.flatMap(([x1, , x2]) => [x1, x2]));
+    const rawMinY = Math.min(...walls.flatMap(([, y1, , y2]) => [y1, y2]));
+    if (Number.isFinite(rawMinX) && Number.isFinite(rawMinY)) {
+      dx = target.x - rawMinX;
+      dy = target.y - rawMinY;
+    }
   } else if (existing.length > 0) {
     dx = Math.max(...existing.flatMap((w) => [w.start.x, w.end.x])) + 300;
   }
@@ -418,7 +429,7 @@ function renderRich(text: string): ReactNode {
 
 const EMPTY_THREADS: Record<Mode, Msg[]> = { ask: [], draw: [], render: [] };
 
-export function Assistant({ store, history, selectedIds, open, onClose, zoomToFit, initialCiz }: AssistantProps) {
+export function Assistant({ store, history, selectedIds, open, onClose, zoomToFit, placePoint, initialCiz }: AssistantProps) {
   const [mode, setMode] = useState<Mode>('ask');
   // Her mod KENDİ sohbetini tutar (Sor/Çiz/Render karışmaz).
   const [threads, setThreads] = useState<Record<Mode, Msg[]>>(EMPTY_THREADS);
@@ -513,7 +524,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
   };
 
   const drawVariantInner = (v: Layout): void => {
-    const { drawn, named, openingCount, doorCount, windowCount } = applyLayout(store, history, v.walls, v.rooms, v.openings);
+    const { drawn, named, openingCount, doorCount, windowCount } = applyLayout(store, history, v.walls, v.rooms, v.openings, placePoint?.());
     if (drawn > 0) zoomToFit?.();
     // Kapı/pencere sayısını AYRI göster (ör. "6 kapı, 6 pencere") — kullanıcı net görsün.
     const openingText =
