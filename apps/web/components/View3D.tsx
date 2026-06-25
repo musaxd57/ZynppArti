@@ -254,7 +254,12 @@ export function View3D({ store }: { store: EntityStore }) {
         new GLTFExporter().parse(
           scene,
           (result) => {
-            const blob = new Blob([result as ArrayBuffer], { type: 'model/gltf-binary' });
+            // binary:true → ArrayBuffer beklenir; değilse (JSON nesnesi) Blob "[object Object]" yazardı.
+            if (!(result instanceof ArrayBuffer)) {
+              console.error('GLB export: beklenmeyen (ikili olmayan) çıktı, atlanıyor.');
+              return;
+            }
+            const blob = new Blob([result], { type: 'model/gltf-binary' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -297,6 +302,9 @@ export function View3D({ store }: { store: EntityStore }) {
         floorMat.dispose();
         wallMat.dispose();
         renderer.dispose();
+        // WebGL context'i açıkça serbest bırak → hızlı aç/kapa döngülerinde tarayıcının ~16 context
+        // sınırına çarpıp "context lost" yaşanmasın (dispose tek başına context'i GC'ye bırakır).
+        renderer.forceContextLoss();
         if (renderer.domElement.parentNode === container) container.removeChild(renderer.domElement);
       };
     } catch (e) {
