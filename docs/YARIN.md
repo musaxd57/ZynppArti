@@ -6,64 +6,57 @@
 
 ---
 
-## ✅ 2026-06-25 — bugün ne yaptık (13-saat otonom sertleştirme turu)
-`feat/autonomous-13h-2026-06-25` (off `feat/auth-clerk`), **18 fix-commit, push'lu, Moses merge bekliyor.**
-7 denetim + 2 doğrulama agent'ı; **regresyon yok** (adversaryal review). Test 318→**~342**, tüm zincir yeşil.
-Tam liste + gerekçeler: `docs/STATE.md` 2026-06-25 girdisi. Özet: serialize derin doğrulama · AI route
-context sanitize + design clamp · select-tool kilit-bypass · dxf escaping · entity-bounds tek-geçiş · dash
-cap · collab karantina · **findFaces bileşen-bazlı (çift-mahal bug)** · Assistant fetch/stream + a11y ·
-export guard'ları · io text clamp · **sync sunucu sertleştirme** · paste→opening · 3B/kesit lento birliği.
+## ✅ 2026-06-25 — bugün ne yaptık (özet)
+Proje-adı → tüm indirme adları + üst alan · **karşılama ekranı** (Yeni/Aç) · **gerçek çoklu sayfa**
+(plain sheet — "− N sayfa +", kaydolur + PDF'e girer) · **çok-sayfa PDF** (yalnız DOLU sayfa, her sayfa
+kendi paftasına kırpılı) · **boş-export koruması** · yorum boyutu · AI viewport-yerleştirme.
+Sonra **8-ajan tüm-proje denetimi** → onaylanan güvenli HIGH/MED düzeltildi (NaN guard'lar, collab etiket
+karantinası, PDF region kırpma, takeoff duvar-bazlı boşluk + NaN, dblclick layer guard, undo-spam, abort
+yarışı, DXF birimleri). Test → **367**, zincir yeşil, hepsi main'de + canlı. Detay: `docs/STATE.md`.
 
 ---
 
-## ✅ 2026-06-25 akşam — Moses'ın 5-görevi YAPILDI (aynı branch, +13 commit)
-- **render hata sızıntısı (A):** sade kategori döner, ham mesaj sunucu logunda.
-- **perf turu:** `?perf` HUD + RoomManager cap + reverse-index + nearestAxis viewport + duvar hatch build/stroke.
-- **3B GPU-fan:** View3D on-demand render. **slab-mirror:** analiz → matematik hizalı, değiştirilmedi (Moses L-oda ile teyit etsin).
-- **domain:** sıva iç/dış · süpürgelik oda-bazlı · daylight oda-başına · calibrate tüm-çizim (hepsi web-araştırma kaynaklı).
-- Test 359, zincir yeşil. **Kalan (Moses):** branch merge + tarayıcı doğrulaması (?perf 50k FPS, 3B fan, kalibrasyon,
-  maliyet kırılımı, slab-mirror L-oda). Follow-up: render-space/sheet hatch ayrımı (az entity), findFaces hole-subtraction.
+## 🔜 YARIN — denetimde FLAG'lenen işler (Moses ile, "bunları yarın yapıcaz")
+> Bugün bilerek dokunulmadı (riskli/büyük/dokümante; "emin olmadan yapma"). Yarın **test yazarak, emin
+> olarak** yapılacak. Sıra: yüksek-değer + düşük-risk → büyük/kararlı olanlar.
+
+### A. geometry ★ (test-önce — belkemiği)
+- `polygon.ts polygonLabelPoint` — konkav (L/U) odada etiket noktası poligon DIŞINA düşebiliyor; grid
+  sıklaştır + bulunamazsa kesin-içeride noktaya düş. Önce başarısız vakayı yakalayan test.
+- `hatch.ts clipLineToPolygon` — konkav poligonda tarama boşluğu aşırı-doluyor (ts'leri sırala-eşle).
+
+### B. tools (etkileşim; dikkatli)
+- Kendine-snap: entity ucunu sürüklerken kendi diğer ucuna yapışıyor → snapper'a "sürüklenen'i hariç tut".
+- Mid-gesture tool-switch: pointer basılıyken araç değişince yarım jest yanlış araca gidiyor → `setTool` guard.
+- Opening genişliği duvardan taşması → genişlik-sığar kontrolü.
+
+### C. perf (doğruluk değil; 500k ölçek hedefi — tarayıcıda ölç)
+- Çok paftada zoom'da `buildSheet` tam yeniden-çizim → build/stroke ayır (en büyük kazanç burada + render-wall/space).
+- `CanvasStage` pageCount aboneliği her store değişiminde O(n) → yalnız sheet değişince/debounce.
+- `entity-layer pruneEmptyLayers` toplu silmede O(katman) yavaş.
+- `room-font` BitmapFont singleton vs `app.destroy` — SPA remount'ta font bozulabilir (Pixi v8 doğrula).
+
+### D. AI maliyet (ADR-0019 ertelenmiş — birlikte)
+- Sağlayıcı/render/design çağrılarında timeout yok (askılı upstream parayı açık tutar).
+- `classifyTier` ham metne bakıyor → her istek en pahalı modele zorlanabilir (IP-limit zayıf).
+
+### E. copilot doğruluk
+- Koridor/oda min-genişlik konveks-gövdeden ölçülüyor → konkav koridorda dar yeri (90cm) kaçırabilir.
+
+### F. document (latent)
+- `BatchCommand` aynı id'de Update+Remove → undo'da fırlatıyor (uygulamada şu an ULAŞILMAZ — guard ekle).
+
+### G. eski-kalan (hâlâ geçerli, karar/doğrulama gerek)
+- **findFaces hole-subtraction:** kapalı iç döngüde dış mahal alanı çentik çıkarmıyor (polygon-with-holes).
+- **a11y:** modal `role=dialog`+focus-trap (DialogHost/Calibrate/Comment/CommandPalette/View3D); form `<label htmlFor>`.
+- **View3D:** slab-mirror L-oda teyidi; render-loop on-demand; clip-plane yönü.
+- **ALLOWED_ORIGINS** Railway env (sync WS origin koruması — kod hazır, env set edilecek).
+
+### H. BÜYÜK bilinen eksik (Faz 3)
+- Gerçek **backend + auth + kalıcılık** yok: Kaydet/Aç hâlâ yerel JSON; multiplayer kalıcı değil (`docs/ROADMAP.md` Faz 3).
 
 ---
 
-## 🌅 ESKİ — sonraki tur planı (çoğu yukarıda yapıldı; kalan a11y + çekirdek)
-
-> Bunlar bugün **bilinçli yapılmadı**: ya tarayıcı doğrulaması, ya 500k-ölçek testi, ya ürün kararı gerek.
-> Körlemesine değiştirip canlıyı/çekirdeği riske atmak yerine flag'lendi (hatasızlık önceliği).
-
-### 1) Hızlı + güvenli (önce)
-- **ALLOWED_ORIGINS**'i Railway env'ine ekle → sync WS origin koruması devreye girsin (kod hazır).
-- **render-mode hata mesajı**: ham provider detayını client'a sızdırıyor (model gizliliği persona'sıyla çelişir,
-  pre-launch info-disclosure). Sunucu log'una al, client'a sade kategori dön. (Karar: detay teşhis için mi kalsın?)
-
-### 2) Perf sertleştirme (500k hedefi — tarayıcıda ölç + doğrula)
-- engine `EntityLayer.onChange`: `store.all()` yerine **wall→opening reverse-index** (her drag-frame O(n) → O(boşluk)).
-- `tools/context.ts nearestAxis`: tam-yükseklik strip rbush sorgusu → **viewport'a sınırla / aday cap**.
-- `render-wall/render-sheet/render-space`: zoom'da geometri+hatch yeniden hesaplanıyor → **build (entity-değişimi) ile
-  stroke (zoom) ayrımı** (hatch dünya-uzaylı, zoom'dan bağımsız). En büyük kazanç burada.
-
-### 3) View3D görsel (tarayıcıda doğrula)
-- **slab-mirror:** asimetrik odada zemin slab'ı duvarlara göre aynalı (rotation.x +π/2 vs -π/2). Asimetrik oda çiz, karşılaştır.
-- render-loop **on-demand** yap (statikken rAF dönmesin → pil/CPU); `document.hidden`'da duraklat.
-- **clip-plane** yönü: kesit hangi yarıyı tutuyor kamera tarafına göre seç (şu an çizim yönüne bağlı, yanlış yarıyı kesebilir).
-
-### 4) a11y tamamlama (görsel + klavye doğrulaması)
-- Modal'lara `role=dialog`+`aria-modal`+focus-trap+focus-restore (DialogHost/Calibrate/Comment/CommandPalette/ContextMenu/View3D).
-- Form `<label htmlFor>` (PropertiesPanel/RoomList/SheetPanel), ikon-buton aria-label'ları, LayerPanel klavye sıralama.
-
-### 5) Çekirdek/domain (karar + iş)
-- **findFaces hole-subtraction:** kapalı iç döngüde dış mahal alanı çentik çıkarmıyor (polygon-with-holes gerek).
-- **calibrate kapsamı:** yalnız duvar ölçekliyor; import'ta metin de var → duvar+annotation mı, tüm pozisyonel mi? (ürün kararı).
-- **domain yaklaşımları (belgeli, Moses kararı):** sıva ×2 dış-duvar fazla sayım, convex-hull min-genişlik concave'de false-neg,
-  daylight bina+oda çift-rapor.
-
-### 6) Düşük öncelik / niş
-- dxf-import: INSUNITS unmapped→factor1 sessiz (unitsKnown surface), MINSERT row/col, bulge (yay) segmenti, OCS extrusion.
-- Test borcu: canvas-app/entity-layer cull/presence (pixi-coupled — saf matematiği helper'a çıkarıp test et).
-
----
-
-## 📌 Açık notlar / kararlar
-- Bu turun tamamı `feat/autonomous-13h-2026-06-25`'te + push'lu; **main'e değmedi** (canlı deploy tetiklenmedi).
-  Merge + tarayıcı doğrulaması Moses'ta.
-- Railway sync **kalıcılık tutmuyor** (bilinçli v1). Akash GLM yavaş → yalnız yedek. Domain `vesna.design`.
+## 📌 Canlıda test edilecek (Moses)
+- Yeni proje → 1 boş sayfa; "− N sayfa +" çoğalt (gerçek, kaydolur) → çiz → **PDF İndir** (yalnız dolu, kırpılı).
+- Boş export → "Projede dışa aktarılacak yapı yok". · Proje adı → dosya adları; Kaydet/Aç isim+sayfa korur.
