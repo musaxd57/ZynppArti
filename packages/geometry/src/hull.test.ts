@@ -46,4 +46,30 @@ describe('polygonMinWidth', () => {
       ]),
     ).toBe(0);
   });
+
+  it('eş-doğrusal (collinear) noktalar → 0 (dejenere; "darlık ölçümü" değil)', () => {
+    // KİLİT: collinear girdi konveks kabukta <3 köşe → 0 döner. Çağıran (copilot koridor kuralı)
+    // 0'ı "gerçek 0 cm darlık" değil "ölçülemez/dejenere" diye yorumlamalı (false-narrow vermesin).
+    expect(
+      polygonMinWidth([
+        { x: 0, y: 0 },
+        { x: 50, y: 0 },
+        { x: 100, y: 0 },
+      ]),
+    ).toBe(0);
+  });
+
+  it('konkav (L) → konveks-kabuk kapsayıcı genişliği (belgeli sınır, gerçek darboğaz değil)', () => {
+    // L'nin gerçek dar kolu 60 cm ama kabuk 200×200'ü kapsar → min genişlik ~200 (false-negative).
+    // Bu KASITLI/belgeli yaklaşım (hull.ts §sınır); testin amacı davranışı sabitlemek.
+    const L = [
+      { x: 0, y: 0 },
+      { x: 200, y: 0 },
+      { x: 200, y: 60 },
+      { x: 60, y: 60 },
+      { x: 60, y: 200 },
+      { x: 0, y: 200 },
+    ];
+    expect(polygonMinWidth(L)).toBeGreaterThan(150); // dar 60 kolunu GÖRMEZ (kabuk kapsayıcı)
+  });
 });
