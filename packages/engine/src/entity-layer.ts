@@ -64,6 +64,11 @@ export class EntityLayer {
       this.middleBand, // katman-sıralı orta bant (çizgisel entity'ler)
       this.labelLayer, // en üstte: tüm metin/etiketler (hep üstte — hibrit z)
     );
+    // PERF: entity katmanını ayrı bir render-group yap → PixiJS v8 çizim talimatlarını ÖNBELLEĞE alır.
+    // Kamera durunca (idle) ve pan'da (yalnız grup transform'u değişir) 50k+ düğüm her kare YENİDEN
+    // dolaşılmaz; yalnız bir şey gerçekten değişince (cull/entity) talimat yeniden kurulur. Büyük modelde
+    // idle/pan FPS'ini ciddi artırır. (50k stres testi bulgusu — agent teşhisi.)
+    this.container.enableRenderGroup();
 
     const entries: { id: EntityId; box: AABB }[] = [];
     for (const e of store.all()) {
