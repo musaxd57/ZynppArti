@@ -9,7 +9,7 @@
 
 **🚀 CANLI YAYINDA:** Web `https://vesna.design` (Vercel) + sync `wss://zynpparti-production.up.railway.app` (Railway). 3 AI anahtarı Vercel env'de; AI adı **Vesna**.
 **Faz:** 2 (AI copilot ✅) + Faz 4 erken önizleme (AI üretici ✅) + Faz 1 DWG import ✅ + Faz 3 (presence+seçim+yorum) + Faz 5 (3B+kesit+glTF+kamera keyframe) önizleme.
-**Branch:** `main` (güncel + push'lu, Vercel/Railway buradan otomatik deploy).
+**Branch:** `main` canlıda. **AKTİF İŞ:** `feat/autonomous-13h-2026-06-25` (off `feat/auth-clerk`) — 2026-06-25 otonom sertleştirme turu, **18 fix-commit + push'lu, Moses merge/tarayıcı doğrulaması bekliyor** (main'e değmedi → canlı deploy tetiklenmedi). Test 318→**~342**, tüm zincir yeşil, adversaryal review: **regresyon yok**.
 **Durum:** Üç sağlayıcı router (ADR-0042) **hız-öncelikli**: basit/orta→**OpenAI** (~1.3sn), karmaşık/yönetmelik→**Claude** (~2.7sn), **Akash yedek**. **Test: ~317.** 2026-06-24 turları **main'e MERGE + push** (canlı): promo videosu (mantıklı 3+1 + GİRİŞ KAPISI + scrubbable timeline + GERÇEK 3B GIF), HeroMockup aynı kurguya, AI Çiz promptu (zorunlu giriş kapısı + gerçekçilik + oda adları), üst-üste etiket bug'ı (`polygonLabelPoint`), maliyet geliştirme (tesisat+kategori+overhead+₺/m²+düzenlenebilir fiyat), ve **2 denetim + 1 tasarım dalgası** (22+13+11 ajan) → 20+ düzeltme: Y1 (oda bire-bir eşleştirme), Y2 (artımlı cull/500k perf), serialize derin doğrulama, store.emit dayanıklılık, tool gen-token, dxf NaN, motion/a11y tabanı, Cmd+K nav, SEO + R1/R2/H5 regresyon kapatma. **Kalan denetim/tasarım işleri kök-neden kümeli `docs/YARIN.md`'de.** Tarayıcı doğrulaması Moses'ta.
 
 **AI ÇALIŞIYOR (canlı):** Üst araç çubuğu **Vesna** → Sor/Çiz/Render. Sağlayıcı adı UI'da gizli. Anahtarlar yalnız Vercel env (sunucu route `/api/copilot`, tarayıcıya sızmaz; `@zynpparti/ai` client'a import edilmez). Deploy: `docs/DEPLOY.md`.
@@ -120,6 +120,33 @@
 ---
 
 ## GÜNLÜK
+
+### 2026-06-25 (13-saat otonom sertleştirme turu) `feat/autonomous-13h-2026-06-25` (Moses merge bekliyor)
+Moses 13 saat otonom çalışma istedi (didik didik, hatasız, sorma-ilerle). **7 paralel denetim agent'ı** (geometry+document / engine / tools+io / web-react+a11y / ai+copilot+collab / sync+auth+deploy / 3D-View3D) + **2 doğrulama agent'ı** (kendi diff'imin adversaryal review'u → **regresyon yok**; sayısal domain → 100× hatası yok, div-zero temiz). Yalnız test-doğrulanabilir / düşük-regresyon / maliyetsiz işler yapıldı; görsel/perf-refactor/ürün-kararı gerektirenler Moses'a flag'lendi. **18 fix-commit, her biri typecheck+test(+web build) yeşil + push:**
+- **serialize derin doğrulama (KÜME 4):** Sheet/Block(kind∈BLOCK_DEFS)/Annotation/Section/Dimension tip-bazlı; gizli NaN/undefined-alan sınıfı kapandı. `isValidEntity` export edildi.
+- **AI route sertleştirme (KÜME 3):** istemci `context` sanitize (rooms≤200/metrics≤50/findings≤50 + metin kırpma → token-DoS + sistem-prompt injection kapandı); design.ts boş-ad reddi + oda≤300 + summary≤280.
+- **select-tool kilit-bypass (HIGH×2):** seçimden sonra katman kilitlenince handle-drag/taşı/ok-it/sil/x-döndür hâlâ mutasyon ediyordu → tüm mutasyon noktalarına `skip` filtresi.
+- **dxf-export escaping (HIGH):** metin/katman içindeki newline tüm DXF'i bozuyordu → sanitizeText/sanitizeLayer; dxf-import LINE Array.isArray guard.
+- **entity-bounds tek-geçiş (KÜME 2 perf):** `Math.min(...spread)`+`.map()` → tahsis-siz tek loop (NaN-dejenere semantiği korundu).
+- **engine:** dash patlaması cap (zoom-in binlerce moveTo → tek katı çizgi); resize listener destroy temizliği.
+- **collab karantina (KÜME 5):** uzak entity'ler `put` öncesi `isValidEntity`+isSyncable ile doğrulanıyor (bozuk peer store'u zehirleyemez, §6.4).
+- **findFaces bileşen-bazlı dış sınır (HIGH geometry):** kopuk iç döngü (serbest kolon/çekirdek) mahali ÇİFT sayıyordu → union-find ile bileşen başına dış sınır atılır; tek-bileşende eski davranışla birebir.
+- **web Assistant:** res.ok-önce-json (gateway 502 → "Unexpected token <" düzeldi), stream null-body/try-catch/reader.cancel, önceki controller abort; toast/chat **a11y** (role=status/log, aria-live, role=alert).
+- **web:** export onClick guard'ları (RoomList/Takeoff Excel, Toolbar PNG) + SectionPanel render `computeSection` try/catch (panel çökmesi kapandı); CommandPalette pointermove re-render fırtınası; CanvasStage dock-resize + PlanGenerator timer unmount sızıntısı.
+- **io:** içe-aktarılan metin yüksekliği [1,2000] cm clamp + non-finite konum guard.
+- **sync sunucu sertleştirme:** maxPayload 2MB + heartbeat (hep açık) + `ALLOWED_ORIGINS` env ile opt-in origin allow-list (env yoksa eski davranış → canlı kırılmadı); DEPLOY.md güncellendi.
+- **tools:** duvar yapıştırınca bağlı kapı/pencereler de gelir (saf `offsetClone` + wallId remap).
+- **document:** 3B/kesit pencere lento yüksekliği tek-kaynağa bağlandı (220 vs 210 tutarsızlığı, §6.6).
+- **web View3D:** GLB export cast guard + forceContextLoss (context sızıntısı). **test:** polygonLabelPoint kapsandı.
+- **Moses'a FLAG (sonraki tur — körlemesine yapılmadı, doğrulama/karar gerek):**
+  1. **render-mode hata mesajı** ham provider detayını sızdırıyor (2026-06-24 bilinçli teşhis) → pre-launch info-disclosure, gözden geçir.
+  2. **findFaces** kapalı iç döngüde hole-subtraction yok (40000 yerine 30000 değil) → polygon-with-holes gerek.
+  3. **Perf (500k, browser-doğrulama gerek):** engine `store.all()` wall→opening reverse-index, `nearestAxis` strip→viewport cap, render-wall/sheet/space hatch'i zoom'da yeniden hesaplama (build/stroke ayır).
+  4. **View3D görsel:** asimetrik odada slab-mirror, render-loop on-demand (pil), clip-plane yön seçimi → tarayıcıda doğrula.
+  5. **a11y:** modal'lara role=dialog+focus-trap+restore (DialogHost/Calibrate/Comment/CommandPalette/ContextMenu/View3D), form label htmlFor, ikon aria-label'ları.
+  6. **domain yaklaşımları:** sıva ×2 dış-duvar fazla sayım, convex-hull min-genişlik concave koridorda false-neg, daylight bina+oda çift-rapor (belgeli — karar Moses).
+  7. **ALLOWED_ORIGINS**'i Railway'de set et (sync origin koruması devreye girsin).
+  8. **calibrate** yalnız duvar ölçekliyor (import'ta metin de var) → duvar+annotation mı, hepsi mi? (ürün kararı).
 
 ### 2026-06-24 (akşam — pazarlama redesign v2 + auth + 20-ajan QA denetimi) `feat/auth-clerk` (main'e merge bekliyor)
 - **Pazarlama sitesi (claude.ai/design v2):** zengin landing — gerçek-app HeroMockup (araç çubuğu + KATMANLAR/BLOKLAR/COPİLOT + tutarlı 5-odalı kat planı + MAHAL/METRAJ/MALİYET/KESİT + AI render kartı), Marquee, interaktif PlanGenerator, Workflow, BeforeAfter (plan↔render kaydırıcı, illüstratif), açık/koyu tema toggle, mobil hamburger menü. Tailwind v4 arbitrary-value (`bg-[var(--bg)]`) — @theme güvenilmez çıktı. `/app` daima koyu (AppBodyLock).
