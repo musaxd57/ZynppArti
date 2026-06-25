@@ -107,7 +107,9 @@ export default function PlanGenerator() {
     setGenerated(false);
     setSelected(null);
     setTyped("");
-    setTimeout(startTyping, 120);
+    // Bootstrap timer'ı da ref'e ata → unmount cleanup'ı (clearTimeout(timer.current)) bunu da iptal
+    // edebilsin (yoksa unmount sonrası startTyping çağrılıp setState yapardı).
+    timer.current = setTimeout(startTyping, 120);
   };
 
   return (

@@ -111,27 +111,37 @@ export function CanvasStage() {
     }
   }, [leftW]);
 
-  // Dock kenarlarından sürükleyerek genişlik ayarı.
+  // Dock kenarlarından sürükleyerek genişlik ayarı. Aktif sürüklemenin temizleyicisi ref'te tutulur;
+  // bileşen sürükleme ortasında unmount olursa window dinleyicileri yetim kalmasın + unmount sonrası
+  // setState çağrılmasın diye unmount effect'inde temizlenir. (Denetim bulgusu.)
+  const dragCleanup = useRef<(() => void) | null>(null);
+  useEffect(() => () => dragCleanup.current?.(), []);
   const startRightResize = useCallback((e: React.PointerEvent): void => {
     e.preventDefault();
     const onMove = (ev: PointerEvent): void =>
       setRightW(Math.min(560, Math.max(200, window.innerWidth - ev.clientX)));
-    const onUp = (): void => {
+    const cleanup = (): void => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
+      dragCleanup.current = null;
     };
+    const onUp = (): void => cleanup();
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
+    dragCleanup.current = cleanup;
   }, []);
   const startLeftResize = useCallback((e: React.PointerEvent): void => {
     e.preventDefault();
     const onMove = (ev: PointerEvent): void => setLeftW(Math.min(480, Math.max(180, ev.clientX)));
-    const onUp = (): void => {
+    const cleanup = (): void => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
+      dragCleanup.current = null;
     };
+    const onUp = (): void => cleanup();
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
+    dragCleanup.current = cleanup;
   }, []);
 
   useEffect(() => {
