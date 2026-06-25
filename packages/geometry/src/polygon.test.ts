@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { polygonArea, polygonCentroid, distanceToPolygonBoundary } from './polygon';
+import { polygonArea, polygonCentroid, distanceToPolygonBoundary, polygonLabelPoint } from './polygon';
+import { pointInPolygon } from './point-in-polygon';
 import { vec2 } from './vec2';
 
 describe('polygonArea', () => {
@@ -76,5 +77,27 @@ describe('distanceToPolygonBoundary', () => {
   });
   it('dıştaki noktanın kenara uzaklığı', () => {
     expect(distanceToPolygonBoundary({ x: -10, y: 50 }, sq)).toBeCloseTo(10, 6);
+  });
+});
+
+describe('polygonLabelPoint', () => {
+  it('konveks karede merkezi (içeride) döner', () => {
+    const sq = [vec2(0, 0), vec2(100, 0), vec2(100, 100), vec2(0, 100)];
+    const p = polygonLabelPoint(sq);
+    expect(pointInPolygon(p, sq)).toBe(true);
+    expect(p.x).toBeCloseTo(50);
+    expect(p.y).toBeCloseTo(50);
+  });
+
+  it('konkav (L) poligonda etiket noktası DAİMA poligon içindedir (centroid çentiğe düşse bile)', () => {
+    // Bu L'nin alan-ağırlıklı merkezi (~71,71) çentikte (dışarıda) kalır → ızgara-tarama dalı devreye girer.
+    const L = [vec2(0, 0), vec2(200, 0), vec2(200, 60), vec2(60, 60), vec2(60, 200), vec2(0, 200)];
+    const p = polygonLabelPoint(L);
+    expect(pointInPolygon(p, L)).toBe(true);
+  });
+
+  it('3-ten az köşe → noktaların ortalaması (boş → orijin)', () => {
+    expect(polygonLabelPoint([vec2(0, 0), vec2(10, 0)])).toEqual({ x: 5, y: 0 });
+    expect(polygonLabelPoint([])).toEqual({ x: 0, y: 0 });
   });
 });
