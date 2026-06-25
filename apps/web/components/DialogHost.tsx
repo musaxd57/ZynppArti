@@ -15,9 +15,19 @@ export function DialogHost() {
   useEffect(() => {
     if (state?.kind === 'prompt') {
       setText(state.defaultValue ?? '');
-      // odak + seçim
-      queueMicrotask(() => inputRef.current?.select());
+      // Odak + seçim. autoFocus + microtask ilk açılışta YETMİYORDU: diyaloğu açan tıklamanın
+      // pointer-focus'u (canvas) bir sonraki frame'de input'tan odağı geri çalıyordu → kullanıcı
+      // elle tıklamak zorunda kalıyordu. rAF ile rakip focus settle olduktan SONRA zorla odakla.
+      const raf = requestAnimationFrame(() => {
+        const el = inputRef.current;
+        if (el) {
+          el.focus();
+          el.select();
+        }
+      });
+      return () => cancelAnimationFrame(raf);
     }
+    return undefined;
   }, [state]);
 
   if (!state) return null;
