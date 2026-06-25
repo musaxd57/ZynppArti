@@ -9,6 +9,8 @@ import {
   RemoveEntity,
   serializeModel,
   deserializeModel,
+  sheetModelSize,
+  type Entity,
   type EntityStore,
   type History,
   type Sheet,
@@ -51,6 +53,30 @@ interface ToolbarProps {
   /** Zen modu: sol+sağ paneller gizli mi + aç/kapat. */
   chromeHidden?: boolean;
   onToggleChrome?: () => void;
+}
+
+/**
+ * Bir paftanın DOLU olup olmadığı: o paftanın model dikdörtgeni içinde çizim içeriği (duvar/parsel/
+ * ölçü/blok/metin…) var mı? Çok-sayfa PDF'de BOŞ paftalar atlanır (Moses: yalnız dolu olanları kaydet).
+ * Türetilmiş mahal + boşluk (duvara bağlı) sayılmaz — duvar zaten içeriği temsil eder.
+ */
+function sheetHasContent(s: Sheet, ents: readonly Entity[]): boolean {
+  const { w, h } = sheetModelSize(s);
+  const x0 = s.position.x;
+  const y0 = s.position.y;
+  const x1 = x0 + w;
+  const y1 = y0 + h;
+  const inRect = (p: { x: number; y: number }): boolean => p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1;
+  for (const e of ents) {
+    let pts: { x: number; y: number }[] = [];
+    if (e.type === 'wall') pts = [e.start, e.end, { x: (e.start.x + e.end.x) / 2, y: (e.start.y + e.end.y) / 2 }];
+    else if (e.type === 'parcel') pts = [...e.boundary];
+    else if (e.type === 'dimension' || e.type === 'section') pts = [e.a, e.b];
+    else if (e.type === 'block' || e.type === 'annotation' || e.type === 'comment') pts = [e.position];
+    // sheet/space/opening → atla (sheet kendisi, space türetilmiş, opening duvara bağlı)
+    if (pts.some(inRect)) return true;
+  }
+  return false;
 }
 
 /** Araç çubuğu: araç seçimi, undo/redo, DXF içe/dışa aktarma, PNG dışa aktarma. */
@@ -148,14 +174,56 @@ export function Toolbar({
   }
 
   /**
-   * Mevcut tuval görüntüsünü PDF'e gömer. Sayfa boyutu/yönelimi varsa ilk paftadan (A4–A0),
-   * yoksa A4 yatay. Görsel sayfaya orantı korunarak, kenar boşluğuyla sığdırılır.
+   * PDF dışa aktarma. **Pafta(lar) varsa: her pafta = bir SAYFA** (kendi kağıt boyutu/yönelimi,
+   * o paftanın model bölgesi kırpılarak) → çok-sayfa PDF. Pafta yoksa: tek sayfa, tüm tuval (A4 yatay).
+   * Vektör (svg2pdf, keskin baskı); pafta-yok yolunda hata olursa raster yedeğe düşer.
    */
   async function onExportPdf(): Promise<void> {
-    const sheet = store.all().find((e): e is Sheet => e.type === 'sheet');
-    const format = sheet ? sheet.size.toLowerCase() : 'a4';
-    const orientation: 'l' | 'p' = sheet && sheet.orientation === 'portrait' ? 'p' : 'l';
-    const pdf = new jsPDF({ orientation, unit: 'mm', format });
+    const sheets = store
+      .all()
+      .filter((e): e is Sheet => e.type === 'sheet')
+      .sort((a, b) => a.position.y - b.position.y || a.position.x - b.position.x);
+
+    // ÇOK-SAYFA: her DOLU pafta kendi kağıdında ayrı sayfa (boş paftalar atlanır), model dikdörtgeni kırpılır.
+    const ents = visibleEntities();
+    const full = sheets.filter((s) => sheetHasContent(s, ents));
+    if (full.length > 0) {
+      const ori = (s: Sheet): 'l' | 'p' => (s.orientation === 'portrait' ? 'p' : 'l');
+      const pdf = new jsPDF({ orientation: ori(full[0]!), unit: 'mm', format: full[0]!.size.toLowerCase() });
+      for (let i = 0; i < full.length; i++) {
+        const s = full[i]!;
+        if (i > 0) pdf.addPage(s.size.toLowerCase(), ori(s));
+        const pgW = pdf.internal.pageSize.getWidth();
+        const pgH = pdf.internal.pageSize.getHeight();
+        const { w: mw, h: mh } = sheetModelSize(s);
+        try {
+          const svgStr = exportSvg(ents, { minX: s.position.x, minY: s.position.y, w: mw, h: mh });
+          const el = new DOMParser().parseFromString(svgStr, 'image/svg+xml')
+            .documentElement as unknown as SVGSVGElement;
+          el.style.position = 'absolute';
+          el.style.left = '-99999px';
+          document.body.appendChild(el);
+          try {
+            await svg2pdf(el, pdf, { x: 0, y: 0, width: pgW, height: pgH });
+          } finally {
+            el.remove();
+          }
+        } catch (err) {
+          console.error(`Pafta sayfası ${i + 1} PDF'e çizilemedi:`, err);
+        }
+      }
+      pdf.save(`${projectFileBase()}.pdf`);
+      const skipped = sheets.length - full.length;
+      toast(`PDF indirildi (${full.length} sayfa${skipped > 0 ? `, ${skipped} boş pafta atlandı` : ''}).`, 'success');
+      return;
+    }
+    // Pafta(lar) var ama hepsi BOŞ → tek sayfa, tüm tuval (aşağı düş).
+    if (sheets.length > 0) {
+      toast('Paftalar boş — tüm çizim tek sayfaya alındı.', 'info', 4000);
+    }
+
+    // PAFTA YOK: tek sayfa, tüm tuval (A4 yatay, içeriğe sığdır).
+    const pdf = new jsPDF({ orientation: 'l', unit: 'mm', format: 'a4' });
     const pw = pdf.internal.pageSize.getWidth();
     const ph = pdf.internal.pageSize.getHeight();
     const margin = 10;

@@ -20,19 +20,37 @@ import {
  * Çizim sırası katman hissini kurar: mahal dolgusu → parsel → duvar → boşluk (beyaz kesim) →
  * blok → ölçü → metin. Saf TS (yalnız document'e bağımlı; engine/DOM yok).
  */
-export function exportSvg(entities: readonly Entity[]): string {
+export function exportSvg(
+  entities: readonly Entity[],
+  /**
+   * Opsiyonel görünüm bölgesi (model cm). Verilirse viewBox bu olur (kırpma) — çok-sayfa PDF'de her
+   * paftanın kendi dikdörtgenini ayrı sayfaya basmak için. Verilmezse tüm entity'leri çevreler (eski).
+   */
+  region?: { minX: number; minY: number; w: number; h: number },
+): string {
   const walls = new Map<EntityId, Wall>();
   for (const e of entities) if (e.type === 'wall') walls.set(e.id, e);
 
-  const bounds = computeBounds(entities, walls);
-  if (!bounds) {
+  let minX: number;
+  let minY: number;
+  let w: number;
+  let h: number;
+  if (region) {
+    ({ minX, minY, w, h } = region);
+  } else {
+    const bounds = computeBounds(entities, walls);
+    if (!bounds) {
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"></svg>\n';
+    }
+    const margin = 50;
+    minX = bounds.minX - margin;
+    minY = bounds.minY - margin;
+    w = bounds.maxX - bounds.minX + margin * 2;
+    h = bounds.maxY - bounds.minY + margin * 2;
+  }
+  if (!(w > 0 && h > 0)) {
     return '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"></svg>\n';
   }
-  const margin = 50;
-  const minX = bounds.minX - margin;
-  const minY = bounds.minY - margin;
-  const w = bounds.maxX - bounds.minX + margin * 2;
-  const h = bounds.maxY - bounds.minY + margin * 2;
 
   const body: string[] = [];
   // mahal dolgusu + ad
