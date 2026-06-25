@@ -72,8 +72,28 @@ export function SectionPanel({ store, history, selectedIds }: SectionPanelProps)
     const remove = (): void => {
       history.dispatch(new RemoveEntity(section.id));
     };
-    const s = computeSection(section.a, section.b, walls(store), openings(store));
-    if (s.cuts.length === 0) {
+    // computeSection render sırasında çağrılır → bir geometri hatası fırlatırsa TÜM panel çökerdi.
+    // Guard'la: hata olursa güvenli hata gövdesi göster (+ Sil), app sürer. (Denetim bulgusu.)
+    let s: ReturnType<typeof computeSection> | null = null;
+    try {
+      s = computeSection(section.a, section.b, walls(store), openings(store));
+    } catch (e) {
+      console.error('computeSection başarısız:', e);
+    }
+    if (!s) {
+      body = (
+        <div className="flex flex-col gap-1">
+          <div className="px-1 py-2 text-xs text-red-300">Kesit hesaplanamadı (geometri hatası).</div>
+          <button
+            type="button"
+            onClick={remove}
+            className="rounded bg-white/10 px-2 py-1 text-xs hover:bg-white/20"
+          >
+            Sil
+          </button>
+        </div>
+      );
+    } else if (s.cuts.length === 0) {
       body = (
         <div className="flex flex-col gap-1">
           <div className="px-1 py-2 text-xs opacity-50">

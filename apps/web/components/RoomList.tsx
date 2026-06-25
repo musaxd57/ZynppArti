@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
+import { toast } from '@/lib/toast';
 import {
   MATERIALS,
   ROOM_TYPES,
@@ -137,7 +138,13 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Mahaller');
     XLSX.utils.book_append_sheet(wb, summaryWs, 'Özet');
-    XLSX.writeFile(wb, 'mahal-listesi.xlsx');
+    try {
+      XLSX.writeFile(wb, 'mahal-listesi.xlsx');
+      toast('Mahal listesi indirildi.', 'success');
+    } catch (err) {
+      console.error('Excel export başarısız:', err);
+      toast('Excel dışa aktarılamadı.', 'error');
+    }
   }
 
   return (

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
+import { toast } from '@/lib/toast';
 import {
   computeTakeoff,
   estimateCost,
@@ -164,7 +165,13 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
     if (sched.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sched), 'Çizelge');
     if (furn.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(furn), 'Mobilya');
     if (costRows.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(costRows), 'Maliyet');
-    XLSX.writeFile(wb, 'metraj.xlsx');
+    try {
+      XLSX.writeFile(wb, 'metraj.xlsx');
+      toast('Metraj indirildi.', 'success');
+    } catch (err) {
+      console.error('Excel export başarısız:', err);
+      toast('Excel dışa aktarılamadı.', 'error');
+    }
   }
 
   const Row = ({ label, value }: { label: string; value: string }) => (

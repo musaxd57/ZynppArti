@@ -126,8 +126,13 @@ export function Toolbar({
   }
 
   async function onExportPng(): Promise<void> {
-    download(await exportPng(), 'zynpparti.png');
-    toast('PNG indirildi.', 'success');
+    try {
+      download(await exportPng(), 'zynpparti.png');
+      toast('PNG indirildi.', 'success');
+    } catch (err) {
+      console.error('PNG export başarısız:', err);
+      toast('PNG dışa aktarılamadı.', 'error');
+    }
   }
 
   /**
