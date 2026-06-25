@@ -15,9 +15,8 @@ import { SectionTool } from './section-tool';
 import {
   AddEntity,
   BatchCommand,
-  createEntityId,
   isClonable,
-  offsetEntity,
+  offsetClone,
   type BlockKind,
   type Entity,
 } from '@zynpparti/document';
@@ -213,19 +212,28 @@ export class ToolManager implements SceneTool {
     this.selectTool.selectMany(ids);
   }
 
-  /** Seçili (kopyalanabilir) entity'leri panoya alır. */
+  /**
+   * Seçili (kopyalanabilir) entity'leri panoya alır. Kopyalanan DUVARLARIN bağlı boşlukları
+   * (kapı/pencere) da panoya eklenir → duvarla birlikte yapıştırılır (yoksa kapı kaybolurdu).
+   */
   private copy(): void {
     const clonable = this.selectTool.getSelectedEntities().filter(isClonable);
-    if (clonable.length > 0) this.clipboard = clonable;
+    if (clonable.length === 0) return;
+    const wallIds = new Set(clonable.filter((e) => e.type === 'wall').map((e) => e.id));
+    const boundOpenings =
+      wallIds.size > 0
+        ? this.ctx.store.all().filter((e) => e.type === 'opening' && wallIds.has(e.wallId))
+        : [];
+    this.clipboard = [...clonable, ...boundOpenings];
   }
 
-  /** Panodaki entity'lerin kaydırılmış kopyalarını ekler, seçer ve cascade için panoyu günceller. */
+  /**
+   * Panodaki entity'lerin kaydırılmış kopyalarını ekler, seçer ve cascade için panoyu günceller.
+   * Eski→yeni id eşlemesiyle boşlukların `wallId`'si yeni duvara yönlendirilir (bağ kopmaz).
+   */
   private paste(): void {
     if (this.clipboard.length === 0) return;
-    const clones: Entity[] = this.clipboard.map((e) => ({
-      ...offsetEntity(e, PASTE_OFFSET, PASTE_OFFSET),
-      id: createEntityId(),
-    }));
+    const clones = offsetClone(this.clipboard, PASTE_OFFSET, PASTE_OFFSET);
     const cmds = clones.map((c) => new AddEntity(c));
     this.ctx.history.dispatch(cmds.length === 1 ? cmds[0]! : new BatchCommand('Yapıştır', cmds));
     this.clipboard = clones; // tekrar Ctrl+V → bir önceki kopyalardan kayar (üst üste binmez)

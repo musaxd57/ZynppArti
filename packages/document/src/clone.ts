@@ -1,4 +1,5 @@
-import type { Entity } from './entities';
+import type { Entity, EntityId } from './entities';
+import { createEntityId } from './id';
 
 /**
  * Kopyala-yapıştır / çoğaltma için saf geometri yardımcıları (UI'dan bağımsız → test edilebilir).
@@ -47,4 +48,23 @@ export function offsetEntity(e: Entity, dx: number, dy: number): Entity {
     case 'opening':
       return e;
   }
+}
+
+/**
+ * Bir entity grubunun kaydırılmış KOPYALARINI üretir (yapıştır/çoğalt). Her kopyaya yeni id verilir;
+ * grup İÇİNDEKİ bir duvarın bağlı boşluğu (opening) da gruptaysa, boşluğun `wallId`'si yeni duvarın
+ * id'sine yönlendirilir → bağ kopmaz (duvarı kopyalanan kapı/pencere yeni duvara oturur). Duvarı
+ * grupta olmayan boşluk eski `wallId`'sinde kalır. Saf (UI'dan bağımsız → test edilebilir).
+ */
+export function offsetClone(entities: readonly Entity[], dx: number, dy: number): Entity[] {
+  const idMap = new Map<EntityId, EntityId>();
+  const clones = entities.map((e) => {
+    const id = createEntityId();
+    idMap.set(e.id, id);
+    // opening offsetEntity'de değişmeden döner (t-parametrik, duvarıyla taşınır) — yalnız id/wallId yenilenir.
+    return { ...offsetEntity(e, dx, dy), id };
+  });
+  return clones.map((c) =>
+    c.type === 'opening' ? { ...c, wallId: idMap.get(c.wallId) ?? c.wallId } : c,
+  );
 }

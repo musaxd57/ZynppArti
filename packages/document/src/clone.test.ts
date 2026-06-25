@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isClonable, offsetEntity } from './clone';
+import { isClonable, offsetClone, offsetEntity } from './clone';
 import type {
   Annotation,
   Block,
@@ -146,5 +146,29 @@ describe('offsetEntity', () => {
   it('immutable — orijinali değiştirmez', () => {
     offsetEntity(block, 99, 99);
     expect(block.position).toEqual({ x: 10, y: 20 });
+  });
+});
+
+describe('offsetClone (yapıştır — bağlı boşluk remap)', () => {
+  it('her kopyaya yeni id verir, geometriyi kaydırır', () => {
+    const out = offsetClone([wall, block], 10, 0);
+    expect(out).toHaveLength(2);
+    expect(out[0]!.id).not.toBe('w');
+    expect(out[1]!.id).not.toBe('b');
+    expect((out[0] as Wall).start).toEqual({ x: 10, y: 0 });
+  });
+
+  it('duvarla birlikte kopyalanan boşluğun wallId-si YENİ duvara bağlanır', () => {
+    const out = offsetClone([wall, opening], 50, 0);
+    const newWall = out.find((e) => e.type === 'wall')!;
+    const newOpening = out.find((e) => e.type === 'opening') as Opening;
+    expect(newOpening.wallId).toBe(newWall.id); // bağ korundu (eski 'w' değil)
+    expect(newOpening.wallId).not.toBe('w');
+    expect(newOpening.t).toBe(0.5); // t-parametrik konum aynı
+  });
+
+  it('duvarı grupta OLMAYAN boşluk eski wallId-sinde kalır', () => {
+    const out = offsetClone([opening], 50, 0); // yalnız boşluk
+    expect((out[0] as Opening).wallId).toBe('w');
   });
 });
