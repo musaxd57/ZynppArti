@@ -15,8 +15,10 @@ export type CostCategory = 'Kaba yapı' | 'Tesisat' | 'İnce yapı';
 export interface UnitPrices {
   /** Duvar örgü (tuğla/gazbeton + işçilik), ₺/m² (cephe alanı = uzunluk × yükseklik). */
   readonly wallMasonryM2: number;
-  /** Sıva (alçı/çimento + işçilik), ₺/m² (duvar yüzleri, iki yüz). */
+  /** İç sıva (alçı/çimento + işçilik), ₺/m² (iç duvar yüzleri). */
   readonly plasterM2: number;
+  /** Dış cephe sıvası (mantolama/dekoratif + işçilik), ₺/m² — iç sıvadan ayrı poz, genelde daha pahalı. */
+  readonly facadePlasterM2: number;
   /** Elektrik tesisatı (kablolama+anahtar+priz+armatür kabası), ₺/m² (kapalı alan). */
   readonly electricalM2: number;
   /** Sıhhi tesisat (temiz+pis su+ısıtma kabası), ₺/m² (kapalı alan; ıslak hacme yoğunlaşır, alana yayılır). */
@@ -40,6 +42,7 @@ export interface UnitPrices {
 export const DEFAULT_UNIT_PRICES: UnitPrices = {
   wallMasonryM2: 1300,
   plasterM2: 500,
+  facadePlasterM2: 650,
   electricalM2: 1400,
   plumbingM2: 1600,
   paintM2: 320,
@@ -82,7 +85,8 @@ export function estimateCost(t: Takeoff, prices: UnitPrices = DEFAULT_UNIT_PRICE
   const raw: Array<Omit<CostLine, 'total'>> = [
     // Kaba yapı
     { label: 'Duvar örgü', category: 'Kaba yapı', quantity: t.wallElevationM2, unit: 'm²', unitPrice: prices.wallMasonryM2 },
-    { label: 'Sıva', category: 'Kaba yapı', quantity: t.plasterAreaM2, unit: 'm²', unitPrice: prices.plasterM2 },
+    { label: 'İç sıva', category: 'Kaba yapı', quantity: t.plasterAreaM2, unit: 'm²', unitPrice: prices.plasterM2 },
+    { label: 'Dış cephe sıvası', category: 'Kaba yapı', quantity: t.facadePlasterAreaM2, unit: 'm²', unitPrice: prices.facadePlasterM2 },
     // Tesisat (kapalı alana yayılmış kaba tahmin)
     { label: 'Elektrik tesisatı', category: 'Tesisat', quantity: area, unit: 'm²', unitPrice: prices.electricalM2 },
     { label: 'Sıhhi tesisat', category: 'Tesisat', quantity: area, unit: 'm²', unitPrice: prices.plumbingM2 },

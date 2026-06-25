@@ -23,7 +23,8 @@ const PRICES_KEY = 'vesna-unit-prices';
 /** Düzenlenebilir birim fiyat satırları (etiket + UnitPrices anahtarı + birim). */
 const PRICE_FIELDS: ReadonlyArray<{ key: keyof UnitPrices; label: string; unit: string }> = [
   { key: 'wallMasonryM2', label: 'Duvar örgü', unit: '₺/m²' },
-  { key: 'plasterM2', label: 'Sıva', unit: '₺/m²' },
+  { key: 'plasterM2', label: 'İç sıva', unit: '₺/m²' },
+  { key: 'facadePlasterM2', label: 'Dış cephe sıvası', unit: '₺/m²' },
   { key: 'electricalM2', label: 'Elektrik', unit: '₺/m²' },
   { key: 'plumbingM2', label: 'Sıhhi', unit: '₺/m²' },
   { key: 'paintM2', label: 'Boya', unit: '₺/m²' },
@@ -127,8 +128,9 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
     const rows: Record<string, string | number>[] = [
       { Kalem: 'Duvar uzunluğu (m)', Miktar: Number(t.wallLengthM.toFixed(2)) },
       { Kalem: `Duvar örgü (m²) [h=${storeyHeightCm} cm]`, Miktar: Number(t.wallElevationM2.toFixed(2)) },
-      { Kalem: 'Sıva (m²)', Miktar: Number(t.plasterAreaM2.toFixed(2)) },
-      { Kalem: 'Boya — duvar+tavan (m²)', Miktar: Number(t.paintAreaM2.toFixed(2)) },
+      { Kalem: 'İç sıva (m²)', Miktar: Number(t.plasterAreaM2.toFixed(2)) },
+      { Kalem: 'Dış cephe sıvası (m²)', Miktar: Number(t.facadePlasterAreaM2.toFixed(2)) },
+      { Kalem: 'Boya — iç duvar+tavan (m²)', Miktar: Number(t.paintAreaM2.toFixed(2)) },
       { Kalem: 'Döşeme/şap (m²)', Miktar: Number(t.floorAreaM2.toFixed(2)) },
       { Kalem: 'Süpürgelik (m)', Miktar: Number(t.skirtingM.toFixed(2)) },
       { Kalem: 'Kapı (adet)', Miktar: t.doorCount },
@@ -187,8 +189,9 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
       <div className="flex flex-col gap-0.5 px-1">
         <Row label="Duvar uzunluğu" value={`${num(t.wallLengthM)} m`} />
         <Row label="Duvar örgü" value={`${num(t.wallElevationM2)} m²`} />
-        <Row label="Sıva" value={`${num(t.plasterAreaM2)} m²`} />
-        <Row label="Boya (duvar+tavan)" value={`${num(t.paintAreaM2)} m²`} />
+        <Row label="İç sıva" value={`${num(t.plasterAreaM2)} m²`} />
+        <Row label="Dış cephe sıvası" value={`${num(t.facadePlasterAreaM2)} m²`} />
+        <Row label="Boya (iç duvar+tavan)" value={`${num(t.paintAreaM2)} m²`} />
         <Row label="Döşeme/şap" value={`${num(t.floorAreaM2)} m²`} />
         <Row label="Süpürgelik" value={`${num(t.skirtingM)} m`} />
         <Row label="Kapı / Pencere" value={`${t.doorCount} / ${t.windowCount}`} />

@@ -35,8 +35,10 @@ export interface Takeoff {
   readonly wallLengthM: number;
   /** Duvar düşey (cephe) alanı (m²) — uzunluk × yükseklik (TEK yüz); örgü/duvar işçiliği bu alandan. */
   readonly wallElevationM2: number;
-  /** Sıva alanı (m²) — iki yüz × uzunluk × kat yüksekliği, boşluklar düşülmüş. */
+  /** İÇ sıva alanı (m²) — iç yüzler (bölme iki yüz + dış duvar iç yüzü), boşluklar düşülmüş. */
   readonly plasterAreaM2: number;
+  /** DIŞ CEPHE sıva alanı (m²) — yalnız dış (çevre) duvarların DIŞ yüzü. Ayrı poz/birim fiyat (farklı iş). */
+  readonly facadePlasterAreaM2: number;
   /** Tavan alanı (m²) — mahal alanlarının toplamı (boyanır/sıvanır). */
   readonly ceilingAreaM2: number;
   /** Boya alanı (m²) — duvar yüzleri (sıva) + tavan. Sıvadan farklı: tavanı da kapsar. */
@@ -69,6 +71,22 @@ const CM2_PER_M2 = 10000;
 
 function wallLengthCm(w: Wall): number {
   return Math.hypot(w.end.x - w.start.x, w.end.y - w.start.y);
+}
+
+/**
+ * Bir duvarın kaç MAHALE komşu olduğu (orta noktası oda sınırına duvar yarı-kalınlığı + pay kadar
+ * yakınsa o odaya komşu sayılır; copilot windowsServingRoom ile aynı kaba eşleştirme). 1 = çevre
+ * (dış) duvar, 2 = iki odayı ayıran iç bölme. İç/dış sıva ayrımında kullanılır.
+ */
+function wallBorderCount(w: Wall, spaces: readonly Space[]): number {
+  const mx = (w.start.x + w.end.x) / 2;
+  const my = (w.start.y + w.end.y) / 2;
+  const margin = w.thickness / 2 + 8;
+  let n = 0;
+  for (const sp of spaces) {
+    if (sp.boundary.length >= 3 && distanceToPolygonBoundary({ x: mx, y: my }, sp.boundary) <= margin) n++;
+  }
+  return n;
 }
 
 function schedule(openings: readonly Opening[], kind: Opening['kind']): ScheduleRow[] {
@@ -124,14 +142,36 @@ export function computeTakeoff(
   }
   wallElevCm2 = Math.max(0, wallElevCm2);
 
-  // Sıva: iki yüz. Her duvar kendi yüksekliğiyle (yoksa kat yüksekliği). Boşluk alanı (iki yüz) düşülür.
-  let plasterCm2 = walls.reduce((s, w) => s + 2 * wallLengthCm(w) * (w.height ?? h), 0);
+  // Sıva: İÇ yüzler vs DIŞ CEPHE ayrı (araştırma 2026-06-25 — Türk metrajında farklı poz/birim fiyat).
+  // Bir duvarın kaç ODAYA komşu olduğuna bak (orta noktası oda sınırına yakın mı): 1 → ÇEVRE duvarı
+  // (1 iç yüz + 1 dış cephe yüzü); 2+ → İÇ bölme (2 iç yüz); 0 → serbest/oda-öncesi (2 iç yüz say).
+  // Boşluk alanı her iki ilgili yüzden düşülür. Toplam yüzey eskiyle aynı; yalnız iç/dış ayrılıyor.
+  const borderCount = new Map<string, number>();
+  for (const w of walls) borderCount.set(w.id, wallBorderCount(w, spaces));
+  const faces = (id: string, w: Wall): { i: number; e: number } => {
+    const c = borderCount.get(id) ?? wallBorderCount(w, spaces);
+    return c === 1 ? { i: 1, e: 1 } : { i: 2, e: 0 };
+  };
+  let interiorPlasterCm2 = 0;
+  let facadePlasterCm2 = 0;
+  for (const w of walls) {
+    const f = faces(w.id, w);
+    const a = wallLengthCm(w) * (w.height ?? h);
+    interiorPlasterCm2 += f.i * a;
+    facadePlasterCm2 += f.e * a;
+  }
+  const wallByIdP = new Map(walls.map((w) => [w.id, w]));
   for (const o of openings) {
     if (!(o.width > 0) || !Number.isFinite(o.width)) continue;
     const oh = o.kind === 'door' ? DOOR_HEIGHT_CM : WINDOW_HEIGHT_CM;
-    plasterCm2 -= 2 * o.width * oh;
+    const w = wallByIdP.get(o.wallId);
+    // Duvarı bilinmiyorsa eski davranış: 2 iç yüzden düş (kaba; orphan boşluk).
+    const f = w ? faces(o.wallId, w) : { i: 2, e: 0 };
+    interiorPlasterCm2 -= f.i * o.width * oh;
+    facadePlasterCm2 -= f.e * o.width * oh;
   }
-  plasterCm2 = Math.max(0, plasterCm2);
+  const plasterCm2 = Math.max(0, interiorPlasterCm2); // "Sıva" = iç sıva
+  const facadeCm2 = Math.max(0, facadePlasterCm2);
 
   const floorCm2 = spaces.reduce((s, sp) => s + polygonArea(sp.boundary), 0);
   // Boya = duvar yüzleri (sıva alanı) + tavan (mahal alanı). Tavan boyası ayrıca sayılır.
@@ -168,6 +208,7 @@ export function computeTakeoff(
     wallLengthM: wallLenCm / 100,
     wallElevationM2: wallElevCm2 / CM2_PER_M2,
     plasterAreaM2: plasterCm2 / CM2_PER_M2,
+    facadePlasterAreaM2: facadeCm2 / CM2_PER_M2,
     ceilingAreaM2: floorCm2 / CM2_PER_M2,
     paintAreaM2: paintCm2 / CM2_PER_M2,
     floorAreaM2: floorCm2 / CM2_PER_M2,

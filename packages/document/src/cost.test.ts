@@ -6,6 +6,7 @@ const base: Takeoff = {
   wallLengthM: 0,
   wallElevationM2: 0,
   plasterAreaM2: 0,
+  facadePlasterAreaM2: 0,
   ceilingAreaM2: 0,
   paintAreaM2: 0,
   floorAreaM2: 0,

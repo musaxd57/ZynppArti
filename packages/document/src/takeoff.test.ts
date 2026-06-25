@@ -36,12 +36,24 @@ describe('computeTakeoff', () => {
     expect(t.plasterAreaM2).toBeCloseTo(27, 6);
   });
 
-  it('duvar örgü = tek yüz (uzunluk × yükseklik); boya = sıva + tavan', () => {
-    // 500 cm duvar h=270 → örgü 1×5×2,7 = 13,5 m²; 16 m² mahal → boya = 27 + 16 = 43, tavan = 16
+  it('duvar örgü = tek yüz; çevre duvarı → 1 iç + 1 dış cephe yüzü; boya = iç sıva + tavan', () => {
+    // 500cm duvar h=270, odaya komşu (çevre duvarı) → iç sıva 1×5×2,7 = 13,5; dış cephe 13,5; örgü 13,5.
     const t = computeTakeoff([wall('a', 0, 0, 500, 0)], [squareSpace], [], [], { storeyHeightCm: 270 });
     expect(t.wallElevationM2).toBeCloseTo(13.5, 6);
+    expect(t.plasterAreaM2).toBeCloseTo(13.5, 5); // iç sıva (1 yüz)
+    expect(t.facadePlasterAreaM2).toBeCloseTo(13.5, 5); // dış cephe (1 yüz)
     expect(t.ceilingAreaM2).toBeCloseTo(16, 6);
-    expect(t.paintAreaM2).toBeCloseTo(27 + 16, 5);
+    expect(t.paintAreaM2).toBeCloseTo(13.5 + 16, 5); // boya = iç sıva + tavan
+  });
+
+  it('iç bölme duvarı (iki odayı ayıran) → 2 iç yüz, 0 dış cephe', () => {
+    // Ortak duvar x=400'de; iki 400×400 oda → duvar 2 odaya komşu → 2 iç sıva yüzü, dış cephe 0.
+    const left: Space = { ...squareSpace, id: 'L' };
+    const right: Space = { ...squareSpace, id: 'R', boundary: [{ x: 400, y: 0 }, { x: 800, y: 0 }, { x: 800, y: 400 }, { x: 400, y: 400 }] };
+    const shared = wall('w', 400, 0, 400, 400); // 400cm, h=270
+    const t = computeTakeoff([shared], [left, right], [], [], { storeyHeightCm: 270 });
+    expect(t.plasterAreaM2).toBeCloseTo(2 * 4 * 2.7, 5); // 2 yüz × 4m × 2,7 = 21,6
+    expect(t.facadePlasterAreaM2).toBeCloseTo(0, 5); // iç bölme → dış cephe yok
   });
 
   it('kapı sıva alanından (iki yüz) düşülür', () => {
