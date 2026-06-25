@@ -191,15 +191,28 @@ export async function POST(req: Request): Promise<Response> {
       const image = await renderImage(key, p.slice(0, 4000), process.env.OPENAI_IMAGE_MODEL);
       return Response.json({ mode: 'render', image });
     } catch (e) {
+      // HAM sağlayıcı mesajı YALNIZ sunucu logunda (Vercel logs) — hesap/org/fatura/upstream metni
+      // istemciye sızmasın. İstemciye sade KATEGORİ döneriz (HTTP durumundan türetilmiş). (ADR/güvenlik.)
       console.error('Render başarısız:', e);
-      // Gerçek nedeni yüzeye çıkar (model erişimi / fatura / içerik politikası) → teşhis kolaylaşsın.
-      const detail = e instanceof Error ? e.message : String(e);
+      const status = typeof (e as { status?: unknown }).status === 'number' ? (e as { status: number }).status : 0;
+      const category =
+        status === 401 || status === 403
+          ? 'model erişimi/yetki yok'
+          : status === 429
+            ? 'kota/limit doldu — biraz sonra tekrar dene'
+            : status === 400
+              ? 'istek reddedildi (içerik politikası olabilir)'
+              : status === 402
+                ? 'fatura/bakiye sorunu'
+                : status >= 500
+                  ? 'sağlayıcı geçici hata'
+                  : 'görsel üretilemedi';
       const model = process.env.OPENAI_IMAGE_MODEL ?? OPENAI_IMAGE_MODEL;
       return Response.json(
         {
-          error: `Görsel üretilemedi (model: ${model}). ${detail} — "${model}" modeline erişimin yoksa apps/web/.env.local içine OPENAI_IMAGE_MODEL=dall-e-3 ekleyip tekrar dene.`,
+          error: `Görsel üretilemedi (${category}). "${model}" modeline erişim yoksa OPENAI_IMAGE_MODEL=dall-e-3 dene.`,
         },
-        { status: 500 },
+        { status: 502 },
       );
     }
   }
