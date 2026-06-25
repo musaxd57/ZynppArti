@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { setProjectName } from '@/lib/project-name';
+import { deserializeModel } from '@zynpparti/document';
+import { setProjectName, DEFAULT_PROJECT_NAME } from '@/lib/project-name';
 import { setStartEmpty, setPendingOpen } from '@/lib/app-start';
+import { toast } from '@/lib/toast';
 import { VesnaLogo } from './VesnaLogo';
 
 /**
@@ -11,11 +13,11 @@ import { VesnaLogo } from './VesnaLogo';
  * dosya adlarında kullanılır. Collab linki / `?ciz=` ile gelenlerde bu ekran atlanır (AppGate).
  */
 export function StartScreen({ onStart }: { onStart: () => void }) {
-  const [name, setName] = useState('Adsız proje');
+  const [name, setName] = useState(DEFAULT_PROJECT_NAME);
   const [busy, setBusy] = useState(false);
 
   const createNew = (): void => {
-    setProjectName(name.trim() || 'Adsız proje');
+    setProjectName(name.trim() || DEFAULT_PROJECT_NAME);
     setStartEmpty(true); // demo tohumu atla → boş tuvalle başla
     onStart();
   };
@@ -25,11 +27,22 @@ export function StartScreen({ onStart }: { onStart: () => void }) {
     void file
       .text()
       .then((text) => {
-        setProjectName(file.name.replace(/\.json$/i, '') || 'Adsız proje');
+        // Açmadan ÖNCE doğrula — bozuk/yanlış .json sessizce boş açılmasın (uygulama-içi "Aç" gibi uyar).
+        try {
+          deserializeModel(text);
+        } catch {
+          toast('Dosya açılamadı — bu uygulamanın .json kayıt biçiminde olmalı.', 'error', 5000);
+          setBusy(false);
+          return;
+        }
+        setProjectName(file.name.replace(/\.json$/i, '') || DEFAULT_PROJECT_NAME);
         setPendingOpen(text); // CanvasStage mount'ta yükler
         onStart();
       })
-      .catch(() => setBusy(false));
+      .catch(() => {
+        toast('Dosya okunamadı.', 'error', 4000);
+        setBusy(false);
+      });
   };
 
   return (

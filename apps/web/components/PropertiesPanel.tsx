@@ -188,9 +188,12 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
               max={5}
               step={0.25}
               defaultValue={c.size ?? 1}
-              onChange={(ev) => {
+              onBlur={(ev) => {
+                // onBlur (her tuşta değil) → undo geçmişi her ara değerle kirlenmez. Değişmediyse atla.
                 const sz = Number(ev.target.value);
-                if (Number.isFinite(sz) && sz > 0) history.dispatch(new UpdateEntity({ ...c, size: sz }));
+                if (Number.isFinite(sz) && sz > 0 && sz !== (c.size ?? 1)) {
+                  history.dispatch(new UpdateEntity({ ...c, size: sz }));
+                }
               }}
               className={numCls}
             />

@@ -16,8 +16,9 @@ export function AppGate() {
 
   useEffect(() => {
     const isRoom = /room=[\w-]+/.test(window.location.hash);
-    const isCiz = new URLSearchParams(window.location.search).has('ciz');
-    setPhase(isRoom || isCiz ? 'app' : 'start');
+    // CanvasStage ile aynı kontrol: boş/whitespace `?ciz=` baypas SAYILMAZ (yoksa çizimsiz çıkmaz sokak).
+    const ciz = new URLSearchParams(window.location.search).get('ciz');
+    setPhase(isRoom || (ciz && ciz.trim()) ? 'app' : 'start');
   }, []);
 
   if (phase === 'loading') return null; // ilk paint: nötr (hidrasyon güvenli)

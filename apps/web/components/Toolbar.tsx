@@ -20,7 +20,7 @@ import { importDxf, importDwg, exportDxf, exportSvg } from '@zynpparti/io';
 import { Undo2, Redo2, Maximize, PanelLeft, PanelLeftClose } from 'lucide-react';
 import { alertDialog, confirmDialog } from '@/lib/dialog';
 import { toast } from '@/lib/toast';
-import { projectFileBase, useProjectName, setProjectName } from '@/lib/project-name';
+import { projectFileBase, useProjectName, setProjectName, DEFAULT_PROJECT_NAME } from '@/lib/project-name';
 import { VesnaLogo } from './VesnaLogo';
 import { TOOL_ICONS } from './toolbar-icons';
 
@@ -294,10 +294,10 @@ export function Toolbar({
     return visibleEntities().some((e) => e.type !== 'sheet' && e.type !== 'comment');
   }
 
-  /** Çizim boşsa export'u engelle + açıklayıcı uyarı göster. Dönüş true = boş (çağıran return etmeli). */
+  /** Çizim boşsa export'u engelle + nötr bilgi göster. Dönüş true = boş (çağıran return etmeli). */
   function blockExportIfEmpty(): boolean {
     if (hasDrawableContent()) return false;
-    toast('Sayfa boş — dışa aktarmadan önce duvar, oda gibi bir şeyler çiz.', 'info', 4500);
+    toast('Projede dışa aktarılacak bir yapı bulunmuyor.', 'info', 4000);
     return true;
   }
 
@@ -341,7 +341,7 @@ export function Toolbar({
           ...toAdd.map((ent) => new AddEntity(ent)),
         ]),
       );
-      setProjectName(file.name.replace(/\.json$/i, '') || 'Adsız Plan'); // proje adını dosyadan türet
+      setProjectName(file.name.replace(/\.json$/i, '') || DEFAULT_PROJECT_NAME); // proje adını dosyadan türet
       toast(`Model açıldı (${toAdd.length} öğe).`, 'success');
     } catch (err) {
       console.error('Model açma hatası:', err);

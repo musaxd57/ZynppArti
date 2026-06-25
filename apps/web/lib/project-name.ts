@@ -11,7 +11,9 @@ import { useSyncExternalStore } from 'react';
  */
 
 const STORAGE_KEY = 'zynpparti.projectName';
-const DEFAULT_NAME = 'Adsız Plan';
+/** Adsız projenin tek varsayılan adı — StartScreen + Toolbar açma yedeği hep bunu kullanır (tutarlı). */
+export const DEFAULT_PROJECT_NAME = 'Adsız Plan';
+const DEFAULT_NAME = DEFAULT_PROJECT_NAME;
 
 let name = DEFAULT_NAME;
 const listeners = new Set<() => void>();
