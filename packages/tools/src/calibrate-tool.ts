@@ -1,7 +1,7 @@
 import { Graphics } from 'pixi.js';
 import type { Vec2 } from '@zynpparti/geometry';
 import { distance } from '@zynpparti/geometry';
-import { BatchCommand, UpdateEntity, type Wall } from '@zynpparti/document';
+import { BatchCommand, UpdateEntity, scaleEntityAbout } from '@zynpparti/document';
 import type { SceneTool, ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
 
@@ -67,21 +67,15 @@ export class CalibrateTool implements SceneTool {
         if (this.gen !== myGen) return; // araç değişti/iptal → ölçek uygulama
         if (real == null || !Number.isFinite(real) || real <= 0) return;
         const factor = real / measured;
-        const walls = this.ctx.store.all().filter((e): e is Wall => e.type === 'wall');
-        if (walls.length === 0) return;
-        const cmds = walls.map((w) => new UpdateEntity(this.scaleWall(w, factor, a)));
+        // TÜM çizimi tek-tip ölçekle (duvar + metin + ölçü + parsel + blok…), yalnız duvarları değil.
+        // Kalibrasyon = içe aktarılan çizimi gerçek ölçeğe taşıyan benzerlik dönüşümü (Rayon modeli,
+        // araştırma 2026-06-25). Türetilmiş mahaller hariç (RoomManager duvarlardan yeniden türetir).
+        const entities = this.ctx.store.all().filter((e) => e.type !== 'space');
+        if (entities.length === 0) return;
+        const cmds = entities.map((e) => new UpdateEntity(scaleEntityAbout(e, factor, a)));
         this.ctx.history.dispatch(new BatchCommand('Ölçekle', cmds));
       })
       .catch((err) => console.error('Kalibrasyon diyaloğu başarısız:', err));
-  }
-
-  private scaleWall(w: Wall, f: number, o: Vec2): Wall {
-    return {
-      ...w,
-      start: { x: o.x + (w.start.x - o.x) * f, y: o.y + (w.start.y - o.y) * f },
-      end: { x: o.x + (w.end.x - o.x) * f, y: o.y + (w.end.y - o.y) * f },
-      thickness: w.thickness * f,
-    };
   }
 
   private render(): void {

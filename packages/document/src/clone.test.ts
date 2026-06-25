@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isClonable, offsetClone, offsetEntity } from './clone';
+import { isClonable, offsetClone, offsetEntity, scaleEntityAbout } from './clone';
 import type {
   Annotation,
   Block,
@@ -170,5 +170,47 @@ describe('offsetClone (yapıştır — bağlı boşluk remap)', () => {
   it('duvarı grupta OLMAYAN boşluk eski wallId-sinde kalır', () => {
     const out = offsetClone([opening], 50, 0); // yalnız boşluk
     expect((out[0] as Opening).wallId).toBe('w');
+  });
+});
+
+describe('scaleEntityAbout (kalibrasyon — tek-tip ölçek)', () => {
+  const O = { x: 0, y: 0 };
+
+  it('duvarı origin etrafında ölçekler + kalınlık/yükseklik çarpılır', () => {
+    const w: Wall = { ...wall, start: { x: 10, y: 0 }, end: { x: 110, y: 0 }, thickness: 15, height: 270 };
+    const s = scaleEntityAbout(w, 2, O) as Wall;
+    expect(s.start).toEqual({ x: 20, y: 0 });
+    expect(s.end).toEqual({ x: 220, y: 0 });
+    expect(s.thickness).toBe(30);
+    expect(s.height).toBe(540);
+  });
+
+  it('ölçü a/b ölçeklenir, offset çarpılır (uzunluk a/b-den türer → çift uygulama yok)', () => {
+    const d = scaleEntityAbout(dimension, 3, O) as Dimension;
+    expect(d.b).toEqual({ x: 600, y: 0 }); // 200×3
+    expect(d.offset).toBe(90); // 30×3
+  });
+
+  it('boşluk: net genişlik ölçeklenir, t korunur (duvarıyla taşınır)', () => {
+    const s = scaleEntityAbout(opening, 2, O) as Opening;
+    expect(s.width).toBe(180); // 90×2
+    expect(s.t).toBe(0.5); // değişmez
+  });
+
+  it('metin: konum ölçeklenir + yükseklik çarpılır', () => {
+    const a = scaleEntityAbout(annotation, 2, O) as Annotation;
+    expect(a.position).toEqual({ x: 10, y: 10 }); // (5,5)×2
+    expect(a.height).toBe(50); // 25×2
+  });
+
+  it('türetilmiş space ölçeklenmez (RoomManager yeniden türetir)', () => {
+    expect(scaleEntityAbout(space, 5, O)).toBe(space);
+  });
+
+  it('origin merkez alınır (origin sabit kalır)', () => {
+    const w: Wall = { ...wall, start: { x: 100, y: 100 }, end: { x: 200, y: 100 } };
+    const s = scaleEntityAbout(w, 2, { x: 100, y: 100 }) as Wall;
+    expect(s.start).toEqual({ x: 100, y: 100 }); // origin sabit
+    expect(s.end).toEqual({ x: 300, y: 100 });
   });
 });

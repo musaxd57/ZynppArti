@@ -1,3 +1,4 @@
+import type { Vec2 } from '@zynpparti/geometry';
 import type { Entity, EntityId } from './entities';
 import { createEntityId } from './id';
 
@@ -47,6 +48,44 @@ export function offsetEntity(e: Entity, dx: number, dy: number): Entity {
     case 'space':
     case 'opening':
       return e;
+  }
+}
+
+/**
+ * Bir entity'yi `origin` etrafında `f` katı ölçekler (kalibrasyon — saf). Tek-tip benzerlik dönüşümü:
+ * tüm koordinatlar origin'e göre ölçeklenir, gerçek uzunluk taşıyan skaler alanlar (duvar kalınlığı/
+ * yüksekliği, boşluk genişliği, ölçü offset, metin yüksekliği) da çarpılır. Ölçü UZUNLUĞU a/b'den
+ * türediği için kendiliğinden güncellenir (stored değer çarpılmaz → çift uygulama yok — araştırma 2026-06-25).
+ * Türetilmiş `space` ÖLÇEKLENMEZ (RoomManager duvarlardan yeniden türetir). Blok ayak izi katalog-sabiti
+ * olduğundan yalnız konumu taşınır (sembol boyutu korunur).
+ */
+export function scaleEntityAbout(e: Entity, f: number, origin: Vec2): Entity {
+  const sp = (p: Vec2): Vec2 => ({ x: origin.x + (p.x - origin.x) * f, y: origin.y + (p.y - origin.y) * f });
+  switch (e.type) {
+    case 'wall':
+      return {
+        ...e,
+        start: sp(e.start),
+        end: sp(e.end),
+        thickness: e.thickness * f,
+        ...(e.height != null ? { height: e.height * f } : {}),
+      };
+    case 'opening':
+      return { ...e, width: e.width * f }; // t parametrik → duvarıyla taşınır; yalnız net genişlik ölçeklenir
+    case 'dimension':
+      return { ...e, a: sp(e.a), b: sp(e.b), offset: e.offset * f };
+    case 'section':
+      return { ...e, a: sp(e.a), b: sp(e.b) };
+    case 'parcel':
+      return { ...e, boundary: e.boundary.map(sp) };
+    case 'block':
+    case 'sheet':
+    case 'comment':
+      return { ...e, position: sp(e.position) };
+    case 'annotation':
+      return { ...e, position: sp(e.position), height: e.height * f };
+    case 'space':
+      return e; // türetilmiş — ölçeklenmez (RoomManager yeniden hesaplar)
   }
 }
 
