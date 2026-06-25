@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { serializeModel, deserializeModel, MODEL_FORMAT_VERSION } from './serialize';
-import type { Annotation, Entity, SectionLine, Wall } from './entities';
+import type { Annotation, Block, Dimension, Entity, SectionLine, Sheet, Wall } from './entities';
 
 const wall: Wall = {
   id: 'w1',
@@ -91,5 +91,60 @@ describe('serializeModel / deserializeModel', () => {
 
   it('boş model round-trip', () => {
     expect(deserializeModel(serializeModel([]))).toEqual([]);
+  });
+
+  // KÜME 4 — kalan tiplerin derin doğrulaması (Sheet/Annotation/Section/Block/Dimension)
+  const block: Block = {
+    id: 'bl1',
+    type: 'block',
+    layerId: 'furniture',
+    kind: 'sofa',
+    position: { x: 50, y: 50 },
+    rotation: 0,
+  };
+  const sheet: Sheet = {
+    id: 'sh1',
+    type: 'sheet',
+    layerId: 'sheets',
+    position: { x: 0, y: 0 },
+    size: 'A3',
+    orientation: 'landscape',
+    scale: 50,
+    title: 'Kat Planı',
+  };
+  const dim: Dimension = {
+    id: 'd1',
+    type: 'dimension',
+    layerId: 'default',
+    a: { x: 0, y: 0 },
+    b: { x: 500, y: 0 },
+    offset: 100,
+  };
+
+  it('block/sheet/dimension geçerli round-trip', () => {
+    const back = deserializeModel(serializeModel([block, sheet, dim]));
+    expect(back).toHaveLength(3);
+    expect(back).toContainEqual(block);
+    expect(back).toContainEqual(sheet);
+    expect(back).toContainEqual(dim);
+  });
+
+  it('kalan tiplerin bozuk alanları atlanır (derin doğrulama genişletmesi)', () => {
+    const json = JSON.stringify({
+      format: 'zynpparti-model',
+      version: 1,
+      entities: [
+        wall, // sağlam
+        { ...block, kind: 'uydurma-blok' }, // BLOCK_DEFS'te yok → atla
+        { ...sheet, size: 'A9' }, // geçersiz kağıt boyutu → atla
+        { ...sheet, id: 'sh2', orientation: 'diagonal' }, // geçersiz yönelim → atla
+        { ...sheet, id: 'sh3', scale: 0 }, // ölçek > 0 olmalı → atla
+        { ...dim, offset: NaN }, // NaN offset → atla
+        { ...section, label: 123 }, // label string değil → atla
+        { ...ann, height: NaN }, // NaN yükseklik → atla
+      ],
+    });
+    const back = deserializeModel(json);
+    expect(back.map((e: Entity) => e.id)).toEqual(['w1']); // yalnız sağlam duvar kalır
   });
 });

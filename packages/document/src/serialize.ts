@@ -1,4 +1,6 @@
 import type { Entity, EntityType } from './entities';
+import { BLOCK_DEFS } from './block';
+import { SHEET_SIZES } from './sheet';
 
 /**
  * Model serileştirme (saf TS) — tüm çizimi tek JSON dosyasına yazar/okur. Kalıcılık çekirdeği:
@@ -113,13 +115,32 @@ function isValidEntity(v: unknown): v is Entity {
         isFiniteNum(v['width'])
       );
     case 'dimension':
+      // offset NaN → ölçü çizgisi konumu bozulur (render-dimension dik kaydırma).
+      return isVec2(v['a']) && isVec2(v['b']) && isFiniteNum(v['offset']);
     case 'section':
-      return isVec2(v['a']) && isVec2(v['b']);
+      // label baş harfi (A—A') ekran-sabit etiket olarak çizilir; eksikse render patlar.
+      return isVec2(v['a']) && isVec2(v['b']) && typeof v['label'] === 'string';
     case 'block':
-      return typeof v['kind'] === 'string' && isVec2(v['position']) && isFiniteNum(v['rotation']);
+      // kind, BLOCK_DEFS kataloğunda olmalı (yoksa boyut/sembol araması undefined → çizim/AABB çöker).
+      return (
+        typeof v['kind'] === 'string' &&
+        Object.prototype.hasOwnProperty.call(BLOCK_DEFS, v['kind'] as string) &&
+        isVec2(v['position']) &&
+        isFiniteNum(v['rotation'])
+      );
     case 'sheet':
-      return isVec2(v['position']);
+      // size/orientation/scale paftanın model-uzayı boyutunu türetir (sheetModelSize); geçersizse NaN boyut.
+      return (
+        isVec2(v['position']) &&
+        SHEET_SIZES.includes(v['size'] as (typeof SHEET_SIZES)[number]) &&
+        (v['orientation'] === 'portrait' || v['orientation'] === 'landscape') &&
+        isFiniteNum(v['scale']) &&
+        (v['scale'] as number) > 0 &&
+        typeof v['title'] === 'string'
+      );
     case 'annotation':
+      // height (satır yüksekliği, dünya cm) NaN → metin atlası ölçeklemesi bozulur.
+      return isVec2(v['position']) && typeof v['text'] === 'string' && isFiniteNum(v['height']);
     case 'comment':
       return isVec2(v['position']) && typeof v['text'] === 'string';
     default:
