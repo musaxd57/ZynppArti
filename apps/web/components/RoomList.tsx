@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { toast } from '@/lib/toast';
+import { projectFileBase } from '@/lib/project-name';
 import {
   MATERIALS,
   ROOM_TYPES,
@@ -139,7 +140,7 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
     XLSX.utils.book_append_sheet(wb, ws, 'Mahaller');
     XLSX.utils.book_append_sheet(wb, summaryWs, 'Özet');
     try {
-      XLSX.writeFile(wb, 'mahal-listesi.xlsx');
+      XLSX.writeFile(wb, `${projectFileBase()}-mahal-listesi.xlsx`);
       toast('Mahal listesi indirildi.', 'success');
     } catch (err) {
       console.error('Excel export başarısız:', err);

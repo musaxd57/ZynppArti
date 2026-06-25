@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { projectFileBase } from '@/lib/project-name';
 import * as THREE from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import {
@@ -273,7 +274,7 @@ export function View3D({ store }: { store: EntityStore }) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'zynpparti-3b.glb';
+            a.download = `${projectFileBase()}-3b.glb`;
             a.click();
             URL.revokeObjectURL(url);
           },
@@ -287,7 +288,7 @@ export function View3D({ store }: { store: EntityStore }) {
         renderer.render(scene, cam);
         const a = document.createElement('a');
         a.href = renderer.domElement.toDataURL('image/png');
-        a.download = 'zynpparti-3b.png';
+        a.download = `${projectFileBase()}-3b.png`;
         a.click();
       };
 

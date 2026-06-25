@@ -19,6 +19,7 @@ import {
 import { pointInPolygon, findFaces } from '@zynpparti/geometry';
 import { VesnaLogo } from './VesnaLogo';
 import { ProgramBuilder } from './ProgramBuilder';
+import { useProjectFileBase } from '@/lib/project-name';
 
 /**
  * Vesna — uygulamanın kendi AI paneli (sağlayıcı/model adı GÖSTERİLMEZ; "kendi AI'mız" hissi).
@@ -428,6 +429,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
   // Puan bir kez hesaplanıp saklanır (her render'da findFaces çağırma — O(n²) önle).
   const [variants, setVariants] = useState<{ layout: Layout; score: number | null }[] | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const renderFileBase = useProjectFileBase(); // render görselinin indirme adı (proje adından)
   const abortRef = useRef<AbortController | null>(null);
   const idRef = useRef(0);
   const typingRef = useRef<number | null>(null);
@@ -792,7 +794,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
                 />
                 <a
                   href={m.image}
-                  download="zynpparti-render.png"
+                  download={`${renderFileBase}-render.png`}
                   className="mt-1 inline-block text-xs text-blue-300 hover:underline"
                 >
                   ⤓ Görseli indir

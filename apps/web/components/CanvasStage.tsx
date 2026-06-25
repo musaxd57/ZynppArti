@@ -34,6 +34,7 @@ import { BlockPalette } from './BlockPalette';
 import { StatusBar } from './StatusBar';
 import { ShortcutsHelp } from './ShortcutsHelp';
 import { PerfHud, isPerfEnabled } from './PerfHud';
+import { loadProjectName } from '@/lib/project-name';
 
 /** Presence imleç renkleri (kullanıcı clientID'sine göre döner) — accent/semantik tonlar. */
 const PRESENCE_COLORS = [0x5b5bd6, 0xffb454, 0x71d083, 0xff9592, 0x4fd1e0, 0xe05bd6, 0xf5d90a];
@@ -84,6 +85,11 @@ export function CanvasStage() {
     } catch {
       /* yoksay */
     }
+  }, []);
+
+  // Kalıcı proje adını yükle (indirme dosya adları bundan türer). Bir kez, mount'ta.
+  useEffect(() => {
+    loadProjectName();
   }, []);
 
   // Dock genişliklerini hatırla (localStorage).

@@ -18,6 +18,7 @@ import { importDxf, importDwg, exportDxf, exportSvg } from '@zynpparti/io';
 import { Undo2, Redo2, Maximize, PanelLeft, PanelLeftClose } from 'lucide-react';
 import { alertDialog, confirmDialog } from '@/lib/dialog';
 import { toast } from '@/lib/toast';
+import { projectFileBase, useProjectName, setProjectName } from '@/lib/project-name';
 import { VesnaLogo } from './VesnaLogo';
 import { TOOL_ICONS } from './toolbar-icons';
 
@@ -118,6 +119,8 @@ export function Toolbar({
     }
   }
 
+  const projectName = useProjectName(); // üstte düzenlenebilir proje adı (indirmeler bunu kullanır)
+
   function download(href: string, name: string): void {
     const a = document.createElement('a');
     a.href = href;
@@ -135,7 +138,7 @@ export function Toolbar({
       // PNG dev data-URL + ağır extract sonrası toast render'ını yarıştırıp yutuyordu — denetim bulgusu.)
       const blob = await (await fetch(dataUrl)).blob();
       const url = URL.createObjectURL(blob);
-      download(url, 'zynpparti.png');
+      download(url, `${projectFileBase()}.png`);
       URL.revokeObjectURL(url);
       toast('PNG indirildi.', 'success');
     } catch (err) {
@@ -188,7 +191,7 @@ export function Toolbar({
       } finally {
         el.remove();
       }
-      pdf.save('zynpparti.pdf');
+      pdf.save(`${projectFileBase()}.pdf`);
       toast('PDF indirildi (vektör).', 'success');
       return;
     } catch (err) {
@@ -207,7 +210,7 @@ export function Toolbar({
     }
     const { w, h } = fit(img.width / img.height || 1);
     pdf.addImage(dataUrl, 'PNG', (pw - w) / 2, (ph - h) / 2, w, h);
-    pdf.save('zynpparti.pdf');
+    pdf.save(`${projectFileBase()}.pdf`);
     toast('PDF indirildi.', 'success');
   }
 
@@ -219,7 +222,7 @@ export function Toolbar({
   function onExportDxf(): void {
     const blob = new Blob([exportDxf(visibleEntities())], { type: 'application/dxf' });
     const url = URL.createObjectURL(blob);
-    download(url, 'zynpparti.dxf');
+    download(url, `${projectFileBase()}.dxf`);
     URL.revokeObjectURL(url);
     toast('DXF indirildi.', 'success');
   }
@@ -234,7 +237,7 @@ export function Toolbar({
   function onSaveJson(): void {
     const blob = new Blob([serializeModel(store.all())], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    download(url, 'zynpparti.json');
+    download(url, `${projectFileBase()}.json`);
     URL.revokeObjectURL(url);
     toast('Model kaydedildi (.json).', 'success');
   }
@@ -265,7 +268,7 @@ export function Toolbar({
   function onExportSvg(): void {
     const blob = new Blob([exportSvg(visibleEntities())], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
-    download(url, 'zynpparti.svg');
+    download(url, `${projectFileBase()}.svg`);
     URL.revokeObjectURL(url);
     toast('SVG indirildi.', 'success');
   }
@@ -275,6 +278,15 @@ export function Toolbar({
 
   return (
     <div className="z-30 flex w-full shrink-0 flex-nowrap items-center gap-1 overflow-x-auto border-b border-[var(--border-soft)] bg-[var(--surface-2)] p-1.5 text-[13px] text-[var(--text-1)]">
+      <input
+        aria-label="Proje adı"
+        value={projectName}
+        onChange={(e) => setProjectName(e.target.value)}
+        placeholder="Proje adı"
+        title="Proje adı — indirilen dosyalar (PNG/DXF/PDF…) bu adı kullanır"
+        className="mr-0.5 w-28 shrink-0 rounded-md bg-[var(--surface-3)] px-2 py-1 text-[12px] font-medium text-[var(--text-1)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+      />
+      <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       {TOOLS.map((t) => {
         const Icon = TOOL_ICONS[t.name];
         return (

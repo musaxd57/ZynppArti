@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { projectFileBase } from '@/lib/project-name';
 import {
   computeSection,
   solidBands,
@@ -162,7 +163,7 @@ export function SectionPanel({ store, history, selectedIds }: SectionPanelProps)
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `zynpparti-kesit-${section.label}.svg`;
+                a.download = `${projectFileBase()}-kesit-${section.label}.svg`;
                 a.click();
                 URL.revokeObjectURL(url);
               }}
