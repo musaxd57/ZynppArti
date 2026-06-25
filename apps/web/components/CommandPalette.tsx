@@ -127,7 +127,10 @@ export function CommandPalette({ manager, history, zoomToFit }: CommandPalettePr
                 key={i}
                 type="button"
                 onClick={() => runAt(i)}
-                onPointerMove={() => setSelected(i)}
+                // Yalnız seçim gerçekten değişince state güncelle — her piksel hareketinde re-render fırtınası olmasın.
+                onPointerMove={() => {
+                  if (sel !== i) setSelected(i);
+                }}
                 className={`flex w-full items-center justify-between px-4 py-2 text-left ${
                   i === sel ? 'bg-white/15' : 'hover:bg-white/10'
                 }`}

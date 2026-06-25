@@ -7,6 +7,7 @@ function toast(message: string): void {
   if (typeof document === 'undefined') return;
   const el = document.createElement('div');
   el.textContent = message;
+  el.setAttribute('role', 'alert'); // ekran okuyucuya hemen (assertive) duyur
   el.className =
     'fixed bottom-4 right-4 z-[100] max-w-sm rounded-lg bg-red-600/90 px-4 py-2 text-sm text-white shadow-lg';
   document.body.appendChild(el);

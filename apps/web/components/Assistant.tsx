@@ -31,6 +31,28 @@ import { ProgramBuilder } from './ProgramBuilder';
  * /api/copilot route'una fetch yapılır + saf document/geometry yardımcıları kullanılır.
  */
 
+/**
+ * Yanıtı güvenle JSON'a çözer: ÖNCE res.ok kontrol et (yoksa hata mesajını oku), sonra parse et.
+ * Eskiden draw/render dalları `res.json()`'ı res.ok'tan önce çağırıyordu → bir ağ-geçidi 502'si (HTML
+ * gövde) "Unexpected token <" SyntaxError'ı veriyordu, temiz hata yerine. (Denetim bulgusu.)
+ */
+async function readJson(res: Response): Promise<unknown> {
+  if (!res.ok) {
+    let msg = `Hata (${res.status})`;
+    try {
+      msg = ((await res.json()) as { error?: string }).error ?? msg;
+    } catch {
+      /* JSON değil (HTML hata sayfası vb.) → genel mesaj */
+    }
+    throw new Error(msg);
+  }
+  try {
+    return await res.json();
+  } catch {
+    throw new Error('Sunucu yanıtı okunamadı.');
+  }
+}
+
 type Mode = 'ask' | 'draw' | 'render';
 
 interface Msg {
@@ -531,6 +553,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
     setError(null);
     setLoadingMode(m);
     const ctrl = new AbortController();
+    abortRef.current?.abort(); // varsa önceki in-flight isteği iptal et (yetim controller bırakma)
     abortRef.current = ctrl;
     try {
       if (m === 'draw') {
@@ -540,8 +563,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
           body: JSON.stringify({ mode: 'design', prompt: text, hint: buildDesignHint(store) }),
           signal: ctrl.signal,
         });
-        const data: unknown = await res.json();
-        if (!res.ok) throw new Error((data as { error?: string }).error ?? `Hata (${res.status})`);
+        const data = await readJson(res);
         const vs = (data as { variants?: Layout[] }).variants ?? [];
         if (vs.length === 0) throw new Error('Plan üretilemedi, tekrar dener misin?');
         if (vs.length === 1) {
@@ -563,8 +585,7 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
           body: JSON.stringify({ mode: 'render', prompt: buildRenderPrompt(text, store) }),
           signal: ctrl.signal,
         });
-        const data: unknown = await res.json();
-        if (!res.ok) throw new Error((data as { error?: string }).error ?? `Hata (${res.status})`);
+        const data = await readJson(res);
         const image = (data as { image?: string }).image;
         const id = nextId();
         setThread('render', (arr) => [
@@ -596,8 +617,13 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
         const aid = nextId();
         setThread('ask', (arr) => [...arr, { id: aid, role: 'assistant', content: '' }]);
         const reader = res.body?.getReader();
-        if (reader) {
-          const dec = new TextDecoder();
+        if (!reader) {
+          // Gövde yok → boş balonu kaldır, temiz hata ver (boş baloncuk bırakma).
+          setThread('ask', (arr) => arr.filter((x) => x.id !== aid));
+          throw new Error('Yanıt akışı alınamadı.');
+        }
+        const dec = new TextDecoder();
+        try {
           for (;;) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -609,6 +635,15 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
           // bölünmüşse kaybolmasın (yanıtın son karakteri düşmesin).
           const tail = dec.decode();
           if (tail) setThread('ask', (arr) => arr.map((x) => (x.id === aid ? { ...x, content: x.content + tail } : x)));
+        } catch (streamErr) {
+          // İptal → dış catch sessiz geçsin diye yeniden fırlat. Diğer akış kopması → kısmi yanıta not
+          // düş (boş/yarım balonu hata diye gösterme; kullanıcı gelen kısmı görür).
+          if (streamErr instanceof DOMException && streamErr.name === 'AbortError') throw streamErr;
+          setThread('ask', (arr) =>
+            arr.map((x) => (x.id === aid ? { ...x, content: `${x.content}\n\n_(yanıt yarıda kesildi)_` } : x)),
+          );
+        } finally {
+          void reader.cancel().catch(() => {});
         }
       }
     } catch (e) {
@@ -702,7 +737,13 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
       </div>
 
       {/* Mesajlar */}
-      <div ref={scrollRef} className="flex flex-1 flex-col gap-2 overflow-y-auto p-3">
+      <div
+        ref={scrollRef}
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions text"
+        className="flex flex-1 flex-col gap-2 overflow-y-auto p-3"
+      >
         {messages.length === 0 && (
           <div className="m-auto max-w-[280px] text-center text-sm text-white/70">
             <VesnaLogo className="mx-auto mb-2 h-8 w-8 text-white/50" />
@@ -802,7 +843,11 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
           })()}
       </div>
 
-      {error && <div className="mx-3 rounded bg-red-500/15 p-2 text-xs text-red-200">{error}</div>}
+      {error && (
+        <div role="alert" className="mx-3 rounded bg-red-500/15 p-2 text-xs text-red-200">
+          {error}
+        </div>
+      )}
 
       {/* Girdi */}
       <div className="border-t border-white/10 p-3">
