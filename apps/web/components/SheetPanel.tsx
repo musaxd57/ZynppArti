@@ -70,7 +70,7 @@ export function SheetPanel({ store, history, onZoomTo }: SheetPanelProps) {
   const sel = 'rounded bg-white/10 px-1 py-0.5 text-xs outline-none focus:bg-white/20';
 
   return (
-    <Panel title="Paftalar" badge={sheets.length} widthClass="w-full" defaultOpen={false}>
+    <Panel title="Paftalar (sayfalar)" badge={sheets.length} widthClass="w-full" defaultOpen={true}>
       <div className="mb-2 flex items-center gap-1">
         <button
           type="button"

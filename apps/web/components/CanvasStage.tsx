@@ -9,7 +9,7 @@ import {
   type CanvasHandle,
 } from '@zynpparti/engine';
 import type { CollabHandle } from '@zynpparti/collab';
-import { EntityStore, History, RoomManager, RemoveEntity, UpdateEntity, sheetModelSize, deserializeModel } from '@zynpparti/document';
+import { EntityStore, History, RoomManager, RemoveEntity, UpdateEntity, sheetModelSize, deserializeModel, makeSheet, createEntityId } from '@zynpparti/document';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
 import { seedDemo } from '@/lib/demo-seed';
 import { Toolbar } from './Toolbar';
@@ -162,6 +162,7 @@ export function CanvasStage() {
     // Başlangıç içeriği: karşılama ekranından "Aç" geldiyse o modeli yükle; "Yeni proje" ise BOŞ başla;
     // (collab/?ciz baypası veya doğrudan açılış) ise eski davranış: demo tohum.
     const pendingOpen = consumePendingOpen();
+    const startEmpty = isStartEmpty();
     if (pendingOpen) {
       try {
         for (const e of deserializeModel(pendingOpen)) {
@@ -170,8 +171,14 @@ export function CanvasStage() {
       } catch (err) {
         console.error('Başlangıç model açma başarısız:', err);
       }
-    } else if (!isStartEmpty()) {
+    } else if (!startEmpty) {
       seedDemo(store); // geçici demo duvarlar (yalnız demo/baypas modunda)
+    } else {
+      // Yeni boş proje: açılışta 1 PAFTA (sayfa) gelir — kullanıcının gördüğü "büyük kare" budur.
+      // Panelden "+ Pafta ekle" ile çoğaltılır (AutoCAD'de layout/pafta eklemek gibi). Origin'de ortalı.
+      const def = makeSheet({ x: 0, y: 0 }, { sheetNo: '1' });
+      const { w, h } = sheetModelSize({ ...def, id: 'tmp' });
+      store.put({ ...makeSheet({ x: -w / 2, y: -h / 2 }, { sheetNo: '1' }), id: createEntityId() });
     }
 
     let handle: CanvasHandle | undefined;
@@ -186,6 +193,7 @@ export function CanvasStage() {
         return;
       }
       handle = h;
+      if (startEmpty) h.zoomToFit(); // yeni proje: açılıştaki paftayı (büyük kareyi) ekrana sığdır
       const history = new History(store);
       // Mahalleri otomatik bul (engine entity katmanı abone olduktan sonra).
       rooms = new RoomManager(store);
