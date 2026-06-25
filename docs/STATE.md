@@ -121,6 +121,17 @@
 
 ## GÜNLÜK
 
+### 2026-06-25 (gece geç — 8-ajan tüm-proje denetimi + düzeltmeler) main (canlı)
+Moses "bol agent çalıştır, didik didik, emin ol düzelt" dedi (kendisi yok). 8 ajan tüm paketleri taradı; **onaylanan güvenli HIGH/MED'ler düzeltildi**, test 365→**367**:
+- **Sayfa düzeltmeleri (önceki istek):** boş-export uyarısı nötr dil ("Projede dışa aktarılacak yapı yok"); StartScreen "Aç" bozuk-.json doğrulama+toast; AppGate ?ciz= hizalama; yorum-boyut + 3 sayısal PropertiesPanel girdisi onChange→onBlur (undo kirlenmesi); tek "Adsız Plan" sabiti.
+- **engine:** entity-bounds NaN guard (wall/annotation/comment/sheet → rbush bozulması); onDblClick gizli/kilitli katmanı atlar.
+- **collab (güvenlik):** room-labels uzak etiketleri `sanitizeLabel` ile doğrular (karantina baypası kapatıldı — sınırlı name, bilinen roomType enum).
+- **io:** svg-export `region` artık KIRPAR (clipPath) → çok-sayfa PDF her sayfaya tüm çizimi basmıyordu, düzeldi; geçersiz region full-bounds'a düşer; $INSUNITS birim tablosu tamamlandı (mile/km/yard/dm…).
+- **takeoff:** NaN Wall.height/storeyHeight metrajı zehirlemez (safeH/safeLen); boşluklar DUVAR-BAZINDA düşülür (dar duvardaki boşluk komşunun alanını çalmıyor); +2 regresyon testi.
+- **web:** RoomList NaN guard ("NaN m²"/Excel); Assistant send() abort-yarışı (spinner) guard.
+- **FLAG (Moses'a — riskli/büyük/dokümante, emin olmadan dokunulmadı):** geometry label-noktası-dışarı & hatch concave taşma (★, test gerek); engine BitmapFont remount lifecycle + sheet/zoom rebuild perf + pruneEmptyLayers perf; web pageCount O(n) tarama + StrictMode pendingOpen (dev-only); ai timeout yok + tier-abuse (maliyet, ADR-0019 ertelendi); copilot konkav-oda convex-hull genişliği; tools snap-to-self & mid-gesture tool-switch & opening-genişlik>duvar; BatchCommand Update+Remove-aynı-id (latent/ulaşılamaz). **Faz 3 backend/auth kalıcılığı hâlâ büyük eksik (bilinen).**
+- Zincir yeşil (typecheck 9/9 · lint 9/9 · 367 test · web build). 7 commit + push.
+
 ### 2026-06-25 (gece — proje-adı + karşılama ekranı + çoklu-pafta + AI yerleştirme) `feat/project-name-sheets` → main (canlı)
 Moses'ın büyük özellik isteği (5-agent haritalama + didik didik). Hepsi main'e merge + canlı. Test 359→**365**:
 - **Proje adı:** `lib/project-name.ts` modül-store → 12 indirme sahası proje adını kullanır (zynpparti yerine) + üstte düzenlenebilir "Proje adı" alanı. sanitizeFilename (Türkçe korunur). İç `zynpparti.*` localStorage anahtarları korundu.
