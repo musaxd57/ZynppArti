@@ -9,7 +9,7 @@ import {
   type CanvasHandle,
 } from '@zynpparti/engine';
 import type { CollabHandle } from '@zynpparti/collab';
-import { EntityStore, History, RoomManager, RemoveEntity, UpdateEntity, sheetModelSize } from '@zynpparti/document';
+import { EntityStore, History, RoomManager, RemoveEntity, UpdateEntity, sheetModelSize, deserializeModel } from '@zynpparti/document';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
 import { seedDemo } from '@/lib/demo-seed';
 import { Toolbar } from './Toolbar';
@@ -35,6 +35,7 @@ import { StatusBar } from './StatusBar';
 import { ShortcutsHelp } from './ShortcutsHelp';
 import { PerfHud, isPerfEnabled } from './PerfHud';
 import { loadProjectName } from '@/lib/project-name';
+import { isStartEmpty, consumePendingOpen } from '@/lib/app-start';
 
 /** Presence imleç renkleri (kullanıcı clientID'sine göre döner) — accent/semantik tonlar. */
 const PRESENCE_COLORS = [0x5b5bd6, 0xffb454, 0x71d083, 0xff9592, 0x4fd1e0, 0xe05bd6, 0xf5d90a];
@@ -157,7 +158,20 @@ export function CanvasStage() {
     if (!el) return;
 
     const store = new EntityStore();
-    seedDemo(store); // geçici demo duvarlar (kendi history'siyle "bakılı")
+    // Başlangıç içeriği: karşılama ekranından "Aç" geldiyse o modeli yükle; "Yeni proje" ise BOŞ başla;
+    // (collab/?ciz baypası veya doğrudan açılış) ise eski davranış: demo tohum.
+    const pendingOpen = consumePendingOpen();
+    if (pendingOpen) {
+      try {
+        for (const e of deserializeModel(pendingOpen)) {
+          if (e.type !== 'space') store.put(e); // mahaller RoomManager'ca yeniden türetilir
+        }
+      } catch (err) {
+        console.error('Başlangıç model açma başarısız:', err);
+      }
+    } else if (!isStartEmpty()) {
+      seedDemo(store); // geçici demo duvarlar (yalnız demo/baypas modunda)
+    }
 
     let handle: CanvasHandle | undefined;
     let manager: ToolManager | undefined;

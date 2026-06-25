@@ -258,6 +258,7 @@ export function Toolbar({
           ...toAdd.map((ent) => new AddEntity(ent)),
         ]),
       );
+      setProjectName(file.name.replace(/\.json$/i, '') || 'Adsız Plan'); // proje adını dosyadan türet
       toast(`Model açıldı (${toAdd.length} öğe).`, 'success');
     } catch (err) {
       console.error('Model açma hatası:', err);
