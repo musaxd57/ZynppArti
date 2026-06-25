@@ -9,7 +9,7 @@
 
 **🚀 CANLI YAYINDA:** Web `https://vesna.design` (Vercel) + sync `wss://zynpparti-production.up.railway.app` (Railway). 3 AI anahtarı Vercel env'de; AI adı **Vesna**.
 **Faz:** 2 (AI copilot ✅) + Faz 4 erken önizleme (AI üretici ✅) + Faz 1 DWG import ✅ + Faz 3 (presence+seçim+yorum) + Faz 5 (3B+kesit+glTF+kamera keyframe) önizleme.
-**Branch:** `main` canlıda. **AKTİF İŞ:** `feat/autonomous-13h-2026-06-25` (off `feat/auth-clerk`) — 2026-06-25 otonom tur **+ Moses'ın 5-görev turu**, **34 commit + push'lu, Moses merge/tarayıcı doğrulaması bekliyor** (main'e değmedi → canlı deploy tetiklenmedi). Test 318→**359**, tüm zincir yeşil (typecheck 9/9 · lint 9/9 · web build 1/1), adversaryal review: **regresyon yok**. **5-görev (Moses onayıyla) BİTTİ:** render hata sızıntısı (A), perf turu (?perf HUD + RoomManager cap + reverse-index + nearestAxis viewport + duvar hatch build/stroke), 3B GPU-fan (on-demand render), domain araştırma kararları (sıva iç/dış · süpürgelik oda-bazlı · daylight oda-başına · calibrate tüm-çizim). Kalan: tarayıcı doğrulaması + slab-mirror teyidi (`docs/YARIN.md`).
+**Branch:** `main` canlıda (her şey merge'li). 2026-06-25 büyük tur main'de + canlı: (a) otonom sertleştirme (serialize/AI/lock/dxf/perf/collab/findFaces/a11y…), (b) Moses 5-görevi (render hata-A, perf turu [?perf HUD + RoomManager cap + reverse-index + nearestAxis viewport + duvar hatch build/stroke + render-group], 3B GPU-fan on-demand, domain kararları), (c) **proje-adı + karşılama ekranı + çoklu-pafta yöneticisi + AI viewport-yerleştirme**, (d) PNG/Excel toast + metin-focus düzeltmeleri. **Test 318→365**, zincir yeşil (typecheck 9/9 · lint 9/9 · web build). render-group + start-screen ekran görüntüsüyle doğrulandı. Açık flag: çok-sayfa PDF, AI tam tıkla-bırak ghost, slab-mirror teyidi, render-space/sheet hatch follow-up (`docs/YARIN.md`).
 **Durum:** Üç sağlayıcı router (ADR-0042) **hız-öncelikli**: basit/orta→**OpenAI** (~1.3sn), karmaşık/yönetmelik→**Claude** (~2.7sn), **Akash yedek**. **Test: ~317.** 2026-06-24 turları **main'e MERGE + push** (canlı): promo videosu (mantıklı 3+1 + GİRİŞ KAPISI + scrubbable timeline + GERÇEK 3B GIF), HeroMockup aynı kurguya, AI Çiz promptu (zorunlu giriş kapısı + gerçekçilik + oda adları), üst-üste etiket bug'ı (`polygonLabelPoint`), maliyet geliştirme (tesisat+kategori+overhead+₺/m²+düzenlenebilir fiyat), ve **2 denetim + 1 tasarım dalgası** (22+13+11 ajan) → 20+ düzeltme: Y1 (oda bire-bir eşleştirme), Y2 (artımlı cull/500k perf), serialize derin doğrulama, store.emit dayanıklılık, tool gen-token, dxf NaN, motion/a11y tabanı, Cmd+K nav, SEO + R1/R2/H5 regresyon kapatma. **Kalan denetim/tasarım işleri kök-neden kümeli `docs/YARIN.md`'de.** Tarayıcı doğrulaması Moses'ta.
 
 **AI ÇALIŞIYOR (canlı):** Üst araç çubuğu **Vesna** → Sor/Çiz/Render. Sağlayıcı adı UI'da gizli. Anahtarlar yalnız Vercel env (sunucu route `/api/copilot`, tarayıcıya sızmaz; `@zynpparti/ai` client'a import edilmez). Deploy: `docs/DEPLOY.md`.
@@ -120,6 +120,14 @@
 ---
 
 ## GÜNLÜK
+
+### 2026-06-25 (gece — proje-adı + karşılama ekranı + çoklu-pafta + AI yerleştirme) `feat/project-name-sheets` → main (canlı)
+Moses'ın büyük özellik isteği (5-agent haritalama + didik didik). Hepsi main'e merge + canlı. Test 359→**365**:
+- **Proje adı:** `lib/project-name.ts` modül-store → 12 indirme sahası proje adını kullanır (zynpparti yerine) + üstte düzenlenebilir "Proje adı" alanı. sanitizeFilename (Türkçe korunur). İç `zynpparti.*` localStorage anahtarları korundu.
+- **Karşılama ekranı (AppGate + StartScreen):** açılışta "Yeni proje" (isim→boş tuval) / "Aç" (.json→isim dosyadan). Collab `#room=` + `?ciz=` baypas (linkler bozulmaz). Yeni=boş (seedDemo `lib/app-start` köprüsüyle koşullu). Production-build screenshot ile doğrulandı.
+- **Çoklu pafta:** `sheet.ts` saf helper'lar (makeSheet/nextSheetPosition/nextSheetNo +6 test). SheetPanel = yönetici: "+ Pafta ekle" (üst üste binmeyen oto-yerleşim + oto numara), "1/N yenile", "Git" (paftaya zoom). engine `zoomToBounds` eklendi.
+- **AI "Çiz" yerleştirme:** plan viewport-merkeze (baktığın yere) gelir + konan plana zoom (H1 fix). applyLayout `target`+`bounds`.
+- Flag (sonraki): çok-sayfa PDF (M5), AI tam tıkla-bırak ghost (engine point-pick).
 
 ### 2026-06-25 (akşam — Moses'ın 5-görev turu, aynı branch) `feat/autonomous-13h-2026-06-25`
 Moses döndü, flag'lediğim 5 maddeyi onayladı/karar verdi → hepsi yapıldı (her biri yeşil + commit + push):
