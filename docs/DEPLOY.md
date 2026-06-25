@@ -29,6 +29,11 @@ Domain → Vercel'e bağlanır (web). Sync için Railway alt-domaini (wss://...)
      (veya root + `node apps/sync/server.mjs`; `ws` paketi sync'in dependency'sidir.)
    - Railway `PORT` env'ini otomatik verir; `apps/sync/server.mjs` `process.env.PORT`'u kullanır → uyumlu.
 3. Railway publicdomain üret → `wss://<servis>.up.railway.app` → bunu Vercel'deki `NEXT_PUBLIC_COLLAB_WS`'e yaz.
+4. **GÜVENLİK (önerilir):** Railway env'ine `ALLOWED_ORIGINS` ekle (virgülle): canlı web origin'(ler)in,
+   ör. `ALLOWED_ORIGINS=https://vesna.design,https://www.vesna.design`. Set'liyse sync yalnız bu
+   origin'lerden WS bağlantısı kabul eder (yabancı sitelerden bağlanma/cross-site hijack engellenir).
+   **Set edilmezse tüm origin'ler kabul edilir** (mevcut davranış — kırmaz, ama korumasız). `maxPayload`
+   (2 MB) ve heartbeat zaten her zaman aktif (amplifikasyon DoS + zombi bağlantı koruması).
 
 ## Maliyet (kaba, başlangıç)
 | Kalem | Sağlayıcı | Maliyet |
@@ -64,6 +69,7 @@ Hocuspocus (kalıcı y-websocket) + basit token auth + blob/DB persistence eklen
 | `AKASHML_API_KEY` | Vercel env | ❌ | Ucuz yedek (GLM, yavaş) |
 | `OPENAI_IMAGE_MODEL` | Vercel env (ops.) | ❌ | Render modeli (vars. `gpt-image-1`; erişim yoksa `dall-e-3`) |
 | `NEXT_PUBLIC_COLLAB_WS` | Vercel env | ✅ (public) | Railway sync URL'i (`wss://…`) |
+| `ALLOWED_ORIGINS` (ops.) | Railway env | ❌ | Sync WS origin allow-list (virgülle); set'liyse yalnız bunlar bağlanır |
 | `*_MODEL` (ops.) | Vercel env | ❌ | Sağlayıcı model id override |
 
 ### Belirti → teşhis → çözüm
