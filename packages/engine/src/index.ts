@@ -3,7 +3,7 @@ export * from './spatial-index';
 export * from './entity-bounds';
 export * from './hit-test';
 export { highlightEntity } from './highlight';
-export { drawWall } from './render-wall';
+export { drawWall, buildWall, strokeWall } from './render-wall';
 export { drawOpening } from './render-opening';
 export { drawDimension, buildDimensionLabel } from './render-dimension';
 export { drawParcel } from './render-parcel';

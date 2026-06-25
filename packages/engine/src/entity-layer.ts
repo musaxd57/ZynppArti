@@ -2,7 +2,7 @@ import { Container, Graphics } from 'pixi.js';
 import { materialById, type Entity, type EntityId, type EntityStore, type StoreChange } from '@zynpparti/document';
 import { SpatialIndex, type AABB } from './spatial-index';
 import { entityBounds, openingBounds } from './entity-bounds';
-import { drawWall } from './render-wall';
+import { buildWall, strokeWall } from './render-wall';
 import { buildSpaceFill, buildSpaceLabel, drawSpaceMaterial, drawSpacePerimeter } from './render-space';
 import { drawOpening } from './render-opening';
 import { drawDimension, buildDimensionLabel } from './render-dimension';
@@ -168,10 +168,11 @@ export class EntityLayer {
     const px = this.lineweightPx;
     if (entity.type === 'wall') {
       const g = new Graphics();
-      drawWall(g, entity, px);
+      const geom = buildWall(entity); // dünya-uzaylı geometri bir kez; zoom'da yeniden hesaplanmaz
+      strokeWall(g, geom, px);
       this.layerContainer(entity.layerId).addChild(g);
       objs.push(g);
-      this.redrawables.set(entity.id, (p) => drawWall(g, entity, p));
+      this.redrawables.set(entity.id, (p) => strokeWall(g, geom, p));
     } else if (entity.type === 'opening') {
       const g = new Graphics();
       const wall = this.store.get(entity.wallId);
