@@ -31,6 +31,16 @@ export function dashSegment(
   const ux = dx / len;
   const uy = dy / len;
 
+  // PERF GÜVENLİĞİ: yoğun zoom-in'de pixelSize→0 → desen adımı dünya-uzayında küçülür ve uzun bir
+  // kenar binlerce alt-piksel dash üretir (kare başına binlerce moveTo/lineTo → takılma). Desen tekrarı
+  // bir sınırı aşarsa dash'ler zaten alt-piksel/görsel olarak dolu demektir → tek katı çizgiye düş.
+  const MAX_REPEATS = 1000;
+  const patternWorld = pattern.reduce((s, v) => s + (v > 0 ? v : 0), 0) * pixelSize;
+  if (patternWorld <= 0 || len / patternWorld > MAX_REPEATS) {
+    g.moveTo(a.x, a.y).lineTo(b.x, b.y);
+    return;
+  }
+
   let dist = 0;
   let i = 0;
   let on = true; // desen dolu ile başlar

@@ -107,7 +107,8 @@ export async function createCanvasApp(
 
   camera = { x: app.screen.width / 2, y: app.screen.height / 2, zoom: 1 };
   applyCamera();
-  app.renderer.on('resize', () => entityLayer.cull(viewportBounds()));
+  const onResize = (): void => entityLayer.cull(viewportBounds());
+  app.renderer.on('resize', onResize);
 
   const canvas = app.canvas;
 
@@ -361,6 +362,7 @@ export async function createCanvasApp(
       canvas.removeEventListener('contextmenu', onContextMenu);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      app.renderer.off('resize', onResize); // tutarlı temizlik (app.destroy zaten renderer'ı söker)
       activeTool?.onDeactivate?.();
       entityLayer.destroy();
       app.destroy(true, { children: true });

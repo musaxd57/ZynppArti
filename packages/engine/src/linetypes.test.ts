@@ -49,4 +49,11 @@ describe('dashSegment', () => {
     expect(DOT.length).toBeGreaterThan(0);
     expect(CHAIN.length).toBe(4); // dash-dot zincir
   });
+
+  it('aşırı yoğun (zoom-in) dash → tek katı çizgiye düşer (binlerce moveTo değil)', () => {
+    const g = fakeGraphics();
+    // Çok uzun kenar + minik pixelSize → naif yol ~5M dash üretirdi; cap → tek moveTo.
+    dashSegment(g as never, { x: 0, y: 0 }, { x: 100_000, y: 0 }, DASH, 0.001);
+    expect(g.moves).toBe(1);
+  });
 });
