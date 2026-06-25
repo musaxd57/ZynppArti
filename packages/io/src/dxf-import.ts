@@ -15,8 +15,23 @@ const MAX_TEXT_HEIGHT = 2000; // cm — bozuk MTEXT (ör. 1e9) zoom/bounds'u ele
 const ARC_STEP = Math.PI / 12; // ~15° → eğri başına segment çözünürlüğü
 const MAX_INSERT_DEPTH = 6; // iç içe blok özyineleme sınırı (döngüsel referans koruması)
 
-// $INSUNITS kodu → cm çarpanı (1=inch, 2=feet, 4=mm, 5=cm, 6=m).
-const INSUNITS_TO_CM: Record<number, number> = { 1: 2.54, 2: 30.48, 4: 0.1, 5: 1, 6: 100 };
+// $INSUNITS kodu → cm çarpanı. ISO/AutoCAD birim kodları (0=birimsiz → 1, kalibrasyona bırakılır).
+// 1=inch 2=feet 3=mile 4=mm 5=cm 6=m 7=km 8=microinch 9=mil 10=yard 11=Å 12=nm 13=µm 14=dm 15=dam 16=hm 17=Gm.
+const INSUNITS_TO_CM: Record<number, number> = {
+  1: 2.54, // inch
+  2: 30.48, // feet
+  3: 160934.4, // mile
+  4: 0.1, // mm
+  5: 1, // cm
+  6: 100, // m
+  7: 100000, // km
+  8: 2.54e-4, // microinch
+  9: 2.54e-3, // mil
+  10: 91.44, // yard
+  14: 10, // decimeter
+  15: 1000, // dekameter
+  16: 10000, // hectometer
+};
 
 export interface DxfImportResult {
   walls: Wall[];

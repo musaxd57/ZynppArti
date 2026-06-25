@@ -50,9 +50,9 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
               type="number"
               min={1}
               defaultValue={Math.round(w.thickness)}
-              onChange={(ev) => {
+              onBlur={(ev) => {
                 const t = Number(ev.target.value);
-                if (Number.isFinite(t) && t > 0)
+                if (Number.isFinite(t) && t > 0 && t !== w.thickness)
                   history.dispatch(new UpdateEntity({ ...w, thickness: t }));
               }}
               className={numCls}
@@ -64,9 +64,9 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
               type="number"
               min={1}
               defaultValue={Math.round(w.height ?? 280)}
-              onChange={(ev) => {
+              onBlur={(ev) => {
                 const hh = Number(ev.target.value);
-                if (Number.isFinite(hh) && hh > 0)
+                if (Number.isFinite(hh) && hh > 0 && hh !== (w.height ?? 280))
                   history.dispatch(new UpdateEntity({ ...w, height: hh }));
               }}
               className={numCls}
@@ -107,9 +107,10 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
               type="number"
               min={10}
               defaultValue={Math.round(o.width)}
-              onChange={(ev) => {
+              onBlur={(ev) => {
                 const wd = Number(ev.target.value);
-                if (Number.isFinite(wd) && wd > 0) history.dispatch(new UpdateEntity({ ...o, width: wd }));
+                if (Number.isFinite(wd) && wd > 0 && wd !== o.width)
+                  history.dispatch(new UpdateEntity({ ...o, width: wd }));
               }}
               className={numCls}
             />
@@ -155,9 +156,10 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
               type="number"
               min={1}
               defaultValue={Math.round(a.height)}
-              onChange={(ev) => {
+              onBlur={(ev) => {
                 const hh = Number(ev.target.value);
-                if (Number.isFinite(hh) && hh > 0) history.dispatch(new UpdateEntity({ ...a, height: hh }));
+                if (Number.isFinite(hh) && hh > 0 && hh !== a.height)
+                  history.dispatch(new UpdateEntity({ ...a, height: hh }));
               }}
               className={numCls}
             />

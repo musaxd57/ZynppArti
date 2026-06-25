@@ -35,7 +35,15 @@ export function exportSvg(
   let minY: number;
   let w: number;
   let h: number;
-  if (region) {
+  // Geçerli region = sonlu köşe + pozitif boyut. Bozuk/dejenere region → boş/kaymış sayfa yerine
+  // tüm-içerik bounds'una düş (güvenli). `clip` yalnız geçerli region'da uygulanır.
+  const validRegion =
+    !!region &&
+    Number.isFinite(region.minX) &&
+    Number.isFinite(region.minY) &&
+    region.w > 0 &&
+    region.h > 0;
+  if (region && validRegion) {
     ({ minX, minY, w, h } = region);
   } else {
     const bounds = computeBounds(entities, walls);
@@ -111,11 +119,22 @@ export function exportSvg(
     });
   }
 
+  // Region (çok-sayfa PDF) verildiyse içeriği o dikdörtgene KIRP — yoksa komşu paftaların geometrisi
+  // sayfaya taşar (svg2pdf viewBox dışını çizebilir). Tüm-bounds modunda kırpmaya gerek yok.
+  const clipId = 'page-clip';
+  const defs = validRegion
+    ? `<defs><clipPath id="${clipId}"><rect x="${num(minX)}" y="${num(minY)}" width="${num(w)}" height="${num(h)}" /></clipPath></defs>\n`
+    : '';
+  const open = validRegion ? `<g clip-path="url(#${clipId})">\n` : '';
+  const close = validRegion ? '\n</g>' : '';
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${num(minX)} ${num(minY)} ${num(w)} ${num(h)}" ` +
     `width="${num(w)}" height="${num(h)}">\n` +
+    defs +
     `<rect x="${num(minX)}" y="${num(minY)}" width="${num(w)}" height="${num(h)}" fill="#ffffff" />\n` +
+    open +
     body.join('\n') +
+    close +
     `\n</svg>\n`
   );
 }

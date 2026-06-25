@@ -685,8 +685,12 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
         setError(e instanceof Error ? e.message : 'İstek başarısız.');
       }
     } finally {
-      setLoadingMode(null);
-      abortRef.current = null;
+      // Yalnız HÂLÂ güncel istek isek temizle — hızlı tekrar-gönderde iptal edilen ESKİ isteğin
+      // finally'si yeni isteğin loading/controller'ını sıfırlamasın (spinner sönmesi/yarış önlenir).
+      if (abortRef.current === ctrl) {
+        setLoadingMode(null);
+        abortRef.current = null;
+      }
     }
   };
 

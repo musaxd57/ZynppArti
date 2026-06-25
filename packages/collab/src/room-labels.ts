@@ -15,6 +15,25 @@ export interface RoomLabel {
   readonly material?: string;
 }
 
+const ROOM_TYPES = new Set(['living', 'kitchen', 'bathroom', 'wet', 'sleeping', 'circulation', 'service', 'other']);
+const MAX_LABEL_LEN = 120;
+
+/**
+ * Uzak etiketi DOĞRULA/sanitize et (karantina) — diğer EntitySync gibi, kötü/bozuk peer verisi
+ * (devasa string, geçersiz roomType, non-string alanlar) doğrudan store'a (Space.name/roomType) sızmasın.
+ * Geçersizse null. roomType yalnız bilinen enum; name/material sınırlı uzunlukta string.
+ */
+function sanitizeLabel(raw: unknown): RoomLabel | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const r = raw as Record<string, unknown>;
+  if (typeof r['name'] !== 'string') return null;
+  const name = r['name'].slice(0, MAX_LABEL_LEN);
+  const roomType = typeof r['roomType'] === 'string' && ROOM_TYPES.has(r['roomType']) ? r['roomType'] : undefined;
+  const material =
+    typeof r['material'] === 'string' && r['material'].length <= MAX_LABEL_LEN ? r['material'] : undefined;
+  return { name, ...(roomType ? { roomType } : {}), ...(material ? { material } : {}) };
+}
+
 /** Mahalin merkezinden stabil anahtar (10 cm ızgara) — client'lar arası tutarlı. */
 export function roomKey(s: Space): string {
   let x = 0;
@@ -57,7 +76,7 @@ export class RoomLabelSync {
     for (const id of c.added) {
       const s = this.store.get(id);
       if (s?.type === 'space') {
-        const label = this.ymap.get(roomKey(s));
+        const label = sanitizeLabel(this.ymap.get(roomKey(s)));
         if (label && label.name !== s.name) this.applyLabel(s, label);
       }
     }
@@ -76,7 +95,9 @@ export class RoomLabelSync {
     }
   }
 
-  private applyLabel(s: Space, label: RoomLabel): void {
+  private applyLabel(s: Space, rawLabel: RoomLabel): void {
+    const label = sanitizeLabel(rawLabel); // çağıran sanitize etse de savunma katmanı
+    if (!label) return;
     this.applying = true;
     try {
       this.store.put({
@@ -97,7 +118,7 @@ export class RoomLabelSync {
     try {
       const updated: string[] = [];
       for (const s of this.spaces()) {
-        const label = this.ymap.get(roomKey(s));
+        const label = sanitizeLabel(this.ymap.get(roomKey(s)));
         if (label && label.name !== s.name) {
           this.store.put({
             ...s,

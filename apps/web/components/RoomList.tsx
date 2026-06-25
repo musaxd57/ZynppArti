@@ -31,7 +31,14 @@ function getWalls(store: EntityStore): Wall[] {
 }
 
 function fmt(m2: number): string {
+  if (!Number.isFinite(m2)) return '0,0'; // bozuk geometri → "NaN m²" gösterme (metrics.ts ile aynı disiplin)
   return m2.toFixed(1).replace('.', ',');
+}
+
+/** Mahal alanı (m²) — NaN/Infinity'ye karşı korumalı (bozuk boundary → 0; UI + Excel aynı). */
+function safeAreaM2(s: Space): number {
+  const a = centerlineAreaM2(s);
+  return Number.isFinite(a) ? a : 0;
 }
 
 interface RoomListProps {
@@ -118,7 +125,7 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
     const rows: Record<string, string | number>[] = spaces.map((s) => ({
       Mahal: s.name,
       Tip: roomTypeLabel(roomTypeOf(s)),
-      'Alan (m²)': Number(centerlineAreaM2(s).toFixed(2)),
+      'Alan (m²)': Number(safeAreaM2(s).toFixed(2)),
     }));
     rows.push({ Mahal: 'Toplam', Tip: '', 'Alan (m²)': Number(metrics.totalM2.toFixed(2)) });
     const ws = XLSX.utils.json_to_sheet(rows);
@@ -173,7 +180,7 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
                 className="min-w-0 flex-1 rounded bg-white/10 px-2 py-1 outline-none focus:bg-white/20"
               />
               <span className="w-16 shrink-0 text-right tabular-nums opacity-80">
-                {fmt(centerlineAreaM2(s))} m²
+                {fmt(safeAreaM2(s))} m²
               </span>
             </div>
             {/* Satır 2: tip + malzeme (eşit paylaşımlı, taşmaz) */}

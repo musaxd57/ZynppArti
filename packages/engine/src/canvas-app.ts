@@ -212,17 +212,19 @@ export async function createCanvasApp(
     });
     for (const id of ids) {
       const ent = store.get(id);
-      if (spaceActivate && ent?.type === 'space' && pointInPolygon(world, ent.boundary)) {
+      // Gizli/kilitli katmandaki entity yerinde-düzenlemeye AÇILMAZ (tek-tık hit-test ile tutarlı).
+      if (!ent || layers.isHidden(ent.layerId) || layers.isLocked(ent.layerId)) continue;
+      if (spaceActivate && ent.type === 'space' && pointInPolygon(world, ent.boundary)) {
         e.preventDefault();
         spaceActivate(id);
         return;
       }
-      if (annotationActivate && ent?.type === 'annotation' && pointInAnnotation(ent, world)) {
+      if (annotationActivate && ent.type === 'annotation' && pointInAnnotation(ent, world)) {
         e.preventDefault();
         annotationActivate(id);
         return;
       }
-      if (commentActivate && ent?.type === 'comment') {
+      if (commentActivate && ent.type === 'comment') {
         // Yorum baloncuğu position'ın YUKARISINDA → kutu testi (hit-test ile aynı).
         const { w, h } = commentSize(ent);
         const px = ent.position.x;

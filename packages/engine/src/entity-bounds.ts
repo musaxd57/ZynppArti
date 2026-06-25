@@ -35,6 +35,18 @@ function aabbOfPoints(pts: readonly Pt[], pad = 0): AABB {
   return { minX: minX - pad, minY: minY - pad, maxX: maxX + pad, maxY: maxY + pad };
 }
 
+/**
+ * Satır-içi hesaplanan kutuyu NaN/Infinity'ye karşı korur (rbush'a non-finite AABB girerse ağaç
+ * karşılaştırmaları bozulur → search/remove sessizce kaçırır). aabbOfPoints zaten korur; bu, onu
+ * KULLANMAYAN wall/annotation/comment/sheet yolları içindir (bozuk import/komut NaN üretebilir).
+ */
+function finiteBox(minX: number, minY: number, maxX: number, maxY: number): AABB {
+  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+    return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+  }
+  return { minX, minY, maxX, maxY };
+}
+
 /** Boşluğun (kapı/pencere) duvardan türetilmiş AABB'si. Duvar çözümü gerektiğinden ayrı. */
 export function openingBounds(opening: Opening, wall: Wall): AABB {
   const f = openingFrame(opening, wall);
@@ -60,12 +72,12 @@ export function entityBounds(entity: Entity): AABB {
     }
     case 'wall': {
       const half = entity.thickness / 2;
-      return {
-        minX: Math.min(entity.start.x, entity.end.x) - half,
-        minY: Math.min(entity.start.y, entity.end.y) - half,
-        maxX: Math.max(entity.start.x, entity.end.x) + half,
-        maxY: Math.max(entity.start.y, entity.end.y) + half,
-      };
+      return finiteBox(
+        Math.min(entity.start.x, entity.end.x) - half,
+        Math.min(entity.start.y, entity.end.y) - half,
+        Math.max(entity.start.x, entity.end.x) + half,
+        Math.max(entity.start.y, entity.end.y) + half,
+      );
     }
     case 'space':
     case 'parcel':
@@ -74,31 +86,16 @@ export function entityBounds(entity: Entity): AABB {
       return aabbOfPoints(blockCorners(entity));
     case 'annotation': {
       const { w, h } = annotationSize(entity);
-      return {
-        minX: entity.position.x,
-        minY: entity.position.y,
-        maxX: entity.position.x + w,
-        maxY: entity.position.y + h,
-      };
+      return finiteBox(entity.position.x, entity.position.y, entity.position.x + w, entity.position.y + h);
     }
     case 'comment': {
       // İğne (kuyruk) `position`ta; baloncuk+metin yukarıda → kutu position.y'den yukarı.
       const { w, h } = commentSize(entity);
-      return {
-        minX: entity.position.x,
-        minY: entity.position.y - h,
-        maxX: entity.position.x + w,
-        maxY: entity.position.y,
-      };
+      return finiteBox(entity.position.x, entity.position.y - h, entity.position.x + w, entity.position.y);
     }
     case 'sheet': {
       const { w, h } = sheetModelSize(entity);
-      return {
-        minX: entity.position.x,
-        minY: entity.position.y,
-        maxX: entity.position.x + w,
-        maxY: entity.position.y + h,
-      };
+      return finiteBox(entity.position.x, entity.position.y, entity.position.x + w, entity.position.y + h);
     }
   }
 }
