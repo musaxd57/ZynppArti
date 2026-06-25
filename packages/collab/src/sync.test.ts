@@ -99,6 +99,32 @@ describe('EntitySync — iki istemci', () => {
     expect(s2.has('host')).toBe(true); // host çizimi alındı
   });
 
+  it('bozuk/uyumsuz uzak entity karantinaya alınır (store zehirlenmez)', () => {
+    const s1 = new EntityStore();
+    const s2 = new EntityStore();
+    const d1 = new Y.Doc();
+    const d2 = new Y.Doc();
+    connect(d1, d2);
+    new EntitySync(s1, d1);
+    new EntitySync(s2, d2);
+
+    // Geçerli duvar normal yoldan → her iki istemciye yansır.
+    s1.put(wall('good', 100));
+    s1.emit({ added: ['good'], updated: [], removed: [] });
+
+    // Kötücül/bozuk peer simülasyonu: Y.Map'e doğrudan NaN-koordinatlı "wall" + senkronlanamaz
+    // "space" enjekte et (gerçek peer bunları gönderemez ama bozuk doc/saldırgan gönderebilir).
+    const bad = { id: 'bad', type: 'wall', layerId: 'default', start: { x: NaN, y: 0 }, end: { x: 1, y: 1 }, thickness: 10 };
+    const space = { id: 'sp', type: 'space', layerId: 'rooms', name: 'X', boundary: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }] };
+    d1.getMap('entities').set('bad', bad as never);
+    d1.getMap('entities').set('sp', space as never);
+
+    expect(s2.has('good')).toBe(true); // geçerli olan uygulandı
+    expect(s2.has('bad')).toBe(false); // NaN duvar reddedildi
+    expect(s2.has('sp')).toBe(false); // türetilmiş space tipi reddedildi (uyumsuz)
+    expect(s1.has('bad')).toBe(false); // yerel doc gözleminde de reddedildi
+  });
+
   it('var olan odaya katılan istemci mevcut entity-leri alır', () => {
     const s1 = new EntityStore();
     const d1 = new Y.Doc();

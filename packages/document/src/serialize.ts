@@ -89,7 +89,7 @@ function isVec2Array(v: unknown, min: number): boolean {
  * (koordinat/sayı/ad) doğrular → NaN/eksik alanlı entity belleğe (ve rbush/metraj/maliyet hesabına)
  * sızmaz. Geçersiz entity yüklemede atlanır (toleranslı kısmi-bozulma).
  */
-function isValidEntity(v: unknown): v is Entity {
+export function isValidEntity(v: unknown): v is Entity {
   if (!isRecord(v)) return false;
   const type = v['type'];
   if (

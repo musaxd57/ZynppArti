@@ -1,4 +1,5 @@
 import * as Y from 'yjs';
+import { isValidEntity } from '@zynpparti/document';
 import type { Entity, EntityId, EntityStore, StoreChange } from '@zynpparti/document';
 
 /**
@@ -49,16 +50,31 @@ export class EntitySync {
     }, this);
   }
 
-  /** Mevcut tüm Y.Map entity'lerini store'a uygular (echo-güvenli). */
+  /** Mevcut tüm Y.Map entity'lerini store'a uygular (echo-güvenli; geçersiz/uyumsuz olanı karantinaya alır). */
   private applyAllFromY(): void {
     this.applyRemote(() => {
       const added: EntityId[] = [];
       this.ymap.forEach((e, id) => {
+        if (!this.acceptRemote(e, id)) return;
         this.store.put(e);
         added.push(id);
       });
       if (added.length) this.store.emit({ added, updated: [], removed: [] });
     });
+  }
+
+  /**
+   * KARANTİNA (CLAUDE §6.4): uzak veriyi store'a koymadan ÖNCE doğrula. Bozuk/kötücül bir peer
+   * (NaN koordinat, eksik alan, sarkık binding, beklenmeyen tip) tüm peer'ların store'unu zehirleyip
+   * RoomManager/render'ı NaN'le düşürebilir. Geçersiz veya senkronlanamaz (türetilmiş space) entity
+   * sessizce reddedilir (log'lanır) — diğer geçerli değişiklikler uygulanmaya devam eder.
+   */
+  private acceptRemote(e: unknown, id: string): boolean {
+    if (!isValidEntity(e) || !isSyncable(e)) {
+      console.warn(`EntitySync: geçersiz/uyumsuz uzak entity reddedildi (karantina): ${id}`);
+      return false;
+    }
+    return true;
   }
 
   private applyRemote(fn: () => void): void {
@@ -97,7 +113,7 @@ export class EntitySync {
           removed.push(id);
         } else {
           const e = this.ymap.get(id);
-          if (e) {
+          if (e && this.acceptRemote(e, id)) {
             this.store.put(e);
             (change.action === 'add' ? added : updated).push(id);
           }
