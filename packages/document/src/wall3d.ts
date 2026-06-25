@@ -1,5 +1,10 @@
 import type { Opening, Wall } from './entities';
-import { DEFAULT_WALL_HEIGHT_CM } from './section';
+import {
+  DEFAULT_WALL_HEIGHT_CM,
+  DEFAULT_DOOR_HEAD_CM,
+  DEFAULT_WINDOW_SILL_CM,
+  DEFAULT_WINDOW_HEAD_CM,
+} from './section';
 
 /** Bir duvarın 3B kutu parametreleri (saf — three.js/DOM yok; engine/web üretir). */
 export interface Wall3DBox {
@@ -16,10 +21,11 @@ export interface Wall3DBox {
   readonly baseHeight?: number;
 }
 
-/** Boşluk varsayımları (cm) — şematik 3B (planda yükseklik saklanmaz). */
-const DOOR_HEIGHT = 210;
-const WINDOW_SILL = 90;
-const WINDOW_HEAD = 220;
+// Boşluk varsayımları (cm) — şematik 3B. 2B kesit (section.ts) ile TEK KAYNAK (§6.6): aynı pencere
+// hem 3B'de hem kesitte aynı denizlik/lento kotuyla çizilsin (eskiden 3B lento 220, kesit 210 → tutarsızdı).
+const DOOR_HEIGHT = DEFAULT_DOOR_HEAD_CM;
+const WINDOW_SILL = DEFAULT_WINDOW_SILL_CM;
+const WINDOW_HEAD = DEFAULT_WINDOW_HEAD_CM;
 
 /**
  * Duvarları 3B kutu parametrelerine çevirir (Faz 5 şematik 3B). Saf fonksiyon: her duvar, plan

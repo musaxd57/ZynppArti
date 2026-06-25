@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { wallBoxes, wallBoxesWithOpenings } from './wall3d';
+import { DEFAULT_WINDOW_HEAD_CM } from './section';
 import type { Opening, Wall } from './entities';
 
 function wall(x1: number, y1: number, x2: number, y2: number, thickness = 20, height?: number): Wall {
@@ -61,6 +62,8 @@ describe('wallBoxesWithOpenings', () => {
     const out = wallBoxesWithOpenings([w], [op('w1', 0.5, 100, 'window')], 280);
     expect(out).toHaveLength(4);
     expect(out.some((b) => b.baseHeight === 0 && b.height === 90 && b.length === 100)).toBe(true); // denizlik
-    expect(out.some((b) => b.baseHeight === 220)).toBe(true); // lento
+    // Lento kotu 2B kesit ile TEK KAYNAK (section.DEFAULT_WINDOW_HEAD_CM) — 3B ve kesit aynı pencere
+    // yüksekliğini kullanır (eskiden 3B 220, kesit 210 → tutarsızdı).
+    expect(out.some((b) => b.baseHeight === DEFAULT_WINDOW_HEAD_CM)).toBe(true); // lento
   });
 });
