@@ -41,6 +41,8 @@ export interface CanvasHandle {
   exportPng(): Promise<string>;
   /** Tüm entity'leri ekrana sığacak şekilde kamerayı ayarlar (zoom extents). */
   zoomToFit(): void;
+  /** Kamerayı verilen dünya-uzayı kutusuna odaklar (pafta "Git" navigasyonu). */
+  zoomToBounds(b: AABB): void;
   destroy: () => void;
 }
 
@@ -234,9 +236,8 @@ export async function createCanvasApp(
     }
   }
 
-  function zoomToFit(): void {
-    const b = entityLayer.index.bounds();
-    if (!b) return;
+  /** Kamerayı verilen dünya-uzayı kutusuna sığdırır (%10 boşlukla). Pafta "Git" + zoomToFit kullanır. */
+  function zoomToBounds(b: AABB): void {
     const bw = Math.max(b.maxX - b.minX, 1);
     const bh = Math.max(b.maxY - b.minY, 1);
     const pad = 0.1; // her kenarda %10 boşluk
@@ -249,6 +250,11 @@ export async function createCanvasApp(
     const cy = (b.minY + b.maxY) / 2;
     camera = { zoom, x: app.screen.width / 2 - cx * zoom, y: app.screen.height / 2 - cy * zoom };
     applyCamera();
+  }
+
+  function zoomToFit(): void {
+    const b = entityLayer.index.bounds();
+    if (b) zoomToBounds(b);
   }
 
   function onWheel(e: WheelEvent): void {
@@ -329,6 +335,7 @@ export async function createCanvasApp(
       }
     },
     zoomToFit,
+    zoomToBounds,
     setSpaceActivateHandler(cb: (id: EntityId) => void): void {
       spaceActivate = cb;
     },

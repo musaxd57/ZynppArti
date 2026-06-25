@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { sheetModelSize, sheetPaperMm, sheetTitleBlock } from './sheet';
+import {
+  sheetModelSize,
+  sheetPaperMm,
+  sheetTitleBlock,
+  makeSheet,
+  nextSheetPosition,
+  nextSheetNo,
+} from './sheet';
 import type { Sheet } from './entities';
 
 const make = (over: Partial<Sheet> = {}): Sheet => ({
@@ -47,5 +54,46 @@ describe('sheetTitleBlock', () => {
     expect(tb.y + tb.h).toBeLessThan(s.position.y + size.h);
     expect(tb.w).toBeGreaterThan(0);
     expect(tb.h).toBeGreaterThan(0);
+  });
+});
+
+describe('makeSheet', () => {
+  it('varsayılanları uygular (A3/landscape/50/Pafta)', () => {
+    const s = makeSheet({ x: 10, y: 20 });
+    expect(s).toMatchObject({ type: 'sheet', layerId: 'sheet', position: { x: 10, y: 20 }, size: 'A3', orientation: 'landscape', scale: 50, title: 'Pafta' });
+    expect('id' in s).toBe(false); // id çağıran tarafından verilir
+  });
+  it('override + opsiyonel alanlar (project/sheetNo)', () => {
+    const s = makeSheet({ x: 0, y: 0 }, { size: 'A1', scale: 100, project: 'Ev', sheetNo: '2' });
+    expect(s.size).toBe('A1');
+    expect(s.scale).toBe(100);
+    expect(s.project).toBe('Ev');
+    expect(s.sheetNo).toBe('2');
+  });
+});
+
+describe('nextSheetPosition (üst üste binmeyen otomatik yerleşim)', () => {
+  it('pafta yoksa origin', () => {
+    expect(nextSheetPosition([])).toEqual({ x: 0, y: 0 });
+  });
+  it('yeni paftayı mevcudun SAĞINA gap ile koyar (üst hizalı)', () => {
+    const s: Sheet = { id: 's1', type: 'sheet', layerId: 'sheet', position: { x: 0, y: 0 }, size: 'A3', orientation: 'landscape', scale: 50, title: 'P' };
+    const w = sheetModelSize(s).w; // 2100
+    const pos = nextSheetPosition([s], 200);
+    expect(pos).toEqual({ x: w + 200, y: 0 });
+  });
+  it('birden çok paftada en sağdakinin sağına koyar', () => {
+    const base = { type: 'sheet' as const, layerId: 'sheet', size: 'A3' as const, orientation: 'landscape' as const, scale: 50, title: 'P' };
+    const a: Sheet = { ...base, id: 'a', position: { x: 0, y: 0 } };
+    const b: Sheet = { ...base, id: 'b', position: { x: 5000, y: 0 } };
+    const pos = nextSheetPosition([a, b], 200);
+    expect(pos.x).toBe(5000 + sheetModelSize(b).w + 200);
+  });
+});
+
+describe('nextSheetNo', () => {
+  it('N pafta → yeni numara N+1', () => {
+    expect(nextSheetNo(0)).toBe('1');
+    expect(nextSheetNo(4)).toBe('5');
   });
 });

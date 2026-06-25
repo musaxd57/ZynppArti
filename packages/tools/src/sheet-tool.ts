@@ -1,26 +1,15 @@
 import { Graphics } from 'pixi.js';
 import type { Vec2 } from '@zynpparti/geometry';
-import {
-  AddEntity,
-  createEntityId,
-  sheetModelSize,
-  type Sheet,
-  type SheetOrientation,
-  type SheetSize,
-} from '@zynpparti/document';
+import { AddEntity, createEntityId, makeSheet, sheetModelSize, type Sheet } from '@zynpparti/document';
 import type { SceneTool, ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
 
 const PREVIEW_COLOR = 0xffb454;
 
-/** Yeni pafta varsayılanları (panelden değiştirilir). */
-const DEFAULT_SIZE: SheetSize = 'A3';
-const DEFAULT_ORIENTATION: SheetOrientation = 'landscape';
-const DEFAULT_SCALE = 50;
-
 /**
  * Pafta (sheet) yerleştirme aracı: imleçte çerçeve boyutunu önizler, tıklayınca sol-üst köşesi o
  * noktaya gelecek şekilde varsayılan bir pafta ekler. Boyut/ölçek/antet sonra SheetPanel'den düzenlenir.
+ * Varsayılanlar `makeSheet` (document) ile tek kaynaktan gelir — panel "+ Pafta ekle" ile tutarlı.
  */
 export class SheetTool implements SceneTool {
   private readonly preview = new Graphics();
@@ -31,16 +20,7 @@ export class SheetTool implements SceneTool {
   }
 
   private make(position: Vec2, id: string): Sheet {
-    return {
-      id,
-      type: 'sheet',
-      layerId: 'sheet',
-      position,
-      size: DEFAULT_SIZE,
-      orientation: DEFAULT_ORIENTATION,
-      scale: DEFAULT_SCALE,
-      title: 'Pafta',
-    };
+    return { ...makeSheet(position), id };
   }
 
   onPointerMove(p: ScenePointer): void {

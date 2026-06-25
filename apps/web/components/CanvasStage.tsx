@@ -9,7 +9,7 @@ import {
   type CanvasHandle,
 } from '@zynpparti/engine';
 import type { CollabHandle } from '@zynpparti/collab';
-import { EntityStore, History, RoomManager, RemoveEntity, UpdateEntity } from '@zynpparti/document';
+import { EntityStore, History, RoomManager, RemoveEntity, UpdateEntity, sheetModelSize } from '@zynpparti/document';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
 import { seedDemo } from '@/lib/demo-seed';
 import { Toolbar } from './Toolbar';
@@ -54,6 +54,7 @@ export function CanvasStage() {
     overlay: CanvasHandle['overlay'];
     pixelSize: CanvasHandle['pixelSize'];
     zoomToFit: () => void;
+    zoomToBounds: CanvasHandle['zoomToBounds'];
   } | null>(null);
   const [collab, setCollab] = useState<CollabHandle | null>(null);
   // Hover olaylarını çoğa dağıt (StatusBar + presence). Tek motor handler'ı → çok dinleyici.
@@ -258,6 +259,7 @@ export function CanvasStage() {
         overlay: h.overlay,
         pixelSize: h.pixelSize,
         zoomToFit: h.zoomToFit,
+        zoomToBounds: h.zoomToBounds,
       });
     }).catch((err) => {
       // PixiJS init başarısız (WebGL yok/bellek) → sonsuz "yükleniyor" yerine hata göster.
@@ -430,7 +432,14 @@ export function CanvasStage() {
             />
             <TakeoffPanel store={ui.store} />
             <SectionPanel store={ui.store} history={ui.history} selectedIds={selectedIds} />
-            <SheetPanel store={ui.store} history={ui.history} />
+            <SheetPanel
+              store={ui.store}
+              history={ui.history}
+              onZoomTo={(s) => {
+                const { w, h } = sheetModelSize(s);
+                ui.zoomToBounds({ minX: s.position.x, minY: s.position.y, maxX: s.position.x + w, maxY: s.position.y + h });
+              }}
+            />
           </div>
         )}
 

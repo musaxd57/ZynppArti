@@ -1,3 +1,4 @@
+import type { Vec2 } from '@zynpparti/geometry';
 import type { Sheet } from './entities';
 
 /**
@@ -40,6 +41,59 @@ export function sheetModelSize(sheet: Sheet): { w: number; h: number } {
   const p = sheetPaperMm(sheet.size, sheet.orientation);
   const f = sheetMmToModelCm(sheet.scale);
   return { w: p.w * f, h: p.h * f };
+}
+
+// Yeni pafta varsayılanları (SheetTool + "+ Pafta ekle" tek kaynaktan kullanır).
+export const SHEET_DEFAULT_SIZE: SheetSize = 'A3';
+export const SHEET_DEFAULT_ORIENTATION: SheetOrientation = 'landscape';
+export const SHEET_DEFAULT_SCALE = 50;
+
+export interface SheetOpts {
+  size?: SheetSize;
+  orientation?: SheetOrientation;
+  scale?: number;
+  title?: string;
+  project?: string;
+  date?: string;
+  sheetNo?: string;
+}
+
+/** Paylaşılan pafta factory (id hariç) — varsayılanlar + override. SheetTool ve panel "+ ekle" kullanır. */
+export function makeSheet(position: Vec2, opts: SheetOpts = {}): Omit<Sheet, 'id'> {
+  return {
+    type: 'sheet',
+    layerId: 'sheet',
+    position,
+    size: opts.size ?? SHEET_DEFAULT_SIZE,
+    orientation: opts.orientation ?? SHEET_DEFAULT_ORIENTATION,
+    scale: opts.scale ?? SHEET_DEFAULT_SCALE,
+    title: opts.title ?? 'Pafta',
+    ...(opts.project ? { project: opts.project } : {}),
+    ...(opts.date ? { date: opts.date } : {}),
+    ...(opts.sheetNo ? { sheetNo: opts.sheetNo } : {}),
+  };
+}
+
+/**
+ * Yeni paftayı mevcut paftaların SAĞINA, üst üste binmeyecek şekilde yerleştirir (aralarında `gapCm`
+ * boşluk; üst kenarlar hizalı). Pafta yoksa origin. "+ Pafta ekle" bunu kullanır → tıklama gerekmez.
+ */
+export function nextSheetPosition(sheets: readonly Sheet[], gapCm = 200): Vec2 {
+  if (sheets.length === 0) return { x: 0, y: 0 };
+  let right = -Infinity;
+  let top = Infinity;
+  for (const s of sheets) {
+    const { w } = sheetModelSize(s);
+    if (s.position.x + w > right) right = s.position.x + w;
+    if (s.position.y < top) top = s.position.y;
+  }
+  if (!Number.isFinite(right) || !Number.isFinite(top)) return { x: 0, y: 0 };
+  return { x: right + gapCm, y: top };
+}
+
+/** N pafta varken yeni paftanın 1-tabanlı numarası ("3"). "i/N" yeniden-numaralandırma panelde ayrıca yapılır. */
+export function nextSheetNo(count: number): string {
+  return String(count + 1);
 }
 
 /** Antet (title block) dikdörtgeni — pafta'nın sağ-alt köşesinde (model cm). */
