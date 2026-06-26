@@ -121,6 +121,15 @@
 
 ## GÜNLÜK
 
+### 2026-06-26 (gece — denetim turu 4: kapsam/polish) `feat/audit-deep-2026-06-26`
+4. tur (19 ajan, kapsam/iyileştirme/completeness-critic): **12 onaylı (11 güvenli, 1 riskli flag)**. Hepsi düzeltildi, **407 test**, zincir yeşil:
+- **export fidelity:** PNG export'a editör kromu (grid + overlay: seçim/snap/yorum/uzak-imleç) gömülüyordu → extract öncesi gizle/sonra geri al (vektör export'lar gibi temiz); SVG/PDF export'a **kalıcı kesit (A—A') işareti** girmiyordu → render + bounds eklendi (section-only model artık boş SVG vermiyor). +test.
+- **AI Çiz:** applyLayout TÜM dış açıklıkları window'a zorluyordu → DESIGN_SYSTEM'in zorunlu giriş kapısını siliyordu. İç→kapı, dış→AI'ın kind'ine güven + failsafe (hiç dış kapı yoksa birini giriş yap) → her plan gerçek girişe sahip.
+- **DXF robustness:** polyface/3B mesh POLYLINE çöp duvar üretiyordu (yüz-kayıtları origin'e) → atla; OCS −Z eksenel extrusion (ayna ARC/LWPOLYLINE/POLYLINE) → tf-kompozisyonla X-negate düzeltme. +2 test.
+- **a11y:** `useFocusTrap` hook + DialogHost/Calibrate/Comment/CommandPalette'e role=dialog/aria-modal/aria-label + odak tuzağı; CommandPalette klavye-seçimi scrollIntoView + listbox/option rolleri.
+- **güvenlik/sertleştirme:** schema models_shared_read uuid-cast guard (bucket'ta UUID-olmayan dosya tüm sorguyu düşürmesin); sync server global + oda-başı bağlantı sınırı (auth'suz public WS DoS); CLAUDE.md DWG ☐→✅ (kod gerçeğiyle senkron).
+- **FLAG (riskli — yapılmadı):** DXF import katman/entity RENGİ atılıyor (flat-monokrom) → düzeltmesi feature (renk modeli + serialize sürüm artışı + render değişimi) → `docs/YARIN.md`, roadmap.
+
 ### 2026-06-26 (gece — UI istekleri + denetim turu 3) `feat/audit-deep-2026-06-26`
 Moses tarayıcı testi (preview deploy) → istekler + 3. denetim turu (24 ajan, ~1.6M token). **DXF Y-flip matematiği rigor doğrulandı → bug YOK.**
 - **Moses UI istekleri:** açılışta pafta/sayfa seed YOK (boş başla) · **chromeHidden=true** (sol+sağ dock gizli, temiz tam-genişlik tuval = 143612) · açılış kamerası zoom 0.5 (biraz uzaktan, origin) · **basit FPS sayacı** (FpsCounter, rAF, sol-alt) · **DXF Y-flip** (import+export, AutoCAD aynalama düzeldi).

@@ -35,8 +35,11 @@ yarışı, DXF birimleri). Test → **367**, zincir yeşil, hepsi main'de + canl
   oda seçimi/hover kaybı. Fix: matchOf eşleşmesinde eski id'yi koru, yalnız sınır değişince `updated`.
   Belkemiği (RoomManager) → tarayıcı doğrulaması ister.
 
+### Round 4 FLAG (riskli — yapılmadı, roadmap)
+- **DXF import katman/entity RENGİ atılıyor** (her şey flat-monokrom duvar). Düzeltmesi feature: entity'lere renk alanı (serialize sürüm artışı + lazy migration ADR-0028) + render-wall renk override + export renk. Roadmap (akıllı katman tanıma, CLAUDE §1). INSERT OCS −Z de yapılmadı (nadir+karmaşık).
+
 ### Eski-kalan (hâlâ geçerli)
-- DWG import sınırları; a11y diğer modallar (DialogHost/Calibrate/Comment focus-trap); ALLOWED_ORIGINS Railway env.
+- a11y: ShortcutsHelp focus-trap (diğer modallar yapıldı); ALLOWED_ORIGINS Railway env; updateLineweights perf + DXF Y-flip GÖRSEL doğrulama (Moses, FPS sayacı + AutoCAD).
 
 ---
 
