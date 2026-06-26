@@ -124,6 +124,9 @@ export class EntityLayer {
 
   private onChange(change: StoreChange): void {
     for (const id of change.removed) this.removeEntity(id);
+    // PERF: boş katman temizliğini silme BAŞINA değil, toplu silme SONUNDA bir kez yap (Ctrl+A→Sil
+    // gibi N silmede O(katman×N) yerine O(katman)). (YARIN C.)
+    if (change.removed.length > 0) this.pruneEmptyLayers();
     for (const id of change.added) this.upsert(id, true);
     for (const id of change.updated) this.upsert(id, false);
 
@@ -292,7 +295,7 @@ export class EntityLayer {
     this.destroyObjects(id);
     this.index.remove(id);
     this.prevVisible.delete(id); // silinen ID prevVisible'da kalmasın (set sınırsız büyümesin)
-    this.pruneEmptyLayers();
+    // (Boş katman temizliği onChange'de toplu silme sonunda bir kez — bkz. PERF notu.)
   }
 
   /**

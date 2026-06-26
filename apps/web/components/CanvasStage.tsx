@@ -111,12 +111,37 @@ export function CanvasStage() {
 
   // Sayfa sayacı = dokümandaki SADE sayfa (plain sheet) sayısı. Store değişince güncellenir
   // (ekle/çıkar/aç/undo hepsi yansır). Sayfalar gerçek entity → kaydolur + PDF'e girer.
+  // PERF: tüm store'u her değişimde (her duvar sürüklemede) O(n) taramak yerine, plain-sheet
+  // id'lerini bir Set'te tutup yalnız bir SHEET değiştiğinde güncelle (O(değişen)). (YARIN C.)
   useEffect(() => {
     if (!ui) return;
-    const refresh = (): void =>
-      setPageCount(ui.store.all().filter((e): e is Sheet => e.type === 'sheet' && e.plain === true).length);
-    refresh();
-    return ui.store.subscribe(refresh);
+    const plainIds = new Set<string>();
+    const isPlain = (id: string): boolean => {
+      const e = ui.store.get(id);
+      return e?.type === 'sheet' && (e as Sheet).plain === true;
+    };
+    // İlk tam tarama (yalnız bir kez): Set'i doldur.
+    for (const e of ui.store.all()) {
+      if (e.type === 'sheet' && (e as Sheet).plain === true) plainIds.add(e.id);
+    }
+    setPageCount(plainIds.size);
+    return ui.store.subscribe((change) => {
+      let changed = false;
+      for (const id of [...change.added, ...change.updated]) {
+        const plain = isPlain(id);
+        if (plain && !plainIds.has(id)) {
+          plainIds.add(id);
+          changed = true;
+        } else if (!plain && plainIds.has(id)) {
+          plainIds.delete(id);
+          changed = true;
+        }
+      }
+      for (const id of change.removed) {
+        if (plainIds.delete(id)) changed = true;
+      }
+      if (changed) setPageCount(plainIds.size);
+    });
   }, [ui]);
 
   // Dock genişliklerini hatırla (localStorage).
