@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { hatchLines, hatchPattern } from './hatch';
+import { pointInPolygon } from './point-in-polygon';
 
 const square = [
   { x: 0, y: 0 },
@@ -31,6 +32,28 @@ describe('hatchLines', () => {
   it('dejenere girdi → boş', () => {
     expect(hatchLines([{ x: 0, y: 0 }], 10, 0)).toEqual([]);
     expect(hatchLines(square, 0, 0)).toEqual([]);
+  });
+
+  it('konkav (U) poligonda çentiği DOLDURMAZ — her segment poligon içinde', () => {
+    // U yukarı açık: sol kol x[0,30], sağ kol x[70,100] tam yükseklik, taban y[0,40].
+    // Çentik: x(30,70) × y(40,100) DIŞARIDA. Eski kod min/max-t ile tek segment çizip
+    // çentiği doldururdu (orta nokta 50,70 dışarıda).
+    const u = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 100 },
+      { x: 70, y: 100 },
+      { x: 70, y: 40 },
+      { x: 30, y: 40 },
+      { x: 30, y: 100 },
+      { x: 0, y: 100 },
+    ];
+    const lines = hatchLines(u, 10, 0);
+    expect(lines.length).toBeGreaterThan(0);
+    for (const l of lines) {
+      const mid = { x: (l.a.x + l.b.x) / 2, y: (l.a.y + l.b.y) / 2 };
+      expect(pointInPolygon(mid, u)).toBe(true);
+    }
   });
 });
 

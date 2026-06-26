@@ -96,6 +96,21 @@ describe('polygonLabelPoint', () => {
     expect(pointInPolygon(p, L)).toBe(true);
   });
 
+  it('ince-kollu L odada etiket İÇERİDE (kaba ızgara kolları ıskalasa bile)', () => {
+    // Kollar 30 br ince, bbox 1000×1000. 24-ızgara adımı ~42 br > 30 → tüm ızgara noktaları
+    // kolların dışına düşer; eski kod bu durumda dış centroid'i (~261,261 = çentik) dönerdi.
+    const thinL = [
+      vec2(0, 0),
+      vec2(1000, 0),
+      vec2(1000, 30),
+      vec2(30, 30),
+      vec2(30, 1000),
+      vec2(0, 1000),
+    ];
+    const p = polygonLabelPoint(thinL);
+    expect(pointInPolygon(p, thinL)).toBe(true);
+  });
+
   it('3-ten az köşe → noktaların ortalaması (boş → orijin)', () => {
     expect(polygonLabelPoint([vec2(0, 0), vec2(10, 0)])).toEqual({ x: 5, y: 0 });
     expect(polygonLabelPoint([])).toEqual({ x: 0, y: 0 });

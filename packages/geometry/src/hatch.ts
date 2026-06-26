@@ -50,14 +50,23 @@ export function hatchLines(
   const out: HatchSegment[] = [];
   for (let s = minP + spacing / 2; s < maxP; s += spacing) {
     const anchor = { x: n.x * s, y: n.y * s };
-    const seg = clipLineToPolygon(anchor, d, polygon);
-    if (seg) out.push(seg);
+    clipLineToPolygon(anchor, d, polygon, out);
   }
   return out;
 }
 
-/** Sonsuz `anchor + t·d` doğrusunu poligon kenarlarıyla kesip [tmin,tmax] parçasını döndürür. */
-function clipLineToPolygon(anchor: Vec2, d: Vec2, poly: readonly Vec2[]): HatchSegment | null {
+/**
+ * Sonsuz `anchor + t·d` doğrusunu poligon kenarlarıyla kesip İÇERİDE kalan parçaları `out`'a ekler.
+ * KONKAV doğruluk: kesişim t'leri sıralanır ve ardışık ÇİFTLER (0-1, 2-3…) iç-aralık olarak eşlenir.
+ * (Eski kod yalnız min/max-t alıp tek parça çiziyordu → U/L'de çentiği de dolduruyordu.) Çift sayıda
+ * geçiş = düzgün giriş/çıkış; tek geçiş (kenara teğet köşe) en sonda sarkar → görmezden gelinir.
+ */
+function clipLineToPolygon(
+  anchor: Vec2,
+  d: Vec2,
+  poly: readonly Vec2[],
+  out: HatchSegment[],
+): void {
   const ts: number[] = [];
   const m = poly.length;
   for (let i = 0; i < m; i++) {
@@ -71,14 +80,19 @@ function clipLineToPolygon(anchor: Vec2, d: Vec2, poly: readonly Vec2[]): HatchS
     const by = p.y - anchor.y;
     const t = (-bx * ey + ex * by) / det;
     const u = (d.x * by - d.y * bx) / det;
-    if (u >= -1e-9 && u <= 1 + 1e-9) ts.push(t);
+    // Kenarın başlangıç köşesini dahil et, bitişini hariç tut ([0,1)) → ortak köşe çift sayılmaz.
+    if (u >= -1e-9 && u < 1 - 1e-9) ts.push(t);
   }
-  if (ts.length < 2) return null;
-  const tmin = Math.min(...ts);
-  const tmax = Math.max(...ts);
-  if (tmax - tmin < 1e-9) return null;
-  return {
-    a: { x: anchor.x + d.x * tmin, y: anchor.y + d.y * tmin },
-    b: { x: anchor.x + d.x * tmax, y: anchor.y + d.y * tmax },
-  };
+  if (ts.length < 2) return;
+  ts.sort((a, b) => a - b);
+  // Ardışık çiftler = poligon içindeki dolu aralıklar (parite kuralı).
+  for (let k = 0; k + 1 < ts.length; k += 2) {
+    const tmin = ts[k]!;
+    const tmax = ts[k + 1]!;
+    if (tmax - tmin < 1e-9) continue;
+    out.push({
+      a: { x: anchor.x + d.x * tmin, y: anchor.y + d.y * tmin },
+      b: { x: anchor.x + d.x * tmax, y: anchor.y + d.y * tmax },
+    });
+  }
 }

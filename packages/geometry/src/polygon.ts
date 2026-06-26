@@ -107,11 +107,13 @@ export function polygonLabelPoint(polygon: readonly Vec2[]): Vec2 {
     if (p.y < minY) minY = p.y;
     if (p.y > maxY) maxY = p.y;
   }
-  const N = 24;
+  // Başlangıç = KESİN içeride bir nokta (scanline). Böylece ızgara hiç iç nokta bulamasa
+  // (ince/uzun kollar 24-ızgarayı ıskalayabilir) bile etiket asla dışarı (centroid'e) düşmez.
+  let best = interiorPointByScanline(polygon, minY, maxY);
+  let bestD = distanceToPolygonBoundary(best, polygon);
+  const N = 48; // sıklaştırıldı (ince kolları yakalamak için)
   const dx = (maxX - minX) / N;
   const dy = (maxY - minY) / N;
-  let best = c;
-  let bestD = -1;
   for (let i = 1; i < N; i++) {
     for (let j = 1; j < N; j++) {
       const q = { x: minX + i * dx, y: minY + j * dy };
@@ -124,4 +126,41 @@ export function polygonLabelPoint(polygon: readonly Vec2[]): Vec2 {
     }
   }
   return best;
+}
+
+/**
+ * Basit poligonda KESİN içeride bir nokta: ardışık köşe-y'leri arasındaki orta seviyelerde yatay
+ * tarama yapar, kesişim x'lerini sıralar, ardışık çift (giriş/çıkış) = dolu aralık; en geniş aralığın
+ * orta noktasını döndürür. Konkav odalarda bile daima poligon içindedir (parite kuralı).
+ */
+function interiorPointByScanline(poly: readonly Vec2[], minY: number, maxY: number): Vec2 {
+  const ys = poly.map((p) => p.y).sort((a, b) => a - b);
+  const m = poly.length;
+  let best: Vec2 | null = null;
+  let bestW = -1;
+  for (let s = 0; s + 1 < ys.length; s++) {
+    const y0 = ys[s]!;
+    const y1 = ys[s + 1]!;
+    if (y1 - y0 < 1e-9) continue;
+    const y = (y0 + y1) / 2;
+    const xs: number[] = [];
+    for (let j = 0; j < m; j++) {
+      const a = poly[j]!;
+      const b = poly[(j + 1) % m]!;
+      // Yarı-açık geçiş ([ay,by)) → ortak köşe tek sayılır.
+      if ((a.y <= y && b.y > y) || (b.y <= y && a.y > y)) {
+        const t = (y - a.y) / (b.y - a.y);
+        xs.push(a.x + t * (b.x - a.x));
+      }
+    }
+    xs.sort((a, b) => a - b);
+    for (let k = 0; k + 1 < xs.length; k += 2) {
+      const w = xs[k + 1]! - xs[k]!;
+      if (w > bestW) {
+        bestW = w;
+        best = { x: (xs[k]! + xs[k + 1]!) / 2, y };
+      }
+    }
+  }
+  return best ?? { x: 0, y: (minY + maxY) / 2 };
 }
