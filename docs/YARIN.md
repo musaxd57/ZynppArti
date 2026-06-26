@@ -16,35 +16,16 @@ yarışı, DXF birimleri). Test → **367**, zincir yeşil, hepsi main'de + canl
 
 ---
 
-## 🔜 YARIN — denetimde FLAG'lenen işler (Moses ile, "bunları yarın yapıcaz")
-> Bugün bilerek dokunulmadı (riskli/büyük/dokümante; "emin olmadan yapma"). Yarın **test yazarak, emin
-> olarak** yapılacak. Sıra: yüksek-değer + düşük-risk → büyük/kararlı olanlar.
+## ✅ 2026-06-26 — A–F + AI maliyet TAMAM (`feat/yarin-debt-sweep`, merge bekliyor)
+A geometry (label-point+hatch), B tools (exclude-snap+mid-gesture+opening-fit), D AI timeout,
+E copilot konkav-genişlik, F BatchCommand guard — hepsi test-önce, **367→387 test**, zincir yeşil + push.
+**C perf kısmi:** pageCount Set + pruneEmptyLayers toplu. Detay: `docs/STATE.md`. Kalan ↓
 
-### A. geometry ★ (test-önce — belkemiği)
-- `polygon.ts polygonLabelPoint` — konkav (L/U) odada etiket noktası poligon DIŞINA düşebiliyor; grid
-  sıklaştır + bulunamazsa kesin-içeride noktaya düş. Önce başarısız vakayı yakalayan test.
-- `hatch.ts clipLineToPolygon` — konkav poligonda tarama boşluğu aşırı-doluyor (ts'leri sırala-eşle).
+## 🔜 SIRADAKI — kalan FLAG'ler (Moses ile)
 
-### B. tools (etkileşim; dikkatli)
-- Kendine-snap: entity ucunu sürüklerken kendi diğer ucuna yapışıyor → snapper'a "sürüklenen'i hariç tut".
-- Mid-gesture tool-switch: pointer basılıyken araç değişince yarım jest yanlış araca gidiyor → `setTool` guard.
-- Opening genişliği duvardan taşması → genişlik-sığar kontrolü.
-
-### C. perf (doğruluk değil; 500k ölçek hedefi — tarayıcıda ölç)
-- Çok paftada zoom'da `buildSheet` tam yeniden-çizim → build/stroke ayır (en büyük kazanç burada + render-wall/space).
-- `CanvasStage` pageCount aboneliği her store değişiminde O(n) → yalnız sheet değişince/debounce.
-- `entity-layer pruneEmptyLayers` toplu silmede O(katman) yavaş.
+### C. perf — KALAN (tarayıcıda ölç; engine refactor, körlemesine değil)
+- Çok paftada zoom'da `buildSheet` tam yeniden-çizim → build/stroke ayır (+ render-wall/space).
 - `room-font` BitmapFont singleton vs `app.destroy` — SPA remount'ta font bozulabilir (Pixi v8 doğrula).
-
-### D. AI maliyet (ADR-0019 ertelenmiş — birlikte)
-- Sağlayıcı/render/design çağrılarında timeout yok (askılı upstream parayı açık tutar).
-- `classifyTier` ham metne bakıyor → her istek en pahalı modele zorlanabilir (IP-limit zayıf).
-
-### E. copilot doğruluk
-- Koridor/oda min-genişlik konveks-gövdeden ölçülüyor → konkav koridorda dar yeri (90cm) kaçırabilir.
-
-### F. document (latent)
-- `BatchCommand` aynı id'de Update+Remove → undo'da fırlatıyor (uygulamada şu an ULAŞILMAZ — guard ekle).
 
 ### G. eski-kalan (hâlâ geçerli, karar/doğrulama gerek)
 - **findFaces hole-subtraction:** kapalı iç döngüde dış mahal alanı çentik çıkarmıyor (polygon-with-holes).

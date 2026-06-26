@@ -121,6 +121,16 @@
 
 ## GÜNLÜK
 
+### 2026-06-26 (YARIN-flag süpürmesi A–F + AI maliyet koruması) `feat/yarin-debt-sweep` (Moses merge bekliyor)
+Moses "1. bugün A–F'yi yap, 2. Faz 3'ü de başlat; AI maliyet korumasını şimdi ekle" dedi. Test-önce, emin olarak. Test **367→387**, her commit yeşil + push (typecheck 9/9 · lint 9/9 · web build):
+- **A geometry ★:** `polygonLabelPoint` artık kesin-içeride (scanline) fallback + sık ızgara → ince-kollu L/U odada etiket çentiğe/komşuya düşmüyor. `hatch clipLineToPolygon` ts'leri sıralayıp ÇİFT-aralık dolduruyor (parite) → U/L taramada çentik dolmuyor. +2 test.
+- **B tools:** snapper'a `exclude` (ucu sürüklerken kendi diğer ucuna yapışmaz); ToolManager jest-ortasında klavye araç-değişimini yok sayar; `fitOpeningT` boşluğu duvara sığdırır (taşma yok, sığmazsa yerleştirme reddedilir). +3 test.
+- **D AI maliyet (ADR-0019):** `timeout.ts withTimeout(ms,parent?)` — her ücretli AI çağrısına deadline (sohbet/tasarım/render); route `req.signal`'ı render+design'a geçiriyor (istemci kopunca iptal). +5 test.
+- **E copilot:** `polygonNarrowWidth` (konkav-duyarlı, içe-normal ışın) → konveks-kabuğun kaçırdığı L koridorun dar kolunu (90cm) yakalar; koridor/oda/banyo denetimleri buna geçti. +5 test.
+- **F document:** `BatchCommand` aynı id'ye iki kez dokunan batch'i yapım anında net hatayla reddeder (undo'da gizemli "entity bulunamadı" yerine fail-fast; uygulamada ulaşılmazdı). +1 test.
+- **C perf (kısmi):** CanvasStage sayfa-sayacı O(n) tam-tarama → plain-sheet id Set'i (O(değişen)); engine `pruneEmptyLayers` toplu silmede O(katman×N) → onChange'de bir kez O(katman). ☐ Kalan (tarayıcı-ölçüm gerek, flag): `buildSheet` zoom'da tam rebuild (build/stroke ayır), `room-font` BitmapFont SPA-remount lifecycle.
+- **Kalan (Moses ile):** G eski-kalan (findFaces hole-subtraction, a11y modal focus-trap, View3D slab-mirror, ALLOWED_ORIGINS Railway env), H Faz 3 backend+auth+kalıcılık (büyük — Moses infra/maliyet kararı bekliyor: DB + auth sağlayıcı).
+
 ### 2026-06-25 (gece geç — 8-ajan tüm-proje denetimi + düzeltmeler) main (canlı)
 Moses "bol agent çalıştır, didik didik, emin ol düzelt" dedi (kendisi yok). 8 ajan tüm paketleri taradı; **onaylanan güvenli HIGH/MED'ler düzeltildi**, test 365→**367**:
 - **Sayfa düzeltmeleri (önceki istek):** boş-export uyarısı nötr dil ("Projede dışa aktarılacak yapı yok"); StartScreen "Aç" bozuk-.json doğrulama+toast; AppGate ?ciz= hizalama; yorum-boyut + 3 sayısal PropertiesPanel girdisi onChange→onBlur (undo kirlenmesi); tek "Adsız Plan" sabiti.
