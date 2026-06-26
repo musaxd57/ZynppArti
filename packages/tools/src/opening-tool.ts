@@ -3,10 +3,12 @@ import type { Vec2 } from '@zynpparti/geometry';
 import {
   AddEntity,
   createEntityId,
+  fitOpeningT,
   projectToWall,
   type Opening,
   type Wall,
 } from '@zynpparti/document';
+import { distance } from '@zynpparti/geometry';
 import { drawOpening, type SceneTool, type ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
 
@@ -47,10 +49,13 @@ export class OpeningTool implements SceneTool {
       if (e?.type !== 'wall') continue;
       const { t, dist } = projectToWall(world, e);
       const reach = e.thickness / 2 + SNAP_PX * this.ctx.pixelSize();
-      if (dist <= reach && dist < bestD) {
-        bestD = dist;
-        best = { wall: e, t };
-      }
+      if (dist > reach || dist >= bestD) continue;
+      // Boşluk bu duvara sığmıyorsa (genişlik > duvar boyu) aday değil; sığıyorsa t'yi içeride tut.
+      const len = distance(e.start, e.end);
+      const fitted = fitOpeningT(len, this.width, t);
+      if (fitted === null) continue;
+      bestD = dist;
+      best = { wall: e, t: fitted };
     }
     return best;
   }

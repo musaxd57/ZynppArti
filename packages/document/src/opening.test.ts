@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { openingFrame, projectToWall } from './opening';
+import { fitOpeningT, openingFrame, projectToWall } from './opening';
 import type { Opening, Wall } from './entities';
 
 const wall = (x1: number, y1: number, x2: number, y2: number, thickness = 20): Wall => ({
@@ -50,6 +50,35 @@ describe('openingFrame', () => {
     const f = openingFrame(opening(0.5, 80), wall(10, 10, 10, 10));
     expect(Number.isFinite(f.center.x)).toBe(true);
     expect(Number.isFinite(f.dir.x)).toBe(true);
+  });
+
+  it('uca yakın boşluk duvar İÇİNDE kalır (jamb taşmaz)', () => {
+    // 200 boyu duvar, 80 genişlik kapı, t=0 (uçta) istense bile yarısı (40) içeri çekilir.
+    const w = wall(0, 0, 200, 0);
+    const f = openingFrame(opening(0, 80), w);
+    expect(f.a.x).toBeGreaterThanOrEqual(-1e-9); // sol jamb duvar başlangıcından önce değil
+    expect(f.b.x).toBeLessThanOrEqual(200 + 1e-9); // sağ jamb duvar sonundan sonra değil
+    expect(f.center.x).toBeCloseTo(40, 6); // merkez yarı-genişlik kadar içeri
+  });
+});
+
+describe('fitOpeningT', () => {
+  it('orta konumu olduğu gibi bırakır', () => {
+    expect(fitOpeningT(200, 80, 0.5)).toBeCloseTo(0.5, 6);
+  });
+
+  it('uçtaki t değerlerini içeri kısar (yarı/1−yarı)', () => {
+    expect(fitOpeningT(200, 80, 0)).toBeCloseTo(0.2, 6); // 40/200
+    expect(fitOpeningT(200, 80, 1)).toBeCloseTo(0.8, 6);
+  });
+
+  it('genişlik duvardan büyükse sığmaz → null', () => {
+    expect(fitOpeningT(100, 120, 0.5)).toBeNull();
+    expect(fitOpeningT(0, 80, 0.5)).toBeNull();
+  });
+
+  it('tam sığan genişlik (width = wallLen) → t ortaya kilitlenir', () => {
+    expect(fitOpeningT(80, 80, 0.2)).toBeCloseTo(0.5, 6);
   });
 });
 

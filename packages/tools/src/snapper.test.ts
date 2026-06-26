@@ -138,6 +138,27 @@ describe('createSnapper', () => {
     expect(hint!.pointKind).toBe('intersection');
   });
 
+  it('exclude verilen entity yakalamaya katılmaz (kendine-snap önlenir)', () => {
+    const store = new EntityStore();
+    const index = new SpatialIndex();
+    // Izgara-DIŞI uçlu duvar (10,10)-(110,10) → uç (10,10) ızgara noktası değil.
+    const wall: Wall = {
+      id: 'w1',
+      type: 'wall',
+      layerId: 'default',
+      start: { x: 10, y: 10 },
+      end: { x: 110, y: 10 },
+      thickness: 10,
+    };
+    store.put(wall);
+    index.insert(wall.id, entityBounds(wall));
+    const snap = createSnapper(store, index, () => 1);
+    // w1 dahil → kendi ucuna (10,10) yapışır.
+    expect(snap({ x: 13, y: 12 })).toEqual({ x: 10, y: 10 });
+    // w1 hariç → uca yapışmaz, ızgaraya düşer (0,0).
+    expect(snap({ x: 13, y: 12 }, new Set(['w1']))).toEqual({ x: 0, y: 0 });
+  });
+
   it('exact endpoint snap reports a point hint (no guides)', () => {
     const { store, index } = wallAt();
     let hint: SnapHint | null = null;

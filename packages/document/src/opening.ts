@@ -19,6 +19,18 @@ export interface OpeningFrame {
   readonly thickness: number;
 }
 
+/**
+ * Boşluğun duvara SIĞMASI için `t`'yi kısar. Boşluk merkezli (genişlik `width`) olduğundan, duvar
+ * ucundan taşmaması için t ∈ [yarı, 1−yarı] olmalı (yarı = (width/2)/wallLen). Genişlik duvardan
+ * büyükse hiç sığmaz → `null` (yerleştirme reddedilir). Saf; tool yerleştirmede, frame render'da kullanır.
+ */
+export function fitOpeningT(wallLen: number, width: number, t: number): number | null {
+  if (!(wallLen > 0) || !Number.isFinite(width) || width > wallLen) return null;
+  const half = width / 2 / wallLen;
+  const tt = Number.isFinite(t) ? t : 0.5;
+  return Math.max(half, Math.min(1 - half, tt));
+}
+
 /** Boşluğun duvardan türetilmiş çerçevesini hesaplar. */
 export function openingFrame(o: Opening, wall: Wall): OpeningFrame {
   const sx = wall.end.x - wall.start.x;
@@ -26,9 +38,9 @@ export function openingFrame(o: Opening, wall: Wall): OpeningFrame {
   const len = Math.hypot(sx, sy) || 1;
   const dx = sx / len;
   const dy = sy / len;
-  // t∈[0,1] savunması: bozuk/elle düzenlenmiş modelde (serialize derin doğrulama yapmaz) duvar
-  // dışına taşmasın.
-  const t = Number.isFinite(o.t) ? Math.max(0, Math.min(1, o.t)) : 0.5;
+  // t kısma: boşluk duvar dışına taşmasın (sığmazsa ortala — render best-effort).
+  // (Bozuk/elle düzenlenmiş modelde de savunma; serialize derin doğrulama yapmaz.)
+  const t = fitOpeningT(len, o.width, o.t) ?? 0.5;
   const cx = wall.start.x + sx * t;
   const cy = wall.start.y + sy * t;
   const half = o.width / 2;

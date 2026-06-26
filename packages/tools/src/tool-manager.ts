@@ -71,6 +71,8 @@ export class ToolManager implements SceneTool {
   private readonly blockTool: BlockTool;
   private readonly selectTool: SelectTool;
   private current: ToolName = 'select';
+  /** Pointer basılı mı (jest sürüyor mu) — jest ortasında klavyeyle araç değişimini engeller. */
+  private pointerActive = false;
   private readonly listeners = new Set<ToolListener>();
   /** Kopyala-yapıştır panosu (çoklu; oturum-içi, kalıcı değil). */
   private clipboard: Entity[] = [];
@@ -128,6 +130,7 @@ export class ToolManager implements SceneTool {
   }
 
   onPointerDown(p: ScenePointer): void {
+    this.pointerActive = true;
     this.active.onPointerDown?.(p);
   }
   onPointerMove(p: ScenePointer): void {
@@ -135,6 +138,7 @@ export class ToolManager implements SceneTool {
   }
   onPointerUp(p: ScenePointer): void {
     this.active.onPointerUp?.(p);
+    this.pointerActive = false;
   }
 
   onKeyDown(e: KeyboardEvent): void {
@@ -177,7 +181,8 @@ export class ToolManager implements SceneTool {
       else this.active.onKeyDown?.(e);
       return;
     }
-    if (!ctrl) {
+    // Jest ortasında (pointer basılı) klavyeyle araç değiştirme — yarım jest yanlış araca gider.
+    if (!ctrl && !this.pointerActive) {
       const k = e.key.toLowerCase();
       if (k === 'v' || k === '1') return this.setTool('select'); // 'm' YOK → yorum aracına ait (aşağıda)
       if (k === 'l') return this.toggleTool('wall'); // tekrar L → kapat, Seç'e dön

@@ -61,6 +61,11 @@ export class SelectTool implements SceneTool {
   /** Aktif tutamaç sürüklemesi (yalnız tek seçimde). */
   private dragHandle: { entity: Entity; index: number } | null = null;
 
+  /** Tutamaç sürüklerken snap'te hariç tutulacak id (kendi diğer ucuna yapışmasın). */
+  private get dragExclude(): ReadonlySet<EntityId> | undefined {
+    return this.dragHandle ? new Set([this.dragHandle.entity.id]) : undefined;
+  }
+
   constructor(private readonly ctx: ToolContext) {
     this.ctx.overlay.addChild(this.hoverGfx);
     this.ctx.overlay.addChild(this.selectionGfx);
@@ -124,7 +129,7 @@ export class SelectTool implements SceneTool {
   onPointerMove(p: ScenePointer): void {
     // Tutamaç sürüklemesi — canlı önizleme (snap'li).
     if (this.dragHandle) {
-      const np = this.ctx.snap(p.world);
+      const np = this.ctx.snap(p.world, this.dragExclude);
       this.drawGhosts([this.applyHandle(this.dragHandle.entity, this.dragHandle.index, np)]);
       return;
     }
@@ -152,7 +157,7 @@ export class SelectTool implements SceneTool {
   onPointerUp(p: ScenePointer): void {
     // Tutamaç sürüklemesi commit.
     if (this.dragHandle) {
-      const np = this.ctx.snap(p.world);
+      const np = this.ctx.snap(p.world, this.dragExclude);
       this.ctx.history.dispatch(
         new UpdateEntity(this.applyHandle(this.dragHandle.entity, this.dragHandle.index, np)),
       );

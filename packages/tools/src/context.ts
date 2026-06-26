@@ -15,8 +15,11 @@ export interface ToolContext {
   readonly overlay: Container;
   /** Bir ekran pikselinin dünya birimi karşılığı (tolerans/yarıçap ölçekleme). */
   pixelSize(): number;
-  /** Dünya noktasını en yakın uç noktaya, yoksa ızgaraya yakalar. */
-  snap(world: Vec2): Vec2;
+  /**
+   * Dünya noktasını en yakın uç noktaya, yoksa ızgaraya yakalar. `exclude` verilirse o id'li
+   * entity'ler yakalamada YOK SAYILIR (bir ucu sürüklerken kendi diğer ucuna/ortasına yapışmasın).
+   */
+  snap(world: Vec2, exclude?: ReadonlySet<EntityId>): Vec2;
   /** Katman gizliyse o entity seçilemez/silinemez (hit-test atlar). İsteğe bağlı. */
   isLayerHidden?(layerId: string): boolean;
   /** Katman kilitliyse seçilemez/düzenlenemez (görünür kalır). İsteğe bağlı. */
@@ -125,6 +128,7 @@ function nearestAxis(
   axis: 'x' | 'y',
   tol: number,
   vp: AABB | null,
+  exclude?: ReadonlySet<EntityId>,
 ): { value: number; ref: Vec2 } | null {
   // Şerit, dik eksende GÖRÜNÜR alanla sınırlanır (yoksa ±BIG): hizalama yalnız ekrandaki geometriye
   // bakar → çok büyük modelde şerit tüm modeli değil yalnız viewport bandını döndürür (perf).
@@ -139,6 +143,7 @@ function nearestAxis(
   let best: { value: number; ref: Vec2 } | null = null;
   let bestD = tol;
   for (const id of index.search(box)) {
+    if (exclude?.has(id)) continue;
     const e = store.get(id);
     if (!e) continue;
     for (const sp of snapPoints(e)) {
@@ -167,8 +172,8 @@ export function createSnapper(
   pixelSize: () => number,
   onSnap?: (hint: SnapHint) => void,
   viewport?: () => AABB | null,
-): (world: Vec2) => Vec2 {
-  return (world: Vec2): Vec2 => {
+): (world: Vec2, exclude?: ReadonlySet<EntityId>) => Vec2 {
+  return (world: Vec2, exclude?: ReadonlySet<EntityId>): Vec2 => {
     const px = pixelSize();
 
     // 1) Tam nokta yakalama (köşe/orta, öncelik) ve 1.5) kenar-üstü yakalama — tek rbush aramasıyla.
@@ -184,6 +189,7 @@ export function createSnapper(
       maxX: world.x + r,
       maxY: world.y + r,
     })) {
+      if (exclude?.has(id)) continue;
       const e = store.get(id);
       if (!e) continue;
       for (const sp of snapPoints(e)) {
@@ -240,8 +246,8 @@ export function createSnapper(
     // 2) Eksen hizalama (yoksa 3) ızgara). Eksenler bağımsız: biri hizalanırken diğeri ızgaraya düşebilir.
     const aTol = ALIGN_PX * px;
     const vp = viewport?.() ?? null;
-    const vx = nearestAxis(store, index, world, 'x', aTol, vp);
-    const hy = nearestAxis(store, index, world, 'y', aTol, vp);
+    const vx = nearestAxis(store, index, world, 'x', aTol, vp, exclude);
+    const hy = nearestAxis(store, index, world, 'y', aTol, vp, exclude);
     const snapped: Vec2 = {
       x: vx ? vx.value : Math.round(world.x / SNAP_GRID) * SNAP_GRID,
       y: hy ? hy.value : Math.round(world.y / SNAP_GRID) * SNAP_GRID,
