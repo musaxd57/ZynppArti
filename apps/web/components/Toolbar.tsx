@@ -134,6 +134,7 @@ export function Toolbar({
       }
       const imported = [...walls, ...annotations];
       history.dispatch(new BatchCommand('CAD içe aktar', imported.map((ent) => new AddEntity(ent))));
+      zoomToFit(); // içe aktarılan içeriği KADRAJA al (gerçek DXF koord'ları origin'den uzak → boş-görünmesin)
       toast(`${imported.length} öğe içe aktarıldı (${walls.length} çizgi/duvar).`, 'success');
     } catch (err) {
       // Mimar-dostu mesaj; teknik ayrıntı konsola.
@@ -343,6 +344,7 @@ export function Toolbar({
       if (cmds.length > 0) {
         history.dispatch(cmds.length === 1 ? cmds[0]! : new BatchCommand('Model aç', cmds));
       }
+      zoomToFit(); // açılan modeli KADRAJA al (origin'den uzak/büyük model boş-görünmesin)
       setProjectName(file.name.replace(/\.json$/i, '') || DEFAULT_PROJECT_NAME); // proje adını dosyadan türet
       clearCloudProjectId(); // yerel dosya açıldı → bulut bağını kopar (yanlış üzerine yazma önlemi)
       toast(`Model açıldı (${toAdd.length} öğe).`, 'success');
@@ -416,7 +418,7 @@ export function Toolbar({
       <button type="button" onClick={() => jsonRef.current?.click()} className={btn} title="Model aç (.json) — Ctrl+O">
         Aç
       </button>
-      <CloudMenu store={store} history={history} />{/* giriş yoksa kendini gizler */}
+      <CloudMenu store={store} history={history} zoomToFit={zoomToFit} />{/* giriş yoksa kendini gizler */}
       <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button type="button" onClick={() => fileRef.current?.click()} className={btn}>
         CAD Yükle

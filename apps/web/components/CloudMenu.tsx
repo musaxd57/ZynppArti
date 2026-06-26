@@ -27,7 +27,15 @@ import { confirmDialog } from '@/lib/dialog';
  * Bulut Kaydet/Aç menüsü (ADR-0047). Yalnız Supabase yapılandırılmış + GİRİŞ yapılmışken görünür
  * (anonim akış bozulmaz). Model `serializeModel` zarfıyla Storage'a yazılır → yerel .json ile uyumlu.
  */
-export function CloudMenu({ store, history }: { store: EntityStore; history: History }): React.ReactElement | null {
+export function CloudMenu({
+  store,
+  history,
+  zoomToFit,
+}: {
+  store: EntityStore;
+  history: History;
+  zoomToFit?: () => void;
+}): React.ReactElement | null {
   const projectName = useProjectName();
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
@@ -103,6 +111,7 @@ export function CloudMenu({ store, history }: { store: EntityStore; history: His
       if (cmds.length > 0) {
         history.dispatch(cmds.length === 1 ? cmds[0]! : new BatchCommand('Buluttan aç', cmds));
       }
+      zoomToFit?.(); // açılan bulut projesini KADRAJA al (origin'den uzak/büyük model boş-görünmesin)
       setProjectName(p.name);
       setCloudProjectId(p.id);
       toast(`"${p.name}" açıldı (${toAdd.length} öğe).`, 'success');

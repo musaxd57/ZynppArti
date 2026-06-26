@@ -91,6 +91,9 @@ export function CanvasStage() {
   // Açılışta sol+sağ dock kolonları GİZLİ (Moses isteği: temiz tam-genişlik tuvalle başla, 143612).
   // Toolbar'daki panel-aç/kapa düğmesiyle gösterilir. (Oturum-içi; her açılış temiz başlar.)
   const [chromeHidden, setChromeHidden] = useState(true);
+  // İlk anlamlı seçimde panelleri BİR KEZ otomatik aç (seçili öğeyi düzenlemek için panel gerekir;
+  // gizliyken seçim hiçbir edit arayüzü göstermezdi). Sonradan kullanıcı zen'e dönerse zorlamaz.
+  const autoRevealedRef = useRef(false);
 
   // Landing'den `/app?ciz=<program>` ile gelindiyse: Vesna AI'ı Çiz modunda, istem YAPIŞTIRILMIŞ aç.
   // (window.location → useSearchParams Suspense gereksinimi yok; app zaten tam istemci.)
@@ -240,7 +243,9 @@ export function CanvasStage() {
         return;
       }
       handle = h;
-      // (Yeni proje artık boş başlıyor → sığdıracak sayfa yok; varsayılan kamera origin'de kalır.)
+      // Açılışta "Aç" ile model yüklendiyse içeriği KADRAJA al (origin'den uzak/büyük model boş-görünmesin
+      // — zoom 0.5 + boş-başla bunu açığa çıkardı). Boş yeni projede zoomToFit no-op (origin/0.5 kalır).
+      if (pendingOpen) h.zoomToFit();
       const history = new History(store);
       // Mahalleri otomatik bul (engine entity katmanı abone olduktan sonra).
       rooms = new RoomManager(store);
@@ -261,7 +266,14 @@ export function CanvasStage() {
         isLayerHidden: (id) => h.layers.isHidden(id),
         isLayerLocked: (id) => h.layers.isLocked(id),
         setCursor: (c) => h.setCursor(c),
-        onSelectionChange: (ids) => setSelectedIds(ids),
+        onSelectionChange: (ids) => {
+          setSelectedIds(ids);
+          // İlk seçimde panelleri bir kez aç → Özellikler/Mahal panelleri görünür olsun (chromeHidden default).
+          if (ids.length > 0 && !autoRevealedRef.current) {
+            autoRevealedRef.current = true;
+            setChromeHidden(false);
+          }
+        },
         onLayerLocked: () => {
           // Kilitli öğeye tıklayınca bilgilendir; arka arkaya tıklamada spam yapma (1.5 sn).
           const now = Date.now();
@@ -275,8 +287,11 @@ export function CanvasStage() {
       });
       h.setActiveTool(manager);
       // Mahal içine çift tık → Seç moduna geç + o mahalin adını düzenlemeye odaklan.
+      // Panelleri AÇ: ad düzenleme girdisi RoomList içinde (sağ dock); chromeHidden ise görünmezdi (regresyon).
       h.setSpaceActivateHandler((id) => {
         manager?.setTool('select');
+        autoRevealedRef.current = true;
+        setChromeHidden(false);
         setRenameId(id);
       });
       // Açıklama metnine çift tık → mevcut metinle düzenle (basit prompt; AnnotationTool ile tutarlı).

@@ -58,9 +58,10 @@ export function CollabControl({
 
   const start = (): void => {
     const fromHash = location.hash.match(/room=([\w-]+)/)?.[1];
-    // Oda kodu kriptografik rastgele (Math.random tahmin edilebilir; collab link gizliliği için crypto).
-    const newRoom = `oda-${crypto.randomUUID().slice(0, 8)}`;
-    connect(room ?? fromHash ?? newRoom);
+    // Oda kodu: güvenli bağlamda kriptografik (crypto.randomUUID), DEĞİLSE (LAN http — çapraz-cihaz test
+    // yolu) Math.random'a düş. crypto.randomUUID yalnız secure context'te tanımlı → yoksa throw'u önle.
+    const rnd = globalThis.crypto?.randomUUID?.().slice(0, 8) ?? Math.random().toString(36).slice(2, 10);
+    connect(room ?? fromHash ?? `oda-${rnd}`);
   };
 
   /** Paylaşımı kapat: bağlantıyı sök, URL'den oda kodunu temizle, tek-kullanıcıya dön. */
