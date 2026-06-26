@@ -1,6 +1,6 @@
 import { buildSystemPrompt } from './prompt';
 import { classifyTier, resolveChain, maxTokensForTier } from './router';
-import { tierTimeoutMs, withTimeout } from './timeout';
+import { tierTimeoutMs, withTimeout, withIdleTimeout } from './timeout';
 import type { AiProvider, AiProviderName, ChatMessage, CopilotContext, Tier } from './types';
 
 export interface CopilotResult {
@@ -94,12 +94,14 @@ export async function askCopilotStream(
     const provider = providers[name];
     if (!provider) continue;
     let started = false;
-    // İstemci iptali (parent) + deadline birleşik: hangisi önce olursa çağrı iptal.
-    const { signal: attemptSignal, dispose } = withTimeout(tierTimeoutMs(tier), signal);
+    // İstemci iptali (parent) + BOŞTA-KALMA timeout'u: token aktıkça `bump()` pencereyi sıfırlar →
+    // sağlıklı ama uzun yanıt kesilmez; yalnız askıda upstream iptal olur (mutlak deadline yerine).
+    const { signal: attemptSignal, bump, dispose } = withIdleTimeout(tierTimeoutMs(tier), signal);
     try {
       // onDelta yalnız boş-OLMAYAN parçayla çağrılır (sağlayıcılar boş delta'yı eler) → `started`
       // yalnız gerçek içerik gelince true olur; akış başladıysa fallback yapılmaz (aşağıda).
       await provider.chatStream(messages, { system, maxTokens, signal: attemptSignal }, (d) => {
+        bump(); // her delta idle penceresini sıfırlar
         started = true;
         onDelta(d);
       });

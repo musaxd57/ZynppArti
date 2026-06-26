@@ -34,6 +34,19 @@ describe('hatchLines', () => {
     expect(hatchLines(square, 0, 0)).toEqual([]);
   });
 
+  it('devasa açıklık / küçük aralık → çizgi sayısı sınırı (donmaz / patlamaz)', () => {
+    // Tarama yönüne (y) dik açıklık 2.000.000 br, spacing 1 → 2M çizgi olurdu → cap (>100k) → boş.
+    const huge = [
+      { x: 0, y: 0 },
+      { x: 1000, y: 0 },
+      { x: 1000, y: 2_000_000 },
+      { x: 0, y: 2_000_000 },
+    ];
+    const t0 = Date.now();
+    expect(hatchLines(huge, 1, 0)).toEqual([]); // aşırı sayım → boş (UI donmaz)
+    expect(Date.now() - t0).toBeLessThan(500); // anında döner (asılı kalmaz)
+  });
+
   it('tarama çizgisi reflex köşeye TAM denk gelince parite bozulmaz (açıklık tümden dolar)', () => {
     // Reflex köşe (5,5); y=5 taraması tam o köşeden geçer. Eski u-tabanlı kural ts=[0,5,10] üretip
     // yalnız (0,5)'i doldurur, (5,10) açıklığını yanlışça boş bırakırdı. Gerçek iç = [0,10].

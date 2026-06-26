@@ -77,10 +77,18 @@ export async function listCloudProjects(): Promise<CloudProject[]> {
   return (data ?? []) as CloudProject[];
 }
 
-/** Bir bulut projesinin JSON zarfını indirir (deserializeModel'e verilir). */
+/**
+ * Bir bulut projesinin JSON zarfını indirir (deserializeModel'e verilir). Yolu METADATA'daki
+ * `storage_path`'ten okur (paylaşılan projede dosya SAHİBİN klasöründedir; çağıranın değil → kendi
+ * uid'inden uydurmak 404 verirdi). storage_path yoksa kendi klasörüne düşer (geriye uyum). (Denetim.)
+ */
 export async function loadProjectFromCloud(id: string): Promise<string> {
   const { supabase, uid } = await requireUid();
-  const { data, error } = await supabase.storage.from(BUCKET).download(pathOf(uid, id));
+  let path = pathOf(uid, id);
+  const meta = await supabase.from('projects').select('storage_path').eq('id', id).maybeSingle();
+  const sp = meta.data?.storage_path as string | undefined;
+  if (sp) path = sp.startsWith(`${BUCKET}/`) ? sp.slice(BUCKET.length + 1) : sp;
+  const { data, error } = await supabase.storage.from(BUCKET).download(path);
   if (error) throw error;
   return await data.text();
 }

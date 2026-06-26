@@ -119,6 +119,26 @@ describe('importDxf', () => {
     }
   });
 
+  it('ELLIPSE → tessellate (düşmez); köşeler elips üstünde', () => {
+    // merkez (0,0), büyük eksen ucu (100,0) → a=100, axisRatio 0.5 → b=50, tam elips.
+    const dxf = [
+      '0', 'SECTION', '2', 'ENTITIES',
+      '0', 'ELLIPSE', '8', 'A',
+      '10', '0.0', '20', '0.0', '30', '0.0',
+      '11', '100.0', '21', '0.0', '31', '0.0',
+      '40', '0.5',
+      '41', '0.0', '42', '6.283185307',
+      '0', 'ENDSEC', '0', 'EOF',
+    ].join('\n');
+    const r = importDxf(dxf);
+    expect(r.walls.length).toBeGreaterThanOrEqual(4);
+    // Her köşe elips denkleminde: (x/100)² + (y/50)² ≈ 1.
+    for (const w of r.walls) {
+      const v = (w.start.x / 100) ** 2 + (w.start.y / 50) ** 2;
+      expect(v).toBeCloseTo(1, 1);
+    }
+  });
+
   it('round-trips through exportDxf (geometry preserved)', () => {
     const dxf = exportDxf([
       {

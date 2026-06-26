@@ -196,6 +196,10 @@ export async function createCanvasApp(
       canvas.style.cursor = spaceHeld ? 'grab' : toolCursor;
       return;
     }
+    // pointerDown yalnız sol tuşu (button 0) araca iletir → pointerUp de simetrik olmalı. Aksi halde
+    // SAĞ tık, eşleşen pointerDown olmadan tool.onPointerUp tetikleyip seçimi temizler (sağ-tık menüsü
+    // boş seçimle açılır → seçili öğeye sağ tıklayıp işlem yapılamaz). Denetim bulgusu.
+    if (e.button !== 0) return;
     guardTool('pointerUp', () => activeTool?.onPointerUp?.(scenePointer(e)));
   }
 

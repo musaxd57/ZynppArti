@@ -86,6 +86,7 @@ create policy profiles_self on public.profiles
   for all using (id = auth.uid()) with check (id = auth.uid());
 
 -- Bir kullanıcının bir projeye erişimi var mı? (sahip veya üye) — yardımcı.
+-- SECURITY DEFINER: gövdedeki sorgular RLS'i ATLAR → policy içinde kullanınca özyineleme olmaz (KRİTİK).
 create or replace function public.can_access_project(p uuid)
 returns boolean
 language sql
@@ -99,25 +100,37 @@ as $$
   );
 $$;
 
+-- Kullanıcı bu projenin SAHİBİ mi? — definer (RLS-atlar) → project_members policy'sinde özyineleme kırar.
+create or replace function public.is_project_owner(p uuid)
+returns boolean
+language sql
+security definer set search_path = public
+stable
+as $$
+  select exists (select 1 from public.projects pr where pr.id = p and pr.owner = auth.uid());
+$$;
+
 -- projects: sahip tam yetki; üye okuyabilir.
 drop policy if exists projects_owner_all on public.projects;
 create policy projects_owner_all on public.projects
   for all using (owner = auth.uid()) with check (owner = auth.uid());
 
+-- ÖNEMLİ: üye-okuma DEFINER fonksiyonla yapılır. Inline `exists(... project_members ...)` kullanılırsa
+-- projects↔project_members policy'leri KARŞILIKLI ÖZYİNELEME yapar ("infinite recursion detected") ve
+-- HER projects sorgusu (listCloudProjects) çöker. can_access_project RLS'i atladığından döngü kırılır. (Denetim.)
 drop policy if exists projects_member_read on public.projects;
 create policy projects_member_read on public.projects
-  for select using (
-    exists (select 1 from public.project_members m where m.project = id and m.member = auth.uid())
-  );
+  for select using (public.can_access_project(id));
 
--- project_members: yalnız proje sahibi üye ekler/çıkarır/listeler.
+-- project_members: sahip üye ekler/çıkarır/listeler (sahip kontrolü DEFINER fn ile → özyineleme yok);
+-- üye KENDİ üyelik satırını okuyabilir (paylaşılan projeyi listeleyebilmek için).
 drop policy if exists members_owner on public.project_members;
 create policy members_owner on public.project_members
-  for all using (
-    exists (select 1 from public.projects pr where pr.id = project and pr.owner = auth.uid())
-  ) with check (
-    exists (select 1 from public.projects pr where pr.id = project and pr.owner = auth.uid())
-  );
+  for all using (public.is_project_owner(project)) with check (public.is_project_owner(project));
+
+drop policy if exists members_self_read on public.project_members;
+create policy members_self_read on public.project_members
+  for select using (member = auth.uid());
 
 -- comments: projeye erişimi olan okur/yazar; yorumu yalnız yazarı düzenler/siler.
 drop policy if exists comments_read on public.comments;
@@ -144,11 +157,21 @@ insert into storage.buckets (id, name, public)
 values ('models', 'models', false)
 on conflict (id) do nothing;
 
--- Storage RLS: dosya yolu 'models/<auth.uid>/...' → kullanıcı yalnız kendi klasörü.
+-- Storage RLS: yazma/silme yalnız KENDİ klasörüne ('models/<auth.uid>/...'); kullanıcı kendi
+-- dosyalarını tam yönetir.
 drop policy if exists models_own_folder on storage.objects;
 create policy models_own_folder on storage.objects
   for all using (
     bucket_id = 'models' and (storage.foldername(name))[1] = auth.uid()::text
   ) with check (
     bucket_id = 'models' and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Paylaşılan OKUMA: dosya adı '<projectId>.json' → erişebildiği projenin (üye/sahip) modelini indirebilir.
+-- Yol 'models/<owner>/<projectId>.json'; project id = dosya adı (uzantısız). Yalnız SELECT (üye yazamaz).
+drop policy if exists models_shared_read on storage.objects;
+create policy models_shared_read on storage.objects
+  for select using (
+    bucket_id = 'models'
+    and public.can_access_project((split_part(storage.filename(name), '.', 1))::uuid)
   );

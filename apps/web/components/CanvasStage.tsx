@@ -376,7 +376,8 @@ export function CanvasStage() {
           if (c) cursors.push({ id: String(id), x: c.x, y: c.y, color });
           const sel = st.selection as string[] | undefined;
           if (Array.isArray(sel)) {
-            for (const eid of sel) {
+            // Gelen tarafta da cap (kapamayan/eski bir peer dev dizi gönderirse render donmasın).
+            for (const eid of sel.length > 200 ? sel.slice(0, 200) : sel) {
               const e = ui.store.get(eid);
               if (!e) continue;
               try {
@@ -406,12 +407,15 @@ export function CanvasStage() {
   }, [collab, ui, registerHover]);
 
   // Presence: kendi seçimini paylaş (uzaktakiler renkli kutuyla görür).
+  // CAP: tüm seçim dizisini yayınlamak Ctrl+A (yüz binlerce id) sonrası awareness payload'ını + her
+  // peer'ın render döngüsünü patlatır → 200 ile sınırla (500k/60fps hedefi). (Denetim bulgusu.)
   useEffect(() => {
     if (!collab) return;
     try {
+      const shared = selectedIds.length > 200 ? selectedIds.slice(0, 200) : selectedIds;
       (collab.awareness as unknown as { setLocalStateField: (k: string, v: unknown) => void }).setLocalStateField(
         'selection',
-        selectedIds,
+        shared,
       );
     } catch {
       /* awareness yoksa atla */

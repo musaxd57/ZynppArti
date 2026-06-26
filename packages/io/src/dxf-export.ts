@@ -17,11 +17,31 @@ import {
  * Geriye uyumlu: `readonly Wall[]` da `readonly Entity[]` olarak geçerlidir.
  */
 export function exportDxf(entities: readonly Entity[]): string {
-  const out: string[] = ['0', 'SECTION', '2', 'ENTITIES'];
+  const out: string[] = [];
 
   // Boşlukları konumlandırmak için duvar haritası (binding çözümü).
   const walls = new Map<EntityId, Wall>();
   for (const e of entities) if (e.type === 'wall') walls.set(e.id, e);
+
+  // HEADER: $INSUNITS=5 (cm) → yeniden içe-aktarımda birim ipucu (elle kalibrasyon gerekmez); $ACADVER.
+  out.push(
+    '0', 'SECTION', '2', 'HEADER',
+    '9', '$ACADVER', '1', 'AC1009',
+    '9', '$INSUNITS', '70', '5',
+    '0', 'ENDSEC',
+  );
+
+  // TABLES → LAYER: kullanılan katmanları tanımla (strict tüketiciler renk/görünürlük için ister).
+  const layerNames = new Set<string>();
+  for (const e of entities) if (e.type !== 'sheet') layerNames.add(sanitizeLayer(e.layerId));
+  if (layerNames.size === 0) layerNames.add('0');
+  out.push('0', 'SECTION', '2', 'TABLES', '0', 'TABLE', '2', 'LAYER', '70', String(layerNames.size));
+  for (const name of layerNames) {
+    out.push('0', 'LAYER', '2', name, '70', '0', '62', '7', '6', 'CONTINUOUS');
+  }
+  out.push('0', 'ENDTAB', '0', 'ENDSEC');
+
+  out.push('0', 'SECTION', '2', 'ENTITIES');
 
   for (const e of entities) {
     switch (e.type) {

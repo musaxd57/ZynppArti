@@ -325,6 +325,22 @@ export function View3D({ store }: { store: EntityStore }) {
     return () => cleanup();
   }, [open, store]);
 
+  // a11y: tam-ekran modal Escape ile kapanmalı (CommandPalette/ShortcutsHelp gibi) — klavye kullanıcısı
+  // ✕'e mahkûm kalmasın. Kapatma mantığı ✕ butonuyla aynı. (Denetim bulgusu.)
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') {
+        spinRef.current = false;
+        setSpin(false);
+        setViewCount(0);
+        setOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
   return (
     <>
       {!open && (
@@ -338,7 +354,12 @@ export function View3D({ store }: { store: EntityStore }) {
         </button>
       )}
       {open && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-neutral-950">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="3B önizleme"
+          className="fixed inset-0 z-50 flex flex-col bg-neutral-950"
+        >
           <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2 text-white">
             <span className="text-sm font-semibold">3B Önizleme (şematik)</span>
             <span className="text-[11px] text-white/50">sürükle: döndür · tekerlek: yakınlaş</span>

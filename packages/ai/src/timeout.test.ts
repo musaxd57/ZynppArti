@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { withTimeout, tierTimeoutMs, TimeoutError, DESIGN_TIMEOUT_MS, RENDER_TIMEOUT_MS } from './timeout';
+import { withTimeout, withIdleTimeout, tierTimeoutMs, TimeoutError, DESIGN_TIMEOUT_MS, RENDER_TIMEOUT_MS } from './timeout';
 
 describe('tierTimeoutMs', () => {
   it('karmaşık kademe en uzun süre', () => {
@@ -50,5 +50,33 @@ describe('withTimeout', () => {
     vi.advanceTimersByTime(5000);
     expect(signal.aborted).toBe(false);
     vi.useRealTimers();
+  });
+});
+
+describe('withIdleTimeout', () => {
+  it('bump() penceresi sıfırlar → akan stream kesilmez; etkinlik durunca iptal', () => {
+    vi.useFakeTimers();
+    const { signal, bump, dispose } = withIdleTimeout(1000);
+    // 0.8sn sonra bir token → bump; 0.8sn daha → bump; toplam 1.6sn > 1sn ama hiç kesilmedi.
+    vi.advanceTimersByTime(800);
+    bump();
+    expect(signal.aborted).toBe(false);
+    vi.advanceTimersByTime(800);
+    bump();
+    expect(signal.aborted).toBe(false);
+    // Şimdi etkinlik dur → 1sn sonra iptal.
+    vi.advanceTimersByTime(1000);
+    expect(signal.aborted).toBe(true);
+    expect(signal.reason).toBeInstanceOf(TimeoutError);
+    dispose();
+    vi.useRealTimers();
+  });
+
+  it('parent iptali idle timeout-u da iptal eder', () => {
+    const parent = new AbortController();
+    const { signal, dispose } = withIdleTimeout(60_000, parent.signal);
+    parent.abort(new Error('istemci koptu'));
+    expect(signal.aborted).toBe(true);
+    dispose();
   });
 });

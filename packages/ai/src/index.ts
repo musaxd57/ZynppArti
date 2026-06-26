@@ -7,6 +7,7 @@ export { openAICompatibleProvider, type OpenAICompatConfig } from './provider-op
 export { classifyTier, resolveChain, FALLBACK_CHAINS } from './router';
 export {
   withTimeout,
+  withIdleTimeout,
   tierTimeoutMs,
   TimeoutError,
   DESIGN_TIMEOUT_MS,

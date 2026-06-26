@@ -126,6 +126,23 @@ export function importDxf(text: string): DxfImportResult {
         const a = e as IArcEntity;
         tessellateArc(a.center, a.radius, a.startAngle, a.endAngle, factor, layer, walls, tf);
         layers.add(layer);
+      } else if (e.type === 'ELLIPSE') {
+        // Mimari DXF'te kemerli boşluk/oval mekan; eskiden sessizce DÜŞÜYORDU (denetim).
+        const el = e as {
+          center?: XY;
+          majorAxisEndPoint?: XY;
+          axisRatio?: number;
+          startAngle?: number;
+          endAngle?: number;
+        };
+        if (el.center && el.majorAxisEndPoint && tessellateEllipse(el.center, el.majorAxisEndPoint, el.axisRatio ?? 1, el.startAngle ?? 0, el.endAngle ?? Math.PI * 2, factor, layer, walls, tf)) {
+          layers.add(layer);
+        }
+      } else if (e.type === 'SPLINE') {
+        // Serbest/eğri duvar; fit noktaları (eğri üstünde) tercih, yoksa kontrol poligonu (kaba). Düştü yerine yaklaş.
+        const sp = e as { fitPoints?: XY[]; controlPoints?: XY[] };
+        const pts = (sp.fitPoints && sp.fitPoints.length >= 2 ? sp.fitPoints : sp.controlPoints) ?? [];
+        if (pts.length >= 2 && pushPolyline(pts, false, factor, layer, walls, tf)) layers.add(layer);
       } else if (e.type === 'TEXT') {
         const t = e as ITextEntity;
         const ann = makeAnnotation(t.startPoint ? tf(t.startPoint) : undefined, t.text, t.textHeight, factor, layer);
@@ -246,6 +263,51 @@ function tessellateArc(
     pushWall(out, prev, cur, factor, layer);
     prev = cur;
   }
+}
+
+/**
+ * Elipsi küçük doğru parçalarına böler. `majorEnd` merkeze göre büyük-eksen UÇ vektörü; a=|majorEnd|,
+ * b=a·axisRatio, φ=eksenin açısı. startAngle/endAngle RADYANDIR (ARC'ın derecesinden farklı). NaN/dejenere
+ * → false. Her örnek nokta tf ile dünyaya taşınır.
+ */
+function tessellateEllipse(
+  center: XY,
+  majorEnd: XY,
+  axisRatio: number,
+  startAngle: number,
+  endAngle: number,
+  factor: number,
+  layer: string,
+  out: Wall[],
+  tf: Tf,
+): boolean {
+  const a = Math.hypot(majorEnd.x, majorEnd.y);
+  if (
+    !(a > 0) || !Number.isFinite(a) || !Number.isFinite(axisRatio) ||
+    !Number.isFinite(center.x) || !Number.isFinite(center.y) ||
+    !Number.isFinite(startAngle) || !Number.isFinite(endAngle)
+  ) {
+    return false;
+  }
+  const b = a * axisRatio;
+  const phi = Math.atan2(majorEnd.y, majorEnd.x);
+  const cphi = Math.cos(phi);
+  const sphi = Math.sin(phi);
+  let sweep = endAngle - startAngle;
+  if (sweep <= 0) sweep += Math.PI * 2; // CCW normalize (tam elips için 2π)
+  const steps = Math.max(2, Math.ceil(sweep / ARC_STEP));
+  const at = (t: number): XY => {
+    const ca = Math.cos(t) * a;
+    const sb = Math.sin(t) * b;
+    return tf({ x: center.x + ca * cphi - sb * sphi, y: center.y + ca * sphi + sb * cphi });
+  };
+  let prev = at(startAngle);
+  for (let i = 1; i <= steps; i++) {
+    const cur = at(startAngle + (sweep * i) / steps);
+    pushWall(out, prev, cur, factor, layer);
+    prev = cur;
+  }
+  return true;
 }
 
 /** NaN/Infinity koordinat → null (bozuk DXF bounds/index'i bozmasın). */

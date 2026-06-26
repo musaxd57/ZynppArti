@@ -47,8 +47,15 @@ export function hatchLines(
     if (proj > maxP) maxP = proj;
   }
 
+  // Çizgi sayısını ÖNDEN hesapla + sınırla. (1) Devasa/kalibre-edilmemiş import'ta bant milyonlarca
+  // birim olabilir → kare başına yüz binlerce segment (donma). (2) `spacing`, `s`'in ULP'undan küçükse
+  // (koord ~1e15+) `s += spacing` ilerlemez → SONSUZ döngü. Tam-sayı indeksle ilerle → ilerleme garanti.
   const out: HatchSegment[] = [];
-  for (let s = minP + spacing / 2; s < maxP; s += spacing) {
+  const count = (maxP - minP) / spacing;
+  if (!(count > 0) || count > 100000) return out; // dejenere/aşırı → boş (UI'yi dondurma)
+  for (let k = 0; k < count; k++) {
+    const s = minP + spacing / 2 + k * spacing;
+    if (s >= maxP) break;
     const anchor = { x: n.x * s, y: n.y * s };
     clipLineToPolygon(anchor, d, n, s, polygon, out);
   }

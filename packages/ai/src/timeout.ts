@@ -55,3 +55,36 @@ export function withTimeout(
   };
   return { signal: ctrl.signal, dispose };
 }
+
+/**
+ * AKIŞ için boşta-kalma (idle) zaman aşımı: `ms` boyunca HİÇBİR etkinlik (`bump()`) olmazsa iptal.
+ * Mutlak deadline'ın aksine, token akmaya devam ettikçe (her delta `bump()`) sağlıklı ama uzun bir
+ * yanıt KESİLMEZ; yalnız ASKIDA (etkinliksiz) upstream iptal olur → maliyet yine korunur. Düşünme fazı
+ * metin yaymaz; `ms` penceresi (kademe süresi) bunu kapsayacak kadar geniş. (Denetim bulgusu.)
+ */
+export function withIdleTimeout(
+  ms: number,
+  parent?: AbortSignal,
+): { signal: AbortSignal; bump: () => void; dispose: () => void } {
+  const ctrl = new AbortController();
+  const onParentAbort = (): void => ctrl.abort((parent as AbortSignal).reason);
+  if (parent) {
+    if (parent.aborted) ctrl.abort(parent.reason);
+    else parent.addEventListener('abort', onParentAbort, { once: true });
+  }
+  let timer: ReturnType<typeof setTimeout>;
+  const arm = (): void => {
+    timer = setTimeout(() => ctrl.abort(new TimeoutError(ms)), ms);
+    (timer as { unref?: () => void }).unref?.();
+  };
+  const bump = (): void => {
+    clearTimeout(timer);
+    arm();
+  };
+  arm();
+  const dispose = (): void => {
+    clearTimeout(timer);
+    parent?.removeEventListener('abort', onParentAbort);
+  };
+  return { signal: ctrl.signal, bump, dispose };
+}

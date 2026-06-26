@@ -83,4 +83,17 @@ describe('findFaces', () => {
     expect(faces).toHaveLength(1);
     expect(polygonArea(faces[0]!)).toBeCloseTo(10000, -1);
   });
+
+  it('hücre sınırını çapraz aşan ~yakın köşeleri birleştirir (ızgara-bucket straddle)', () => {
+    // Köşeler snapTol(1) içinde ama farklı ızgara hücrelerinde (sınır .5'te): A ucu (0.4,0.6),
+    // B ucu (0.6,0.4) → bucket (0,1) vs (1,0); eski kod birleştirmez, oda kaybolurdu.
+    const faces = findFaces([
+      { a: vec2(0.4, 0.6), b: vec2(0.4, 100) },
+      { a: vec2(0.4, 100), b: vec2(100, 100) },
+      { a: vec2(100, 100), b: vec2(100, 0.4) },
+      { a: vec2(100, 0.4), b: vec2(0.6, 0.4) },
+    ]);
+    expect(faces).toHaveLength(1);
+    expect(polygonArea(faces[0]!)).toBeGreaterThan(9000);
+  });
 });

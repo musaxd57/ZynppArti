@@ -20,16 +20,38 @@ export interface Segment {
  */
 export function findFaces(segments: readonly Segment[], snapTol = 1, minArea = 1): Vec2[][] {
   const verts: Vec2[] = [];
-  const vkey = new Map<string, number>();
+  // Hücre → o hücredeki düğüm id'leri. Saf ızgara-eşitliği (tek id/hücre) snapTol İÇİNDE ama hücre
+  // sınırını çapraz aşan iki ucu birleştirmiyordu (köşe kapanmaz, oda sessizce kaybolur — denetim).
+  // Bu yüzden ev + 8 komşu hücrede GERÇEK mesafeyle (≤ snapTol) en yakın mevcut düğümü ara.
+  const vkey = new Map<string, number[]>();
   const q = (n: number): number => Math.round(n / snapTol);
+  const tol2 = snapTol * snapTol;
   const vid = (p: Vec2): number => {
-    const k = `${q(p.x)},${q(p.y)}`;
-    let id = vkey.get(k);
-    if (id === undefined) {
-      id = verts.length;
-      verts.push({ x: p.x, y: p.y });
-      vkey.set(k, id);
+    const cx = q(p.x);
+    const cy = q(p.y);
+    let best = -1;
+    let bestD = tol2;
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const ids = vkey.get(`${cx + dx},${cy + dy}`);
+        if (!ids) continue;
+        for (const id of ids) {
+          const v = verts[id]!;
+          const d = (v.x - p.x) * (v.x - p.x) + (v.y - p.y) * (v.y - p.y);
+          if (d <= bestD) {
+            bestD = d;
+            best = id;
+          }
+        }
+      }
     }
+    if (best >= 0) return best;
+    const id = verts.length;
+    verts.push({ x: p.x, y: p.y });
+    const key = `${cx},${cy}`;
+    const arr = vkey.get(key);
+    if (arr) arr.push(id);
+    else vkey.set(key, [id]);
     return id;
   };
 

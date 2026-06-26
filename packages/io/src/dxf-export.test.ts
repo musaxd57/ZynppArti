@@ -26,6 +26,21 @@ describe('exportDxf', () => {
     expect(lines).toHaveLength(2);
   });
 
+  it('HEADER $INSUNITS=5 (cm) + kullanılan katmanlar için LAYER tablosu yazar', () => {
+    const dxf = exportDxf([wall('a', 0, 0, 100, 0, 'Mimari')]);
+    expect(dxf).toContain('$INSUNITS');
+    expect(dxf).toContain('HEADER');
+    expect(dxf).toContain('TABLE');
+    // $INSUNITS değerinin 5 (cm) olduğunu doğrula.
+    const rows = dxf.split('\n');
+    const ui = rows.indexOf('$INSUNITS');
+    expect(rows[ui + 2]).toBe('5'); // 9 $INSUNITS / 70 / 5
+    // Katman tanımı: bir '0 LAYER 2 Mimari ...' girişi olmalı (sadece kenar code-8 değil).
+    const layerDefs = rows.filter((r, k) => r === 'LAYER' && rows[k - 1] === '0');
+    expect(layerDefs.length).toBeGreaterThanOrEqual(1);
+    expect(dxf).toContain('CONTINUOUS');
+  });
+
   it('koordinatları (cm, 4 ondalık) ve katmanı korur', () => {
     const dxf = exportDxf([wall('a', 12.5, -3, 100, 0, 'Mimari')]);
     expect(dxf).toContain('12.5000'); // start.x

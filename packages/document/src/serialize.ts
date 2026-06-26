@@ -56,6 +56,15 @@ export function deserializeModel(json: string): Entity[] {
   if (!isRecord(parsed) || parsed['format'] !== 'zynpparti-model' || !Array.isArray(parsed['entities'])) {
     throw new Error('Model dosyası tanınmadı (zynpparti-model değil).');
   }
+  // İLERİ-UYUMLULUK (ADR-0028): daha YENİ sürümle yazılmış dosyayı SESSİZCE açma. Tanımadığımız yeni
+  // entity tipleri `isValidEntity` ile atlanır, kullanıcı kaydedince yeni veri KALICI kaybolurdu →
+  // bunun yerine net hata ver (reddet). Eski/eksik version = v1 kabul (mevcut dosyalar hep v1 → regresyon yok).
+  const version = parsed['version'];
+  if (typeof version === 'number' && Number.isFinite(version) && version > MODEL_FORMAT_VERSION) {
+    throw new Error(
+      `Bu dosya daha yeni bir sürümle (v${version}) oluşturulmuş. Lütfen uygulamayı güncelleyin.`,
+    );
+  }
   const out: Entity[] = [];
   let skipped = 0;
   for (const raw of parsed['entities']) {

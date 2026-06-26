@@ -57,6 +57,16 @@ describe('serializeModel / deserializeModel', () => {
     expect(() => deserializeModel(JSON.stringify({ foo: 'bar' }))).toThrow();
   });
 
+  it('daha yeni sürüm → reddeder (sessiz veri kaybı yerine net hata)', () => {
+    const future = JSON.stringify({ format: 'zynpparti-model', version: MODEL_FORMAT_VERSION + 1, entities: [] });
+    expect(() => deserializeModel(future)).toThrow(/daha yeni/);
+  });
+
+  it('eksik/eski sürüm = v1 kabul (mevcut dosyalar açılır)', () => {
+    const noVer = JSON.stringify({ format: 'zynpparti-model', entities: [] });
+    expect(deserializeModel(noVer)).toEqual([]);
+  });
+
   it('bilinmeyen/eksik entity atlanır (toleranslı)', () => {
     const json = JSON.stringify({
       format: 'zynpparti-model',
