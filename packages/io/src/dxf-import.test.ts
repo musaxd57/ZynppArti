@@ -100,6 +100,25 @@ describe('importDxf', () => {
     expect(last.end.y).toBeCloseTo(100, 0);
   });
 
+  it('LWPOLYLINE bulge → düz kiriş değil YAY olarak içe aktarılır', () => {
+    // (100,0)→(0,100), merkez (0,0), 90° yay; bulge = tan(22.5°) ≈ 0.41421.
+    const dxf = [
+      '0', 'SECTION', '2', 'ENTITIES',
+      '0', 'LWPOLYLINE', '8', 'A',
+      '90', '2', '70', '0',
+      '10', '100.0', '20', '0.0', '42', '0.41421356',
+      '10', '0.0', '20', '100.0',
+      '0', 'ENDSEC', '0', 'EOF',
+    ].join('\n');
+    const r = importDxf(dxf);
+    // Düz olsaydı 1 segment; yay → tessellate (≥4). Tüm köşeler ~100 yarıçapta (orta nokta da).
+    expect(r.walls.length).toBeGreaterThanOrEqual(4);
+    for (const w of r.walls) {
+      expect(Math.hypot(w.start.x, w.start.y)).toBeCloseTo(100, 0);
+      expect(Math.hypot(w.end.x, w.end.y)).toBeCloseTo(100, 0);
+    }
+  });
+
   it('round-trips through exportDxf (geometry preserved)', () => {
     const dxf = exportDxf([
       {

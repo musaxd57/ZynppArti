@@ -50,6 +50,28 @@ describe('runCopilotChecks — koridor genişliği (TS 9111)', () => {
     expect(nonInfo(runCopilotChecks([rect('Depo', 'service', 400, 90)], []))).toHaveLength(0);
   });
 
+  it('duvarlı koridorda NET genişlik kullanılır (centerline geçse de net kalırsa flaglenir)', () => {
+    // 400×130 centerline koridor; 15 cm duvarlar → NET genişlik 130−15 = 115 < 120 → flaglenir.
+    // (Eski kod centerline 130'u kullanıp uyumlu sanırdı — false-negative.)
+    const w = 400;
+    const h = 130;
+    const room = space('Koridor', 'circulation', [
+      { x: 0, y: 0 },
+      { x: w, y: 0 },
+      { x: w, y: h },
+      { x: 0, y: h },
+    ]);
+    const walls = [
+      wall('wb', 0, 0, w, 0, 15),
+      wall('wt', 0, h, w, h, 15),
+      wall('wl', 0, 0, 0, h, 15),
+      wall('wr', w, 0, w, h, 15),
+    ];
+    const findings = nonInfo(runCopilotChecks([room], walls));
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.severity).toBe('error');
+  });
+
   it('KONKAV (L) koridorun dar kolunu yakalar (konveks kabuk kaçırırdı)', () => {
     // L koridoru: her iki kol 90 cm (< 120). Konveks-kabuk genişliği 90'ı GÖREMEZDİ (kapsayıcı);
     // konkav-duyarlı ölçüm dar kolu yakalar → atıflı koridor hatası.

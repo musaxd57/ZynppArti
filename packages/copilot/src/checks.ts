@@ -6,6 +6,8 @@ import {
 } from '@zynpparti/geometry';
 import {
   centerlineAreaM2,
+  netGrossAreaM2,
+  representativeWallThickness,
   openingFrame,
   roomTypeOf,
   type Opening,
@@ -48,13 +50,24 @@ function fmtM2(m2: number): string {
   return `${m2.toFixed(1).replace('.', ',')} m²`;
 }
 
-/** Sirkülasyon mahalleri TS 9111 koridor genişliğini sağlıyor mu? */
-function checkCorridorWidth(spaces: readonly Space[]): Finding[] {
+/**
+ * Mahalin NET (serbest) en dar genişliği (cm). `s.boundary` duvar orta-çizgisidir → ölçülen geçiş
+ * gerçek serbest genişlikten ~bir tam duvar kalınlığı fazladır; temsili kalınlığı çıkarırız. Eşik
+ * değerleri net olduğundan kıyas doğru tarafa düşer (denetim bulgusu). 0 = ölçülemedi.
+ */
+function clearWidthCm(s: Space, walls: readonly Wall[]): number {
+  const center = polygonNarrowWidth(s.boundary);
+  if (!(center > 0)) return 0;
+  return Math.max(0, center - representativeWallThickness(s, walls));
+}
+
+/** Sirkülasyon mahalleri TS 9111 koridor genişliğini (NET) sağlıyor mu? */
+function checkCorridorWidth(spaces: readonly Space[], walls: readonly Wall[]): Finding[] {
   const reg = REGULATIONS.corridorWidth;
   const out: Finding[] = [];
   for (const s of spaces) {
     if (roomTypeOf(s) !== 'circulation') continue;
-    const widthCm = polygonNarrowWidth(s.boundary);
+    const widthCm = clearWidthCm(s, walls);
     if (widthCm > 0 && widthCm < reg.min) {
       out.push({
         severity: 'error',
@@ -74,13 +87,14 @@ const MIN_AREA_BY_TYPE = {
   kitchen: REGULATIONS.kitchenMinArea,
 } as const;
 
-/** Yatma/yaşam/mutfak mahalleri İmar Yönetmeliği asgari alanını sağlıyor mu? */
-function checkRoomMinArea(spaces: readonly Space[]): Finding[] {
+/** Yatma/yaşam/mutfak mahalleri İmar Yönetmeliği asgari NET alanını sağlıyor mu? */
+function checkRoomMinArea(spaces: readonly Space[], walls: readonly Wall[]): Finding[] {
   const out: Finding[] = [];
   for (const s of spaces) {
     const reg = MIN_AREA_BY_TYPE[roomTypeOf(s) as keyof typeof MIN_AREA_BY_TYPE];
     if (!reg) continue;
-    const area = centerlineAreaM2(s);
+    // Eşik NET alan → centerline değil net m² ile kıyasla (yoksa sınırın altındaki oda kaçar). Denetim.
+    const area = netGrossAreaM2(s, walls).netM2;
     if (area > 0 && area < reg.min) {
       out.push({
         severity: 'warning',
@@ -94,13 +108,13 @@ function checkRoomMinArea(spaces: readonly Space[]): Finding[] {
 }
 
 /** Yaşanabilir oda (yatma/yaşam) en küçük net genişliği İmar asgarisini sağlıyor mu? (info — plana göre değişir) */
-function checkRoomMinWidth(spaces: readonly Space[]): Finding[] {
+function checkRoomMinWidth(spaces: readonly Space[], walls: readonly Wall[]): Finding[] {
   const reg = REGULATIONS.roomMinWidth;
   const out: Finding[] = [];
   for (const s of spaces) {
     const t = roomTypeOf(s);
     if (t !== 'sleeping' && t !== 'living') continue;
-    const widthCm = polygonNarrowWidth(s.boundary);
+    const widthCm = clearWidthCm(s, walls);
     if (widthCm > 0 && widthCm < reg.min) {
       out.push({
         severity: 'info',
@@ -137,13 +151,13 @@ function checkParcelContainment(walls: readonly Wall[], parcels: readonly Parcel
 }
 
 /** Banyo/WC/ıslak hacimde erişilebilir dönüş alanı (TS 9111, ~150 cm) — bilgi (advisory). */
-function checkBathroomAccess(spaces: readonly Space[]): Finding[] {
+function checkBathroomAccess(spaces: readonly Space[], walls: readonly Wall[]): Finding[] {
   const reg = REGULATIONS.bathroomTurning;
   const out: Finding[] = [];
   for (const s of spaces) {
     const t = roomTypeOf(s);
     if (t !== 'bathroom' && t !== 'wet') continue;
-    const widthCm = polygonNarrowWidth(s.boundary);
+    const widthCm = clearWidthCm(s, walls);
     if (widthCm > 0 && widthCm < reg.min) {
       out.push({
         severity: 'info',
@@ -157,12 +171,12 @@ function checkBathroomAccess(spaces: readonly Space[]): Finding[] {
 }
 
 /** Banyo net alanı İmar asgarisini sağlıyor mu? (değer sürüme göre değişebilir → info, ADR-0021). */
-function checkBathroomMinArea(spaces: readonly Space[]): Finding[] {
+function checkBathroomMinArea(spaces: readonly Space[], walls: readonly Wall[]): Finding[] {
   const reg = REGULATIONS.bathroomMinArea;
   const out: Finding[] = [];
   for (const s of spaces) {
     if (roomTypeOf(s) !== 'bathroom') continue;
-    const area = centerlineAreaM2(s);
+    const area = netGrossAreaM2(s, walls).netM2; // eşik net → net m² ile kıyasla (denetim)
     if (area > 0 && area < reg.min) {
       out.push({
         severity: 'info',
@@ -427,11 +441,11 @@ export function runCopilotChecks(
   parcels: readonly Parcel[] = [],
 ): Finding[] {
   return [
-    ...checkCorridorWidth(spaces),
-    ...checkRoomMinArea(spaces),
-    ...checkRoomMinWidth(spaces),
-    ...checkBathroomMinArea(spaces),
-    ...checkBathroomAccess(spaces),
+    ...checkCorridorWidth(spaces, walls),
+    ...checkRoomMinArea(spaces, walls),
+    ...checkRoomMinWidth(spaces, walls),
+    ...checkBathroomMinArea(spaces, walls),
+    ...checkBathroomAccess(spaces, walls),
     ...checkDoorWidth(openings),
     ...checkCeilingHeight(walls),
     ...checkRoomDaylight(spaces, walls, openings),

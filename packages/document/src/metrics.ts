@@ -55,6 +55,24 @@ export function centerlineAreaM2(space: Space): number {
   return polygonArea(space.boundary) / CM2_PER_M2;
 }
 
+/**
+ * Bir mahali çevreleyen duvarların TEMSİLİ (medyan) kalınlığı (cm). NET genişlik tahmini için: mahal
+ * sınırı duvar orta-çizgisi olduğundan ölçülen "en dar geçiş" gerçek serbest genişlikten ~bir tam
+ * duvar kalınlığı fazladır (iki yandan yarısı). Bunu çıkarmak için temsili kalınlık. Eşleşen duvar
+ * yoksa 0. (Copilot koridor/oda/banyo net-genişlik denetimleri kullanır.)
+ */
+export function representativeWallThickness(space: Space, walls: readonly Wall[]): number {
+  const pts = space.boundary;
+  const ts: number[] = [];
+  for (let i = 0; i < pts.length; i++) {
+    const t = edgeWallThickness(pts[i]!, pts[(i + 1) % pts.length]!, walls);
+    if (t > 0) ts.push(t);
+  }
+  if (ts.length === 0) return 0;
+  ts.sort((a, b) => a - b);
+  return ts[Math.floor(ts.length / 2)]!; // medyan (uç değerlerden etkilenmez)
+}
+
 /** Bir kenarın (a→b) üstünde durduğu duvarın kalınlığını döndürür; bulunamazsa 0. */
 function edgeWallThickness(a: Vec2, b: Vec2, walls: readonly Wall[]): number {
   const TOL = 2; // cm — kenar uçları duvar orta-çizgisine bu kadar yakınsa o duvara aittir

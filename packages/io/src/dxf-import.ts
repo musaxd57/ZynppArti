@@ -163,8 +163,11 @@ export function importDxf(text: string): DxfImportResult {
   return { walls, annotations, unitScaleToCm: factor, layers: [...layers] };
 }
 
+/** LWPOLYLINE/POLYLINE köşesi — opsiyonel `bulge` (yay) ile (dxf-parser grup kodu 42). */
+type PolyVertex = { x: number; y: number; bulge?: number };
+
 function pushPolyline(
-  verts: ReadonlyArray<XY>,
+  verts: ReadonlyArray<PolyVertex>,
   closed: boolean,
   factor: number,
   layer: string,
@@ -172,12 +175,42 @@ function pushPolyline(
   tf: Tf,
 ): boolean {
   for (let i = 0; i + 1 < verts.length; i++) {
-    pushWall(out, tf(verts[i]!), tf(verts[i + 1]!), factor, layer);
+    pushPolySegment(verts[i]!, verts[i + 1]!, factor, layer, out, tf);
   }
   if (closed && verts.length > 2) {
-    pushWall(out, tf(verts[verts.length - 1]!), tf(verts[0]!), factor, layer);
+    pushPolySegment(verts[verts.length - 1]!, verts[0]!, factor, layer, out, tf);
   }
   return verts.length > 0;
+}
+
+/**
+ * Bir polyline kenarı: köşedeki `bulge` sıfır/yok/NaN ise düz çizgi; aksi halde YAY (mimari DXF'te
+ * eğri duvar/balkon/pah çok yaygın). Standalone ARC/CIRCLE zaten tessellate ediliyordu; bulge'lu
+ * segment de aynı yola sokulur → tutarlı (eskiden düz kirişe düşüyordu, m²/konum bozuluyordu). Denetim.
+ */
+function pushPolySegment(p1: PolyVertex, p2: PolyVertex, factor: number, layer: string, out: Wall[], tf: Tf): void {
+  const b = p1.bulge;
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+  const chord = Math.hypot(dx, dy);
+  if (b == null || !Number.isFinite(b) || b === 0 || !(chord > 0)) {
+    pushWall(out, tf(p1), tf(p2), factor, layer);
+    return;
+  }
+  // bulge = tan(θ/4). c-faktör merkez (CAD standardı; çeyrek-daire ile doğrulandı):
+  const c = (1 - b * b) / (2 * b);
+  const cx = (p1.x + p2.x) / 2 - (c * (p2.y - p1.y)) / 2;
+  const cy = (p1.y + p2.y) / 2 + (c * (p2.x - p1.x)) / 2;
+  const radius = Math.hypot(p1.x - cx, p1.y - cy);
+  let a1 = Math.atan2(p1.y - cy, p1.x - cx);
+  let a2 = Math.atan2(p2.y - cy, p2.x - cx);
+  // tessellateArc CCW süpürür; pozitif bulge = CCW, negatif = CW → uçları takasla (CW eşdeğeri).
+  if (b < 0) {
+    const t = a1;
+    a1 = a2;
+    a2 = t;
+  }
+  tessellateArc({ x: cx, y: cy }, radius, a1, a2, factor, layer, out, tf);
 }
 
 /** Çember/yayı küçük doğru parçalarına böler; her örnek nokta dönüşümle (INSERT) dünyaya taşınır. */
