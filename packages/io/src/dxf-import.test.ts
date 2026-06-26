@@ -24,13 +24,28 @@ describe('importDxf', () => {
     const w = result.walls[0]!;
     expect(w.type).toBe('wall');
     expect(w.layerId).toBe('DUVAR');
-    expect(w.start).toEqual({ x: 0, y: 0 });
+    expect(w.start.x).toBeCloseTo(0);
+    expect(w.start.y).toBeCloseTo(0); // Y-flip: y=0 → -0 (görsel aynı; toBeCloseTo -0≈0)
     expect(w.end.x).toBeCloseTo(100);
     expect(w.end.y).toBeCloseTo(0);
   });
 
   it('throws on an unparseable file', () => {
     expect(() => importDxf('not a dxf at all')).toThrow();
+  });
+
+  it('Y-FLIP: DXF y-UP → iç model y-DOWN (AutoCAD ile aynı yön; eskiden dikey aynalıydı)', () => {
+    // DXF'te yukarı = +y; bizde aşağı = +y. Pozitif DXF-y, NEGATİF iç-y olmalı (görsel aynalanma düzelir).
+    const dxf = [
+      '0', 'SECTION', '2', 'ENTITIES',
+      '0', 'LINE', '8', 'L',
+      '10', '0.0', '20', '0.0', '30', '0.0',
+      '11', '0.0', '21', '100.0', '31', '0.0', // DXF'te yukarı doğru 100
+      '0', 'ENDSEC', '0', 'EOF',
+    ].join('\n');
+    const w = importDxf(dxf).walls[0]!;
+    expect(w.start.y).toBeCloseTo(0);
+    expect(w.end.y).toBeCloseTo(-100); // yukarı (DXF +100) → iç modelde -100 (aşağı-pozitif sistemde "yukarı")
   });
 
   it('TEXT → Annotation (içerik + konum + yükseklik)', () => {
@@ -46,7 +61,7 @@ describe('importDxf', () => {
     expect(r.annotations).toHaveLength(1);
     const a = r.annotations[0]!;
     expect(a.text).toBe('Salon');
-    expect(a.position).toEqual({ x: 50, y: 60 });
+    expect(a.position).toEqual({ x: 50, y: -60 }); // Y-flip (IO sınırı): DXF y=60 → iç model y=-60
     expect(a.height).toBeCloseTo(30);
   });
 
@@ -96,8 +111,8 @@ describe('importDxf', () => {
     const last = r.walls[r.walls.length - 1]!;
     expect(first.start.x).toBeCloseTo(100); // 0° → (100,0)
     expect(first.start.y).toBeCloseTo(0);
-    expect(last.end.x).toBeCloseTo(0, 0); // 90° → (0,100)
-    expect(last.end.y).toBeCloseTo(100, 0);
+    expect(last.end.x).toBeCloseTo(0, 0); // 90° → DXF (0,100) → Y-flip → iç model (0,-100)
+    expect(last.end.y).toBeCloseTo(-100, 0);
   });
 
   it('LWPOLYLINE bulge → düz kiriş değil YAY olarak içe aktarılır', () => {
@@ -152,8 +167,11 @@ describe('importDxf', () => {
     ]);
     const back = importDxf(dxf);
     expect(back.walls).toHaveLength(1);
-    expect(back.walls[0]!.start).toEqual({ x: 0, y: 0 });
+    // Y-flip simetrik (export -y, import -(-y)) → in-app round-trip geometriyi korur (-0≈0).
+    expect(back.walls[0]!.start.x).toBeCloseTo(0);
+    expect(back.walls[0]!.start.y).toBeCloseTo(0);
     expect(back.walls[0]!.end.x).toBeCloseTo(250);
+    expect(back.walls[0]!.end.y).toBeCloseTo(0);
   });
 
   // BLOCK "KAPI" (LINE 0,0→100,0) + INSERT konum 200,50 → patlatılmış duvar 200,50→300,50.
@@ -177,17 +195,17 @@ describe('importDxf', () => {
     const w = r.walls[0]!;
     expect(w.layerId).toBe('KAPILAR'); // blok içi entity'nin katmanı korunur
     expect(w.start.x).toBeCloseTo(200);
-    expect(w.start.y).toBeCloseTo(50);
+    expect(w.start.y).toBeCloseTo(-50); // Y-flip (IO sınırı): DXF y=50 → iç model y=-50
     expect(w.end.x).toBeCloseTo(300);
-    expect(w.end.y).toBeCloseTo(50);
+    expect(w.end.y).toBeCloseTo(-50);
   });
 
   it('INSERT rotasyonu (90°) uygulanır', () => {
-    // rotation kodu 50 = 90° → yerel (100,0) → (0,100)
+    // rotation kodu 50 = 90° → yerel (100,0) → DXF (0,100) → Y-flip → iç model (0,-100)
     const r = importDxf(blockDxf(['0', 'INSERT', '8', '0', '2', 'KAPI', '10', '0.0', '20', '0.0', '30', '0.0', '50', '90.0']));
     expect(r.walls).toHaveLength(1);
     const w = r.walls[0]!;
     expect(w.end.x).toBeCloseTo(0);
-    expect(w.end.y).toBeCloseTo(100);
+    expect(w.end.y).toBeCloseTo(-100);
   });
 });

@@ -310,12 +310,17 @@ function tessellateEllipse(
   return true;
 }
 
-/** NaN/Infinity koordinat → null (bozuk DXF bounds/index'i bozmasın). */
+/**
+ * NaN/Infinity koordinat → null (bozuk DXF bounds/index'i bozmasın).
+ * Y-FLIP (IO sınırı): DXF y-UP, iç modelimiz y-DOWN → import'ta Y negate edilir ki çizim AutoCAD'deki
+ * yönüyle AYNI görünsün (eskiden dikey aynalıydı). Tüm entity tipleri (LINE/ARC/ELLIPSE/SPLINE/INSERT)
+ * son koordinatı buradan geçirir → tek noktada flip yeter. İç model dokunulmaz; yalnız sınırda çevrilir.
+ */
 function makeWall(a: XY, b: XY, factor: number, layer: string): Wall | null {
   const sx = a.x * factor;
-  const sy = a.y * factor;
+  const sy = -a.y * factor;
   const ex = b.x * factor;
-  const ey = b.y * factor;
+  const ey = -b.y * factor;
   if (!Number.isFinite(sx) || !Number.isFinite(sy) || !Number.isFinite(ex) || !Number.isFinite(ey)) {
     return null;
   }
@@ -354,7 +359,7 @@ function makeAnnotation(
     id: createEntityId(),
     type: 'annotation',
     layerId: layer,
-    position: { x: pos.x * factor, y: pos.y * factor },
+    position: { x: pos.x * factor, y: -pos.y * factor }, // Y-flip (IO sınırı, makeWall ile tutarlı)
     text: value,
     height: h,
   };

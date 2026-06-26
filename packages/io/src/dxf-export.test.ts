@@ -44,7 +44,7 @@ describe('exportDxf', () => {
   it('koordinatları (cm, 4 ondalık) ve katmanı korur', () => {
     const dxf = exportDxf([wall('a', 12.5, -3, 100, 0, 'Mimari')]);
     expect(dxf).toContain('12.5000'); // start.x
-    expect(dxf).toContain('-3.0000'); // start.y
+    expect(dxf).toContain('3.0000'); // start.y: iç model -3 → Y-flip export → DXF +3 (y-UP)
     expect(dxf).toContain('100.0000'); // end.x
     expect(dxf).toContain('Mimari'); // katman (kod 8)
   });

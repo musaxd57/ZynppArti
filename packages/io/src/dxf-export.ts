@@ -94,26 +94,28 @@ export function exportDxf(entities: readonly Entity[]): string {
   return out.join('\n') + '\n';
 }
 
+// Y-FLIP (IO sınırı): iç model y-DOWN, DXF y-UP → export'ta Y negate edilir ki dosya AutoCAD'de DOĞRU
+// yönle açılsın. Import da Y negate ettiğinden in-app round-trip (kaydet→tekrar-aç) byte-stable kalır.
 function line(out: string[], layer: string, a: Vec2, b: Vec2): void {
   out.push(
     '0', 'LINE',
     '8', sanitizeLayer(layer),
-    '10', fmt(a.x), '20', fmt(a.y), '30', '0',
-    '11', fmt(b.x), '21', fmt(b.y), '31', '0',
+    '10', fmt(a.x), '20', fmt(-a.y), '30', '0',
+    '11', fmt(b.x), '21', fmt(-b.y), '31', '0',
   );
 }
 
 function polyline(out: string[], layer: string, pts: readonly Vec2[], closed: boolean): void {
   if (pts.length === 0) return;
   out.push('0', 'LWPOLYLINE', '8', sanitizeLayer(layer), '90', String(pts.length), '70', closed ? '1' : '0');
-  for (const p of pts) out.push('10', fmt(p.x), '20', fmt(p.y));
+  for (const p of pts) out.push('10', fmt(p.x), '20', fmt(-p.y));
 }
 
 function text(out: string[], layer: string, pos: Vec2, height: number, value: string): void {
   out.push(
     '0', 'TEXT',
     '8', sanitizeLayer(layer),
-    '10', fmt(pos.x), '20', fmt(pos.y), '30', '0',
+    '10', fmt(pos.x), '20', fmt(-pos.y), '30', '0',
     '40', fmt(height),
     '1', sanitizeText(value),
   );
