@@ -1,18 +1,13 @@
-import { clerkMiddleware } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { updateSession } from '@/lib/supabase/middleware';
 
 /**
- * Clerk middleware — oturumu tüm isteklerde kullanılabilir kılar. **Hiçbir rotayı KORUMAZ** (varsayılan):
- * ücretsiz katman hesap istemez (ADR-0046, additif auth) → anonim kullanım aynen çalışır. İleride
- * yalnız hesap/fatura uçları `auth.protect()` ile korunacak.
- *
- * Anahtar yoksa (yerel/CI build) middleware no-op → build/dev kırılmaz.
+ * Supabase oturum tazeleme middleware'i (ADR-0047). Hiçbir rotayı KORUMAZ — ücretsiz katman hesap
+ * istemez (additif auth); yalnız oturum çerezini canlı tutar. Anahtar yoksa no-op (anonim akış çalışır).
  */
-const hasClerk = Boolean(
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY,
-);
-
-export default hasClerk ? clerkMiddleware() : () => NextResponse.next();
+export async function middleware(request: NextRequest) {
+  return updateSession(request);
+}
 
 export const config = {
   matcher: [
