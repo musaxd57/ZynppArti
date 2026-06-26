@@ -45,6 +45,9 @@ export class EntityLayer {
   private readonly openingWall = new Map<EntityId, EntityId>();
   /** Son uygulanan pixelSize (= 1/zoom); yalnız değişince konturlar yenilenir. */
   private lineweightPx = 1;
+  /** Entity başına SON çizildiği pixelSize. Zoom'da yalnız GÖRÜNÜR set yeniden çizilir; ekran-dışı
+   * entity'ler "stale" kalır ve görünür olunca (cull) tazelenir → 500k'da zoom O(görünür), O(model) değil. */
+  private readonly appliedPx = new Map<EntityId, number>();
   /** Son uygulanan viewport — katman görünürlüğü değişince yeniden uygulamak için saklanır. */
   private lastViewport: AABB | null = null;
   /** Şu an görünür entity'ler — artımlı cull için (yalnız değişen görünürlükleri dokun). */
@@ -174,6 +177,7 @@ export class EntityLayer {
     if (entity.type === 'opening') this.trackOpening(entity.id, entity.wallId); // ters indeks (init + upsert)
     const objs: Container[] = [];
     const px = this.lineweightPx;
+    this.appliedPx.set(entity.id, px); // bu entity şu an px'te çizildi (zoom-tazeleme takibi)
     if (entity.type === 'wall') {
       const g = new Graphics();
       const geom = buildWall(entity); // dünya-uzaylı geometri bir kez; zoom'da yeniden hesaplanmaz
@@ -282,7 +286,16 @@ export class EntityLayer {
   updateLineweights(pixelSize: number): void {
     if (Math.abs(pixelSize - this.lineweightPx) < 1e-9) return;
     this.lineweightPx = pixelSize;
-    for (const redraw of this.redrawables.values()) redraw(pixelSize);
+    // PERF: TÜM redrawables yerine yalnız GÖRÜNÜR seti (prevVisible) yeniden çiz → zoom maliyeti
+    // ekran içeriğiyle sınırlı (500k'da O(model) yerine O(görünür)). Ekran-dışı stale kalır;
+    // görünür olunca cull() tazeler (appliedPx). applyCamera updateLineweights'i cull'dan ÖNCE çağırır.
+    for (const id of this.prevVisible) {
+      const redraw = this.redrawables.get(id);
+      if (redraw) {
+        redraw(pixelSize);
+        this.appliedPx.set(id, pixelSize);
+      }
+    }
   }
 
   private removeEntity(id: EntityId): void {
@@ -318,6 +331,7 @@ export class EntityLayer {
       this.objects.delete(id);
     }
     this.redrawables.delete(id);
+    this.appliedPx.delete(id);
   }
 
   /**
@@ -336,6 +350,11 @@ export class EntityLayer {
       if (!objs) continue;
       if (this.layers.isHidden(this.store.get(id)?.layerId ?? '')) continue; // viewport'ta ama katmanı gizli
       nowVisible.add(id);
+      // Görünür olurken kontur kalınlığı bayatsa (zoom ekran-dışındayken değişti) tazele.
+      if (this.appliedPx.get(id) !== this.lineweightPx) {
+        this.redrawables.get(id)?.(this.lineweightPx);
+        this.appliedPx.set(id, this.lineweightPx);
+      }
       for (const o of objs) o.visible = true;
     }
     // Önceki karede görünür olup artık görünmeyenleri (viewport'tan çıkan/gizlenen) kapat.
