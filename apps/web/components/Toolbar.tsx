@@ -22,6 +22,7 @@ import { alertDialog, confirmDialog } from '@/lib/dialog';
 import { toast } from '@/lib/toast';
 import { projectFileBase, useProjectName, setProjectName, DEFAULT_PROJECT_NAME } from '@/lib/project-name';
 import { VesnaLogo } from './VesnaLogo';
+import { CloudMenu } from './CloudMenu';
 import { TOOL_ICONS } from './toolbar-icons';
 
 const TOOLS: { name: ToolName; label: string; hotkey: string }[] = [
@@ -413,6 +414,7 @@ export function Toolbar({
       <button type="button" onClick={() => jsonRef.current?.click()} className={btn} title="Model aç (.json) — Ctrl+O">
         Aç
       </button>
+      <CloudMenu store={store} history={history} />{/* giriş yoksa kendini gizler */}
       <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button type="button" onClick={() => fileRef.current?.click()} className={btn}>
         CAD Yükle
