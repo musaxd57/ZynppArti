@@ -121,6 +121,20 @@
 
 ## GÜNLÜK
 
+### 2026-06-26 (gece — 25-ajan derin denetim turu 1 + 12 düzeltme) `feat/audit-deep-2026-06-26` (sweep+faz3 merge'li)
+Moses "agentlarla tüm projeyi tara, hata bul, düzelt, geliştir, ~3 saat" dedi (gitti). Birleşik taban (sweep A–F + Faz 3 Supabase). **12-hedef derin denetim workflow'u (25 ajan, ~1.5M token)** → her bulgu adversaryal doğrulama → **12 onaylı (hepsi gerçek+güvenli, 0 riskli)**, hepsi test-yazılarak düzeltildi. Test **387→394**, zincir yeşil (typecheck 9/9 · lint 9/9 · web build):
+- **geometry/hatch:** tarama paritesi reflex/tepe köşede ters dönüyordu (u-tabanlı kural) → projection-koordinat half-open. +test.
+- **document (F-regresyonu!):** F-guard'ım kaydedilen modeli tekrar açmayı kırmış (Remove+Add aynı id → throw) → `replaceEntitiesCommands` (ortak id=Update); Toolbar+CloudMenu kullanıyor. +test.
+- **engine/entity-bounds:** opening NaN/Infinity duvar kalınlığı (pad) rbush'ı zehirliyordu → pad finite-clamp. +test.
+- **tools:** Ctrl+A gizli/kilitli katmanı seçiyordu (görsel sızıntı+kopya); OpeningTool kilitli duvara boşluk açıyordu → ikisi de skip kuralına uydu.
+- **collab/sync:** acceptRemote entity.id===Y.Map-key doğrulamıyordu (peer store zehirleme/yetim) → kontrol eklendi.
+- **ai/design:** extractJson ilk dengeli {} bloğu geçersizse pes ediyordu → sonraki bloğa devam. +test.
+- **web/CloudMenu (HIGH):** stale currentId Yeni/yerel-Aç sonrası YANLIŞ bulut projesinin üstüne yazıyordu (veri kaybı) → `lib/cloud-project` paylaşılan store; Yeni/Aç temizler.
+- **copilot:** asgari alan centerline (net değil) + genişlik centerline (net/clear değil) ölçüyordu → false-negative → `netGrossAreaM2`.netM2 + `representativeWallThickness` çıkarma. +test.
+- **io/dxf:** LWPOLYLINE/POLYLINE bulge (yay) düz kirişe düşüyordu → tessellate (c-faktör merkez). +test.
+- **supabase/schema:** comments.author NOT NULL + ON DELETE SET NULL çelişkisi (hesap silmeyi bloklar) → nullable.
+- Round 2 (daha derin + "geliştir") workflow'u çalışıyor. **NOT:** bu branch sweep+faz3'ü içerir → Moses merge'lerken bunu tek başına alabilir.
+
 ### 2026-06-26 (YARIN-flag süpürmesi A–F + AI maliyet koruması) `feat/yarin-debt-sweep` (Moses merge bekliyor)
 Moses "1. bugün A–F'yi yap, 2. Faz 3'ü de başlat; AI maliyet korumasını şimdi ekle" dedi. Test-önce, emin olarak. Test **367→387**, her commit yeşil + push (typecheck 9/9 · lint 9/9 · web build):
 - **A geometry ★:** `polygonLabelPoint` artık kesin-içeride (scanline) fallback + sık ızgara → ince-kollu L/U odada etiket çentiğe/komşuya düşmüyor. `hatch clipLineToPolygon` ts'leri sıralayıp ÇİFT-aralık dolduruyor (parite) → U/L taramada çentik dolmuyor. +2 test.
