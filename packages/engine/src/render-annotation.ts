@@ -14,5 +14,6 @@ export function buildAnnotation(a: Annotation): BitmapText {
   });
   t.anchor.set(0, 0);
   t.position.set(a.position.x, a.position.y);
+  if (a.color != null) t.tint = a.color; // içe-aktarma kaynak rengi (DXF metin rengi korunur)
   return t;
 }

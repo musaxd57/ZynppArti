@@ -76,12 +76,18 @@ export function exportSvg(
       `<polygon points="${pts(e.boundary)}" fill="none" stroke="#888" stroke-width="2" stroke-dasharray="24 8 4 8" />`,
     );
   }
-  // duvar (kalınlık = stroke)
+  // duvar: native → kalın poché (#1a1a1a); içe-aktarılmış (color) → kaynak renginde ince çizgi (wireframe).
   for (const e of entities) {
     if (e.type !== 'wall') continue;
-    body.push(
-      `<line x1="${num(e.start.x)}" y1="${num(e.start.y)}" x2="${num(e.end.x)}" y2="${num(e.end.y)}" stroke="#1a1a1a" stroke-width="${num(e.thickness)}" stroke-linecap="square" />`,
-    );
+    if (e.color != null) {
+      body.push(
+        `<line x1="${num(e.start.x)}" y1="${num(e.start.y)}" x2="${num(e.end.x)}" y2="${num(e.end.y)}" stroke="${toHexColor(e.color)}" stroke-width="3" stroke-linecap="round" />`,
+      );
+    } else {
+      body.push(
+        `<line x1="${num(e.start.x)}" y1="${num(e.start.y)}" x2="${num(e.end.x)}" y2="${num(e.end.y)}" stroke="#1a1a1a" stroke-width="${num(e.thickness)}" stroke-linecap="square" />`,
+      );
+    }
   }
   // boşluk (duvarı beyazla kes + kanat/cam işareti)
   for (const e of entities) {

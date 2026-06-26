@@ -25,6 +25,13 @@ export interface Wall extends EntityBase {
   readonly height?: number;
   /** Yapı malzemesi (wall-material.ts id'si: tuğla/beton…); metraj malzeme dağılımı için. */
   readonly material?: string;
+  /**
+   * İçe-aktarma rengi (0xRRGGBB). DXF/DWG'den gelen geometri KAYNAK katman/entity rengini taşır
+   * (Rayon/AutoCAD deseni: import edilen çizim kendi renginde "wireframe"). Atanırsa duvar şık poché
+   * yerine bu renkte ince çizgi çizilir → orijinal çizimin katman renkleri korunur. Native (uygulamada
+   * çizilen) duvarlar bu alanı taşımaz → her zaman poché. Opsiyonel + geriye uyumlu (eski dosya = poché).
+   */
+  readonly color?: number;
 }
 
 /**
@@ -136,6 +143,8 @@ export interface Annotation extends EntityBase {
   readonly position: Vec2;
   readonly text: string;
   readonly height: number;
+  /** İçe-aktarma rengi (0xRRGGBB) — DXF/DWG kaynak rengi; atanmazsa varsayılan metin rengi. (Wall.color gibi.) */
+  readonly color?: number;
 }
 
 /**

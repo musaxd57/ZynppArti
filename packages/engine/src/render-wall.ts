@@ -14,20 +14,38 @@ const HATCH_ANGLE = Math.PI / 4; // 45° (kesilen malzeme geleneği)
 export interface WallGeom {
   readonly flat: number[];
   readonly hatch: readonly { a: Vec2; b: Vec2 }[];
+  /** İçe-aktarılan duvarın kaynak rengi (0xRRGGBB) — atanmışsa poché yerine renkli ince çizgi. */
+  readonly color?: number;
+  /** Merkez-çizgi uçları (renkli wireframe çizimi için). */
+  readonly a: Vec2;
+  readonly b: Vec2;
 }
 
 /** Duvar geometrisini (poligon + tarama) bir kez hesaplar — duvar değişince çağrılır, zoom'da DEĞİL. */
 export function buildWall(wall: Wall): WallGeom {
   const quad = wallQuad(wall);
-  return { flat: quad.flatMap((p) => [p.x, p.y]), hatch: hatchLines(quad, HATCH_SPACING, HATCH_ANGLE) };
+  return {
+    flat: quad.flatMap((p) => [p.x, p.y]),
+    hatch: hatchLines(quad, HATCH_SPACING, HATCH_ANGLE),
+    color: wall.color,
+    a: wall.start,
+    b: wall.end,
+  };
 }
 
 /**
- * Önceden hesaplanmış geometriyi **poché gövde + 45° tarama + kesit konturu** olarak çizer
- * (VISUAL-CRAFT §1/§3). Yalnız stroke genişliği `pixelSize`'a (zoom) bağlı → zoom'da geometri math'i yok.
+ * Önceden hesaplanmış geometriyi çizer. İçe-aktarma rengi VARSA → kaynak renginde ince çizgi (Rayon/
+ * AutoCAD "wireframe": orijinal çizimin katman renkleri korunur). YOKSA → **poché gövde + 45° tarama +
+ * kesit konturu** (VISUAL-CRAFT §1/§3; native duvarların şık görünümü). Stroke genişliği zoom'a bağlı.
  */
 export function strokeWall(g: Graphics, geom: WallGeom, pixelSize: number): void {
   g.clear();
+  // İçe-aktarılmış (renkli) duvar → kaynak renginde ince çizgi; poché math'i atlanır.
+  if (geom.color != null) {
+    g.moveTo(geom.a.x, geom.a.y).lineTo(geom.b.x, geom.b.y);
+    g.stroke({ width: LINEWEIGHTS.thin * pixelSize, color: geom.color });
+    return;
+  }
   // 1) Poché gövde dolgusu.
   g.poly(geom.flat).fill({ color: PALETTE.wallBody });
   // 2) 45° tarama (hairline, soluk) — kesilen malzeme.

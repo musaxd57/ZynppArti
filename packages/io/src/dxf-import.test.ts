@@ -34,6 +34,29 @@ describe('importDxf', () => {
     expect(() => importDxf('not a dxf at all')).toThrow();
   });
 
+  it('entity rengini (ACI) içe aktarır — kaynak renk korunur', () => {
+    // 62=1 → kırmızı (ACI). İçe aktarılan duvar color taşımalı (Rayon/AutoCAD: import = kaynak renk).
+    const dxf = [
+      '0', 'SECTION', '2', 'ENTITIES',
+      '0', 'LINE', '8', 'A', '62', '1',
+      '10', '0.0', '20', '0.0', '30', '0.0',
+      '11', '100.0', '21', '0.0', '31', '0.0',
+      '0', 'ENDSEC', '0', 'EOF',
+    ].join('\n');
+    const w = importDxf(dxf).walls[0]!;
+    expect(w.color).toBe(0xff0000); // kırmızı
+  });
+
+  it('renksiz entity → color undefined (duvar poché kalır, native gibi)', () => {
+    const dxf = [
+      '0', 'SECTION', '2', 'ENTITIES',
+      '0', 'LINE', '8', 'A',
+      '10', '0.0', '20', '0.0', '11', '100.0', '21', '0.0',
+      '0', 'ENDSEC', '0', 'EOF',
+    ].join('\n');
+    expect(importDxf(dxf).walls[0]!.color).toBeUndefined();
+  });
+
   it('polyface/3B mesh POLYLINE atlanır (origin\'e çöp duvar üretmez)', () => {
     // 70=64 → polyface mesh; vertices'e yüz-kayıtları karışır → eski kod (0,0)'a çöp duvar çizerdi.
     const dxf = [

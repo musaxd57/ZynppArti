@@ -79,6 +79,27 @@ interface BlockLike {
   position?: XY;
 }
 
+/** Standart AutoCAD Color Index (1-9) → RGB. dxf-parser çoğu `.color`'u çözer; bu yedek/yaygın haldir. */
+const ACI_RGB: Record<number, number> = {
+  1: 0xff0000, 2: 0xffff00, 3: 0x00ff00, 4: 0x00ffff, 5: 0x0000ff, 6: 0xff00ff, 7: 0xffffff, 8: 0x808080, 9: 0xc0c0c0,
+};
+
+/**
+ * Bir entity/katmanın rengini (0xRRGGBB) çözer. `color` (dxf-parser'ın çözdüğü 24-bit) öncelikli;
+ * yoksa `colorIndex` (ACI 1-9) tablodan. ByLayer(256)/ByBlock(0) / yok → undefined (katmana düşülür /
+ * poché). Siyah (0x000000) koyu tuvalde görünmez → açık griye map (görünürlük). (Renk içe-aktarma.)
+ */
+function resolveAci(color?: number, colorIndex?: number): number | undefined {
+  let rgb: number | undefined;
+  if (typeof color === 'number' && color > 0) rgb = color & 0xffffff;
+  else if (typeof colorIndex === 'number' && ACI_RGB[colorIndex] !== undefined) rgb = ACI_RGB[colorIndex];
+  if (rgb === undefined) return undefined;
+  // Beyaz/siyah (ACI 7 "auto", en yaygın varsayılan) → "renk yok" say → duvar POCHÉ kalır (native şık
+  // görünüm; hem koyu tuvalde hem beyaz PDF'te doğru). Yalnız GERÇEK renkler (kırmızı/mavi/cyan…) korunur.
+  if (rgb === 0x000000 || rgb === 0xffffff) return undefined;
+  return rgb;
+}
+
 /**
  * OCS düzeltmesi: DXF entity koordinatları nesne-koordinat-sisteminde (OCS) saklanır. AutoCAD MIRROR'la
  * üretilmiş entity'lerde extrusion (0,0,−1) olur ve koordinatlar X-aynalı saklanır. Eksenel −Z durumunda
@@ -117,10 +138,26 @@ export function importDxf(text: string): DxfImportResult {
   const annotations: Annotation[] = [];
   const layers = new Set<string>();
 
-  const process = (e: { type?: string; layer?: string }, tf: Tf, fallbackLayer: string, depth: number): void => {
+  // KATMAN RENKLERİ (Rayon/AutoCAD deseni): import edilen geometri kaynak katman/entity rengini taşır
+  // → orijinal çizimin renkleri korunur (akıllı katman tanıma, CLAUDE §1). Renk yoksa duvar poché kalır.
+  const layerTable = (dxf.tables?.layer as { layers?: Record<string, { color?: number; colorIndex?: number }> } | undefined)?.layers ?? {};
+  const layerColor = new Map<string, number>();
+  for (const [name, l] of Object.entries(layerTable)) {
+    const c = resolveAci(l?.color, l?.colorIndex);
+    if (c !== undefined) layerColor.set(name, c);
+  }
+
+  const process = (
+    e: { type?: string; layer?: string; color?: number; colorIndex?: number },
+    tf: Tf,
+    fallbackLayer: string,
+    depth: number,
+  ): void => {
     const layer = e.layer || fallbackLayer;
     // Tek bir bozuk entity tüm import'u öldürmesin → entity başına izole et, hatalıyı atla.
     try {
+      const beforeW = walls.length;
+      const beforeA = annotations.length;
       if (e.type === 'LINE') {
         const v = (e as ILineEntity).vertices;
         // Bozuk LINE (vertices yok / <2 nokta) throw'a düşmesin → açıkça guard'la (Array.isArray).
@@ -190,6 +227,15 @@ export function importDxf(text: string): DxfImportResult {
           for (const be of block.entities) {
             process(be as { type?: string; layer?: string }, childTf, layer, depth + 1);
           }
+        }
+      }
+      // RENK damgası (INSERT hariç — çocuklar kendi rengini alır): bu entity'nin ürettiği duvar/metne
+      // kaynak rengini bas (entity rengi > katman rengi). Renk yoksa damgalama → duvar poché kalır.
+      if (e.type !== 'INSERT') {
+        const color = resolveAci(e.color, e.colorIndex) ?? layerColor.get(layer);
+        if (color !== undefined) {
+          for (let i = beforeW; i < walls.length; i++) walls[i] = { ...walls[i]!, color };
+          for (let i = beforeA; i < annotations.length; i++) annotations[i] = { ...annotations[i]!, color };
         }
       }
     } catch (err) {

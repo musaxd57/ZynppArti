@@ -37,6 +37,12 @@ describe('serializeModel / deserializeModel', () => {
     expect(back).toEqual([wall, ann]);
   });
 
+  it('içe-aktarma rengi (Wall.color) save→load round-trip boyunca korunur', () => {
+    const w: Wall = { id: 'w', type: 'wall', layerId: 'A', start: { x: 0, y: 0 }, end: { x: 100, y: 0 }, thickness: 10, color: 0xff0000 };
+    const back = deserializeModel(serializeModel([w]));
+    expect(back[0]!.type === 'wall' && back[0]!.color).toBe(0xff0000);
+  });
+
   it('crypto.randomUUID id save→load round-trip boyunca KORUNUR (id üretilmez)', () => {
     const id = createEntityId();
     expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i); // UUID v4 biçimi
