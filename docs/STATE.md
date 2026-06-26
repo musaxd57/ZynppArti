@@ -121,6 +121,14 @@
 
 ## GÜNLÜK
 
+### 2026-06-26 (Faz 3 başladı — Supabase backend) `feat/faz3-supabase` (Moses provizyon + test bekliyor)
+Moses Faz 3 yönünü **Supabase (hepsi-bir-arada)** seçti (ADR-0047, Clerk planının yerine). Sıfır-riskli zemin + additive kod (anahtarsız anonim çalışır; build/typecheck/lint yeşil):
+- **Zemin (provizyon unblock):** ADR-0047 · `supabase/schema.sql` (profiles/projects/project_members/comments + RLS + models Storage bucket + new-user trigger) · `docs/SUPABASE-SETUP.md` runbook · `.env.example` Supabase değişkenleri.
+- **Auth (Clerk → Supabase):** `lib/supabase` (env/browser/server/service/middleware, additive) · `@supabase/ssr` oturum tazeleme middleware'i · `/giris` (e-posta+parola + Google OAuth) · `/auth/callback` · AuthButtons Supabase'e · ClerkProvider + `@clerk/nextjs` söküldü · yeni API anahtar formatı (`sb_publishable_`/`sb_secret_`, anon yedek).
+- **Bulut Kaydet/Aç:** `lib/supabase/projects.ts` (save/list/load/delete — model = Storage'da `serializeModel` zarfı, §6.5) · toolbar **"Bulut"** menüsü (girişe kapılı, anonim akışı bozmaz).
+- **Moses adımları (sonra):** Supabase projesi + `schema.sql` çalıştır + 3 anahtarı env'e koy → "hazır" → tarayıcıda birlikte doğrula (giriş→Buluta Kaydet→yenile→Aç). Sonraki: paylaşım (project_members) + Paddle abonelik.
+- **NOT:** `feat/yarin-debt-sweep` (A–F + AI maliyet, 387 test) ayrı branch — merge sırası: önce sweep, sonra bu (STATE GÜNLÜK'te ufak conflict olabilir, ikisini de tut).
+
 ### 2026-06-25 (gece geç — 8-ajan tüm-proje denetimi + düzeltmeler) main (canlı)
 Moses "bol agent çalıştır, didik didik, emin ol düzelt" dedi (kendisi yok). 8 ajan tüm paketleri taradı; **onaylanan güvenli HIGH/MED'ler düzeltildi**, test 365→**367**:
 - **Sayfa düzeltmeleri (önceki istek):** boş-export uyarısı nötr dil ("Projede dışa aktarılacak yapı yok"); StartScreen "Aç" bozuk-.json doğrulama+toast; AppGate ?ciz= hizalama; yorum-boyut + 3 sayısal PropertiesPanel girdisi onChange→onBlur (undo kirlenmesi); tek "Adsız Plan" sabiti.

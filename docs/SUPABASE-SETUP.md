@@ -27,17 +27,18 @@ Cömert ücretsiz katman. Üç ayrı sağlayıcı yerine tek hesap, tek fatura. 
    - Tekrar çalıştırman güvenli (idempotent) — hata vermez.
 
 ### 3) Anahtarları kopyala (~1 dk)
-Sol menü → **Project Settings** (dişli) → **API**:
+Sol menü → **Project Settings** (dişli) → **API Keys**:
 - **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`
-- **anon / public** key → `NEXT_PUBLIC_SUPABASE_ANON_KEY` (public olması NORMAL — RLS korur)
-- **service_role** key → `SUPABASE_SERVICE_ROLE_KEY` (**GİZLİ** — asla tarayıcıya/commit'e gitmez; yalnız sunucu route'u)
+- **publishable** key (`sb_publishable_…`) → `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (public olması NORMAL — RLS korur)
+  - _(Eski projelerde "anon/public" JWT görürsün → `NEXT_PUBLIC_SUPABASE_ANON_KEY`; kod ikisini de kabul eder.)_
+- **secret** key (`sb_secret_…`) → `SUPABASE_SECRET_KEY` (**GİZLİ** — asla tarayıcıya/commit'e gitmez; yalnız sunucu)
 
 ### 4) Anahtarları gir
 **Yerelde** (`apps/web/.env.local` — gitignore'lu, `.env.example`'a bak):
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+SUPABASE_SECRET_KEY=sb_secret_...
 ```
 **Canlıda** (Vercel → Project → Settings → Environment Variables) → aynı üçünü ekle → **Redeploy**.
 
@@ -47,12 +48,21 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 
 ---
 
-## Bana (Claude) "hazır" de — sonra ben şunları bağlarım (branch `feat/faz3-supabase`):
-1. `@supabase/supabase-js` istemcisi (additive — anahtar yoksa anonim, build kırılmaz).
-2. **Giriş/kayıt UI** (Supabase Auth) — Clerk yerine.
-3. **Buluta Kaydet / Aç** — model JSON zarfını `models/<uid>/<project>.json` olarak Storage'a yaz/oku; `projects` satırı metadata.
-4. **Paylaşım** (project_members) + yorum kalıcılığı.
-5. Clerk söküm + ADR-0046 → 0047 geçiş temizliği.
+## Kod tarafı — ÇOĞU HAZIR (branch `feat/faz3-supabase`)
+✅ Yapıldı (anahtarsız bile build/anonim çalışır):
+1. `@supabase/supabase-js` + `@supabase/ssr` istemcileri (additive — anahtar yoksa anonim).
+2. **Giriş/kayıt UI** (`/giris` — e-posta+parola + Google) + oturum tazeleme middleware'i. **Clerk söküldü.**
+3. **Buluta Kaydet / Aç** — toolbar "Bulut" menüsü; model JSON zarfını `models/<uid>/<id>.json` Storage'a yaz/oku; `projects` satırı metadata.
 
-> **Anahtarsız test:** Adım 1-4 bitmeden de kod yazılır; ama gerçek giriş/kaydet ancak anahtarlar girilince çalışır.
-> **Güvenlik:** `service_role` key her şeyi açar (RLS'i atlar) — yalnız sunucu env'inde, asla `NEXT_PUBLIC_*` değil, asla commit değil.
+☐ Sonraki (anahtarlar girilip canlı doğrulandıktan SONRA):
+4. **Paylaşım** (project_members) + yorum kalıcılığı (Yjs presence zaten var, ADR-0044).
+5. Paddle abonelik (plan kapısı) — ADR-0046 §Paddle planı.
+
+## Sen "hazır" deyince ben ne yaparım
+Adım 1–4'ü (proje + şema + anahtar) bitirip **"hazır"** de → tarayıcıda birlikte doğrularız:
+giriş/kayıt → Google → **Buluta Kaydet** → sayfa yenile → **Buluttan Aç**. Bir hata çıkarsa düzeltirim.
+
+> **Anahtarsız durum:** Kod şu an anahtarsız anonim çalışıyor (giriş/Bulut butonları gizli). Anahtar girince beliriyor.
+> **Google girişi (opsiyonel):** Çalışması için Supabase → Authentication → Providers → Google'ı açıp
+>   **Redirect URL**'e `https://<proje>.supabase.co/auth/v1/callback` koymalısın (Supabase ekranı söyler).
+> **Güvenlik:** secret key RLS'i atlar — yalnız sunucu env'inde, asla `NEXT_PUBLIC_*` değil, asla commit değil.
