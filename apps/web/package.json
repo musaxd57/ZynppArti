@@ -13,7 +13,8 @@
     "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.5.7",
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.108.2",
     "@zynpparti/ai": "workspace:*",
     "@zynpparti/collab": "workspace:*",
     "@zynpparti/copilot": "workspace:*",

@@ -5,6 +5,18 @@
 
 ---
 
+## ADR-0047 — Faz 3 backend: Supabase (auth + Postgres + Storage, hepsi-bir-arada) — ADR-0046'yı günceller
+**Tarih:** 2026-06-26 · **Durum:** Kabul (Moses kararı) · **Kapsam: Faz 3 backend** · **Yerini aldığı:** [ADR-0046] (Clerk + Railway Postgres + R2)
+**Bağlam:** Faz 3'ün üç ayağı (gerçek kimlik/giriş, kalıcı bulut proje, çok-kullanıcı kalıcılığı) ayrı sağlayıcılarla (Clerk + Railway Postgres + R2 blob) kurulacaktı — üç hesap, üç anahtar seti, üç fatura. Moses tek-sağlayıcı sadeliğini seçti: **Supabase** auth + Postgres + dosya (Storage) + satır-düzeyi güvenlik (RLS) + realtime'ı tek serviste, cömert ücretsiz katmanla verir. Kodun çoğunu Claude yazıyor; az hareketli parça = az hata.
+**Karar:** **Supabase** Faz 3 backend'i:
+- **Auth:** Supabase Auth (e-posta/parola + OAuth + magic link). **Clerk'i değiştirir** (ADR-0046'daki additif Clerk iskelesi sökülür/devre dışı). **KRİTİK İLKE korunur: auth ADDİTİF/OPSİYONEL** — anahtar yoksa uygulama anonim çalışır (build/runtime kırılmaz); giriş yalnız bulut kayıt + abonelik için. Tüm app auth arkasına ALINMAZ.
+- **Veritabanı (metadata, CLAUDE §6.5 — entity satır satır YAZILMAZ):** Postgres tabloları — `profiles`(id=auth.uid, email, plan), `projects`(id, owner, name, **storage_path**, updated_at), `project_members`(project, user, role), `comments`(project, author, body, resolved). **Çizim içeriği DB'de değil**, Storage'da tek dosya.
+- **Model dosyaları (CLAUDE §6.5 "model = blob"):** Supabase **Storage** bucket (`models/`); her proje = bir versiyonlu JSON zarfı (`packages/document/serialize.ts` formatı). Aç/Kaydet bu dosyayı indirir/yükler.
+- **Güvenlik:** RLS politikaları — kullanıcı yalnız sahibi/üyesi olduğu projeyi görür. Anon key public (RLS korur), service_role yalnız sunucu route'unda.
+- **Realtime (Faz 3 multiplayer):** Yjs+broadcast sync sunucusu (ADR-0044) **kalır**; Supabase Storage yalnız kalıcılık (snapshot) için. Supabase Realtime presence ileride değerlendirilir.
+- **Yeni bağımlılık:** `@supabase/supabase-js` (bu ADR §12 onayı). Anahtarlar yalnız env: `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (public, RLS'li), `SUPABASE_SERVICE_ROLE_KEY` (gizli, yalnız sunucu).
+**Sonuç/Takas:** Tek sağlayıcı = en hızlı yol + tek fatura + RLS güvenliği hazır. Takas: Supabase'e bağımlılık (kilitlenme) — ama `serialize.ts` zarfı taşınabilir (model dosyaları her yere taşınır), şema standart Postgres. **Sıra:** (1) Supabase projesi provision + `supabase/schema.sql` çalıştır + anahtarları env'e koy **[Moses]** → (2) additive Supabase istemcisi + Aç/Kaydet-buluta + auth UI **[Claude, branch]** → (3) Clerk sökümü → (4) Paddle abonelik (ADR-0046 §Paddle planı korunur). Setup: `docs/SUPABASE-SETUP.md`.
+
 ## ADR-0046 — Hesap/giriş + kalıcılık: Clerk (auth) + Railway PostgreSQL + Prisma
 **Tarih:** 2026-06-24 · **Durum:** Kabul (Moses kararı — satışa hazırlık; "Railway'i seçelim") · **Kapsam: Faz 3 backend başlangıcı**
 **Bağlam:** Satış için ücretli özellikleri kapı arkasına almak gerek; bunun için kullanıcı kimliği + plan durumu saklanmalı (BUSINESS-PRICING §4: tahsilat auth'tan sonra). Moses zaten Railway kullanıyor (sync); veritabanını da orada istedi. Şifre/oturum güvenliğini elle yazmak riskli (güvenlik açığı = felaket) → giriş hazır/güvenli bir katmana bırakılır.

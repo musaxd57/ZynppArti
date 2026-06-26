@@ -6,10 +6,7 @@ import { AuthButtons } from '@/components/AuthButtons';
 
 const LOGO = 'corner' as const; // Kullanıcı seçimi: Blueprint Köşe
 
-// Clerk anahtarı varsa giriş/kayıt butonları gösterilir (yoksa gizli — anonim akış aynen çalışır).
-const clerkEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
-
-/** Paylaşılan üst bar (cam efekt) — logo, nav, tema, Clerk girişi, "Uygulamayı Aç". */
+/** Paylaşılan üst bar (cam efekt) — logo, nav, tema, Supabase girişi, "Uygulamayı Aç". */
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg-glass)] backdrop-blur-[14px] backdrop-saturate-150">
@@ -29,7 +26,7 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2.5">
           <ThemeToggle />
-          {clerkEnabled && <AuthButtons />}
+          <AuthButtons />{/* anahtar yoksa kendini gizler (anonim akış) */}
           <Link
             href="/app"
             className="hidden items-center gap-1.5 rounded-[10px] border border-[var(--accent)] bg-[var(--accent)] px-[15px] py-[9px] text-sm font-semibold text-white transition hover:-translate-y-px hover:bg-[var(--accent-2)] sm:inline-flex"
