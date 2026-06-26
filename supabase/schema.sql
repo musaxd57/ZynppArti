@@ -173,5 +173,8 @@ drop policy if exists models_shared_read on storage.objects;
 create policy models_shared_read on storage.objects
   for select using (
     bucket_id = 'models'
+    -- UUID-biçim guard ÖNCE (AND kısa-devre): bucket'ta UUID-olmayan bir dosya adı varsa `::uuid` cast'i
+    -- 'invalid input syntax' fırlatıp TÜM sorguyu (list/download) düşürmesin. (Denetim — savunma.)
+    and split_part(storage.filename(name), '.', 1) ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
     and public.can_access_project((split_part(storage.filename(name), '.', 1))::uuid)
   );

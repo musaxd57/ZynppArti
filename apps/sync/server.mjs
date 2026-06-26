@@ -44,9 +44,24 @@ const wss = new WebSocketServer({
 /** room adı → o odadaki bağlı soketler. */
 const rooms = new Map();
 
+// DoS sertleştirme (denetim): auth'suz public WS → sınırsız bağlantı/oda açılabilirdi. Global + oda-başı
+// cap; aşımda 1013 (try again later) ile kapat. Env ile ayarlanır (Railway). maxPayload + heartbeat zaten var.
+const MAX_TOTAL_CONNS = Number(process.env.MAX_CONNECTIONS) || 2000;
+const MAX_PEERS_PER_ROOM = Number(process.env.MAX_PEERS_PER_ROOM) || 50;
+
 wss.on('connection', (ws, req) => {
+  // Global bağlantı sınırı (yeni soket clients'a zaten eklendi → > ile MAX'ı tavan yap).
+  if (wss.clients.size > MAX_TOTAL_CONNS) {
+    ws.close(1013, 'server busy');
+    return;
+  }
   const room = decodeURIComponent((req.url || '/').slice(1).split('?')[0]) || 'default';
   let peers = rooms.get(room);
+  // Oda dolu → reddet (boş oda OLUŞTURMADAN; amplification/oda-spam önlenir).
+  if (peers && peers.size >= MAX_PEERS_PER_ROOM) {
+    ws.close(1013, 'room full');
+    return;
+  }
   if (!peers) rooms.set(room, (peers = new Set()));
   peers.add(ws);
 

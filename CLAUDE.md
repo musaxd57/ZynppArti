@@ -104,7 +104,7 @@ zynpparti/
 │   ├── engine/      ✅          ← WebGL render motoru (çizim, pan/zoom/snap, hit-test)
 │   ├── tools/       ✅          ← çizim araçları (XState FSM'leri: duvar, ölçü, seçim…)
 │   ├── copilot/     ✅          ← deterministik Türkçe yönetmelik kural motoru (Faz 2B)
-│   ├── io/          ✅          ← DXF import (LINE/POLYLINE/CIRCLE/ARC/TEXT) + DXF/SVG export + kalibrasyon (saf TS). DWG ☐. (PNG=engine, PDF=jsPDF, Excel=xlsx → apps/web)
+│   ├── io/          ✅          ← DXF import (LINE/POLYLINE/CIRCLE/ARC/ELLIPSE/SPLINE/TEXT/INSERT, Y-flip+OCS) + DXF/SVG export + kalibrasyon (saf TS). DWG ✅ (tarayıcı WASM, libredwg-web). (PNG=engine, PDF=jsPDF, Excel=xlsx → apps/web)
 │   ├── collab/      ☐          ← gerçek zamanlı senkron (Yjs / commit-log) — Faz 3
 │   ├── blocks/      ☐          ← (blok kütüphanesi şimdilik document+engine içinde; ayrı paket yok)
 │   ├── ai/          ☐          ← sağlayıcı-bağımsız AI adapter (ADR-0006) — Faz 2 AI ayağı
@@ -145,7 +145,7 @@ zynpparti/
 - ⚠️ **Şu an `packages/geometry` BAĞIMLILIKSIZ saf TS** (vec2/segment/polygon/hull/hatch/planar-faces el-yazımı). Aşağıdakiler offset/boolean gerektiğinde eklenecek **planlı** seçimlerdir, henüz kurulu değil:
 - `@flatten-js/core` ☐ — nokta/çizgi/poligon/kesişim primitive.
 - **Clipper2** ☐ — offset/boolean (duvar ofseti + oda birleştirme). `polygon-clipping` yedek; JSTS ağır.
-- DXF: `dxf-parser` ✅ (kurulu, `packages/io`). DWG: `@mlightcad/libredwg-web` ☐ (WASM, tarayıcıda — henüz yok). PDF: `jspdf` ✅ (web, ADR-0022). Excel: `xlsx` ✅.
+- DXF: `dxf-parser` ✅ (kurulu, `packages/io`). DWG: `@mlightcad/libredwg-web` ✅ (WASM, tarayıcıda; wasm `apps/web/public`; bilinen sınırlar §8.4; sunucu ODA yedeği ☐). PDF: `jspdf` ✅ (web, ADR-0022). Excel: `xlsx` ✅.
 
 > Kütüphane karşılaştırması ve gerekçe: `docs/LANDSCAPE.md §6`.
 
@@ -336,7 +336,7 @@ TARAYICI
 > Detay + kabul kriterleri: `docs/ROADMAP.md`. **Her faz çalışan, gösterilebilir bir ürünle biter.** Önceki faz bitmeden sonrakine geçme.
 
 - **Faz 0 — İskelet: ✅ TAMAM.** Monorepo (pnpm+turbo), Next.js+React+PixiJS, pan/zoom canvas, CI yeşil.
-- **Faz 1 — Çizim + Import + Mahal: ✅ TAMAM.** Duvar/kapı/pencere/ölçü/parsel/blok/metin, undo/redo, snapping+hizalama, katman (panel+görünürlük+kilit), stil; DXF import + 2-nokta ölçekleme; otomatik mahal + isim/tip + m² + tablo/Excel; DXF/PNG/PDF export. *(DWG import ☐.)*
+- **Faz 1 — Çizim + Import + Mahal: ✅ TAMAM.** Duvar/kapı/pencere/ölçü/parsel/blok/metin, undo/redo, snapping+hizalama, katman (panel+görünürlük+kilit), stil; DXF import + 2-nokta ölçekleme; otomatik mahal + isim/tip + m² + tablo/Excel; DXF/PNG/PDF export. *(DWG import ✅ tarayıcı WASM; sunucu ODA yedeği ☐.)*
 - **Faz 2 — AI Render + Copilot: ⏳ KISMEN.** ✅ Canlı metrik (2A) + ✅ deterministik atıflı Türkçe yönetmelik copilot'u (2B). ☐ Plandan AI render + LLM doğal-dil katmanı (maliyetli → ertelendi, ADR-0019).
 - **Faz 3 — Gerçek Zamanlı İşbirliği: ☐** Yjs multiplayer, presence, link paylaşımı, yorum/markup; ayrıca şematik kesit. **✅ =** iki kişi aynı anda çiziyor. *(Metraj/çizelge ADR-0019 ile öne çekildi — yapıldı.)*
 - **Faz 4 — Boş Plandan Üretim:** Sınır + program → plan/kesit üretimi (AI). **✅ =** boş plan + istekten otomatik yerleşim.
