@@ -121,6 +121,13 @@
 
 ## GÜNLÜK
 
+### 2026-06-26 (gece — UI istekleri + denetim turu 3) `feat/audit-deep-2026-06-26`
+Moses tarayıcı testi (preview deploy) → istekler + 3. denetim turu (24 ajan, ~1.6M token). **DXF Y-flip matematiği rigor doğrulandı → bug YOK.**
+- **Moses UI istekleri:** açılışta pafta/sayfa seed YOK (boş başla) · **chromeHidden=true** (sol+sağ dock gizli, temiz tam-genişlik tuval = 143612) · açılış kamerası zoom 0.5 (biraz uzaktan, origin) · **basit FPS sayacı** (FpsCounter, rAF, sol-alt) · **DXF Y-flip** (import+export, AutoCAD aynalama düzeldi).
+- **Round-3 (bugünkü değişikliklerimin REGRESYONLARI — düzeltildi):** chromeHidden oda-adlandırmayı kırmıştı (RoomList sağ dock'ta) → space-activate + ilk-seçim panelleri açar (one-time guard); Aç/Import sonrası **zoomToFit yoktu** → origin'den uzak model boş-görünüyordu → pendingOpen/onFile/onOpenJson/CloudMenu.openProject hepsine eklendi; CollabControl crypto.randomUUID güvensiz bağlamda (LAN http) throw → Math.random fallback.
+- **Perf (round-2/3 flag — YAPILDI):** `updateLineweights` zoom'da TÜM entity'leri yeniden çiziyordu → `appliedPx` ile yalnız görünür set; ekran-dışı stale, görünür olunca cull tazeler (O(görünür)). **Görsel zoom doğrulaması Moses'ta (FPS sayacı).**
+- Round 4 (kapsam/polish/completeness) çalışıyor. Zincir yeşil, hepsi push'lu.
+
 ### 2026-06-26 (gece — derin denetim turu 2 + 12 düzeltme) `feat/audit-deep-2026-06-26`
 İkinci, daha derin + "geliştir" odaklı **8-hedef workflow (25 ajan, ~1.5M token)** → **17 onaylı (hepsi güvenli)**; 12'si test-yazılarak düzeltildi, **3'ü riskli diye Moses'a flag'lendi** (körlemesine yapılmadı). Test **394→402**, zincir yeşil:
 - **Bug'lar:** hatch sonsuz/patlayan döngü (devasa koord/küçük aralık → çizgi-cap+tam-sayı indeks); planar-faces ızgara-bucket snap hücre-sınırı çapraz ucu kaçırıyordu (komşu-hücre gerçek-mesafe); canvas-app SAĞ-tık eşleşmemiş pointerUp ile seçimi siliyordu (buton guard); **schema RLS karşılıklı özyineleme** (projects↔project_members → her listCloudProjects çöker → SECURITY DEFINER fn + members_self_read + paylaşılan-okuma storage policy); projects.ts paylaşılan yükleme caller-uid'den (404) → storage_path okur.
