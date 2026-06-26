@@ -206,11 +206,20 @@ export class ToolManager implements SceneTool {
     this.setTool(this.current === name ? 'select' : name);
   }
 
-  /** Tüm seçilebilir entity'leri (mahaller hariç) seçer; Seç aracına geçer. */
+  /**
+   * Tüm seçilebilir entity'leri (mahaller hariç) seçer; Seç aracına geçer. GİZLİ/KİLİTLİ katmandakiler
+   * HARİÇ — diğer tüm seçim yolları (hit-test/kutu-seçim) bu kuralı uygular; Ctrl+A da uymalı. Aksi halde
+   * gizli geometri seçim konturuyla görünür olur + kopyalanır (denetim bulgusu).
+   */
   private selectAll(): void {
     const ids = this.ctx.store
       .all()
-      .filter((e) => e.type !== 'space')
+      .filter(
+        (e) =>
+          e.type !== 'space' &&
+          !this.ctx.isLayerHidden?.(e.layerId) &&
+          !this.ctx.isLayerLocked?.(e.layerId),
+      )
       .map((e) => e.id);
     if (ids.length === 0) return;
     this.setTool('select');

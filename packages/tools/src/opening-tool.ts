@@ -47,6 +47,9 @@ export class OpeningTool implements SceneTool {
     for (const id of ids) {
       const e = this.ctx.store.get(id);
       if (e?.type !== 'wall') continue;
+      // Kilitli/gizli katmandaki duvara boşluk açmak o duvarın görünümünü düzenler = kilit ihlali
+      // (seç/sil araçları bu kuralı uygular; boşluk aracı da uymalı — denetim bulgusu).
+      if (this.ctx.isLayerLocked?.(e.layerId) || this.ctx.isLayerHidden?.(e.layerId)) continue;
       const { t, dist } = projectToWall(world, e);
       const reach = e.thickness / 2 + SNAP_PX * this.ctx.pixelSize();
       if (dist > reach || dist >= bestD) continue;

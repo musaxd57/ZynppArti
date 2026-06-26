@@ -7,6 +7,7 @@ import {
   AddEntity,
   BatchCommand,
   RemoveEntity,
+  replaceEntitiesCommands,
   serializeModel,
   deserializeModel,
   sheetModelSize,
@@ -21,6 +22,7 @@ import { Undo2, Redo2, Maximize, PanelLeft, PanelLeftClose } from 'lucide-react'
 import { alertDialog, confirmDialog } from '@/lib/dialog';
 import { toast } from '@/lib/toast';
 import { projectFileBase, useProjectName, setProjectName, DEFAULT_PROJECT_NAME } from '@/lib/project-name';
+import { clearCloudProjectId } from '@/lib/cloud-project';
 import { VesnaLogo } from './VesnaLogo';
 import { CloudMenu } from './CloudMenu';
 import { TOOL_ICONS } from './toolbar-icons';
@@ -316,6 +318,7 @@ export function Toolbar({
     if (toRemove.length === 0) return;
     if (!(await confirmDialog('Tüm çizim temizlensin mi? (Geri al ile dönülebilir.)'))) return;
     history.dispatch(new BatchCommand('Yeni', toRemove.map((ent) => new RemoveEntity(ent.id))));
+    clearCloudProjectId(); // yeni doküman → bulut bağını kopar (yanlış üzerine yazma önlemi)
   }
 
   function onSaveJson(): void {
@@ -334,15 +337,14 @@ export function Toolbar({
       const loaded = deserializeModel(await file.text());
       // Mahaller (space) duvarlardan RoomManager ile türetilir → yüklemede atlanır, yeniden hesaplanır.
       const toAdd = loaded.filter((ent) => ent.type !== 'space');
-      // "Aç" = değiştir: mevcut (türetilmemiş) entity'leri kaldır, yüklenenleri ekle (tek undo).
-      const toRemove = store.all().filter((ent) => ent.type !== 'space');
-      history.dispatch(
-        new BatchCommand('Model aç', [
-          ...toRemove.map((ent) => new RemoveEntity(ent.id)),
-          ...toAdd.map((ent) => new AddEntity(ent)),
-        ]),
-      );
+      // "Aç" = değiştir (tek undo). Ortak id'ler Update (Remove+Add DEĞİL) → aynı modeli tekrar açmak
+      // BatchCommand tek-id kuralına takılmaz (denetim bulgusu).
+      const cmds = replaceEntitiesCommands(store.all().filter((ent) => ent.type !== 'space'), toAdd);
+      if (cmds.length > 0) {
+        history.dispatch(cmds.length === 1 ? cmds[0]! : new BatchCommand('Model aç', cmds));
+      }
       setProjectName(file.name.replace(/\.json$/i, '') || DEFAULT_PROJECT_NAME); // proje adını dosyadan türet
+      clearCloudProjectId(); // yerel dosya açıldı → bulut bağını kopar (yanlış üzerine yazma önlemi)
       toast(`Model açıldı (${toAdd.length} öğe).`, 'success');
     } catch (err) {
       console.error('Model açma hatası:', err);

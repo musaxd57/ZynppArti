@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { EntityStore } from './store';
 import { History } from './history';
-import { AddEntity, UpdateEntity, RemoveEntity, BatchCommand } from './command';
+import { AddEntity, UpdateEntity, RemoveEntity, BatchCommand, replaceEntitiesCommands } from './command';
 import { makeWall, wallOf } from './test-helpers';
 
 describe('BatchCommand', () => {
@@ -56,5 +56,38 @@ describe('BatchCommand', () => {
     expect(
       () => new BatchCommand('dış', [new BatchCommand('iç', [new AddEntity(a)])]),
     ).not.toThrow();
+  });
+
+  it('replaceEntitiesCommands: kaydedilen modeli tekrar acmak guarda takilmaz (Update kullanir)', () => {
+    const store = new EntityStore();
+    const history = new History(store);
+    const a = makeWall('a', { x: 0, y: 0 }, { x: 100, y: 0 });
+    const b = makeWall('b', { x: 0, y: 0 }, { x: 0, y: 100 });
+    history.dispatch(new BatchCommand('seed', [new AddEntity(a), new AddEntity(b)]));
+
+    // "Aç" = aynı id'lerle yüklenen model (kaydet→aç senaryosu): a değişmiş, b aynı, c yeni, eski 'b' yok değil.
+    const loaded = [makeWall('a', { x: 0, y: 0 }, { x: 200, y: 0 }), b, makeWall('c')];
+    const cmds = replaceEntitiesCommands(store.all(), loaded);
+    // Aynı id (a,b) → Update; yeni (c) → Add; kaldırılan yok. Hiçbir id iki komutta değil → guard OK.
+    expect(() => new BatchCommand('Model aç', cmds)).not.toThrow();
+    history.dispatch(new BatchCommand('Model aç', cmds));
+    expect(wallOf(store, 'a').end).toEqual({ x: 200, y: 0 });
+    expect(store.has('c')).toBe(true);
+
+    // Undo geri alır (tersi de guard'a takılmaz).
+    history.undo();
+    expect(wallOf(store, 'a').end).toEqual({ x: 100, y: 0 });
+    expect(store.has('c')).toBe(false);
+  });
+
+  it('replaceEntitiesCommands: mevcutta olup yüklenende olmayan silinir', () => {
+    const store = new EntityStore();
+    const a = makeWall('a');
+    const b = makeWall('b');
+    store.put(a);
+    store.put(b);
+    const cmds = replaceEntitiesCommands(store.all(), [makeWall('a')]); // b yok → Remove(b)
+    const kinds = cmds.map((c) => c.label).sort();
+    expect(kinds).toEqual(['Remove', 'Update']);
   });
 });

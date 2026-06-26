@@ -32,7 +32,10 @@ function aabbOfPoints(pts: readonly Pt[], pad = 0): AABB {
     if (p.y > maxY) maxY = p.y;
   }
   if (!Number.isFinite(minX)) return { minX: 0, minY: 0, maxX: 0, maxY: 0 }; // boş dizi
-  return { minX: minX - pad, minY: minY - pad, maxX: maxX + pad, maxY: maxY + pad };
+  // pad de doğrulanmalı: openingBounds wall.thickness/2'yi pad olarak geçer; bozuk duvar NaN/Infinity
+  // kalınlık verince noktalar sonlu kalsa bile pad non-finite → AABB bozulup rbush'ı zehirler. (Denetim.)
+  const p = Number.isFinite(pad) ? pad : 0;
+  return { minX: minX - p, minY: minY - p, maxX: maxX + p, maxY: maxY + p };
 }
 
 /**

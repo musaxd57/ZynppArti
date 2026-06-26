@@ -50,20 +50,24 @@ export function hatchLines(
   const out: HatchSegment[] = [];
   for (let s = minP + spacing / 2; s < maxP; s += spacing) {
     const anchor = { x: n.x * s, y: n.y * s };
-    clipLineToPolygon(anchor, d, polygon, out);
+    clipLineToPolygon(anchor, d, n, s, polygon, out);
   }
   return out;
 }
 
 /**
- * Sonsuz `anchor + t·d` doğrusunu poligon kenarlarıyla kesip İÇERİDE kalan parçaları `out`'a ekler.
- * KONKAV doğruluk: kesişim t'leri sıralanır ve ardışık ÇİFTLER (0-1, 2-3…) iç-aralık olarak eşlenir.
- * (Eski kod yalnız min/max-t alıp tek parça çiziyordu → U/L'de çentiği de dolduruyordu.) Çift sayıda
- * geçiş = düzgün giriş/çıkış; tek geçiş (kenara teğet köşe) en sonda sarkar → görmezden gelinir.
+ * `anchor + t·d` tarama doğrusunu (n ekseninde s ofsetli) poligon kenarlarıyla kesip İÇERİDE kalan
+ * parçaları `out`'a ekler. KONKAV doğruluk: bir kenarın doğruyu kesip kesmediği KÖŞE-İZDÜŞÜMÜ
+ * yarı-açık kuralıyla belirlenir — (p·n ≤ s) ≠ (q·n ≤ s). Bu, kenarın AÇI parametresine (u) bakan
+ * eski kuralın aksine, bir kenar-ortak köşe taramaya tam denk geldiğinde pariteyi korur (köşe ya 0
+ * ya 2 sayılır; tepe/çentik köşesinde fill/empty ters dönmez). t'ler sıralanıp ardışık ÇİFTLER iç
+ * aralık olur. (Önceki u-tabanlı kural reflex köşeye denk gelen taramada bandı yanlış dolduruyordu.)
  */
 function clipLineToPolygon(
   anchor: Vec2,
   d: Vec2,
+  n: Vec2,
+  s: number,
   poly: readonly Vec2[],
   out: HatchSegment[],
 ): void {
@@ -72,16 +76,15 @@ function clipLineToPolygon(
   for (let i = 0; i < m; i++) {
     const p = poly[i]!;
     const q = poly[(i + 1) % m]!;
-    const ex = q.x - p.x;
-    const ey = q.y - p.y;
-    const det = -d.x * ey + ex * d.y;
-    if (Math.abs(det) < 1e-9) continue; // doğru ile kenar paralel
-    const bx = p.x - anchor.x;
-    const by = p.y - anchor.y;
-    const t = (-bx * ey + ex * by) / det;
-    const u = (d.x * by - d.y * bx) / det;
-    // Kenarın başlangıç köşesini dahil et, bitişini hariç tut ([0,1)) → ortak köşe çift sayılmaz.
-    if (u >= -1e-9 && u < 1 - 1e-9) ts.push(t);
+    const pProj = p.x * n.x + p.y * n.y;
+    const qProj = q.x * n.x + q.y * n.y;
+    // Kenar, tarama doğrusunu (n·x = s) keser mi? Yarı-açık (≤ s) → ortak köşe tutarlı sayılır.
+    if ((pProj <= s) === (qProj <= s)) continue;
+    // Kesişim noktası: kenar boyunca f oranı, sonra ray parametresi t = (nokta − anchor)·d.
+    const f = (s - pProj) / (qProj - pProj);
+    const ix = p.x + f * (q.x - p.x);
+    const iy = p.y + f * (q.y - p.y);
+    ts.push((ix - anchor.x) * d.x + (iy - anchor.y) * d.y);
   }
   if (ts.length < 2) return;
   ts.sort((a, b) => a - b);

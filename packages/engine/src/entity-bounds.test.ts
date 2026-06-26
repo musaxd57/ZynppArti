@@ -3,11 +3,12 @@ import {
   sheetModelSize,
   type Annotation,
   type Block,
+  type Opening,
   type Parcel,
   type Sheet,
   type Wall,
 } from '@zynpparti/document';
-import { entityBounds } from './entity-bounds';
+import { entityBounds, openingBounds } from './entity-bounds';
 
 describe('entityBounds', () => {
   it('expands a wall AABB by half its thickness', () => {
@@ -95,6 +96,17 @@ describe('entityBounds', () => {
       boundary: [{ x: 0, y: 0 }, { x: NaN, y: 10 }, { x: 10, y: 10 }],
     };
     expect(entityBounds(badParcel)).toEqual({ minX: 0, minY: 0, maxX: 0, maxY: 0 });
+  });
+
+  it('openingBounds: NaN/Infinity duvar kalınlığı (pad) rbush-zehirleyen AABB üretmez', () => {
+    const opening: Opening = { id: 'o', type: 'opening', layerId: 'd', wallId: 'w', t: 0.5, width: 80, kind: 'door' };
+    const wallNaN = {
+      id: 'w', type: 'wall', layerId: 'd',
+      start: { x: 0, y: 0 }, end: { x: 100, y: 0 }, thickness: NaN,
+    } as unknown as Wall;
+    const b = openingBounds(opening, wallNaN);
+    // pad NaN olsa bile tüm kenarlar sonlu kalmalı (pad→0'a düşer).
+    expect(Number.isFinite(b.minX) && Number.isFinite(b.minY) && Number.isFinite(b.maxX) && Number.isFinite(b.maxY)).toBe(true);
   });
 
   it('sheet AABB = model boyutu (kağıt × ölçek)', () => {

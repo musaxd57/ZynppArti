@@ -63,7 +63,9 @@ create table if not exists public.project_members (
 create table if not exists public.comments (
   id         uuid primary key default gen_random_uuid(),
   project    uuid not null references public.projects (id) on delete cascade,
-  author     uuid not null references auth.users (id) on delete set null,
+  -- author NULLABLE: ON DELETE SET NULL ile NOT NULL ÇELİŞİR (kullanıcı silinince author=NULL
+  -- yazılamayıp silme işlemi abort olurdu). Yazar gidince yorum kalsın → nullable. (Denetim bulgusu.)
+  author     uuid references auth.users (id) on delete set null,
   body       text not null,
   resolved   boolean not null default false,
   created_at timestamptz not null default now()

@@ -70,8 +70,11 @@ export class EntitySync {
    * sessizce reddedilir (log'lanır) — diğer geçerli değişiklikler uygulanmaya devam eder.
    */
   private acceptRemote(e: unknown, id: string): boolean {
-    if (!isValidEntity(e) || !isSyncable(e)) {
-      console.warn(`EntitySync: geçersiz/uyumsuz uzak entity reddedildi (karantina): ${id}`);
+    // entity.id, Y.Map ANAHTARIYLA eşleşmeli. Eşleşmezse: store entity.id'ye yazarken biz anahtarı
+    // izleriz → engine dirty-lookup bulamaz, sonra anahtar silininca yetim kalır (silinemez), hatta
+    // peer başka bir entity'yi ezebilir. Kötücül/bozuk peer bunu sömürebilir (karantina sözü). (Denetim.)
+    if (!isValidEntity(e) || e.id !== id || !isSyncable(e)) {
+      console.warn(`EntitySync: geçersiz/uyumsuz/anahtar-uyuşmaz uzak entity reddedildi (karantina): ${id}`);
       return false;
     }
     return true;

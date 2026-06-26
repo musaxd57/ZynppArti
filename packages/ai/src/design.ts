@@ -105,31 +105,42 @@ function num(v: unknown): v is number {
  * sıfırlayıp geçerli planı `null` döndürmesin diye in-string + backslash-escape durumunu izler.
  */
 function extractJson(text: string): unknown | null {
-  const start = text.indexOf('{');
-  if (start < 0) return null;
-  let depth = 0;
-  let inStr = false;
-  let esc = false;
-  for (let i = start; i < text.length; i++) {
-    const ch = text[i];
-    if (inStr) {
-      if (esc) esc = false;
-      else if (ch === '\\') esc = true;
-      else if (ch === '"') inStr = false;
-      continue;
-    }
-    if (ch === '"') inStr = true;
-    else if (ch === '{') depth++;
-    else if (ch === '}') {
-      depth--;
-      if (depth === 0) {
-        try {
-          return JSON.parse(text.slice(start, i + 1));
-        } catch {
-          return null;
+  let start = text.indexOf('{');
+  // Birden çok dengeli {...} bloğunu dene: ilk blok geçerli JSON değilse (ör. modelin gövde metnindeki
+  // "{ana mekan}" gibi süs parantezi) SONRAKİNE geç — gerçek plan JSON'u onun ardından gelebilir.
+  // (Eski kod ilk blokta parse hatasında null dönüp geçerli planı atıyordu — denetim bulgusu.)
+  while (start >= 0) {
+    let depth = 0;
+    let inStr = false;
+    let esc = false;
+    let parsed: unknown | null = null;
+    let end = -1;
+    for (let i = start; i < text.length; i++) {
+      const ch = text[i];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (ch === '\\') esc = true;
+        else if (ch === '"') inStr = false;
+        continue;
+      }
+      if (ch === '"') inStr = true;
+      else if (ch === '{') depth++;
+      else if (ch === '}') {
+        depth--;
+        if (depth === 0) {
+          end = i;
+          try {
+            parsed = JSON.parse(text.slice(start, i + 1));
+          } catch {
+            parsed = null;
+          }
+          break;
         }
       }
     }
+    if (parsed !== null) return parsed;
+    if (end < 0) return null; // dengeli blok kapanmadı → daha fazla deneme yok
+    start = text.indexOf('{', end + 1); // bu blok geçersizdi → bir sonraki '{'ten dene
   }
   return null;
 }

@@ -28,6 +28,13 @@ describe('parseLayout', () => {
     expect(parseLayout('JSON yok burada')).toBeNull();
   });
 
+  it('JSON öncesi süs parantezli prozayı atlayıp gerçek planı bulur', () => {
+    // Eski kod ilk "{ana mekan}" bloğunda parse hatasında null dönüp geçerli planı atıyordu.
+    const out = parseLayout('Salon {ana mekan} için: {"summary":"x","walls":[[0,0,100,0]],"rooms":[]}');
+    expect(out).not.toBeNull();
+    expect(out!.walls).toHaveLength(1);
+  });
+
   it('aşırı duvar sayısını reddeder (UI donma koruması)', () => {
     const many = Array.from({ length: 700 }, (_, i) => [0, i, 100, i]);
     expect(parseLayout(JSON.stringify({ walls: many, rooms: [] }))).toBeNull();

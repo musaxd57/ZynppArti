@@ -2,9 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
-  AddEntity,
   BatchCommand,
-  RemoveEntity,
+  replaceEntitiesCommands,
   serializeModel,
   deserializeModel,
   type EntityStore,
@@ -20,6 +19,7 @@ import {
   type CloudProject,
 } from '@/lib/supabase/projects';
 import { useProjectName, setProjectName } from '@/lib/project-name';
+import { useCloudProjectId, setCloudProjectId } from '@/lib/cloud-project';
 import { toast } from '@/lib/toast';
 import { confirmDialog } from '@/lib/dialog';
 
@@ -33,8 +33,9 @@ export function CloudMenu({ store, history }: { store: EntityStore; history: His
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [projects, setProjects] = useState<CloudProject[] | null>(null);
-  // Açık/kaydedilmiş bulut projesinin id'si → tekrar "Kaydet" üzerine yazar (kopya oluşturmaz).
-  const [currentId, setCurrentId] = useState<string | undefined>(undefined);
+  // Açık bulut projesinin id'si → tekrar "Kaydet" üzerine yazar. PAYLAŞILAN store: "Yeni"/yerel "Aç"
+  // doküman değiştirince sıfırlanır → ilgisiz çizimi yanlış projeye yazma önlenir (denetim bulgusu).
+  const currentId = useCloudProjectId();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -68,7 +69,7 @@ export function CloudMenu({ store, history }: { store: EntityStore; history: His
     setBusy(true);
     try {
       const { id } = await saveProjectToCloud({ id: currentId, name: projectName, json: serializeModel(store.all()) });
-      setCurrentId(id);
+      setCloudProjectId(id);
       setProjects(null); // liste bayatladı
       toast('Buluta kaydedildi.', 'success');
       setOpen(false);
@@ -97,15 +98,13 @@ export function CloudMenu({ store, history }: { store: EntityStore; history: His
     try {
       const loaded = deserializeModel(await loadProjectFromCloud(p.id));
       const toAdd = loaded.filter((ent) => ent.type !== 'space'); // mahaller türetilir
-      const toRemove = store.all().filter((ent) => ent.type !== 'space');
-      history.dispatch(
-        new BatchCommand('Buluttan aç', [
-          ...toRemove.map((ent) => new RemoveEntity(ent.id)),
-          ...toAdd.map((ent) => new AddEntity(ent)),
-        ]),
-      );
+      // Ortak id'ler Update (Remove+Add DEĞİL) → BatchCommand tek-id kuralına takılmaz (denetim bulgusu).
+      const cmds = replaceEntitiesCommands(store.all().filter((ent) => ent.type !== 'space'), toAdd);
+      if (cmds.length > 0) {
+        history.dispatch(cmds.length === 1 ? cmds[0]! : new BatchCommand('Buluttan aç', cmds));
+      }
       setProjectName(p.name);
-      setCurrentId(p.id);
+      setCloudProjectId(p.id);
       toast(`"${p.name}" açıldı (${toAdd.length} öğe).`, 'success');
       setOpen(false);
     } catch (err) {
@@ -121,7 +120,7 @@ export function CloudMenu({ store, history }: { store: EntityStore; history: His
     try {
       await deleteCloudProject(p.id);
       setProjects((list) => (list ?? []).filter((x) => x.id !== p.id));
-      if (currentId === p.id) setCurrentId(undefined);
+      if (currentId === p.id) setCloudProjectId(undefined);
       toast('Proje silindi.', 'success');
     } catch (err) {
       console.error('Bulut silme hatası:', err);

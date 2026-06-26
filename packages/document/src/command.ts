@@ -121,3 +121,22 @@ export class BatchCommand implements Command {
     return new BatchCommand(this.label, inverses);
   }
 }
+
+/**
+ * "Model aç/değiştir" için minimal komut listesi: mevcut entity'leri yüklenenlerle değiştirir.
+ * Her id EN ÇOK BİR komuta girer (BatchCommand tek-id kuralı için): yalnız mevcutta olan → Remove,
+ * yalnız yüklenende olan → Add, İKİSİNDE de olan → Update (Remove+Add YERİNE — aksi halde aynı id
+ * iki komuta düşüp batch reddedilirdi; bir modeli kaydedip aynı oturumda tekrar AÇMAK bunu tetikler).
+ * Çağıran taraf önce türetilmiş (space) entity'leri eler — onlar duvarlardan yeniden hesaplanır.
+ */
+export function replaceEntitiesCommands(
+  current: readonly Entity[],
+  loaded: readonly Entity[],
+): Command[] {
+  const loadedIds = new Set(loaded.map((e) => e.id));
+  const currentIds = new Set(current.map((e) => e.id));
+  const cmds: Command[] = [];
+  for (const e of current) if (!loadedIds.has(e.id)) cmds.push(new RemoveEntity(e.id));
+  for (const e of loaded) cmds.push(currentIds.has(e.id) ? new UpdateEntity(e) : new AddEntity(e));
+  return cmds;
+}
