@@ -78,6 +78,86 @@ export function distanceToPolygonBoundary(p: Vec2, polygon: readonly Vec2[]): nu
 }
 
 /**
+ * KONKAV-DUYARLI minimum geçiş genişliği — koridor/oda darboğazı için. `polygonMinWidth` (konveks
+ * kabuk) L/U/T mekanlarda dar kolu GÖREMEZ (kabuk kapsayıcı). Burada her kenarın iç-normali boyunca
+ * ışın atıp karşı sınıra olan yerel genişliği ölçer; bunların minimumu gerçek darboğazdır.
+ *
+ * Yöntem: poligon sarımına göre iç-normal seçilir (CCW→sol, CW→sağ); her kenarda birkaç iç-örnek
+ * noktasından iç-normal ışın atılır, bitişik-olmayan kenarlarla en yakın kesişim = yerel genişlik.
+ * Hiç kesişim yoksa (dejenere) konveks-kabuk genişliğine düşer. Saf; copilot koridor/oda denetimi kullanır.
+ */
+export function polygonNarrowWidth(polygon: readonly Vec2[], samplesPerEdge = 3): number {
+  const n = polygon.length;
+  if (n < 3) return 0;
+  let area2 = 0;
+  for (let i = 0; i < n; i++) {
+    const a = polygon[i]!;
+    const b = polygon[(i + 1) % n]!;
+    area2 += a.x * b.y - b.x * a.y;
+  }
+  if (Math.abs(area2) < 1e-9) return 0;
+  const ccw = area2 > 0;
+  const EPS = 1e-6;
+  let minW = Infinity;
+  for (let i = 0; i < n; i++) {
+    const a = polygon[i]!;
+    const b = polygon[(i + 1) % n]!;
+    const ex = b.x - a.x;
+    const ey = b.y - a.y;
+    const elen = Math.hypot(ex, ey);
+    if (elen < 1e-9) continue;
+    // İç-normal (CCW poligonda iç sol taraftadır → sol normal; CW'de tersi).
+    const nx = ccw ? -ey / elen : ey / elen;
+    const ny = ccw ? ex / elen : -ex / elen;
+    for (let s = 1; s <= samplesPerEdge; s++) {
+      const f = s / (samplesPerEdge + 1); // kenar içinden örnek (uçları hariç tut)
+      const px = a.x + ex * f;
+      const py = a.y + ey * f;
+      let best = Infinity;
+      for (let j = 0; j < n; j++) {
+        if (j === i) continue; // ışının çıktığı kenarı atla
+        const c = polygon[j]!;
+        const d = polygon[(j + 1) % n]!;
+        const t = rayHitSegment(px, py, nx, ny, c, d);
+        if (t !== null && t > EPS && t < best) best = t;
+      }
+      if (best < minW) minW = best;
+    }
+  }
+  return minW === Infinity ? polygonMinWidthFallback(polygon) : minW;
+}
+
+/** `O + t·D` ışınının (D birim) C–E segmentini kestiği t≥0 değeri (yoksa null). */
+function rayHitSegment(ox: number, oy: number, dx: number, dy: number, c: Vec2, e: Vec2): number | null {
+  const sx = e.x - c.x;
+  const sy = e.y - c.y;
+  const denom = dx * sy - dy * sx;
+  if (Math.abs(denom) < 1e-12) return null; // paralel
+  const qx = c.x - ox;
+  const qy = c.y - oy;
+  const t = (qx * sy - qy * sx) / denom; // ışın parametresi
+  const u = (qx * dy - qy * dx) / denom; // segment parametresi [0,1]
+  if (t < 0 || u < -1e-9 || u > 1 + 1e-9) return null;
+  return t;
+}
+
+/** Dejenere durumda konveks-kabuk yaklaşımı (rotating calipers, polygonMinWidth ile aynı mantık). */
+function polygonMinWidthFallback(polygon: readonly Vec2[]): number {
+  // Basit kapsayıcı: bbox kısa kenarı (konkav-duyarlı ölçüm tutmadıysa kaba ama güvenli alt sınır değil).
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const p of polygon) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  return Math.min(maxX - minX, maxY - minY);
+}
+
+/**
  * Etiket yerleştirme noktası — poligonun "erişilemezlik kutbu"na (kenarlardan en uzak iç nokta)
  * yakın bir nokta. Centroid İÇERİDEYSE onu döner (konveks/normal odalar — ucuz). Konkav/L odada
  * centroid dışarı (komşuya) düşebilir; bu durumda bbox üzerinde ızgara tarayıp İÇERDE + kenara en

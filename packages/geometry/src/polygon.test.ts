@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { polygonArea, polygonCentroid, distanceToPolygonBoundary, polygonLabelPoint } from './polygon';
+import {
+  polygonArea,
+  polygonCentroid,
+  distanceToPolygonBoundary,
+  polygonLabelPoint,
+  polygonNarrowWidth,
+} from './polygon';
 import { pointInPolygon } from './point-in-polygon';
 import { vec2 } from './vec2';
 
@@ -114,5 +120,34 @@ describe('polygonLabelPoint', () => {
   it('3-ten az köşe → noktaların ortalaması (boş → orijin)', () => {
     expect(polygonLabelPoint([vec2(0, 0), vec2(10, 0)])).toEqual({ x: 5, y: 0 });
     expect(polygonLabelPoint([])).toEqual({ x: 0, y: 0 });
+  });
+});
+
+describe('polygonNarrowWidth', () => {
+  it('dikdörtgende = kısa kenar', () => {
+    const r = [vec2(0, 0), vec2(300, 0), vec2(300, 90), vec2(0, 90)];
+    expect(polygonNarrowWidth(r)).toBeCloseTo(90, 1);
+  });
+
+  it('konkav (L) odada GERÇEK dar kolu yakalar (konveks kabuğun aksine)', () => {
+    // Aynı L: kollar 60 cm. polygonMinWidth >150 döner; narrowWidth ~60 görmeli.
+    const L = [
+      vec2(0, 0),
+      vec2(200, 0),
+      vec2(200, 60),
+      vec2(60, 60),
+      vec2(60, 200),
+      vec2(0, 200),
+    ];
+    expect(polygonNarrowWidth(L)).toBeCloseTo(60, 0);
+  });
+
+  it('saat yönü (CW) sarımda da çalışır', () => {
+    const cw = [vec2(0, 0), vec2(0, 90), vec2(300, 90), vec2(300, 0)];
+    expect(polygonNarrowWidth(cw)).toBeCloseTo(90, 1);
+  });
+
+  it('dejenere → 0', () => {
+    expect(polygonNarrowWidth([vec2(0, 0), vec2(10, 0)])).toBe(0);
   });
 });

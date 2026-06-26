@@ -1,6 +1,6 @@
 import {
   polygonArea,
-  polygonMinWidth,
+  polygonNarrowWidth,
   distanceToPolygonBoundary,
   pointInPolygon,
 } from '@zynpparti/geometry';
@@ -54,7 +54,7 @@ function checkCorridorWidth(spaces: readonly Space[]): Finding[] {
   const out: Finding[] = [];
   for (const s of spaces) {
     if (roomTypeOf(s) !== 'circulation') continue;
-    const widthCm = polygonMinWidth(s.boundary);
+    const widthCm = polygonNarrowWidth(s.boundary);
     if (widthCm > 0 && widthCm < reg.min) {
       out.push({
         severity: 'error',
@@ -100,7 +100,7 @@ function checkRoomMinWidth(spaces: readonly Space[]): Finding[] {
   for (const s of spaces) {
     const t = roomTypeOf(s);
     if (t !== 'sleeping' && t !== 'living') continue;
-    const widthCm = polygonMinWidth(s.boundary);
+    const widthCm = polygonNarrowWidth(s.boundary);
     if (widthCm > 0 && widthCm < reg.min) {
       out.push({
         severity: 'info',
@@ -143,7 +143,7 @@ function checkBathroomAccess(spaces: readonly Space[]): Finding[] {
   for (const s of spaces) {
     const t = roomTypeOf(s);
     if (t !== 'bathroom' && t !== 'wet') continue;
-    const widthCm = polygonMinWidth(s.boundary);
+    const widthCm = polygonNarrowWidth(s.boundary);
     if (widthCm > 0 && widthCm < reg.min) {
       out.push({
         severity: 'info',

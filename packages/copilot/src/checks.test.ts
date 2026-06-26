@@ -49,6 +49,23 @@ describe('runCopilotChecks — koridor genişliği (TS 9111)', () => {
   it('sirkülasyon olmayan dar mekan → koridor kuralı uygulanmaz', () => {
     expect(nonInfo(runCopilotChecks([rect('Depo', 'service', 400, 90)], []))).toHaveLength(0);
   });
+
+  it('KONKAV (L) koridorun dar kolunu yakalar (konveks kabuk kaçırırdı)', () => {
+    // L koridoru: her iki kol 90 cm (< 120). Konveks-kabuk genişliği 90'ı GÖREMEZDİ (kapsayıcı);
+    // konkav-duyarlı ölçüm dar kolu yakalar → atıflı koridor hatası.
+    const L = space('LKoridor', 'circulation', [
+      { x: 0, y: 0 },
+      { x: 400, y: 0 },
+      { x: 400, y: 90 },
+      { x: 90, y: 90 },
+      { x: 90, y: 400 },
+      { x: 0, y: 400 },
+    ]);
+    const findings = nonInfo(runCopilotChecks([L], []));
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.severity).toBe('error');
+    expect(findings[0]!.entityId).toBe('LKoridor');
+  });
 });
 
 describe('runCopilotChecks — asgari alan (İmar)', () => {
