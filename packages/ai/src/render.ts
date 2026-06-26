@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { RENDER_TIMEOUT_MS, withTimeout } from './timeout';
 
 /**
  * AI Render (Faz 2C) — plandan/tariften fotogerçekçi mimari görsel. v1: OpenAI görsel API'si
@@ -21,11 +22,21 @@ export async function renderImage(
   apiKey: string,
   prompt: string,
   model: string = OPENAI_IMAGE_MODEL,
+  signal?: AbortSignal,
 ): Promise<string> {
   const client = new OpenAI({ apiKey });
-  const res = await client.images.generate({ model, prompt, size: '1024x1024' });
-  const first = res.data?.[0];
-  if (first?.b64_json) return `data:image/png;base64,${first.b64_json}`;
-  if (first?.url) return first.url;
-  throw new Error('Görsel üretilemedi (boş yanıt).');
+  // Maliyet koruması: istemci iptali + deadline (askıda görsel isteği parayı açık tutmasın).
+  const t = withTimeout(RENDER_TIMEOUT_MS, signal);
+  try {
+    const res = await client.images.generate(
+      { model, prompt, size: '1024x1024' },
+      { signal: t.signal },
+    );
+    const first = res.data?.[0];
+    if (first?.b64_json) return `data:image/png;base64,${first.b64_json}`;
+    if (first?.url) return first.url;
+    throw new Error('Görsel üretilemedi (boş yanıt).');
+  } finally {
+    t.dispose();
+  }
 }

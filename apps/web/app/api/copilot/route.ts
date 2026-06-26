@@ -188,7 +188,7 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
     try {
-      const image = await renderImage(key, p.slice(0, 4000), process.env.OPENAI_IMAGE_MODEL);
+      const image = await renderImage(key, p.slice(0, 4000), process.env.OPENAI_IMAGE_MODEL, req.signal);
       return Response.json({ mode: 'render', image });
     } catch (e) {
       // HAM sağlayıcı mesajı YALNIZ sunucu logunda (Vercel logs) — hesap/org/fatura/upstream metni
@@ -260,7 +260,7 @@ export async function POST(req: Request): Promise<Response> {
     const hintRaw = (body as { hint?: unknown })?.hint;
     const hint = typeof hintRaw === 'string' ? hintRaw.slice(0, 1000) : undefined;
     try {
-      const d = await askDesignVariants(providers, designPrompt, forced, hint, 2);
+      const d = await askDesignVariants(providers, designPrompt, forced, hint, 2, req.signal);
       return Response.json({ mode: 'design', variants: d.variants });
     } catch (e) {
       if (e instanceof NoProviderError) return Response.json({ error: 'AI yapılandırılmadı.' }, { status: 503 });

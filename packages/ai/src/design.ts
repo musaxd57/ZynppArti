@@ -1,4 +1,5 @@
 import { resolveChain, classifyDesignTier } from './router';
+import { DESIGN_TIMEOUT_MS, withTimeout } from './timeout';
 import type { AiProvider, AiProviderName } from './types';
 
 /**
@@ -220,6 +221,7 @@ export async function askDesign(
   prompt: string,
   forced?: AiProviderName,
   hint?: string,
+  signal?: AbortSignal,
 ): Promise<DesignResult> {
   const available = Object.keys(providers) as AiProviderName[];
   const order = resolveChain(classifyDesignTier(prompt), available, forced);
@@ -230,16 +232,20 @@ export async function askDesign(
   for (const name of chain) {
     const provider = providers[name];
     if (!provider) continue;
+    const t = withTimeout(DESIGN_TIMEOUT_MS, signal);
     try {
       const text = await provider.chat([{ role: 'user', content: userContent }], {
         system: DESIGN_SYSTEM,
         maxTokens: 4000,
+        signal: t.signal,
       });
       const layout = parseLayout(text);
       if (layout) return { ...layout, provider: name, model: provider.model };
       lastErr = new Error(`Sağlayıcı "${name}" geçerli plan JSON üretemedi.`);
     } catch (e) {
       lastErr = e;
+    } finally {
+      t.dispose();
     }
     console.error('Tasarım üretimi başarısız, sıradaki sağlayıcı:', lastErr);
   }
@@ -263,6 +269,7 @@ export async function askDesignVariants(
   forced?: AiProviderName,
   hint?: string,
   count = 2,
+  signal?: AbortSignal,
 ): Promise<DesignVariantsResult> {
   const available = Object.keys(providers) as AiProviderName[];
   // Basit → Akash-önce (ucuz; geçersizse Claude'a düşer), gelişmiş → Claude-önce.
@@ -275,16 +282,20 @@ export async function askDesignVariants(
   for (const name of chain) {
     const provider = providers[name];
     if (!provider) continue;
+    const t = withTimeout(DESIGN_TIMEOUT_MS, signal);
     try {
       const text = await provider.chat([{ role: 'user', content: userContent }], {
         system: DESIGN_SYSTEM,
         maxTokens: 6000,
+        signal: t.signal,
       });
       const variants = parseLayouts(text).slice(0, count);
       if (variants.length > 0) return { variants, provider: name, model: provider.model };
       lastErr = new Error(`Sağlayıcı "${name}" geçerli varyant üretemedi.`);
     } catch (e) {
       lastErr = e;
+    } finally {
+      t.dispose();
     }
     console.error('Varyant üretimi başarısız, sıradaki sağlayıcı:', lastErr);
   }
