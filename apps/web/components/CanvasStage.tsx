@@ -20,7 +20,6 @@ import {
   makeSheet,
   createEntityId,
   nextSheetPosition,
-  sheetModelSize,
   type Sheet,
 } from '@zynpparti/document';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
@@ -222,13 +221,9 @@ export function CanvasStage() {
       }
     } else if (!startEmpty) {
       seedDemo(store); // geçici demo duvarlar (yalnız demo/baypas modunda)
-    } else {
-      // Yeni boş proje: 1 SADE SAYFA (plain sheet) ile başla — kullanıcının çoğaltacağı boş sayfa.
-      // Origin'de ortalı. Pafta arayüzü yok (plain); kaydolur + PDF'e girer. "− N sayfa +" çoğaltır.
-      const probe = { ...makeSheet({ x: 0, y: 0 }, { plain: true }), id: 'tmp' } as Sheet;
-      const { w, h } = sheetModelSize(probe);
-      store.put({ ...makeSheet({ x: -w / 2, y: -h / 2 }, { plain: true, sheetNo: '1' }), id: createEntityId() });
     }
+    // Yeni boş proje (startEmpty): GERÇEKTEN boş başla — açılışta sayfa/pafta SEED ETME (Moses isteği).
+    // Kullanıcı isterse alttaki "− N sayfa +" ile sayfa ekler. PDF export sayfasız da çalışır (tüm tuval).
 
     let handle: CanvasHandle | undefined;
     let manager: ToolManager | undefined;
@@ -242,7 +237,7 @@ export function CanvasStage() {
         return;
       }
       handle = h;
-      if (startEmpty) h.zoomToFit(); // yeni proje: açılıştaki boş sayfayı ekrana sığdır
+      // (Yeni proje artık boş başlıyor → sığdıracak sayfa yok; varsayılan kamera origin'de kalır.)
       const history = new History(store);
       // Mahalleri otomatik bul (engine entity katmanı abone olduktan sonra).
       rooms = new RoomManager(store);
