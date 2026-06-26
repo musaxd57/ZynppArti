@@ -16,6 +16,30 @@ yarışı, DXF birimleri). Test → **367**, zincir yeşil, hepsi main'de + canl
 
 ---
 
+## 🚩 2026-06-26 — DERİN DENETİM (2 tur) FLAG'leri (Moses ile — riskli, doğrulama gerek)
+> `feat/audit-deep-2026-06-26` (sweep+faz3 merge'li). 2 tur × 25 ajan → 29 düzeltme (367→**402 test**).
+> Aşağıdakiler bilerek YAPILMADI (riskli/doğrulama gerek):
+
+### DXF Y-ekseni aynalama (HIGH — interop, #1 iş akışı)
+- İç model y-DOWN, DXF y-UP; iki taraf da çevirmiyor → AutoCAD'e/dan import-export **dikey aynalı**.
+- Net fix var (IO sınırında Y-negate + yay yönü), in-app round-trip byte-stable kalır. **AMA AutoCAD'le
+  doğrulama gerek** + canlıda mevcut tüm DXF import'larının yönünü çevirir (kullanıcı algısı). Moses kararı.
+
+### engine updateLineweights zoom-cull (HIGH — perf, 500k)
+- Zoom'da `redrawables` TÜM entity'leri yeniden stroke'luyor (rbush culling'i bozar). Her tekerlek tıkı = O(model).
+- Plan hazır: updateLineweights yalnız `prevVisible`'ı çiz; cull-in'de bayat olanı tazele (appliedPx Map).
+  Tarayıcı `?perf` ile 50k/500k FPS ölçümü gerek (engine hot-path).
+
+### rooms.ts stabil oda id'leri (LOW — perf + seçim korunması)
+- recompute her duvar düzenlemesinde TÜM space'lere yeni id → engine destroy+rebuild (BitmapText churn) +
+  oda seçimi/hover kaybı. Fix: matchOf eşleşmesinde eski id'yi koru, yalnız sınır değişince `updated`.
+  Belkemiği (RoomManager) → tarayıcı doğrulaması ister.
+
+### Eski-kalan (hâlâ geçerli)
+- DWG import sınırları; a11y diğer modallar (DialogHost/Calibrate/Comment focus-trap); ALLOWED_ORIGINS Railway env.
+
+---
+
 ## ✅ 2026-06-26 — A–F + AI maliyet TAMAM (`feat/yarin-debt-sweep`, merge bekliyor)
 A geometry (label-point+hatch), B tools (exclude-snap+mid-gesture+opening-fit), D AI timeout,
 E copilot konkav-genişlik, F BatchCommand guard — hepsi test-önce, **367→387 test**, zincir yeşil + push.
