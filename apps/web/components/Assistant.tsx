@@ -341,6 +341,7 @@ function applyLayout(
   // Kapı/pencereleri en yakın duvara (≤80 cm) bağla; t = duvar üzerindeki izdüşüm oranı.
   let doorCount = 0;
   let windowCount = 0;
+  const placed: { opening: Opening; exterior: boolean }[] = [];
   for (const o of openings) {
     const px = o.cx + dx;
     const py = o.cy + dy;
@@ -356,21 +357,26 @@ function applyLayout(
       }
     }
     if (best && bestD <= 80) {
-      const kind: Opening['kind'] = isExteriorWall(best) ? 'window' : 'door';
-      cmds.push(
-        new AddEntity({
-          id: createEntityId(),
-          type: 'opening',
-          layerId: 'default',
-          wallId: best.id,
-          t: bestT,
-          width: o.width,
-          kind,
-        } satisfies Opening),
-      );
-      if (kind === 'door') doorCount++;
-      else windowCount++;
+      const exterior = isExteriorWall(best);
+      // İç duvar → her zaman KAPI (geçiş, güvenli). Dış duvar → AI'ın kind'ine GÜVEN: giriş kapısını
+      // window'a zorlama (eski kod tüm dışı window yapıp DESIGN_SYSTEM'in zorunlu giriş kapısını siliyordu).
+      const kind: Opening['kind'] = exterior ? (o.kind === 'door' ? 'door' : 'window') : 'door';
+      placed.push({
+        opening: { id: createEntityId(), type: 'opening', layerId: 'default', wallId: best.id, t: bestT, width: o.width, kind },
+        exterior,
+      });
     }
+  }
+  // FAILSAFE: her planda EN AZ BİR dış giriş kapısı olmalı. AI tüm dış açıklıkları yanlışlıkla window
+  // etiketlediyse, dış açıklıklardan kapı-genişliğine en yakın olanı GİRİŞ KAPISI yap.
+  if (placed.some((p) => p.exterior) && !placed.some((p) => p.exterior && p.opening.kind === 'door')) {
+    const ext = placed.filter((p) => p.exterior).sort((a, b) => Math.abs(a.opening.width - 90) - Math.abs(b.opening.width - 90));
+    ext[0]!.opening = { ...ext[0]!.opening, kind: 'door' };
+  }
+  for (const p of placed) {
+    cmds.push(new AddEntity(p.opening));
+    if (p.opening.kind === 'door') doorCount++;
+    else windowCount++;
   }
   const openingCount = doorCount + windowCount;
   history.dispatch(new BatchCommand('AI taslak plan', cmds));

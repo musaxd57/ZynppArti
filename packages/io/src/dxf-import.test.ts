@@ -34,6 +34,34 @@ describe('importDxf', () => {
     expect(() => importDxf('not a dxf at all')).toThrow();
   });
 
+  it('polyface/3B mesh POLYLINE atlanır (origin\'e çöp duvar üretmez)', () => {
+    // 70=64 → polyface mesh; vertices'e yüz-kayıtları karışır → eski kod (0,0)'a çöp duvar çizerdi.
+    const dxf = [
+      '0', 'SECTION', '2', 'ENTITIES',
+      '0', 'POLYLINE', '8', 'M', '66', '1', '70', '64',
+      '0', 'VERTEX', '8', 'M', '10', '0.0', '20', '0.0',
+      '0', 'VERTEX', '8', 'M', '10', '100.0', '20', '0.0',
+      '0', 'SEQEND',
+      '0', 'ENDSEC', '0', 'EOF',
+    ].join('\n');
+    expect(importDxf(dxf).walls).toHaveLength(0);
+  });
+
+  it('OCS −Z extrusion (ayna): ARC X-aynalı içe aktarılır', () => {
+    // 230=-1 → eksenel −Z extrusion (MIRROR). Merkez (100,0) → WCS X-negate → x negatif olmalı.
+    const dxf = [
+      '0', 'SECTION', '2', 'ENTITIES',
+      '0', 'ARC', '8', 'A',
+      '10', '100.0', '20', '0.0', '30', '0.0',
+      '40', '50.0', '50', '0.0', '51', '90.0',
+      '210', '0.0', '220', '0.0', '230', '-1.0',
+      '0', 'ENDSEC', '0', 'EOF',
+    ].join('\n');
+    const r = importDxf(dxf);
+    expect(r.walls.length).toBeGreaterThanOrEqual(2);
+    for (const w of r.walls) expect(w.start.x).toBeLessThan(0); // X-aynalı → tüm köşeler negatif x
+  });
+
   it('Y-FLIP: DXF y-UP → iç model y-DOWN (AutoCAD ile aynı yön; eskiden dikey aynalıydı)', () => {
     // DXF'te yukarı = +y; bizde aşağı = +y. Pozitif DXF-y, NEGATİF iç-y olmalı (görsel aynalanma düzelir).
     const dxf = [

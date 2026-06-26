@@ -75,7 +75,10 @@ export async function createCanvasApp(
 
   const world = new Container();
   app.stage.addChild(world);
-  const redrawGrid = buildGrid(world);
+  // Grid kendi container'ında (entityLayer'ın ALTINDA) → PNG export'ta gizlenebilir (ızgara çıktıya girmesin).
+  const gridLayer = new Container();
+  world.addChild(gridLayer);
+  const redrawGrid = buildGrid(gridLayer);
 
   const layers = new LayerState();
   const entityLayer = new EntityLayer(store, layers);
@@ -335,11 +338,20 @@ export async function createCanvasApp(
     viewportBounds,
     exportPng: async () => {
       // WebGL bağlamı kaybı / extract desteklenmemesi → anlamlı hata (çağıran yakalar).
+      // Editör kromu (grid + overlay: seçim/snap/yorum/ghost/uzak-imleç) çıktıya GİRMESİN → extract
+      // öncesi gizle, sonra geri al (vektör export'lar zaten temiz; PNG tutarlı olsun — denetim).
+      const gridWas = gridLayer.visible;
+      const overlayWas = overlay.visible;
+      gridLayer.visible = false;
+      overlay.visible = false;
       try {
         return await app.renderer.extract.base64({ target: app.stage, format: 'png' });
       } catch (err) {
         console.error('PNG extract başarısız:', err);
         throw new Error('Tuval görüntüsü alınamadı (WebGL bağlamı hazır değil).');
+      } finally {
+        gridLayer.visible = gridWas;
+        overlay.visible = overlayWas;
       }
     },
     zoomToFit,

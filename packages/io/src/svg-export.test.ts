@@ -24,6 +24,17 @@ describe('exportSvg', () => {
     expect(svg).toContain('stroke-width="20"');
   });
 
+  it('kesit (A—A\') işareti SVG\'ye girer + sınırlara katılır (eskiden düşüyordu)', () => {
+    const svg = exportSvg([
+      { id: 'sec', type: 'section', layerId: 'section', a: { x: 0, y: 0 }, b: { x: 400, y: 0 }, label: 'A' },
+    ]);
+    expect(svg).toContain('<line'); // kesit çizgisi
+    expect(svg).toContain('>A<'); // A etiketi
+    const m = svg.match(/viewBox="([^"]+)"/);
+    const w = Number((m?.[1] ?? '').split(' ')[2]);
+    expect(w).toBeGreaterThanOrEqual(400); // bounds section'ı içeriyor (boş 100x100 değil)
+  });
+
   it('viewBox tüm entity sınırlarını çevreler (margin dahil)', () => {
     const svg = exportSvg([wall]);
     const m = svg.match(/viewBox="([^"]+)"/);

@@ -80,6 +80,25 @@ interface BlockLike {
 }
 
 /**
+ * OCS düzeltmesi: DXF entity koordinatları nesne-koordinat-sisteminde (OCS) saklanır. AutoCAD MIRROR'la
+ * üretilmiş entity'lerde extrusion (0,0,−1) olur ve koordinatlar X-aynalı saklanır. Eksenel −Z durumunda
+ * (arbitrary-axis eksenel hali) WCS = (−x, y) → tf'i X-negate ile sararız; aksi (+Z / eksenel-olmayan 3B)
+ * dokunmayız. Nokta-katmanında yansıma yay örneklerini ve polyline köşelerini doğru aynalar. (Denetim.)
+ */
+function ocsTf(
+  e: { extrusionDirectionX?: number; extrusionDirectionY?: number; extrusionDirectionZ?: number; extrusionDirection?: { x?: number; y?: number; z?: number } },
+  tf: Tf,
+): Tf {
+  const ex = e.extrusionDirectionX ?? e.extrusionDirection?.x ?? 0;
+  const ey = e.extrusionDirectionY ?? e.extrusionDirection?.y ?? 0;
+  const ez = e.extrusionDirectionZ ?? e.extrusionDirection?.z ?? 1;
+  if (ez < 0 && Math.abs(ex) < 1e-9 && Math.abs(ey) < 1e-9) {
+    return (p) => tf({ x: -p.x, y: p.y });
+  }
+  return tf;
+}
+
+/**
  * DXF metnini ayrıştırır; LINE/LWPOLYLINE/POLYLINE → Wall, CIRCLE/ARC → segmentlenmiş Wall
  * (eğri entity'miz yok), TEXT/MTEXT → Annotation. **INSERT (blok)** referansları çözülüp blok
  * içeriği konum/ölçek/rotasyon dönüşümüyle patlatılır (iç içe bloklar dahil) — mobilya/sembol
@@ -114,17 +133,22 @@ export function importDxf(text: string): DxfImportResult {
         }
       } else if (e.type === 'LWPOLYLINE') {
         const pl = e as ILwpolylineEntity;
-        if (pushPolyline(pl.vertices, pl.shape, factor, layer, walls, tf)) layers.add(layer);
+        if (pushPolyline(pl.vertices, pl.shape, factor, layer, walls, ocsTf(pl, tf))) layers.add(layer);
       } else if (e.type === 'POLYLINE') {
-        const pl = e as IPolylineEntity;
-        if (pushPolyline(pl.vertices, pl.shape, factor, layer, walls, tf)) layers.add(layer);
+        const pl = e as IPolylineEntity & { isPolyfaceMesh?: boolean; is3dPolygonMesh?: boolean };
+        // Polyface/3B mesh POLYLINE'da vertices'e YÜZ-tanım kayıtları (koordinatsız, x=y=0) karışır →
+        // ardışık bağlamak origin'e/ızgaraya çöp duvar üretir (bounds + indeks bozulur). Mesh'i ATLA
+        // (2B plan duvar konturu değildir). Saf çizgi-polyline normal işlenir. (Denetim bulgusu.)
+        if (!pl.isPolyfaceMesh && !pl.is3dPolygonMesh) {
+          if (pushPolyline(pl.vertices, pl.shape, factor, layer, walls, ocsTf(pl, tf))) layers.add(layer);
+        }
       } else if (e.type === 'CIRCLE') {
         const c = e as ICircleEntity;
         tessellateArc(c.center, c.radius, 0, Math.PI * 2, factor, layer, walls, tf);
         layers.add(layer);
       } else if (e.type === 'ARC') {
         const a = e as IArcEntity;
-        tessellateArc(a.center, a.radius, a.startAngle, a.endAngle, factor, layer, walls, tf);
+        tessellateArc(a.center, a.radius, a.startAngle, a.endAngle, factor, layer, walls, ocsTf(a, tf));
         layers.add(layer);
       } else if (e.type === 'ELLIPSE') {
         // Mimari DXF'te kemerli boşluk/oval mekan; eskiden sessizce DÜŞÜYORDU (denetim).

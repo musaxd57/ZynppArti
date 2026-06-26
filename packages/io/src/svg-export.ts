@@ -118,6 +118,13 @@ export function exportSvg(
       body.push(label({ x: e.position.x, y: e.position.y + (i + 0.8) * e.height }, ln, e.height, 'start'));
     });
   }
+  // kesit (A—A') işareti — kalıcı section entity; eskiden SVG/PDF'e hiç girmiyordu (denetim bulgusu).
+  for (const e of entities) {
+    if (e.type !== 'section') continue;
+    body.push(seg(e.a, e.b, '#7c3aed', 1.5));
+    body.push(label(e.a, e.label, 24, 'middle', '#7c3aed'));
+    body.push(label(e.b, `${e.label}'`, 24, 'middle', '#7c3aed'));
+  }
 
   // Region (çok-sayfa PDF) verildiyse içeriği o dikdörtgene KIRP — yoksa komşu paftaların geometrisi
   // sayfaya taşar (svg2pdf viewBox dışını çizebilir). Tüm-bounds modunda kırpmaya gerek yok.
@@ -226,6 +233,10 @@ function computeBounds(entities: readonly Entity[], walls: Map<EntityId, Wall>):
         }
         break;
       }
+      case 'section':
+        add(e.a);
+        add(e.b);
+        break;
       case 'annotation': {
         const lines = e.text.split('\n');
         const wEst = Math.max(1, ...lines.map((l) => l.length)) * e.height * 0.6;
