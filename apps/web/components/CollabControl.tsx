@@ -58,7 +58,9 @@ export function CollabControl({
 
   const start = (): void => {
     const fromHash = location.hash.match(/room=([\w-]+)/)?.[1];
-    connect(room ?? fromHash ?? `oda-${Math.random().toString(36).slice(2, 8)}`);
+    // Oda kodu kriptografik rastgele (Math.random tahmin edilebilir; collab link gizliliği için crypto).
+    const newRoom = `oda-${crypto.randomUUID().slice(0, 8)}`;
+    connect(room ?? fromHash ?? newRoom);
   };
 
   /** Paylaşımı kapat: bağlantıyı sök, URL'den oda kodunu temizle, tek-kullanıcıya dön. */

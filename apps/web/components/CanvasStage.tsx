@@ -31,6 +31,7 @@ import { Assistant } from './Assistant';
 import { CollabControl } from './CollabControl';
 import { View3D } from './View3D';
 import { EmptyCanvasHint } from './EmptyCanvasHint';
+import { FpsCounter } from './FpsCounter';
 import { toast } from '@/lib/toast';
 import { TakeoffPanel } from './TakeoffPanel';
 import { SheetPanel } from './SheetPanel';
@@ -460,6 +461,7 @@ export function CanvasStage() {
         <div className="relative min-w-0 flex-1">
           <div ref={containerRef} className="absolute inset-0" />
           {ui && <EmptyCanvasHint store={ui.store} />}
+          {ui && <FpsCounter />}
           {/* Sağ-üst yüzen küme: Canlı Paylaş + 3B (canvas'a göre konumlu, dock'larla çakışmaz). */}
           {ui && (
             <div className="absolute right-3 top-3 z-40 flex items-center gap-2">

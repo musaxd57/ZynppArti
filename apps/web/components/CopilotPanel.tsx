@@ -61,6 +61,7 @@ export function CopilotPanel({ store }: CopilotPanelProps) {
       title="Copilot — Yönetmelik"
       badge={findings.length > 0 ? `${findings.length} bulgu` : 'temiz'}
       widthClass="w-full"
+      defaultOpen={false}
     >
       {findings.length === 0 ? (
         <div className="flex items-center gap-2 px-1 py-1 opacity-70">

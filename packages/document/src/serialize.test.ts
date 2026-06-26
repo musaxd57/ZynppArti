@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { serializeModel, deserializeModel, MODEL_FORMAT_VERSION } from './serialize';
+import { createEntityId } from './id';
 import type { Annotation, Block, Dimension, Entity, SectionLine, Sheet, Wall } from './entities';
 
 const wall: Wall = {
@@ -34,6 +35,15 @@ describe('serializeModel / deserializeModel', () => {
     const back = deserializeModel(json);
     expect(back).toHaveLength(2);
     expect(back).toEqual([wall, ann]);
+  });
+
+  it('crypto.randomUUID id save→load round-trip boyunca KORUNUR (id üretilmez)', () => {
+    const id = createEntityId();
+    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i); // UUID v4 biçimi
+    const w: Wall = { id, type: 'wall', layerId: 'default', start: { x: 0, y: 0 }, end: { x: 50, y: 0 }, thickness: 10 };
+    const back = deserializeModel(serializeModel([w]));
+    expect(back).toHaveLength(1);
+    expect(back[0]!.id).toBe(id); // aynı id geri döner (deserializeModel id'yi yeniden üretmez)
   });
 
   it('kesit (section) entity round-trip (kalıcılık)', () => {

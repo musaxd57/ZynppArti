@@ -27,8 +27,8 @@ export function Panel({
   const [open, setOpen] = useState(defaultOpen);
   // Aç/kapa durumunu hatırla (localStorage). İlk render defaultOpen (SSR ile aynı → hidrasyon
   // uyumsuzluğu yok); kayıtlı değer mount sonrası effect'te uygulanır.
-  // v2: accordion varsayılanları yenilendi (yalnız Mahal Listesi açık) → eski kayıtlı durumlar sıfırlansın.
-  const storageKey = `zynpparti.panel.v2.${title}`;
+  // v3: Bloklar/Kesit/Copilot kapalı gelsin (Moses isteği) → eski kayıtlı "açık" durumlar sıfırlansın.
+  const storageKey = `zynpparti.panel.v3.${title}`;
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);

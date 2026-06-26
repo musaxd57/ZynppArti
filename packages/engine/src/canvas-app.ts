@@ -109,7 +109,9 @@ export async function createCanvasApp(
     entityLayer.cull(viewportBounds());
   }
 
-  camera = { x: app.screen.width / 2, y: app.screen.height / 2, zoom: 1 };
+  // Açılış kamerası: dünya origin'i ekran merkezinde + biraz UZAKTAN (zoom 0.5 → daha geniş alan görünür;
+  // boş projede ferah bir başlangıç). Model yüklenince zoomToFit, kullanıcı tekerlekle bunu ezer.
+  camera = { x: app.screen.width / 2, y: app.screen.height / 2, zoom: 0.5 };
   applyCamera();
   const onResize = (): void => entityLayer.cull(viewportBounds());
   app.renderer.on('resize', onResize);
