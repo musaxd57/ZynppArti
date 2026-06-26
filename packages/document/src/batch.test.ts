@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { EntityStore } from './store';
 import { History } from './history';
-import { AddEntity, UpdateEntity, BatchCommand } from './command';
+import { AddEntity, UpdateEntity, RemoveEntity, BatchCommand } from './command';
 import { makeWall, wallOf } from './test-helpers';
 
 describe('BatchCommand', () => {
@@ -44,5 +44,17 @@ describe('BatchCommand', () => {
     history.undo();
     expect(wallOf(store, 'a').end).toEqual({ x: 100, y: 0 });
     expect(wallOf(store, 'b').end).toEqual({ x: 0, y: 100 });
+  });
+
+  it('ayni entity iki kez dokunan batch yapim aninda reddedilir (fail-fast)', () => {
+    const a = makeWall('a');
+    // Update + Remove aynı id → terslenemez; net hata (undo'da gizemli throw yerine).
+    expect(
+      () => new BatchCommand('bozuk', [new UpdateEntity(a), new RemoveEntity('a')]),
+    ).toThrow(/aynı entity/);
+    // İç içe batch (id'siz) güvenli — duplicate denetimi onları atlar.
+    expect(
+      () => new BatchCommand('dış', [new BatchCommand('iç', [new AddEntity(a)])]),
+    ).not.toThrow();
   });
 });

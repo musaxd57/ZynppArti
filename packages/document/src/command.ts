@@ -10,6 +10,8 @@ import type { EntityStore, StoreChange } from './store';
  */
 export interface Command {
   readonly label: string;
+  /** Komutun dokunduğu entity (varsa). BatchCommand bağımsızlık (tek-id) denetimi için kullanır. */
+  readonly targetId?: EntityId;
   apply(store: EntityStore): StoreChange;
   invert(store: EntityStore): Command;
 }
@@ -17,7 +19,10 @@ export interface Command {
 /** Yeni bir entity ekler. */
 export class AddEntity implements Command {
   readonly label = 'Add';
-  constructor(private readonly entity: Entity) {}
+  readonly targetId: EntityId;
+  constructor(private readonly entity: Entity) {
+    this.targetId = entity.id;
+  }
 
   apply(store: EntityStore): StoreChange {
     store.put(this.entity);
@@ -32,7 +37,10 @@ export class AddEntity implements Command {
 /** Var olan bir entity'yi siler. */
 export class RemoveEntity implements Command {
   readonly label = 'Remove';
-  constructor(private readonly id: EntityId) {}
+  readonly targetId: EntityId;
+  constructor(private readonly id: EntityId) {
+    this.targetId = id;
+  }
 
   apply(store: EntityStore): StoreChange {
     store.delete(this.id);
@@ -49,7 +57,10 @@ export class RemoveEntity implements Command {
 /** Bir entity'yi yeni haliyle değiştirir (taşı/yeniden adlandır/kalınlık vb.). */
 export class UpdateEntity implements Command {
   readonly label = 'Update';
-  constructor(private readonly next: Entity) {}
+  readonly targetId: EntityId;
+  constructor(private readonly next: Entity) {
+    this.targetId = next.id;
+  }
 
   apply(store: EntityStore): StoreChange {
     store.put(this.next);
@@ -73,7 +84,24 @@ export class BatchCommand implements Command {
   constructor(
     readonly label: string,
     private readonly commands: readonly Command[],
-  ) {}
+  ) {
+    // KISIT denetimi (fail-fast): aynı entity'ye iki kez dokunan batch terslenemez — alt-komut
+    // tersleri apply ÖNCESİ ortak durumdan yakalanır, bu yüzden id başına en çok bir komut olmalı.
+    // (Bağlı duvar+boşluk batch'leri farklı id'lere dokunur → güvenli.) Net hata, undo'da gizemli
+    // "entity bulunamadı" yerine geliştirme anında yakalanır.
+    const seen = new Set<EntityId>();
+    for (const c of commands) {
+      const id = c.targetId;
+      if (id === undefined) continue; // iç içe batch / id'siz komut → atla
+      if (seen.has(id)) {
+        throw new Error(
+          `BatchCommand "${label}": aynı entity (${id}) tek batch'te iki kez değiştirilemez ` +
+            `(alt komutlar bağımsız olmalı; undo/redo için tersi ön-durumdan yakalanır).`,
+        );
+      }
+      seen.add(id);
+    }
+  }
 
   apply(store: EntityStore): StoreChange {
     const added: EntityId[] = [];
