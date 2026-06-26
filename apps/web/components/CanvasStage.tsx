@@ -88,7 +88,9 @@ export function CanvasStage() {
   const [leftW, setLeftW] = useState(224);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [initialCiz, setInitialCiz] = useState<string | undefined>(undefined);
-  const [chromeHidden, setChromeHidden] = useState(false); // zen: sol+sağ panelleri gizle
+  // Açılışta sol+sağ dock kolonları GİZLİ (Moses isteği: temiz tam-genişlik tuvalle başla, 143612).
+  // Toolbar'daki panel-aç/kapa düğmesiyle gösterilir. (Oturum-içi; her açılış temiz başlar.)
+  const [chromeHidden, setChromeHidden] = useState(true);
 
   // Landing'den `/app?ciz=<program>` ile gelindiyse: Vesna AI'ı Çiz modunda, istem YAPIŞTIRILMIŞ aç.
   // (window.location → useSearchParams Suspense gereksinimi yok; app zaten tam istemci.)
