@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { MessageSquare, Check, RotateCcw, Trash2 } from 'lucide-react';
 import { getCommentRequest, subscribeCommentRequest, resolveCommentAction } from '@/lib/comment-dialog';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 
 /**
  * Yorum düzenleme diyaloğu: metni düzenle + "çözüldü" işaretini değiştir + sil. Engine çift-tık
@@ -13,6 +14,8 @@ export function CommentDialog() {
   const [text, setText] = useState('');
   const [resolved, setResolved] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef, !!state);
 
   useEffect(() => {
     if (state) {
@@ -38,6 +41,10 @@ export function CommentDialog() {
       onPointerDown={cancel}
     >
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Yorumu düzenle"
         className="w-[26rem] max-w-[92vw] rounded-xl p-5 text-sm shadow-2xl"
         style={{ background: 'var(--overlay)', color: 'var(--text-1)', boxShadow: 'inset 0 0 0 1px var(--border-soft)' }}
         onPointerDown={(e) => e.stopPropagation()}

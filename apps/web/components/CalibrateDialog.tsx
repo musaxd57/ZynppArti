@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 import { Ruler } from 'lucide-react';
 import { getCalibrate, subscribeCalibrate, resolveCalibration } from '@/lib/calibrate-dialog';
 
@@ -18,6 +19,8 @@ export function CalibrateDialog() {
   const state = useSyncExternalStore(subscribeCalibrate, getCalibrate, () => null);
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef, !!state);
 
   useEffect(() => {
     if (state) {
@@ -42,6 +45,10 @@ export function CalibrateDialog() {
       onPointerDown={cancel}
     >
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Ölçeği kalibre et"
         className="w-[26rem] max-w-[92vw] rounded-xl p-5 text-sm shadow-2xl"
         style={{ background: 'var(--overlay)', color: 'var(--text-1)', boxShadow: 'inset 0 0 0 1px var(--border-soft)' }}
         onPointerDown={(e) => e.stopPropagation()}

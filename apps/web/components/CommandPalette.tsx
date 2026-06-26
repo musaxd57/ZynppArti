@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { History } from '@zynpparti/document';
 import type { ToolManager, ToolName } from '@zynpparti/tools';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 
 interface Command {
   readonly label: string;
@@ -40,6 +41,9 @@ export function CommandPalette({ manager, history, zoomToFit }: CommandPalettePr
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(0);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const selectedRef = useRef<HTMLButtonElement>(null);
+  useFocusTrap(modalRef, open);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -54,6 +58,11 @@ export function CommandPalette({ manager, history, zoomToFit }: CommandPalettePr
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  // Klavyeyle seçilen öğeyi görünür alana kaydır (liste height-cap'li; highlight fold altına kaçmasın).
+  useEffect(() => {
+    if (open) selectedRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [open, selected, query]);
 
   const commands = useMemo<Command[]>(() => {
     const sendKey = (key: string, ctrl = false): void => {
@@ -95,6 +104,10 @@ export function CommandPalette({ manager, history, zoomToFit }: CommandPalettePr
       onPointerDown={() => setOpen(false)}
     >
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Komut paleti"
         className="w-[28rem] max-w-[92vw] overflow-hidden rounded-lg border border-white/10 bg-neutral-800/95 text-sm text-white shadow-2xl backdrop-blur"
         onPointerDown={(e) => e.stopPropagation()}
       >
@@ -118,13 +131,16 @@ export function CommandPalette({ manager, history, zoomToFit }: CommandPalettePr
           placeholder="Komut ara… (araç, kaydet, geri al…)"
           className="w-full bg-transparent px-4 py-3 outline-none placeholder:text-white/40"
         />
-        <div className="max-h-[50vh] overflow-y-auto border-t border-white/10">
+        <div role="listbox" aria-label="Komutlar" className="max-h-[50vh] overflow-y-auto border-t border-white/10">
           {results.length === 0 ? (
             <div className="px-4 py-3 text-white/50">Sonuç yok.</div>
           ) : (
             results.map((c, i) => (
               <button
                 key={i}
+                ref={i === sel ? selectedRef : null}
+                role="option"
+                aria-selected={i === sel}
                 type="button"
                 onClick={() => runAt(i)}
                 // Yalnız seçim gerçekten değişince state güncelle — her piksel hareketinde re-render fırtınası olmasın.

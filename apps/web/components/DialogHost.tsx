@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { closeDialog, getDialog, subscribeDialog } from '@/lib/dialog';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 
 /**
  * Aktif dialog'u (alert/confirm/prompt) ekranda gösterir. Bir kez render edilir (layout). Store boşsa
@@ -11,6 +12,8 @@ export function DialogHost() {
   const state = useSyncExternalStore(subscribeDialog, getDialog, () => null);
   const [text, setText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef, !!state);
 
   useEffect(() => {
     if (state?.kind === 'prompt') {
@@ -41,7 +44,12 @@ export function DialogHost() {
       onPointerDown={cancel}
     >
       <div
-        className="w-[24rem] max-w-[92vw] rounded-xl p-5 text-sm shadow-2xl"
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={state.kind === 'prompt' ? 'Metin girişi' : state.kind === 'confirm' ? 'Onay' : 'Bilgi'}
+        tabIndex={-1}
+        className="w-[24rem] max-w-[92vw] rounded-xl p-5 text-sm shadow-2xl outline-none"
         style={{ background: 'var(--overlay)', color: 'var(--text-1)', boxShadow: 'inset 0 0 0 1px var(--border-soft)' }}
         onPointerDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
