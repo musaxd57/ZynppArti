@@ -150,6 +150,61 @@ create policy comments_delete on public.comments
   for delete using (author = auth.uid());
 
 -- ───────────────────────────────────────────────────────────────────────────
+-- PAYLAŞIM RPC'leri (e-posta ile üye ekle/listele) — RLS profiles'ı `id=auth.uid()` ile kilitler,
+-- yani istemci başka kullanıcının uid'sini e-postadan ÇÖZEMEZ. Bu işler SECURITY DEFINER fonksiyonla
+-- yapılır: fonksiyon yalnız ÇAĞIRANIN proje SAHİBİ olduğunu doğrular, sonra auth.users'tan çözer.
+-- ───────────────────────────────────────────────────────────────────────────
+
+-- E-posta ile projeye üye ekle (yalnız sahip). Dönüş: 'ok' | 'not_owner' | 'no_user' | 'self'.
+create or replace function public.share_project(p_project uuid, p_email text, p_role text default 'viewer')
+returns text
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  target uuid;
+  norm_role text := lower(coalesce(p_role, 'viewer'));
+begin
+  if not public.is_project_owner(p_project) then
+    return 'not_owner';
+  end if;
+  if norm_role not in ('viewer', 'commenter', 'editor') then
+    norm_role := 'viewer';
+  end if;
+  select id into target from auth.users where lower(email) = lower(trim(p_email)) limit 1;
+  if target is null then
+    return 'no_user';
+  end if;
+  if target = auth.uid() then
+    return 'self'; -- sahip zaten tam yetkili; kendini üye ekleme
+  end if;
+  insert into public.project_members (project, member, role)
+  values (p_project, target, norm_role)
+  on conflict (project, member) do update set role = excluded.role;
+  return 'ok';
+end;
+$$;
+
+-- Bir projenin üyelerini e-posta + rolüyle listele (yalnız sahip). profiles_self RLS'i atlamak için definer.
+create or replace function public.list_project_members(p_project uuid)
+returns table (member uuid, email text, role text)
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if not public.is_project_owner(p_project) then
+    return; -- sahip değil → boş
+  end if;
+  return query
+    select m.member, u.email::text, m.role
+    from public.project_members m
+    join auth.users u on u.id = m.member
+    where m.project = p_project
+    order by m.added_at asc;
+end;
+$$;
+
+-- ───────────────────────────────────────────────────────────────────────────
 -- Storage bucket — model dosyaları (her proje = bir JSON zarfı).
 -- 'models' bucket'ını Dashboard → Storage'dan da kurabilirsin; bu SQL idempotent eşdeğeri.
 -- ───────────────────────────────────────────────────────────────────────────

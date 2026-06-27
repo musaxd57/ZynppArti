@@ -25,6 +25,7 @@ import { projectFileBase, useProjectName, setProjectName, DEFAULT_PROJECT_NAME }
 import { clearCloudProjectId } from '@/lib/cloud-project';
 import { VesnaLogo } from './VesnaLogo';
 import { CloudMenu } from './CloudMenu';
+import { PlanBadge } from './PlanBadge';
 import { TOOL_ICONS } from './toolbar-icons';
 
 const TOOLS: { name: ToolName; label: string; hotkey: string }[] = [
@@ -419,6 +420,7 @@ export function Toolbar({
         Aç
       </button>
       <CloudMenu store={store} history={history} zoomToFit={zoomToFit} />{/* giriş yoksa kendini gizler */}
+      <PlanBadge />{/* giriş yoksa kendini gizler */}
       <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button type="button" onClick={() => fileRef.current?.click()} className={btn}>
         CAD Yükle

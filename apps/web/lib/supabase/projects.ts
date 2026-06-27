@@ -14,7 +14,23 @@ export interface CloudProject {
   readonly id: string;
   readonly name: string;
   readonly updated_at: string;
+  /** Proje sahibinin uid'si — oturum kullanıcısından farklıysa proje "paylaşılan"dır. */
+  readonly owner?: string;
 }
+
+export interface ProjectMember {
+  readonly member: string;
+  readonly email: string;
+  readonly role: string;
+}
+
+export interface Profile {
+  readonly id: string;
+  readonly email: string | null;
+  readonly plan: string;
+}
+
+export type ShareResult = 'ok' | 'not_owner' | 'no_user' | 'self';
 
 /** Oturum açmış kullanıcının id'si; yoksa anlamlı hata (giriş gerekli). */
 async function requireUid(): Promise<{ supabase: NonNullable<ReturnType<typeof getSupabaseBrowser>>; uid: string }> {
@@ -71,10 +87,57 @@ export async function listCloudProjects(): Promise<CloudProject[]> {
   if (!userData.user) return [];
   const { data, error } = await supabase
     .from('projects')
-    .select('id,name,updated_at')
+    .select('id,name,updated_at,owner')
     .order('updated_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as CloudProject[];
+}
+
+/** Oturum kullanıcısının id'si (paylaşılan/sahip ayrımı için); yoksa null. */
+export async function currentUserId(): Promise<string | null> {
+  const supabase = getSupabaseBrowser();
+  if (!supabase) return null;
+  const { data } = await supabase.auth.getUser();
+  return data.user?.id ?? null;
+}
+
+/** Oturum kullanıcısının profili (plan göstergesi için). Oturum/anahtar yoksa null. */
+export async function getProfile(): Promise<Profile | null> {
+  const supabase = getSupabaseBrowser();
+  if (!supabase) return null;
+  const { data: userData } = await supabase.auth.getUser();
+  const uid = userData.user?.id;
+  if (!uid) return null;
+  const { data, error } = await supabase.from('profiles').select('id,email,plan').eq('id', uid).maybeSingle();
+  if (error) throw error;
+  return (data as Profile | null) ?? { id: uid, email: userData.user?.email ?? null, plan: 'free' };
+}
+
+/** Projeye e-posta ile üye ekler (yalnız sahip; RPC sahip kontrolü + uid çözümü yapar). */
+export async function shareProject(projectId: string, email: string, role: string): Promise<ShareResult> {
+  const { supabase } = await requireUid();
+  const { data, error } = await supabase.rpc('share_project', {
+    p_project: projectId,
+    p_email: email,
+    p_role: role,
+  });
+  if (error) throw error;
+  return (data as ShareResult) ?? 'no_user';
+}
+
+/** Projenin üyelerini (e-posta + rol) listeler (yalnız sahip; RPC). */
+export async function listProjectMembers(projectId: string): Promise<ProjectMember[]> {
+  const { supabase } = await requireUid();
+  const { data, error } = await supabase.rpc('list_project_members', { p_project: projectId });
+  if (error) throw error;
+  return (data as ProjectMember[]) ?? [];
+}
+
+/** Bir üyeyi projeden çıkarır (sahip; members_owner RLS politikası izin verir). */
+export async function removeProjectMember(projectId: string, memberId: string): Promise<void> {
+  const { supabase } = await requireUid();
+  const { error } = await supabase.from('project_members').delete().eq('project', projectId).eq('member', memberId);
+  if (error) throw error;
 }
 
 /**
