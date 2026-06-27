@@ -17,12 +17,25 @@ Detay: `docs/STATE.md`. **Branch Moses'ın merge'ini + tarayıcı testini bekliy
 
 ## 🗓️ 2026-06-28 — SIRADAKİ (Moses ile öncelik belirle)
 
-> **Önce Moses'ın elle yapması gerekenler** (bloke eder):
+> **⏳ PADDLE — domain onayı bekleniyor** (öncelik 1):
+> - `vesna.design` Paddle approved-domains'de **"Pending"** (manuel inceleme, birkaç saat–1-2 gün).
+> - /iade + footer linkleri canlıda (onay şartıydı). **"Approved" olunca** → tekrar "Pro'ya Geç" → 403
+>   gitmeli → **gerçek kartla test alımı** (Moses + Claude birlikte): satın al → webhook `subscription.created`
+>   → `profiles.plan='pro'` → üst barda **Pro** rozeti. İptal → `free`.
+> - Hâlâ 403 ise: console hatasına bak (price/domain/token). Webhook secret = Vesna destination'ının kendi secret'ı mı?
+>
+> **Önce Moses'ın elle yapması gerekenler** (Paddle dışı, bloke eder):
 > - **Supabase: Google OAuth'u aç** (hâlâ "provider is not enabled"): Authentication → Providers → Google
 >   → enable; Google Cloud OAuth Client → ID/Secret; redirect URI = `https://wybkpmjwtdvvndtoubqq.supabase.co/auth/v1/callback`.
-> - **`supabase/schema.sql`'i tekrar çalıştır** (yeni `share_project`/`list_project_members` RPC'leri — idempotent).
+> - **`supabase/schema.sql`'i tekrar çalıştır** (yeni `share_project`/`list_project_members` RPC'leri — idempotent; paylaşım bunsuz hata verir).
 > - Uçtan-uca tarayıcı testi: giriş → bulut Kaydet/Aç → **Paylaş** (2. hesapla doğrula) → şifre sıfırla.
-> - Branch'i main'e merge.
+> - ✅ Branch main'e merge'lendi (yapıldı).
+
+### Paddle — kalan kod (onay sonrası / iyileştirme)
+- Webhook **sıra-dışı olay** koruması: `profiles.plan_updated_at` kolonu + olayın `occurred_at`'i eskiyse yazma
+  (geç gelen eski olay planı geri almasın). `docs/PADDLE-SETUP.md`.
+- Enforcement UX cilası: ücretsiz limitte "Pro'ya geç" toast yerine modal/upsell? (şimdilik toast yeterli).
+- `pdl_live_apikey_` kod kullanmıyor — programatik abonelik yönetimi gerekirse eklenir.
 
 ### A. Görsel/AutoCAD doğrulama (yalnız Moses yapabilir — kod hazır)
 - `updateLineweights` zoom-perf (`?perf` 50k/100k, FPS sayacı) — sorun yoksa flag'i kapat.
