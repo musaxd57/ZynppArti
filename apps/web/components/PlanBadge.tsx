@@ -3,12 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase/client';
 import { getProfile } from '@/lib/supabase/projects';
-
-const PLAN_LABEL: Record<string, string> = {
-  free: 'Ücretsiz',
-  pro: 'Pro',
-  studio: 'Studio',
-};
+import { PLAN_LABEL, isPaidPlan, normalizePlan } from '@/lib/plan';
 
 /**
  * Üst bar plan göstergesi (ADR-0047). Giriş yapılmışsa kullanıcının `profiles.plan`'ını gösterir.
@@ -39,18 +34,18 @@ export function PlanBadge(): React.ReactElement | null {
   }, []);
 
   if (!plan) return null;
-  const isPaid = plan === 'pro' || plan === 'studio';
+  const label = PLAN_LABEL[normalizePlan(plan)];
   return (
     <span
-      title={`Planın: ${PLAN_LABEL[plan] ?? plan}`}
+      title={`Planın: ${label}`}
       className="shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium"
       style={
-        isPaid
+        isPaidPlan(plan)
           ? { background: 'var(--accent-soft)', color: 'var(--accent-text, #b1a9ff)' }
           : { background: 'var(--surface-3)', color: 'var(--text-3)' }
       }
     >
-      {PLAN_LABEL[plan] ?? plan}
+      {label}
     </span>
   );
 }
