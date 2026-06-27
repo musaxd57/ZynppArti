@@ -1,35 +1,48 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase/client';
 import { supabaseEnabled } from '@/lib/supabase/env';
 
+type Mode = 'login' | 'signup' | 'forgot';
+
 /**
- * Giriş / Kayıt sayfası (Supabase Auth, ADR-0047). E-posta+parola ve Google (OAuth). `?mod=kayit`
- * kayıt modunda açılır. Başarıda /app'e döner. Anahtar yoksa bilgilendirir (uygulama anonim çalışır).
+ * Giriş / Kayıt / Şifre-sıfırlama sayfası (Supabase Auth, ADR-0047). E-posta+parola ve Google (OAuth).
+ * `?mod=kayit` kayıt modunda açılır. Başarıda /app'e döner. Anahtar yoksa bilgilendirir (app anonim çalışır).
+ * Marka kartı (logo + wordmark + gölge/ring) — açık/koyu tema uyumlu landing token'ları.
  */
 function GirisForm() {
   const params = useSearchParams();
   const router = useRouter();
-  const [signup, setSignup] = useState(params.get('mod') === 'kayit');
+  const [mode, setMode] = useState<Mode>(params.get('mod') === 'kayit' ? 'signup' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'error' | 'ok'; text: string } | null>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
 
   const supabase = getSupabaseBrowser();
 
+  // İlk açılışta / mod değişiminde e-posta alanına odaklan (forgot dönüşü hariç klavye akışı sürsün).
+  useEffect(() => {
+    emailRef.current?.focus();
+  }, [mode]);
+
   if (!supabaseEnabled || !supabase) {
     return (
-      <p className="text-sm text-[var(--text-2)]">
-        Giriş şu an yapılandırılmamış. Uygulamayı hesapsız da kullanabilirsin —{' '}
-        <Link href="/app" className="text-[var(--accent)] underline">
-          Uygulamayı Aç
-        </Link>
-        .
-      </p>
+      <Card>
+        <Brand />
+        <p className="text-sm text-[var(--text-2)]">
+          Giriş şu an yapılandırılmamış. Uygulamayı hesapsız da kullanabilirsin —{' '}
+          <Link href="/app" className="font-medium text-[var(--accent)] underline">
+            Uygulamayı Aç
+          </Link>
+          .
+        </p>
+      </Card>
     );
   }
 
@@ -38,10 +51,23 @@ function GirisForm() {
     setBusy(true);
     setMsg(null);
     try {
-      if (signup) {
-        const { error } = await supabase!.auth.signUp({ email, password });
+      if (mode === 'forgot') {
+        const { error } = await supabase!.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth/callback?next=/sifre-sifirla`,
+        });
         if (error) throw error;
-        setMsg({ kind: 'ok', text: 'Kayıt alındı. E-postanı doğrulaman gerekebilir, sonra giriş yap.' });
+        setMsg({ kind: 'ok', text: 'Sıfırlama bağlantısı e-postana gönderildi. Gelen kutunu kontrol et.' });
+      } else if (mode === 'signup') {
+        const { error } = await supabase!.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/app` },
+        });
+        if (error) throw error;
+        setMsg({
+          kind: 'ok',
+          text: 'Kayıt alındı. E-postana gelen doğrulama bağlantısına tıkla, sonra giriş yap.',
+        });
       } else {
         const { error } = await supabase!.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -68,58 +94,90 @@ function GirisForm() {
     }
   }
 
+  const title = mode === 'signup' ? 'Hesap oluştur' : mode === 'forgot' ? 'Parolanı sıfırla' : 'Giriş yap';
+  const subtitle =
+    mode === 'signup'
+      ? 'Projelerini buluta kaydet ve paylaş.'
+      : mode === 'forgot'
+        ? 'E-posta adresini gir; sana sıfırlama bağlantısı gönderelim.'
+        : 'Vesna hesabınla devam et.';
+
   return (
-    <div className="w-full max-w-sm">
-      <h1 className="mb-1 text-2xl font-semibold text-[var(--text)]">
-        {signup ? 'Hesap oluştur' : 'Giriş yap'}
-      </h1>
-      <p className="mb-6 text-sm text-[var(--text-2)]">
-        {signup ? 'Projelerini buluta kaydet ve paylaş.' : 'Vesna hesabınla devam et.'}
-      </p>
+    <Card>
+      <Brand />
+      <h1 className="mb-1 text-2xl font-semibold text-[var(--text)]">{title}</h1>
+      <p className="mb-6 text-sm text-[var(--text-2)]">{subtitle}</p>
 
-      <button
-        type="button"
-        onClick={google}
-        disabled={busy}
-        className="mb-4 flex w-full items-center justify-center gap-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] px-4 py-2.5 text-sm font-medium text-[var(--text)] transition hover:bg-[var(--surface-3)] disabled:opacity-50"
-      >
-        <GoogleLogo />
-        Google ile devam et
-      </button>
+      {mode !== 'forgot' && (
+        <>
+          <button
+            type="button"
+            onClick={google}
+            disabled={busy}
+            className="mb-4 flex w-full items-center justify-center gap-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-2)] px-4 py-2.5 text-sm font-medium text-[var(--text)] transition hover:bg-[var(--bg-3)] disabled:opacity-50"
+          >
+            <GoogleLogo />
+            Google ile devam et
+          </button>
 
-      <div className="mb-4 flex items-center gap-3 text-xs text-[var(--text-3)]">
-        <span className="h-px flex-1 bg-[var(--border)]" /> veya <span className="h-px flex-1 bg-[var(--border)]" />
-      </div>
+          <div className="mb-4 flex items-center gap-3 text-xs text-[var(--text-3)]">
+            <span className="h-px flex-1 bg-[var(--border)]" /> veya{' '}
+            <span className="h-px flex-1 bg-[var(--border)]" />
+          </div>
+        </>
+      )}
 
       <form onSubmit={submit} className="space-y-3">
         <label className="block">
           <span className="mb-1 block text-sm text-[var(--text-2)]">E-posta</span>
           <input
+            ref={emailRef}
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
+            className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)]"
           />
         </label>
-        <label className="block">
-          <span className="mb-1 block text-sm text-[var(--text-2)]">Parola</span>
-          <input
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={signup ? 'new-password' : 'current-password'}
-            className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)]"
-          />
-        </label>
+
+        {mode !== 'forgot' && (
+          <label className="block">
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-sm text-[var(--text-2)]">Parola</span>
+              {mode === 'login' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('forgot');
+                    setMsg(null);
+                  }}
+                  className="text-xs text-[var(--text-3)] transition hover:text-[var(--accent)]"
+                >
+                  Şifremi unuttum
+                </button>
+              )}
+            </div>
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-soft)]"
+            />
+          </label>
+        )}
 
         {msg && (
           <p
             role={msg.kind === 'error' ? 'alert' : 'status'}
-            className={`text-sm ${msg.kind === 'error' ? 'text-red-400' : 'text-emerald-400'}`}
+            className={`rounded-lg px-3 py-2 text-sm ${
+              msg.kind === 'error'
+                ? 'bg-red-500/10 text-red-400'
+                : 'bg-emerald-500/10 text-emerald-400'
+            }`}
           >
             {msg.text}
           </p>
@@ -128,23 +186,74 @@ function GirisForm() {
         <button
           type="submit"
           disabled={busy}
-          className="w-full rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--accent-2)] disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--accent-2)] disabled:opacity-50"
         >
-          {busy ? 'Lütfen bekle…' : signup ? 'Kaydol' : 'Giriş yap'}
+          {busy && <Spinner />}
+          {busy
+            ? 'Lütfen bekle…'
+            : mode === 'signup'
+              ? 'Kaydol'
+              : mode === 'forgot'
+                ? 'Sıfırlama bağlantısı gönder'
+                : 'Giriş yap'}
         </button>
       </form>
 
-      <button
-        type="button"
-        onClick={() => {
-          setSignup((s) => !s);
-          setMsg(null);
-        }}
-        className="mt-4 text-sm text-[var(--text-2)] hover:text-[var(--text)]"
-      >
-        {signup ? 'Zaten hesabın var mı? Giriş yap' : 'Hesabın yok mu? Kaydol'}
-      </button>
+      <div className="mt-4 flex flex-col gap-1 text-sm">
+        {mode === 'forgot' ? (
+          <button
+            type="button"
+            onClick={() => {
+              setMode('login');
+              setMsg(null);
+            }}
+            className="text-[var(--text-2)] transition hover:text-[var(--text)]"
+          >
+            ← Girişe dön
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setMode(mode === 'signup' ? 'login' : 'signup');
+              setMsg(null);
+            }}
+            className="text-[var(--text-2)] transition hover:text-[var(--text)]"
+          >
+            {mode === 'signup' ? 'Zaten hesabın var mı? Giriş yap' : 'Hesabın yok mu? Kaydol'}
+          </button>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+/** Marka başlığı: Vesna logosu + wordmark (giriş kartının üstü). */
+function Brand(): React.ReactElement {
+  return (
+    <Link href="/" className="mb-6 inline-flex items-center gap-2.5">
+      <Image src="/vesna-logo.png" alt="Vesna" width={32} height={32} className="rounded-lg" priority />
+      <span className="text-lg font-semibold tracking-tight text-[var(--text)]">Vesna</span>
+    </Link>
+  );
+}
+
+/** Giriş kartı kabuğu — gölge + ring + tema-uyumlu zemin. */
+function Card({ children }: { children: React.ReactNode }): React.ReactElement {
+  return (
+    <div className="w-full max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--bg-2)] p-7 shadow-[var(--shadow)] ring-1 ring-black/5">
+      {children}
     </div>
+  );
+}
+
+/** Buton içi yükleniyor göstergesi (dönen halka). */
+function Spinner(): React.ReactElement {
+  return (
+    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
   );
 }
 
@@ -179,6 +288,7 @@ function errText(err: unknown): string {
   if (/already registered|already exists/i.test(m)) return 'Bu e-posta zaten kayıtlı. Giriş yapmayı dene.';
   if (/email not confirmed/i.test(m)) return 'E-postanı doğrulaman gerekiyor (gelen kutunu kontrol et).';
   if (/rate limit/i.test(m)) return 'Çok fazla deneme — biraz bekleyip tekrar dene.';
+  if (/should be at least|password/i.test(m)) return 'Parola en az 6 karakter olmalı.';
   return m || 'Bir hata oluştu, lütfen tekrar dene.';
 }
 

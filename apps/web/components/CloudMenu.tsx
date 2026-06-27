@@ -71,6 +71,19 @@ export function CloudMenu({
     return () => document.removeEventListener('mousedown', onDown);
   }, [open]);
 
+  // Marketing menüsünden "Bulut projelerim" (?bulut=1) ile gelince menüyü otomatik aç + listeyi tazele.
+  useEffect(() => {
+    if (signedIn !== true) return;
+    if (typeof window === 'undefined') return;
+    if (new URLSearchParams(window.location.search).get('bulut') !== '1') return;
+    setOpen(true);
+    void refreshList();
+    // Paramı temizle ki yenilemede tekrar açılmasın.
+    const url = new URL(window.location.href);
+    url.searchParams.delete('bulut');
+    window.history.replaceState({}, '', url.toString());
+  }, [signedIn]);
+
   if (!signedIn) return null; // anahtar yok ya da giriş yok → gizli (anonim akış)
 
   async function save(): Promise<void> {
