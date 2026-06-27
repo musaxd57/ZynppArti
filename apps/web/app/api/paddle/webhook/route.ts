@@ -28,6 +28,10 @@ function verifySignature(rawBody: string, header: string | null, secret: string)
   const ts = parts['ts'];
   const h1 = parts['h1'];
   if (!ts || !h1) return false;
+  // Replay koruması: timestamp taze mi? (saat kaymasına toleranslı 5 dk pencere). Yakalanan geçerli bir
+  // istek (ör. subscription.canceled) süresiz tekrar oynatılamasın. (Denetim — Paddle önerisi.)
+  const tsNum = Number(ts);
+  if (!Number.isFinite(tsNum) || Math.abs(Date.now() / 1000 - tsNum) > 300) return false;
   const expected = createHmac('sha256', secret).update(`${ts}:${rawBody}`).digest('hex');
   // Uzunluk farkı timingSafeEqual'ı patlatır → önce uzunluk kontrolü (sabit-zamanlı karşılaştırma).
   if (expected.length !== h1.length) return false;

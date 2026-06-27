@@ -36,6 +36,12 @@ export function AuthButtons() {
     };
   }, []);
 
+  // Menü açılınca ilk öğeye odak (a11y — klavye kullanıcısı menüye girsin).
+  useEffect(() => {
+    if (!open) return;
+    menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+  }, [open]);
+
   // Dışarı tıkla / Esc → menüyü kapat.
   useEffect(() => {
     if (!open) return;
@@ -66,6 +72,7 @@ export function AuthButtons() {
           className="flex items-center gap-2 rounded-full p-0.5 transition-colors hover:bg-[rgba(128,128,128,0.15)]"
           aria-haspopup="menu"
           aria-expanded={open}
+          aria-controls="account-menu"
           aria-label="Hesap menüsü"
         >
           <span
@@ -78,6 +85,7 @@ export function AuthButtons() {
 
         {open && (
           <div
+            id="account-menu"
             role="menu"
             className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-2)] py-1 shadow-[var(--shadow)]"
           >

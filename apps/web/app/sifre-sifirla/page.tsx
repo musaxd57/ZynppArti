@@ -28,9 +28,13 @@ export default function SifreSifirlaPage(): React.ReactElement {
       setHasSession(false);
       return;
     }
+    let active = true;
     supabase.auth.getSession().then(({ data }) => {
-      setHasSession(Boolean(data.session));
+      if (active) setHasSession(Boolean(data.session));
     });
+    return () => {
+      active = false;
+    };
   }, [supabase]);
 
   useEffect(() => {

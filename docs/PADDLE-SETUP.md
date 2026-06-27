@@ -41,7 +41,10 @@ NEXT_PUBLIC_PADDLE_ENV=sandbox
       customData:{ user_id: <supabase uid> } })`. **customData.user_id şart** — webhook profili bununla bulur.
 - [ ] Plan kotası **enforcement** (ücretsiz: 3 bulut proje / 1 işbirlikçi — `lib/plan.ts PLAN_QUOTAS`).
       ⚠️ Mevcut ücretsiz kullanıcıları kilitler → ürün kararı (ne zaman, hangi limit).
-- [ ] Webhook'a opsiyonel **timestamp/replay** kontrolü (şu an imza var; eski-istek penceresi yok).
+- [x] Webhook **replay/timestamp** kontrolü (5 dk tolerans penceresi) — eklendi.
+- [ ] Webhook **sıra-dışı olay** koruması: webhook'lar sıralı gelmez; geç gelen eski bir
+      `subscription.updated` iptalden sonra planı geri yükseltebilir. Düzeltme: `profiles`'a
+      `plan_updated_at` kolonu + olayın `occurred_at`'i daha eski ise yazma. (Canlıdan önce.)
 
 ## Test (sandbox)
 1. Sandbox env ile deploy.

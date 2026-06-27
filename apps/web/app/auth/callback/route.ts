@@ -23,8 +23,11 @@ export async function GET(request: NextRequest): Promise<Response> {
     if (supabase) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) {
-        console.error('OAuth code exchange başarısız:', error.message);
-        return NextResponse.redirect(`${base}/giris?hata=oauth`);
+        console.error('Code exchange başarısız:', error.message);
+        // Recovery (şifre sıfırlama) linki farklı cihazda açılınca PKCE code_verifier yok → exchange
+        // başarısız. OAuth'tan ayrı kod ver ki /giris doğru mesajı göstersin (sessiz hata olmasın).
+        const kind = next.includes('sifre-sifirla') ? 'recovery' : 'oauth';
+        return NextResponse.redirect(`${base}/giris?hata=${kind}`);
       }
     }
   }

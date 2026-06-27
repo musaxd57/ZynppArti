@@ -21,7 +21,14 @@ function GirisForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ kind: 'error' | 'ok'; text: string } | null>(null);
+  const [msg, setMsg] = useState<{ kind: 'error' | 'ok'; text: string } | null>(() => {
+    // Callback başarısız exchange sonrası `?hata=` ile döner — sessiz hata yerine kullanıcıya bildir.
+    const h = params.get('hata');
+    if (h === 'recovery')
+      return { kind: 'error', text: 'Sıfırlama bağlantısı geçersiz/süresi dolmuş ya da farklı cihazda açıldı. Bağlantıyı aynı tarayıcıda aç ya da tekrar gönder.' };
+    if (h === 'oauth') return { kind: 'error', text: 'Giriş tamamlanamadı, lütfen tekrar dene.' };
+    return null;
+  });
   const emailRef = useRef<HTMLInputElement>(null);
 
   const supabase = getSupabaseBrowser();
@@ -66,7 +73,7 @@ function GirisForm() {
         if (error) throw error;
         setMsg({
           kind: 'ok',
-          text: 'Kayıt alındı. E-postana gelen doğrulama bağlantısına tıkla, sonra giriş yap.',
+          text: 'Kayıt alındı. E-postana gelen doğrulama bağlantısına tıkla — otomatik giriş yapılıp uygulamaya yönlendirileceksin.',
         });
       } else {
         const { error } = await supabase!.auth.signInWithPassword({ email, password });

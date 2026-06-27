@@ -193,6 +193,12 @@ export function CloudMenu({
     }
   }
 
+  // Açık proje PAYLAŞILAN mı (başkasının)? Storage RLS yalnız kendi klasörüne yazma izni verir →
+  // paylaşılana "üzerine yaz" hem sahibin klasörüne YAZAMAZ hem kendi klasörüne çöp kopya bırakıp
+  // RLS hatası verir. Bu yüzden paylaşılanda yalnız "Kopyamı kaydet" (yeni, sahibi-ben) gösterilir. (Denetim.)
+  const currentShared =
+    !!currentId && !!uid && (projects ?? []).some((p) => p.id === currentId && !!p.owner && p.owner !== uid);
+
   const btn =
     'shrink-0 rounded-md px-3 py-1.5 text-[var(--text-2)] transition-colors hover:bg-[var(--surface-3)] hover:text-[var(--text-1)]';
 
@@ -214,24 +220,39 @@ export function CloudMenu({
       {open && (
         <div className="absolute left-0 top-full z-40 mt-1 w-72 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-2 shadow-lg">
           <div className="mb-1 flex gap-1">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void save()}
-              className="flex-1 rounded-md bg-[var(--accent)] px-3 py-1.5 text-left text-sm font-medium text-white hover:bg-[var(--accent-2)] disabled:opacity-50"
-            >
-              {currentId ? 'Kaydet (üzerine yaz)' : 'Buluta kaydet'}
-            </button>
-            {currentId && (
+            {currentShared ? (
+              // Paylaşılan proje → sahibin dosyasına yazılamaz; yalnız kendi kopyanı oluştur.
               <button
                 type="button"
                 disabled={busy}
                 onClick={() => void saveAsNew()}
-                title="Farklı kaydet (yeni proje)"
-                className="shrink-0 rounded-md border border-[var(--border)] px-2 py-1.5 text-sm text-[var(--text-2)] hover:bg-[var(--surface-3)] hover:text-[var(--text-1)] disabled:opacity-50"
+                title="Bu paylaşılan projenin sana ait bir kopyasını kaydet"
+                className="flex-1 rounded-md bg-[var(--accent)] px-3 py-1.5 text-left text-sm font-medium text-white hover:bg-[var(--accent-2)] disabled:opacity-50"
               >
-                Farklı
+                Kopyamı kaydet
               </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void save()}
+                  className="flex-1 rounded-md bg-[var(--accent)] px-3 py-1.5 text-left text-sm font-medium text-white hover:bg-[var(--accent-2)] disabled:opacity-50"
+                >
+                  {currentId ? 'Kaydet (üzerine yaz)' : 'Buluta kaydet'}
+                </button>
+                {currentId && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void saveAsNew()}
+                    title="Farklı kaydet (yeni proje)"
+                    className="shrink-0 rounded-md border border-[var(--border)] px-2 py-1.5 text-sm text-[var(--text-2)] hover:bg-[var(--surface-3)] hover:text-[var(--text-1)] disabled:opacity-50"
+                  >
+                    Farklı
+                  </button>
+                )}
+              </>
             )}
           </div>
 
