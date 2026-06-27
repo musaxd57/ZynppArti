@@ -9,6 +9,8 @@ import {
   type ChatMessage,
   type CopilotContext,
 } from '@zynpparti/ai';
+import { getSupabaseServer } from '@/lib/supabase/server';
+import { isPaidPlan } from '@/lib/plan';
 
 /**
  * Copilot doğal-dil ucu (Fikir 1 + 3-sağlayıcı router, ADR-0006/0042). SUNUCU TARAFI — API
@@ -179,6 +181,21 @@ export async function POST(req: Request): Promise<Response> {
     const p = (body as { prompt?: unknown })?.prompt;
     if (typeof p !== 'string' || !p.trim()) {
       return Response.json({ error: 'Render için "prompt" gerekli.' }, { status: 400 });
+    }
+    // ENFORCEMENT (ADR-0048): AI render yalnız Pro/Studio. Ücretsiz/anonim → 402 (istemci yükselt-CTA gösterir).
+    // Sunucu tarafı kapı = gerçek koruma (istemci gizlemesi bypass edilebilir; bu uç GERÇEK PARA harcar).
+    const supabase = await getSupabaseServer();
+    const { data: ud } = (await supabase?.auth.getUser()) ?? { data: { user: null } };
+    let plan = 'free';
+    if (supabase && ud.user) {
+      const { data: prof } = await supabase.from('profiles').select('plan').eq('id', ud.user.id).maybeSingle();
+      plan = (prof?.plan as string | undefined) ?? 'free';
+    }
+    if (!isPaidPlan(plan)) {
+      return Response.json(
+        { error: 'AI render Pro planına özel. Görsel üretmek için Pro’ya geç.', upgrade: true },
+        { status: 402 },
+      );
     }
     const key = process.env.OPENAI_API_KEY?.trim();
     if (!key) {

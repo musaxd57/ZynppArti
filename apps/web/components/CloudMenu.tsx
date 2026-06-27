@@ -16,8 +16,10 @@ import {
   listCloudProjects,
   loadProjectFromCloud,
   deleteCloudProject,
+  getProfile,
   type CloudProject,
 } from '@/lib/supabase/projects';
+import { isPaidPlan, PLAN_QUOTAS } from '@/lib/plan';
 import { useProjectName, setProjectName } from '@/lib/project-name';
 import { useCloudProjectId, setCloudProjectId } from '@/lib/cloud-project';
 import { toast } from '@/lib/toast';
@@ -59,6 +61,7 @@ export function CloudMenu({
   const [projects, setProjects] = useState<CloudProject[] | null>(null);
   const [query, setQuery] = useState('');
   const [uid, setUid] = useState<string | null>(null);
+  const [plan, setPlan] = useState<string>('free');
   const [shareTarget, setShareTarget] = useState<CloudProject | null>(null);
   // Açık bulut projesinin id'si → tekrar "Kaydet" üzerine yazar. PAYLAŞILAN store: "Yeni"/yerel "Aç"
   // doküman değiştirince sıfırlanır → ilgisiz çizimi yanlış projeye yazma önlenir (denetim bulgusu).
@@ -76,6 +79,7 @@ export function CloudMenu({
       if (!active) return;
       setSignedIn(!!data.user);
       setUid(data.user?.id ?? null);
+      if (data.user) void getProfile().then((p) => active && setPlan(p?.plan ?? 'free')).catch(() => {});
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setSignedIn(!!session?.user);
@@ -112,7 +116,33 @@ export function CloudMenu({
 
   if (!signedIn) return null; // anahtar yok ya da giriş yok → gizli (anonim akış)
 
+  /**
+   * Ücretsiz plan kotası (ADR-0048): YENİ bulut projesi oluşturmadan önce sahip-olunan proje sayısını
+   * kontrol eder. Limit dolduysa engeller + yükselt mesajı. Üzerine-yazma (mevcut id) bu kapıdan geçmez.
+   * NOT: bu istemci kapısıdır (UX); kesin sınır için ileride sunucu/DB trigger eklenebilir.
+   */
+  async function ensureCanCreate(): Promise<boolean> {
+    if (isPaidPlan(plan)) return true;
+    let list = projects;
+    if (list === null) {
+      try {
+        list = await listCloudProjects();
+        setProjects(list);
+      } catch {
+        return true; // liste alınamadıysa kullanıcıyı engelleme (kapı sağlamlığı)
+      }
+    }
+    const owned = list.filter((p) => !p.owner || p.owner === uid).length;
+    const cap = PLAN_QUOTAS.free.cloudProjects;
+    if (owned >= cap) {
+      toast(`Ücretsiz planda en fazla ${cap} bulut proje saklayabilirsin. Daha fazlası için Pro’ya geç.`, 'error', 6000);
+      return false;
+    }
+    return true;
+  }
+
   async function save(): Promise<void> {
+    if (!currentId && !(await ensureCanCreate())) return; // yeni proje → kota kontrolü
     setBusy(true);
     try {
       const { id } = await saveProjectToCloud({ id: currentId, name: projectName, json: serializeModel(store.all()) });
@@ -130,6 +160,7 @@ export function CloudMenu({
 
   /** Farklı kaydet — currentId yok sayılır, her zaman YENİ bulut projesi oluşturur. */
   async function saveAsNew(): Promise<void> {
+    if (!(await ensureCanCreate())) return; // yeni proje → kota kontrolü
     setBusy(true);
     try {
       const { id } = await saveProjectToCloud({ name: projectName, json: serializeModel(store.all()) });

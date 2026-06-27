@@ -32,6 +32,7 @@ export function SiteFooter() {
           <div className="flex flex-col gap-2.5 text-[0.9rem] text-[var(--text-2)]">
             <Link href="/gizlilik" className="transition hover:text-[var(--text)]">Gizlilik Politikası</Link>
             <Link href="/kosullar" className="transition hover:text-[var(--text)]">Kullanım Koşulları</Link>
+            <Link href="/iade" className="transition hover:text-[var(--text)]">İade ve İptal Politikası</Link>
           </div>
         </div>
       </div>
