@@ -5,6 +5,16 @@
 
 ---
 
+## ADR-0048 — Abonelik: Paddle (Billing) — Merchant of Record; webhook → `profiles.plan`
+**Tarih:** 2026-06-27 · **Durum:** Kabul (Moses kararı; canlı kurulum) · **Kapsam:** Ödeme/abonelik · **İlişkili:** [ADR-0046] (plan iskelesi), [ADR-0047] (profiles)
+**Bağlam:** Pro/Studio abonelikleri için ödeme altyapısı gerekiyordu. Stripe Türkiye'de doğrudan satıcı hesabı + KDV/fatura yükü getirir; **Paddle Merchant-of-Record** olarak vergi/fatura/uyumu üstlenir (Türkiye'den global SaaS satışı için pratik). Bağımlılık (`@paddle/paddle-js`) + canlı para = Moses onayı alındı.
+**Karar:**
+- **Checkout:** Paddle.js overlay (`@paddle/paddle-js`), client token ile (`NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`). Fiyatlandırma kartı CTA'sı → giriş şart (webhook eşlemesi için) → `Checkout.open({ items:[{priceId}], customData:{ user_id } })`.
+- **Plan yazımı:** Paddle **webhook** (`/api/paddle/webhook`) → imza doğrula (node:crypto HMAC `ts:body` + 5dk replay penceresi) → `subscription.*` olaylarını `profiles.plan`'a yaz (servis istemcisi, RLS atlar). Price→plan eşlemesi env (`NEXT_PUBLIC_PADDLE_PRICE_PRO/_STUDIO`).
+- **ADDİTİF/atıl:** anahtar yoksa checkout fiyatlandırmaya, webhook 503'e düşer → anonim/ücretsiz akış bozulmaz.
+- **Plan modeli:** `lib/plan.ts` tek kaynak (etiket + kota). Kota **enforcement** ayrı/ertelendi (ürün kararı — mevcut ücretsiz kullanıcıları kilitler).
+**Sonuç:** Canlı abonelik altyapısı. Takas: (1) **sandbox atlandı, direkt canlı** (Moses) → gerçek tahsilat, test gerçek kartla; (2) webhook **sıra-dışı olay** koruması yok (geç gelen eski olay planı geri alabilir) → `plan_updated_at`+`occurred_at` TODO (`docs/PADDLE-SETUP.md`); (3) secret API key (`pdl_live_apikey_`) kod tarafından henüz kullanılmıyor (programatik yönetim ileride). Kurulum runbook: `docs/PADDLE-SETUP.md`.
+
 ## ADR-0047 — Faz 3 backend: Supabase (auth + Postgres + Storage, hepsi-bir-arada) — ADR-0046'yı günceller
 **Tarih:** 2026-06-26 · **Durum:** Kabul (Moses kararı) · **Kapsam: Faz 3 backend** · **Yerini aldığı:** [ADR-0046] (Clerk + Railway Postgres + R2)
 **Bağlam:** Faz 3'ün üç ayağı (gerçek kimlik/giriş, kalıcı bulut proje, çok-kullanıcı kalıcılığı) ayrı sağlayıcılarla (Clerk + Railway Postgres + R2 blob) kurulacaktı — üç hesap, üç anahtar seti, üç fatura. Moses tek-sağlayıcı sadeliğini seçti: **Supabase** auth + Postgres + dosya (Storage) + satır-düzeyi güvenlik (RLS) + realtime'ı tek serviste, cömert ücretsiz katmanla verir. Kodun çoğunu Claude yazıyor; az hareketli parça = az hata.

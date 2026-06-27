@@ -1,14 +1,16 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { SiteFooter } from "@/components/marketing/SiteFooter";
+import { PlanCta } from "@/components/PlanCta";
+import type { Plan } from "@/lib/plan";
 
 export const metadata: Metadata = {
   title: "Fiyatlandırma — Vesna",
   description: "Vesna planları: Ücretsiz, Pro ve Stüdyo. Tarayıcıda mimari tasarım, m² otomasyonu ve yapay zekâ.",
 };
 
-type Plan = {
+type PlanCard = {
+  tier: Plan;
   name: string;
   blurb: string;
   price: string;
@@ -18,8 +20,9 @@ type Plan = {
   features: string[];
 };
 
-const PLANS: Plan[] = [
+const PLANS: PlanCard[] = [
   {
+    tier: "free",
     name: "Ücretsiz",
     blurb: "Bireysel keşif için.",
     price: "₺0",
@@ -28,6 +31,7 @@ const PLANS: Plan[] = [
     features: ["3 aktif proje", "DWG/DXF içe aktarma", "Otomatik mahal & m²", "Temel 3B önizleme", "Topluluk desteği"],
   },
   {
+    tier: "pro",
     name: "Pro",
     blurb: "Bağımsız mimarlar için.",
     price: "$12",
@@ -45,6 +49,7 @@ const PLANS: Plan[] = [
     ],
   },
   {
+    tier: "studio",
     name: "Stüdyo",
     blurb: "Ekipler ve ofisler için.",
     price: "$29",
@@ -106,16 +111,7 @@ export default function PricingPage() {
                 <span className="text-[2.6rem] font-semibold tracking-tight">{p.price}</span>
                 <span className="text-[0.9rem] text-[var(--text-3)]">{p.unit}</span>
               </div>
-              <Link
-                href="/app"
-                className={`rounded-[10px] py-[11px] text-center text-sm font-semibold transition ${
-                  p.featured
-                    ? "border border-[var(--accent)] bg-[var(--accent)] text-white hover:bg-[var(--accent-2)]"
-                    : "border border-[var(--border-2)] bg-[var(--bg-3)] text-[var(--text)] hover:border-[var(--text-3)]"
-                }`}
-              >
-                {p.cta}
-              </Link>
+              <PlanCta plan={p.tier} label={p.cta} featured={p.featured} />
               <div className="h-px bg-[var(--border)]" />
               <ul className="flex flex-col gap-3 text-[0.92rem] text-[var(--text-2)]">
                 {p.features.map((f) => (

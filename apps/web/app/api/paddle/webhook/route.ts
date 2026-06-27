@@ -83,9 +83,12 @@ export async function POST(req: NextRequest): Promise<Response> {
     return NextResponse.json({ ok: true, skipped: 'no_user_id' });
   }
 
+  // Price id'leri NEXT_PUBLIC_* (checkout ile aynı değer; sunucuda da okunur) — eski PADDLE_PRICE_* yedek.
   const priceMap: Record<string, Plan> = {};
-  if (process.env.PADDLE_PRICE_PRO) priceMap[process.env.PADDLE_PRICE_PRO] = 'pro';
-  if (process.env.PADDLE_PRICE_STUDIO) priceMap[process.env.PADDLE_PRICE_STUDIO] = 'studio';
+  const proPrice = process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO ?? process.env.PADDLE_PRICE_PRO;
+  const studioPrice = process.env.NEXT_PUBLIC_PADDLE_PRICE_STUDIO ?? process.env.PADDLE_PRICE_STUDIO;
+  if (proPrice) priceMap[proPrice] = 'pro';
+  if (studioPrice) priceMap[studioPrice] = 'studio';
 
   let newPlan: Plan | null = null;
   if (type === 'subscription.canceled' || type === 'subscription.paused') {
