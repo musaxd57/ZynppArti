@@ -41,7 +41,8 @@ NEXT_PUBLIC_PADDLE_ENV=production
 - [x] `@paddle/paddle-js` (overlay checkout) — eklendi (ADR-0048).
 - [x] Fiyatlandırma "Pro'ya geç / Stüdyo'yu seç" → `Checkout.open({ items, customData:{ user_id } })`
       (giriş yoksa önce /giris'e yönlendirir — webhook eşlemesi user_id ister). `components/PlanCta.tsx`.
-- [x] Webhook **replay/timestamp** kontrolü (5 dk pencere).
+- [x] Webhook imza doğrulama (HMAC). NOT: timestamp YAŞ penceresi YOK — Paddle retry'leri aynı ts ile
+      gelir, sert pencere meşru retry'leri reddederdi. Replay/sıralama → occurred_at TODO (aşağıda).
 - [ ] Plan kotası **enforcement** (ücretsiz: 3 bulut proje / 1 işbirlikçi — `lib/plan.ts PLAN_QUOTAS`).
       ⚠️ Mevcut ücretsiz kullanıcıları kilitler → ürün kararı (ne zaman, hangi limit).
 - [ ] Webhook **sıra-dışı olay** koruması: webhook'lar sıralı gelmez; geç gelen eski bir
