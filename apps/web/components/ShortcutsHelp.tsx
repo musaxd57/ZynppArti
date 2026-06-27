@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 
 const GROUPS: { title: string; items: [string, string][] }[] = [
   {
@@ -61,6 +62,8 @@ const GROUPS: { title: string; items: [string, string][] }[] = [
  */
 export function ShortcutsHelp() {
   const [open, setOpen] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef, open);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -93,7 +96,12 @@ export function ShortcutsHelp() {
           onClick={() => setOpen(false)}
         >
           <div
-            className="max-h-[80vh] w-[44rem] max-w-[92vw] overflow-y-auto rounded-xl bg-[var(--overlay)] p-5 text-sm text-[var(--text-1)] shadow-2xl ring-1 ring-[var(--border-soft)]"
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Klavye kısayolları"
+            tabIndex={-1}
+            className="max-h-[80vh] w-[44rem] max-w-[92vw] overflow-y-auto rounded-xl bg-[var(--overlay)] p-5 text-sm text-[var(--text-1)] shadow-2xl ring-1 ring-[var(--border-soft)] outline-none"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">

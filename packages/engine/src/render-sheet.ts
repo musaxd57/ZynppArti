@@ -9,16 +9,14 @@ const SHEET_INNER = 0x9aa0a8;
 const SHEET_TEXT = 0xe8e8e8;
 
 /**
- * Pafta (sheet) çizer: dış çerçeve + iç kenar boşluğu (margin) + sağ-alt antet kutusu ve metinleri
- * (CLAUDE.md §8.6). Kağıt boyutu/ölçeği model uzayına ölçeklenir (sheet.ts). Çizgi kalınlığı
- * ekran-sabit; metin yüksekliği antet kutusuyla orantılı (dünya birimi → zoom'la ölçeklenir).
- * Pafta en altta render edilir → çizimi kapatmaz (çerçeve gibi davranır).
+ * Pafta çerçeve + antet ÇİZGİLERİ (kontur) — yalnız Graphics'e yazar. Çizgi kalınlığı ekran-sabit
+ * (pixelSize = 1/zoom) → zoom'da DEĞİŞİR. Bu yüzden geometriden ayrıldı: zoom'da metinler (dünya-ölçekli)
+ * yeniden kurulmaz, yalnız bu fonksiyon `g.clear()` sonrası tekrar koşar (build/stroke ayrımı, perf).
  */
-export function buildSheet(sheet: Sheet, pixelSize: number): Container {
-  const c = new Container();
+export function strokeSheet(g: Graphics, sheet: Sheet, pixelSize: number): void {
+  g.clear();
   const size = sheetModelSize(sheet);
   const f = sheetMmToModelCm(sheet.scale);
-  const g = new Graphics();
 
   // Dış çerçeve.
   g.rect(sheet.position.x, sheet.position.y, size.w, size.h).stroke({
@@ -32,10 +30,9 @@ export function buildSheet(sheet: Sheet, pixelSize: number): Container {
     color: SHEET_INNER,
     alpha: 0.7,
   });
-  c.addChild(g);
 
-  // Sade sayfa ("− N sayfa +" ile çoğaltılan boş sayfa): antet/başlık çizme — sadece sayfa çerçevesi.
-  if (sheet.plain) return c;
+  // Sade sayfa: antet/başlık çizme — sadece sayfa çerçevesi.
+  if (sheet.plain) return;
 
   // Antet kutusu + bölme çizgileri.
   const tb = sheetTitleBlock(sheet);
@@ -46,8 +43,26 @@ export function buildSheet(sheet: Sheet, pixelSize: number): Container {
       .lineTo(tb.x + tb.w, tb.y + i * rowH)
       .stroke({ width: LINEWEIGHTS.hairline * pixelSize, color: SHEET_INNER, alpha: 0.6 });
   }
+}
 
-  // Antet metinleri (dünya-ölçekli; satır yüksekliğinin ~%55'i).
+/**
+ * Pafta (sheet) çizer: dış çerçeve + iç kenar boşluğu (margin) + sağ-alt antet kutusu ve metinleri
+ * (CLAUDE.md §8.6). Kağıt boyutu/ölçeği model uzayına ölçeklenir (sheet.ts). Pafta en altta render
+ * edilir → çizimi kapatmaz. Container'ın İLK çocuğu kontur Graphics'idir (zoom'da `strokeSheet` ile
+ * yenilenir); metinler (dünya-ölçekli BitmapText) bir kez kurulur, zoom'da dokunulmaz.
+ */
+export function buildSheet(sheet: Sheet, pixelSize: number): Container {
+  const c = new Container();
+  const g = new Graphics();
+  strokeSheet(g, sheet, pixelSize);
+  c.addChild(g); // İLK çocuk: kontur (entity-layer zoom'da children[0]'ı re-stroke eder)
+
+  if (sheet.plain) return c;
+
+  // Antet metinleri (dünya-ölçekli; satır yüksekliğinin ~%55'i) — pixelSize'dan BAĞIMSIZ.
+  const f = sheetMmToModelCm(sheet.scale);
+  const tb = sheetTitleBlock(sheet);
+  const rowH = tb.h / 3;
   const fontSize = rowH * 0.55;
   const pad = 3 * f;
   const line = (text: string, row: number): void => {

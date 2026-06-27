@@ -10,7 +10,7 @@ import { drawParcel } from './render-parcel';
 import { drawBlock } from './render-block';
 import { buildAnnotation } from './render-annotation';
 import { buildComment } from './render-comment';
-import { buildSheet } from './render-sheet';
+import { buildSheet, strokeSheet } from './render-sheet';
 import { drawSection, buildSectionLabels, layoutSectionLabels } from './render-section';
 import { LayerState } from './layer-state';
 
@@ -242,11 +242,11 @@ export class EntityLayer {
       const sheet = buildSheet(entity, px);
       this.sheetLayer.addChild(sheet);
       objs.push(sheet);
+      // Zoom'da yalnız kontur Graphics'ini (İLK çocuk) re-stroke et; dünya-ölçekli antet metinleri
+      // (BitmapText) yok edilip yeniden kurulmaz (build/stroke ayrımı, perf — denetim flag'i).
+      const sheetG = sheet.children[0] as Graphics;
       this.redrawables.set(entity.id, (p) => {
-        const rebuilt = buildSheet(entity, p);
-        sheet.removeChildren().forEach((ch) => ch.destroy());
-        sheet.addChild(...rebuilt.removeChildren());
-        rebuilt.destroy();
+        strokeSheet(sheetG, entity, p);
       });
     } else {
       const fill = buildSpaceFill(entity);
