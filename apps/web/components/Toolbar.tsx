@@ -342,11 +342,22 @@ export function Toolbar({
     if (res.status === 'unauthenticated') {
       onSaveJson(); // bulut kapalı / giriş yok → yerel .json indir
     } else if (res.status === 'saved') {
-      toast(res.isNew ? 'Buluta kaydedildi (yeni proje).' : 'Buluta kaydedildi.', 'success');
+      toast(
+        res.isCopy
+          ? 'Paylaşılan projenin kopyası buluta kaydedildi.'
+          : res.isNew
+            ? 'Buluta kaydedildi (yeni proje).'
+            : 'Buluta kaydedildi.',
+        'success',
+      );
+    } else if (res.status === 'busy') {
+      // Zaten kaydediliyor → sessiz geç (çift yeni-proje önlenir, M18).
     } else if (res.status === 'blocked') {
       toast(res.message, 'error', 6000);
     } else {
-      toast(res.message, 'error', 5000);
+      // Bulut hatası: işi kaybetme — yerel .json yedeği indir (denetim M14).
+      onSaveJson();
+      toast(`${res.message} Yerel yedek (.json) indirildi.`, 'error', 6000);
     }
   }
 

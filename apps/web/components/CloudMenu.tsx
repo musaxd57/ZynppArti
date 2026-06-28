@@ -117,14 +117,21 @@ export function CloudMenu({
       const res = await saveCurrentToCloud(store, { asNew });
       if (res.status === 'saved') {
         setProjects(null); // liste bayatladı
-        toast(res.isNew ? 'Yeni bulut projesi oluşturuldu.' : 'Buluta kaydedildi.', 'success');
+        toast(
+          res.isCopy
+            ? 'Paylaşılan projenin kopyası oluşturuldu.'
+            : res.isNew
+              ? 'Yeni bulut projesi oluşturuldu.'
+              : 'Buluta kaydedildi.',
+          'success',
+        );
         setOpen(false);
       } else if (res.status === 'blocked') {
         toast(res.message, 'error', 6000);
       } else if (res.status === 'error') {
         toast(res.message, 'error', 5000);
       }
-      // 'unauthenticated' burada olmaz: CloudMenu yalnız giriş yapılmışken render edilir.
+      // 'busy' → sessiz geç; 'unauthenticated' burada olmaz (CloudMenu yalnız giriş varken render edilir).
     } finally {
       setBusy(false);
     }
