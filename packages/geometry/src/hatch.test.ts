@@ -34,6 +34,14 @@ describe('hatchLines', () => {
     expect(hatchLines(square, 0, 0)).toEqual([]);
   });
 
+  it('geçersiz spacing (negatif / NaN / sonsuz) → boş (guard; sonsuz döngü/donma yok)', () => {
+    expect(hatchLines(square, -5, 0)).toEqual([]);
+    expect(hatchLines(square, NaN, 0)).toEqual([]);
+    expect(hatchLines(square, Infinity, 0)).toEqual([]);
+    // hatchPattern de aynı guard'ı miras alır (cross dahil).
+    expect(hatchPattern(square, -5, 0, 'cross')).toEqual([]);
+  });
+
   it('devasa açıklık / küçük aralık → çizgi sayısı sınırı (donmaz / patlamaz)', () => {
     // Tarama yönüne (y) dik açıklık 2.000.000 br, spacing 1 → 2M çizgi olurdu → cap (>100k) → boş.
     const huge = [

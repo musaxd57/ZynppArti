@@ -12,6 +12,33 @@ describe('convexHull', () => {
     ]);
     expect(hull).toHaveLength(4);
   });
+
+  it('boş / tek nokta → kendisi (dejenere; patlamaz)', () => {
+    expect(convexHull([])).toEqual([]);
+    expect(convexHull([{ x: 5, y: 5 }])).toEqual([{ x: 5, y: 5 }]);
+  });
+
+  it('eş-doğrusal noktalar → yalnız iki uç (sıfır-alan kabuk)', () => {
+    const h = convexHull([
+      { x: 0, y: 0 },
+      { x: 1, y: 1 },
+      { x: 2, y: 2 },
+      { x: 3, y: 3 },
+    ]);
+    expect(h).toHaveLength(2);
+  });
+
+  it('yinelenen köşeler kabuğu bozmaz (kare = 4 köşe)', () => {
+    const h = convexHull([
+      { x: 0, y: 0 },
+      { x: 0, y: 0 }, // çift
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+      { x: 10, y: 10 }, // çift
+      { x: 0, y: 10 },
+    ]);
+    expect(h).toHaveLength(4);
+  });
 });
 
 describe('polygonMinWidth', () => {

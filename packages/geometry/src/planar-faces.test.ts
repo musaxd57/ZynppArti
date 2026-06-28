@@ -73,6 +73,20 @@ describe('findFaces', () => {
     expect(areas).toEqual([1600, 40000]);
   });
 
+  it('kelebek (bowtie / kendini kesen kapalı döngü) çökmeden iki üçgen yüz verir', () => {
+    // (0,0)→(100,100)→(100,0)→(0,100)→kapat. 1. kenar (0,0)-(100,100) ile 3. kenar (100,0)-(0,100)
+    // merkezde (50,50) kesişir → planar bölme iki üçgen (her biri 2500 cm²) verir.
+    const faces = findFaces([
+      { a: vec2(0, 0), b: vec2(100, 100) },
+      { a: vec2(100, 100), b: vec2(100, 0) },
+      { a: vec2(100, 0), b: vec2(0, 100) },
+      { a: vec2(0, 100), b: vec2(0, 0) },
+    ]);
+    const areas = faces.map((f) => Math.round(polygonArea(f))).sort((a, b) => a - b);
+    expect(faces).toHaveLength(2);
+    expect(areas).toEqual([2500, 2500]);
+  });
+
   it('snaps near-coincident endpoints to still close the room', () => {
     const faces = findFaces([
       { a: vec2(0, 0), b: vec2(100, 0) },

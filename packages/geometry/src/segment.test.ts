@@ -50,4 +50,13 @@ describe('segmentIntersection', () => {
     expect(p!.x).toBeCloseTo(5);
     expect(p!.y).toBeCloseTo(0);
   });
+
+  it('eş-doğrusal ÖRTÜŞEN parçalar → null (tek nokta değil; gerçek çapraz değil)', () => {
+    // [0,0]-[100,0] ile [50,0]-[150,0] aynı doğru üzerinde örtüşür → denom≈0 → null (tasarım gereği).
+    expect(segmentIntersection(vec2(0, 0), vec2(100, 0), vec2(50, 0), vec2(150, 0))).toBeNull();
+  });
+
+  it('eş-doğrusal ama AYRIK parçalar → null', () => {
+    expect(segmentIntersection(vec2(0, 0), vec2(40, 0), vec2(60, 0), vec2(100, 0))).toBeNull();
+  });
 });
