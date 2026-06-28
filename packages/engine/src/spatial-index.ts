@@ -62,9 +62,16 @@ export class SpatialIndex {
 
   /** Verilen kutuyla kesişen entity id'leri. */
   search(box: AABB): EntityId[] {
-    return this.tree
-      .search({ minX: box.minX, minY: box.minY, maxX: box.maxX, maxY: box.maxY })
-      .map((it) => it.id);
+    return this.searchItems(box).map((it) => it.id);
+  }
+
+  /**
+   * Verilen kutuyla kesişen ham index item'ları (id + AABB). `search`'ten farkı: ek `.map` dizisi
+   * AYIRMAZ → `it.id`'yi yerinde okuyan sıcak yollar (cull her pan pointermove'da çağrılır, 500k'da
+   * binlerce öğe → gereksiz GC baskısı) bunu kullanır. (Denetim L7.)
+   */
+  searchItems(box: AABB): ReadonlyArray<{ readonly id: EntityId }> {
+    return this.tree.search({ minX: box.minX, minY: box.minY, maxX: box.maxX, maxY: box.maxY });
   }
 
   get size(): number {

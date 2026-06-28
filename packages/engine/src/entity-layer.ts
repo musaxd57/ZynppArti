@@ -350,11 +350,12 @@ export class EntityLayer {
    */
   cull(viewport: AABB): void {
     this.lastViewport = viewport;
-    const candidates = this.index.search(viewport);
+    // searchItems → ham item'lar (ek id-dizisi ayrılmaz; cull her pan move'da çalışır — denetim L7).
+    const candidates = this.index.searchItems(viewport);
     // Yeniden kullanılan tampon (her karede yeni Set ayırma → GC baskısı yok, 500k için kritik).
     const nowVisible = this.cullBuffer;
     nowVisible.clear();
-    for (const id of candidates) {
+    for (const { id } of candidates) {
       const objs = this.objects.get(id);
       if (!objs) continue;
       if (this.layers.isHidden(this.store.get(id)?.layerId ?? '')) continue; // viewport'ta ama katmanı gizli

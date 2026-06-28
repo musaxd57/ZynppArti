@@ -113,6 +113,12 @@ export function CommandPalette({ manager, history, zoomToFit }: CommandPalettePr
       >
         <input
           autoFocus
+          // Combobox a11y (L14): ok tuşları odağı input'ta tutup seçili komutu değiştirir; ekran
+          // okuyucu aktif komutu duysun diye input combobox + aria-activedescendant ile bağlanır.
+          role="combobox"
+          aria-expanded
+          aria-controls="cmd-listbox"
+          aria-activedescendant={results.length > 0 ? `cmd-opt-${sel}` : undefined}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -131,13 +137,14 @@ export function CommandPalette({ manager, history, zoomToFit }: CommandPalettePr
           placeholder="Komut ara… (araç, kaydet, geri al…)"
           className="w-full bg-transparent px-4 py-3 outline-none placeholder:text-white/40"
         />
-        <div role="listbox" aria-label="Komutlar" className="max-h-[50vh] overflow-y-auto border-t border-white/10">
+        <div id="cmd-listbox" role="listbox" aria-label="Komutlar" className="max-h-[50vh] overflow-y-auto border-t border-white/10">
           {results.length === 0 ? (
             <div className="px-4 py-3 text-white/50">Sonuç yok.</div>
           ) : (
             results.map((c, i) => (
               <button
                 key={i}
+                id={`cmd-opt-${i}`}
                 ref={i === sel ? selectedRef : null}
                 role="option"
                 aria-selected={i === sel}
