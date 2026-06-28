@@ -257,7 +257,7 @@ function parcelBounds(
 
 /** Çiz modu için bağlam ipucu: parsel varsa kullanılabilir alanı (çekme paylı) AI'a bildir. */
 function buildDesignHint(store: EntityStore): string | undefined {
-  const parcels = store.all().filter((e): e is Parcel => e.type === 'parcel');
+  const parcels = store.byType('parcel');
   const b = parcelBounds(parcels);
   if (!b) return undefined;
   const w = Math.round(b.maxX - b.minX - 200);
@@ -385,7 +385,7 @@ function applyLayout(
   // Duvarlar eklenince RoomManager mahalleri senkron türetir → merkez noktasıyla ad/tip ata.
   let named = 0;
   try {
-    const spaces = store.all().filter((e): e is Space => e.type === 'space');
+    const spaces = store.byType('space');
     const renameCmds: UpdateEntity[] = [];
     const used = new Set<string>();
     for (const r of rooms) {

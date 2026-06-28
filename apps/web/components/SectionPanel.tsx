@@ -24,15 +24,15 @@ interface SectionPanelProps {
 }
 
 function walls(store: EntityStore): Wall[] {
-  return store.all().filter((e): e is Wall => e.type === 'wall');
+  return store.byType('wall');
 }
 
 function openings(store: EntityStore): Opening[] {
-  return store.all().filter((e): e is Opening => e.type === 'opening');
+  return store.byType('opening');
 }
 
 function sections(store: EntityStore): SectionLine[] {
-  return store.all().filter((e): e is SectionLine => e.type === 'section');
+  return store.byType('section');
 }
 
 /**

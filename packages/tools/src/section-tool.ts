@@ -86,7 +86,7 @@ export class SectionTool implements SceneTool {
  */
 function nextLabel(store: EntityStore): string {
   const used = new Set(
-    store.all().filter((e): e is SectionLine => e.type === 'section').map((s) => s.label),
+    store.byType('section').map((s) => s.label),
   );
   for (let i = 0; i < 26; i++) {
     const letter = String.fromCharCode(65 + i);

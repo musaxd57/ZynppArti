@@ -32,6 +32,19 @@ export class EntityStore {
     return [...this.entities.values()];
   }
 
+  /**
+   * Belirli tipteki entity'leri döndürür (daraltılmış tip). `all().filter((e): e is X => e.type==='x')`
+   * deseni ~8 dosyada elle tekrarlanıyordu + her çağrı `all()` ile tüm diziyi kopyalıyordu; bu tek
+   * geçişte süzer. (Denetim L24.)
+   */
+  byType<T extends Entity['type']>(type: T): Extract<Entity, { type: T }>[] {
+    const out: Extract<Entity, { type: T }>[] = [];
+    for (const e of this.entities.values()) {
+      if (e.type === type) out.push(e as Extract<Entity, { type: T }>);
+    }
+    return out;
+  }
+
   get size(): number {
     return this.entities.size;
   }

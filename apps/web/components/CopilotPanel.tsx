@@ -6,16 +6,16 @@ import type { EntityStore, Opening, Parcel, Space, Wall } from '@zynpparti/docum
 import { Panel } from './Panel';
 
 function getSpaces(store: EntityStore): Space[] {
-  return store.all().filter((e): e is Space => e.type === 'space');
+  return store.byType('space');
 }
 function getWalls(store: EntityStore): Wall[] {
-  return store.all().filter((e): e is Wall => e.type === 'wall');
+  return store.byType('wall');
 }
 function getOpenings(store: EntityStore): Opening[] {
-  return store.all().filter((e): e is Opening => e.type === 'opening');
+  return store.byType('opening');
 }
 function getParcels(store: EntityStore): Parcel[] {
-  return store.all().filter((e): e is Parcel => e.type === 'parcel');
+  return store.byType('parcel');
 }
 function runChecks(store: EntityStore): Finding[] {
   try {

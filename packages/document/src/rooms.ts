@@ -1,6 +1,6 @@
 import { findFaces, polygonCentroid, type Segment, type Vec2 } from '@zynpparti/geometry';
 import type { EntityStore, StoreChange } from './store';
-import type { EntityId, Space, Wall } from './entities';
+import type { EntityId, Space } from './entities';
 import { AddEntity, RemoveEntity } from './command';
 import { createEntityId } from './id';
 
@@ -57,7 +57,7 @@ export class RoomManager {
 
   /** Mahalleri yeniden hesapla ve store'a yansıt. */
   recompute(): void {
-    const walls = this.store.all().filter((e): e is Wall => e.type === 'wall');
+    const walls = this.store.byType('wall');
     this.knownWalls = new Set(walls.map((w) => w.id));
 
     // Çok büyük modelde findFaces (O(n²)) UI'yi dondurur → mahal türetmeyi atla (çizim akıcı kalır).
@@ -78,7 +78,7 @@ export class RoomManager {
     }
 
     // Store'daki mahaller silinip yeniden türetilir; eşleşme kaynağı = store + tohum (yüklenen mahaller).
-    const storeSpaces = this.store.all().filter((e): e is Space => e.type === 'space');
+    const storeSpaces = this.store.byType('space');
     const matchSources: Space[] = [...storeSpaces, ...this.seededSpaces];
 
     // BİRE-BİR eşleştirme: her eski mahal en fazla BİR yeni yüze ad/tip/malzeme verir. Aksi halde bir oda

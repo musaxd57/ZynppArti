@@ -5,14 +5,7 @@ import { projectFileBase } from '@/lib/project-name';
 import { toast } from '@/lib/toast';
 import * as THREE from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
-import {
-  wallBoxesWithOpenings,
-  roomTypeColor,
-  type EntityStore,
-  type Opening,
-  type Space,
-  type Wall,
-} from '@zynpparti/document';
+import { wallBoxesWithOpenings, roomTypeColor, type EntityStore } from '@zynpparti/document';
 
 /**
  * Şematik 3B önizleme (Faz 5 başlangıcı): duvarları yüksekliklerine göre ekstrüde edip three.js'te
@@ -44,8 +37,8 @@ export function View3D({ store }: { store: EntityStore }) {
     if (!container) return;
     setError(null);
 
-    const walls = store.all().filter((e): e is Wall => e.type === 'wall');
-    const openings = store.all().filter((e): e is Opening => e.type === 'opening');
+    const walls = store.byType('wall');
+    const openings = store.byType('opening');
     const boxes = wallBoxesWithOpenings(walls, openings);
     if (boxes.length === 0) {
       setError('Önce 2B tuvalde duvar çiz, sonra 3B önizlemeyi aç.');
@@ -145,7 +138,7 @@ export function View3D({ store }: { store: EntityStore }) {
       }
 
       // Oda zeminleri: her mahal sınırı, tipine göre renkli ince döşeme (2B dolgusunun 3B karşılığı).
-      const spaces = store.all().filter((e): e is Space => e.type === 'space');
+      const spaces = store.byType('space');
       const slabGeos: THREE.ShapeGeometry[] = [];
       const slabMats: THREE.MeshStandardMaterial[] = [];
       for (const sp of spaces) {

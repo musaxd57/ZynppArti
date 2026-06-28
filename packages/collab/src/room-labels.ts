@@ -69,7 +69,7 @@ export class RoomLabelSync {
   }
 
   private spaces(): Space[] {
-    return this.store.all().filter((e): e is Space => e.type === 'space');
+    return this.store.byType('space');
   }
 
   /** Yerel değişiklik: yeni türeyen mahale uzak etiketi uygula; kullanıcı adlandırmasını Y'ye yaz. */

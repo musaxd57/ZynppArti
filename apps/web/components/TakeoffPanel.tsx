@@ -36,16 +36,16 @@ const PRICE_FIELDS: ReadonlyArray<{ key: keyof UnitPrices; label: string; unit: 
 ];
 
 function getWalls(store: EntityStore): Wall[] {
-  return store.all().filter((e): e is Wall => e.type === 'wall');
+  return store.byType('wall');
 }
 function getSpaces(store: EntityStore): Space[] {
-  return store.all().filter((e): e is Space => e.type === 'space');
+  return store.byType('space');
 }
 function getOpenings(store: EntityStore): Opening[] {
-  return store.all().filter((e): e is Opening => e.type === 'opening');
+  return store.byType('opening');
 }
 function getBlocks(store: EntityStore): Block[] {
-  return store.all().filter((e): e is Block => e.type === 'block');
+  return store.byType('block');
 }
 
 function num(n: number): string {

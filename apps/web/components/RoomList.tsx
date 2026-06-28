@@ -23,11 +23,11 @@ import {
 import { Panel } from './Panel';
 
 function getSpaces(store: EntityStore): Space[] {
-  return store.all().filter((e): e is Space => e.type === 'space');
+  return store.byType('space');
 }
 
 function getWalls(store: EntityStore): Wall[] {
-  return store.all().filter((e): e is Wall => e.type === 'wall');
+  return store.byType('wall');
 }
 
 function fmt(m2: number): string {
