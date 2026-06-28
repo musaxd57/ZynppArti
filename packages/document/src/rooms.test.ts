@@ -208,6 +208,48 @@ describe('RoomManager', () => {
     rm.destroy();
   });
 
+  it('erken-return (büyük model) tohumu SIZDIRMAZ → sonraki açılışa ad bulaşmaz (self-review)', () => {
+    const store = new EntityStore();
+    // 8001 kopuk duvar → recompute perf eşiğinde erken-return eder (finally'den önce).
+    for (let i = 0; i < 8001; i++) {
+      store.put({
+        id: `bw${i}`,
+        type: 'wall',
+        layerId: 'default',
+        start: { x: i * 10, y: 0 },
+        end: { x: i * 10 + 5, y: 0 },
+        thickness: 10,
+      });
+    }
+    const rm = new RoomManager(store); // erken-return
+    // Bir önceki modelin kaydedilmiş mahalini tohumla (kare merkezli, 200,150).
+    rm.seedSpaces([
+      {
+        id: 'leak',
+        type: 'space',
+        layerId: 'rooms',
+        name: 'Sızıntı',
+        boundary: [
+          { x: 0, y: 0 },
+          { x: 400, y: 0 },
+          { x: 400, y: 300 },
+          { x: 0, y: 300 },
+        ],
+      },
+    ]);
+    rm.recompute(); // hâlâ 8001 duvar → erken-return; tohum tüketilip ATILMALI (sızmamalı)
+    // Yeni model: duvarları temizle + tohum kutusuna oturan bir kare ekle.
+    for (const w of store.byType('wall')) store.delete(w.id);
+    for (const w of [wall(0, 0, 400, 0), wall(400, 0, 400, 300), wall(400, 300, 0, 300), wall(0, 300, 0, 0)]) {
+      store.put(w);
+    }
+    rm.recompute();
+    const after = spaces(store);
+    expect(after).toHaveLength(1);
+    expect(after[0]!.name).toBe('Mahal'); // 'Sızıntı' DEĞİL → tohum erken-return'de sızmadı
+    rm.destroy();
+  });
+
   it('destroy sonrası değişikliklere tepki vermez', () => {
     const store = squareStore();
     const rm = new RoomManager(store);

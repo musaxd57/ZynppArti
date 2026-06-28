@@ -57,6 +57,12 @@ export class RoomManager {
 
   /** Mahalleri yeniden hesapla ve store'a yansıt. */
   recompute(): void {
+    // Tohum (yüklenen mahaller) BU çağrıda tüketilir → EN BAŞTA al + alanı temizle. Aksi halde erken-return
+    // yollarında (büyük model / findFaces throw, aşağıda) tohum sızıp SONRAKİ model açılışında ilgisiz bir
+    // odaya ad/tip/malzeme bulaştırırdı (RoomManager mount başına bir kez, açılışlar arası paylaşılır). (Self-review.)
+    const seeded = this.seededSpaces;
+    this.seededSpaces = [];
+
     const walls = this.store.byType('wall');
     this.knownWalls = new Set(walls.map((w) => w.id));
 
@@ -79,7 +85,7 @@ export class RoomManager {
 
     // Store'daki mahaller silinip yeniden türetilir; eşleşme kaynağı = store + tohum (yüklenen mahaller).
     const storeSpaces = this.store.byType('space');
-    const matchSources: Space[] = [...storeSpaces, ...this.seededSpaces];
+    const matchSources: Space[] = [...storeSpaces, ...seeded];
 
     // BİRE-BİR eşleştirme: her eski mahal en fazla BİR yeni yüze ad/tip/malzeme verir. Aksi halde bir oda
     // ikiye bölününce ve iki çocuk centroid'i de eski centroid'in toleransındaysa, aynı eski mahal iki
@@ -137,8 +143,7 @@ export class RoomManager {
         removed: storeSpaces.map((s) => s.id),
       });
     } finally {
-      this.recomputing = false;
-      this.seededSpaces = []; // tohum bu turda tüketildi (adlar artık türetilmiş mahallerde yaşıyor)
+      this.recomputing = false; // (tohum zaten en başta tüketildi → burada tekrar temizlemeye gerek yok)
     }
   }
 
