@@ -19,14 +19,13 @@ import {
 } from '@zynpparti/document';
 import type { ToolManager, ToolName } from '@zynpparti/tools';
 import { importDxf, importDwg, exportDxf, exportSvg } from '@zynpparti/io';
-import { Undo2, Redo2, Maximize, PanelLeft, PanelLeftClose } from 'lucide-react';
+import { Undo2, Redo2, Maximize, PanelLeft, PanelLeftClose, Download, ChevronDown } from 'lucide-react';
 import { alertDialog, confirmDialog } from '@/lib/dialog';
 import { toast } from '@/lib/toast';
 import { projectFileBase, useProjectName, setProjectName, DEFAULT_PROJECT_NAME } from '@/lib/project-name';
 import { clearCloudProjectId } from '@/lib/cloud-project';
 import { saveCurrentToCloud } from '@/lib/cloud-save';
 import { VesnaLogo } from './VesnaLogo';
-import { PlanBadge } from './PlanBadge';
 import { TOOL_ICONS } from './toolbar-icons';
 
 const TOOLS: { name: ToolName; label: string; hotkey: string }[] = [
@@ -100,10 +99,29 @@ export function Toolbar({
   seedRooms,
 }: ToolbarProps) {
   const [active, setActive] = useState<ToolName>(manager.activeTool);
+  const [exportOpen, setExportOpen] = useState(false); // "İndir ▾" menüsü (DXF/SVG/PNG/PDF tek menüde)
   const fileRef = useRef<HTMLInputElement>(null);
   const jsonRef = useRef<HTMLInputElement>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => manager.subscribe(setActive), [manager]);
+
+  // İndir menüsü: dışarı tıkla / Escape → kapat.
+  useEffect(() => {
+    if (!exportOpen) return;
+    const onDown = (e: MouseEvent): void => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false);
+    };
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setExportOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [exportOpen]);
 
   // Dosya kısayolları: Ctrl+S (kaydet) / Ctrl+O (aç). Tarayıcının kendi diyaloglarını bastır.
   useEffect(() => {
@@ -451,26 +469,51 @@ export function Toolbar({
       <button type="button" onClick={() => void handleSave()} className={btn} title="Kaydet (Ctrl+S) — giriş yapılmışsa buluta, değilse .json olarak">
         Kaydet
       </button>
-      <button type="button" onClick={() => jsonRef.current?.click()} className={btn} title="Model aç (.json) — Ctrl+O">
-        Aç
-      </button>
-      <PlanBadge />{/* giriş yoksa kendini gizler */}
       <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button type="button" onClick={() => fileRef.current?.click()} className={btn}>
         CAD Yükle
       </button>
-      <button type="button" onClick={onExportDxf} className={btn}>
-        DXF İndir
-      </button>
-      <button type="button" onClick={onExportSvg} className={btn}>
-        SVG İndir
-      </button>
-      <button type="button" onClick={() => void onExportPng()} className={btn}>
-        PNG İndir
-      </button>
-      <button type="button" onClick={() => void onExportPdf()} className={btn}>
-        PDF İndir
-      </button>
+      {/* İndir ▾ — DXF/SVG/PNG/PDF tek menüde (üst çubuk sadeliği; hiçbir format kaybolmadı). */}
+      <div ref={exportRef} className="relative shrink-0">
+        <button
+          type="button"
+          onClick={() => setExportOpen((o) => !o)}
+          className={`${btn} flex items-center gap-1`}
+          aria-haspopup="menu"
+          aria-expanded={exportOpen}
+          title="Çizimi dışa aktar (DXF / SVG / PNG / PDF)"
+        >
+          <Download size={15} /> İndir <ChevronDown size={13} />
+        </button>
+        {exportOpen && (
+          <div
+            role="menu"
+            className="absolute left-0 top-full z-40 mt-1 w-32 rounded-lg border border-[var(--border-soft)] bg-[var(--surface-2)] p-1 shadow-lg"
+          >
+            {(
+              [
+                ['DXF', onExportDxf],
+                ['SVG', onExportSvg],
+                ['PNG', () => void onExportPng()],
+                ['PDF', () => void onExportPdf()],
+              ] as const
+            ).map(([label, run]) => (
+              <button
+                key={label}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  run();
+                  setExportOpen(false);
+                }}
+                className="block w-full rounded-md px-3 py-1.5 text-left text-[var(--text-2)] transition-colors hover:bg-[var(--surface-3)] hover:text-[var(--text-1)]"
+              >
+                {label} indir
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       <button
         type="button"
         onClick={() => onToggleChrome?.()}
