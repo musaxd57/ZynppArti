@@ -80,10 +80,19 @@ alter table public.projects        enable row level security;
 alter table public.project_members enable row level security;
 alter table public.comments        enable row level security;
 
--- profiles: yalnız kendi profilin.
+-- profiles: kendi profilini OKURSUN; güncelleyebilirsin AMA `plan`'ı DEĞİŞTİREMEZSİN (denetim H1).
+-- Sebep: `plan` yetkilendirme kaynağıdır (ücretsiz/pro kotası). Eski `for all ... check(id=uid)` politikası
+-- istemcinin `update({plan:'studio'})` ile kendini ücretsizden Pro'ya çekmesine izin veriyordu (Paddle baypas).
+-- INSERT istemcide YOK: handle_new_user trigger'ı (security definer, RLS-atlar) satırı açar.
+-- `plan`'ı yalnız Paddle webhook'u servis anahtarıyla (RLS-muaf) yazar.
 drop policy if exists profiles_self on public.profiles;
-create policy profiles_self on public.profiles
-  for all using (id = auth.uid()) with check (id = auth.uid());
+drop policy if exists profiles_select_self on public.profiles;
+drop policy if exists profiles_update_self on public.profiles;
+create policy profiles_select_self on public.profiles
+  for select using (id = auth.uid());
+create policy profiles_update_self on public.profiles
+  for update using (id = auth.uid())
+  with check (id = auth.uid() and plan = (select p.plan from public.profiles p where p.id = auth.uid()));
 
 -- Bir kullanıcının bir projeye erişimi var mı? (sahip veya üye) — yardımcı.
 -- SECURITY DEFINER: gövdedeki sorgular RLS'i ATLAR → policy içinde kullanınca özyineleme olmaz (KRİTİK).
@@ -141,9 +150,13 @@ drop policy if exists comments_insert on public.comments;
 create policy comments_insert on public.comments
   for insert with check (author = auth.uid() and public.can_access_project(project));
 
+-- Güncellemede projeye erişim de RE-CHECK edilir (denetim M8): yalnız `author=uid` istemcinin yorumu
+-- erişimi OLMAYAN bir projeye taşımasına (cross-project enjeksiyon) izin verirdi. (Aynı projede içerik
+-- düzenleme serbest; erişilebilir projeler arası taşımayı tümden yasaklamak ayrı BEFORE UPDATE trigger ister.)
 drop policy if exists comments_modify on public.comments;
 create policy comments_modify on public.comments
-  for update using (author = auth.uid()) with check (author = auth.uid());
+  for update using (author = auth.uid())
+  with check (author = auth.uid() and public.can_access_project(project));
 
 drop policy if exists comments_delete on public.comments;
 create policy comments_delete on public.comments

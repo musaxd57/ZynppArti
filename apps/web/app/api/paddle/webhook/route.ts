@@ -92,6 +92,7 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   let newPlan: Plan | null = null;
   if (type === 'subscription.canceled' || type === 'subscription.paused') {
+    // 'free'e DÜŞÜRME yalnız burada — abonelik gerçekten bitti/durduruldu.
     newPlan = 'free';
   } else if (
     type === 'subscription.created' ||
@@ -99,7 +100,15 @@ export async function POST(req: NextRequest): Promise<Response> {
     type === 'subscription.updated' ||
     type === 'subscription.resumed'
   ) {
-    newPlan = planFromItems(data['items'], priceMap) ?? 'free';
+    // KRİTİK: aktif abonelik olayında price eşleşmezse 'free'e DÜŞÜRME (denetim H2/H3/M22).
+    // priceMap boş (env eksik) ya da tanınmayan/yeni price → meşru ödeyen müşteriyi 'free' yapardı.
+    // subscription.updated rutin tetiklenir (ödeme yöntemi/tarih değişimi) → no-op, planı koru.
+    const matched = planFromItems(data['items'], priceMap);
+    if (!matched) {
+      console.warn(`Paddle webhook ${type}: tanınmayan/eksik price, plan DEĞİŞTİRİLMEDİ.`);
+      return NextResponse.json({ ok: true, skipped: 'unknown_price' });
+    }
+    newPlan = matched;
   }
 
   if (newPlan === null) {
