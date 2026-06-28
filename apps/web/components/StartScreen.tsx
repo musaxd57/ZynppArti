@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { deserializeModel } from '@zynpparti/document';
-import { Cloud, FileText, Plus, Trash2, Upload } from 'lucide-react';
+import { exportSvg } from '@zynpparti/io';
+import { Cloud, FolderOpen, Plus, Trash2, Upload } from 'lucide-react';
 import { setProjectName, DEFAULT_PROJECT_NAME } from '@/lib/project-name';
 import { setStartEmpty, setPendingOpen } from '@/lib/app-start';
 import { setCloudProjectId } from '@/lib/cloud-project';
@@ -18,7 +19,7 @@ import { toast } from '@/lib/toast';
 import { confirmDialog } from '@/lib/dialog';
 import { VesnaLogo } from './VesnaLogo';
 
-/** "3 gün önce" tarzı kısa göreli tarih (bulut liste satırı). Geçersizse boş. */
+/** "3 gün önce" tarzı kısa göreli tarih (proje kartı). Geçersizse boş. */
 function relativeTime(iso: string): string {
   const t = new Date(iso).getTime();
   if (!Number.isFinite(t)) return '';
@@ -33,19 +34,60 @@ function relativeTime(iso: string): string {
 }
 
 /**
- * Açılış/karşılama ekranı: GİRİŞ yapılmışsa önce "Bulut projelerin" listelenir (tıkla → kaldığın
- * yerden devam; üzerine gel → sil); ardından "Yeni proje" (isim ver → boş tuval) veya "Aç" (.json model
- * yükle). Seçim sonrası `onStart()` ile uygulama (CanvasStage) açılır. Collab/`?ciz=` ile gelende atlanır.
+ * Bir bulut projesinin CANLI vektör önizlemesi (thumbnail). Projenin JSON'unu indirir → `exportSvg`
+ * ile çizer → data-URL <img>. Mahaller türetilmiş olduğundan dahil edilmez (kaydedilmiş space'ler
+ * dolgu için kalsın → renkli önizleme). Lazy: kart mount olunca yüklenir; yüklenirken iskelet.
+ */
+function CloudThumbnail({ id }: { id: string }): React.ReactElement {
+  const [state, setState] = useState<{ kind: 'loading' } | { kind: 'ok'; url: string } | { kind: 'empty' | 'error' }>(
+    { kind: 'loading' },
+  );
+
+  useEffect(() => {
+    let active = true;
+    void loadProjectFromCloud(id)
+      .then((text) => {
+        if (!active) return;
+        const ents = deserializeModel(text);
+        if (ents.length === 0) {
+          setState({ kind: 'empty' });
+          return;
+        }
+        const svg = exportSvg(ents);
+        setState({ kind: 'ok', url: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}` });
+      })
+      .catch(() => active && setState({ kind: 'error' }));
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  if (state.kind === 'ok') {
+    return <img src={state.url} alt="" className="h-full w-full object-contain p-2" />;
+  }
+  if (state.kind === 'loading') {
+    return <div className="h-full w-full animate-pulse" style={{ background: 'var(--surface-3)' }} />;
+  }
+  return (
+    <div className="grid h-full w-full place-items-center text-xs text-[var(--text-3)]">
+      {state.kind === 'empty' ? 'boş plan' : 'önizleme yok'}
+    </div>
+  );
+}
+
+/**
+ * Açılış ekranı — TAM EKRAN proje galerisi. GİRİŞ yapılmışsa bulut projeleri ızgara halinde, her biri
+ * canlı önizleme (thumbnail) + ad + tarih + sil ile; tıkla → kaldığın yerden devam. Üstte yeni proje
+ * oluştur / .json aç. Giriş yoksa anonim akış (yeni/aç) + giriş daveti. Collab/`?ciz=` ile gelende
+ * AppGate bu ekranı atlar. `onStart()` ile CanvasStage'e geçilir.
  */
 export function StartScreen({ onStart }: { onStart: () => void }) {
   const [name, setName] = useState(DEFAULT_PROJECT_NAME);
   const [busy, setBusy] = useState(false);
-  // Bulut: null = henüz bilinmiyor (giriş kontrolü sürüyor); [] = giriş var ama proje yok / giriş yok.
   const [cloud, setCloud] = useState<CloudProject[] | null>(null);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
-  const [uid, setUid] = useState<string | null>(null); // paylaşılan/sahip ayrımı (paylaşılanda sil gizli)
+  const [uid, setUid] = useState<string | null>(null);
 
-  // Giriş yapılmışsa bulut projelerini çek → kullanıcı kaldığı yerden devam edebilsin.
   useEffect(() => {
     let active = true;
     void isCloudSignedIn().then((yes) => {
@@ -67,8 +109,8 @@ export function StartScreen({ onStart }: { onStart: () => void }) {
 
   const createNew = (): void => {
     setProjectName(name.trim() || DEFAULT_PROJECT_NAME);
-    setCloudProjectId(undefined); // yeni boş tuval → bulut bağı yok (sonraki Kaydet yeni proje açar)
-    setStartEmpty(true); // demo tohumu atla → boş tuvalle başla
+    setCloudProjectId(undefined); // yeni boş tuval → bulut bağı yok
+    setStartEmpty(true);
     onStart();
   };
 
@@ -77,17 +119,16 @@ export function StartScreen({ onStart }: { onStart: () => void }) {
     void file
       .text()
       .then((text) => {
-        // Açmadan ÖNCE doğrula — bozuk/yanlış .json sessizce boş açılmasın (uygulama-içi "Aç" gibi uyar).
         try {
-          deserializeModel(text);
+          deserializeModel(text); // açmadan ÖNCE doğrula (bozuk .json sessizce boş açılmasın)
         } catch {
           toast('Dosya açılamadı — bu uygulamanın .json kayıt biçiminde olmalı.', 'error', 5000);
           setBusy(false);
           return;
         }
         setProjectName(file.name.replace(/\.json$/i, '') || DEFAULT_PROJECT_NAME);
-        setCloudProjectId(undefined); // yerel dosya → bulut bağı yok (yanlış üzerine yazma önlemi)
-        setPendingOpen(text); // CanvasStage mount'ta yükler
+        setCloudProjectId(undefined);
+        setPendingOpen(text);
         onStart();
       })
       .catch(() => {
@@ -96,14 +137,13 @@ export function StartScreen({ onStart }: { onStart: () => void }) {
       });
   };
 
-  /** Bulut projesini aç: JSON'u indir → doğrula → adı+bağı kur → CanvasStage mount'ta yükler. */
   const openCloud = (p: CloudProject): void => {
     setBusy(true);
     void loadProjectFromCloud(p.id)
       .then((text) => {
-        deserializeModel(text); // doğrula (bozuksa catch'e düşer)
+        deserializeModel(text); // doğrula
         setProjectName(p.name);
-        setCloudProjectId(p.id); // sonraki Kaydet bu projeye üzerine yazar
+        setCloudProjectId(p.id); // sonraki Kaydet bu projeye yazar
         setPendingOpen(text);
         onStart();
       })
@@ -113,7 +153,7 @@ export function StartScreen({ onStart }: { onStart: () => void }) {
       });
   };
 
-  /** Bulut projesini sil (onaylı, geri alınamaz) → listeden çıkar. Yalnız sahibi olduğun projelerde. */
+  /** Bulut projesini sil (onaylı, geri alınamaz). Yalnız sahibi olduğun projelerde. */
   const removeCloud = async (p: CloudProject): Promise<void> => {
     if (!(await confirmDialog(`"${p.name}" buluttan silinsin mi? (Geri alınamaz.)`))) return;
     try {
@@ -127,182 +167,207 @@ export function StartScreen({ onStart }: { onStart: () => void }) {
   };
 
   const hasCloud = !!cloud && cloud.length > 0;
+  const loadingCloud = signedIn === true && cloud === null;
+
+  // Yeni proje kartı (ızgaranın ilk hücresi) — üstteki ad alanını kullanır.
+  const newCard = (
+    <button
+      type="button"
+      onClick={createNew}
+      disabled={busy}
+      className="group grid aspect-[4/3] w-full place-items-center rounded-2xl border-2 border-dashed transition-all hover:-translate-y-0.5 hover:border-[var(--accent)] disabled:opacity-50"
+      style={{ borderColor: 'var(--border-soft)' }}
+    >
+      <span className="flex flex-col items-center gap-2 text-[var(--text-2)] transition-colors group-hover:text-[var(--accent-text)]">
+        <span className="grid h-12 w-12 place-items-center rounded-full" style={{ background: 'var(--accent-soft)' }}>
+          <Plus size={24} className="text-[var(--accent-text)]" />
+        </span>
+        <span className="text-sm font-semibold">Yeni proje</span>
+      </span>
+    </button>
+  );
 
   return (
-    <main className="flex h-screen w-screen items-center justify-center bg-[var(--bg)] p-6 text-[var(--text-1)]">
-      <div
-        className="relative w-[27rem] max-w-[92vw] overflow-hidden rounded-[1.75rem] p-7"
-        style={{
-          background: 'linear-gradient(180deg, var(--surface-2), var(--surface-1))',
-          boxShadow:
-            '0 28px 70px -20px rgba(0,0,0,0.7), 0 8px 24px -12px rgba(0,0,0,0.5), inset 0 0 0 1px var(--border-soft)',
-        }}
+    <div className="h-full w-full overflow-y-auto bg-[var(--bg)] text-[var(--text-1)]">
+      {/* Üst bar: marka + yeni proje adı + oluştur/aç */}
+      <header
+        className="sticky top-0 z-10 flex flex-wrap items-center gap-3 px-5 py-3.5 backdrop-blur-xl sm:px-8"
+        style={{ background: 'color-mix(in srgb, var(--bg) 78%, transparent)', boxShadow: '0 1px 0 var(--border-soft)' }}
       >
-        {/* Üstte yumuşak accent parıltısı — premium derinlik (çıktıyı/etkileşimi etkilemez). */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-24 left-1/2 h-48 w-72 -translate-x-1/2 rounded-full blur-3xl"
-          style={{ background: 'var(--accent-soft)', opacity: 0.7 }}
-        />
-
-        <div className="relative">
-          <div className="mb-6 flex items-center gap-2.5">
-            <VesnaLogo className="h-8 w-8" />
-            <div className="leading-tight">
-              <div
-                className="text-[1.35rem] font-bold tracking-tight"
-                style={{
-                  background: 'linear-gradient(90deg, var(--text-1), var(--accent-text))',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                Vesna
-              </div>
-              <div className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--text-3)]">
-                Mimari tasarım stüdyosu
-              </div>
+        <div className="mr-auto flex items-center gap-2.5">
+          <VesnaLogo className="h-8 w-8" />
+          <div className="leading-tight">
+            <div
+              className="text-lg font-bold tracking-tight"
+              style={{
+                background: 'linear-gradient(90deg, var(--text-1), var(--accent-text))',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Vesna
+            </div>
+            <div className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--text-3)]">
+              Mimari tasarım stüdyosu
             </div>
           </div>
+        </div>
 
-          {hasCloud && (
-            <div className="mb-6">
-              <div className="mb-2 flex items-center gap-2">
-                <Cloud size={14} className="text-[var(--accent-text)]" />
-                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-2)]">
-                  Bulut projelerin
-                </span>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') createNew();
+          }}
+          placeholder="Proje adı"
+          aria-label="Yeni proje adı"
+          className="h-10 w-40 rounded-xl px-3 text-sm text-[var(--text-1)] outline-none transition-shadow focus:ring-2 focus:ring-[var(--accent)] sm:w-52"
+          style={{ background: 'var(--surface-3)', boxShadow: 'inset 0 0 0 1px var(--border-soft)' }}
+        />
+        <button
+          type="button"
+          onClick={createNew}
+          disabled={busy}
+          className="flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-white shadow-lg transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
+          style={{
+            background: 'linear-gradient(180deg, var(--accent-hover), var(--accent))',
+            boxShadow: '0 8px 20px -10px var(--accent), inset 0 1px 0 rgba(255,255,255,0.15)',
+          }}
+        >
+          <Plus size={16} /> <span className="hidden sm:inline">Yeni proje</span>
+        </button>
+        <label
+          className="flex h-10 cursor-pointer items-center gap-2 rounded-xl px-3.5 text-sm font-medium text-[var(--text-2)] transition-colors hover:bg-[var(--surface-3)] hover:text-[var(--text-1)]"
+          style={{ boxShadow: 'inset 0 0 0 1px var(--border-soft)' }}
+          title="Kayıtlı .json proje aç"
+        >
+          <Upload size={15} />
+          <span className="hidden sm:inline">{busy ? 'Açılıyor…' : 'Aç (.json)'}</span>
+          <input
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = '';
+              if (f) openFile(f);
+            }}
+          />
+        </label>
+      </header>
+
+      <div className="mx-auto max-w-6xl px-5 pb-16 pt-8 sm:px-8">
+        {/* GİRİŞ YOK → anonim davet */}
+        {signedIn === false && (
+          <div className="mx-auto max-w-md py-16 text-center">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl" style={{ background: 'var(--accent-soft)' }}>
+              <Cloud size={26} className="text-[var(--accent-text)]" />
+            </div>
+            <h1 className="mb-2 text-xl font-bold">Hemen çizmeye başla</h1>
+            <p className="mb-6 text-sm text-[var(--text-2)]">
+              Üstten yeni proje oluştur ya da bir <code>.json</code> aç. Projelerini buluta kaydedip her cihazdan
+              sürdürmek için{' '}
+              <a href="/giris" className="font-medium text-[var(--accent-text)] hover:underline">
+                giriş yap
+              </a>
+              .
+            </p>
+          </div>
+        )}
+
+        {/* GİRİŞ VAR → bulut galerisi */}
+        {signedIn === true && (
+          <>
+            <div className="mb-4 flex items-center gap-2">
+              <FolderOpen size={18} className="text-[var(--accent-text)]" />
+              <h1 className="text-base font-bold">Projelerin</h1>
+              {hasCloud && (
                 <span
-                  className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-text)]"
+                  className="rounded-full px-2 py-0.5 text-[11px] font-semibold text-[var(--accent-text)]"
                   style={{ background: 'var(--accent-soft)' }}
                 >
                   {cloud!.length}
                 </span>
-              </div>
-              <ul className="-mr-1.5 max-h-60 space-y-1.5 overflow-y-auto pr-1.5">
-                {cloud!.map((p) => {
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {newCard}
+
+              {loadingCloud &&
+                [0, 1, 2].map((i) => (
+                  <div
+                    key={`sk${i}`}
+                    className="aspect-[4/3] w-full animate-pulse rounded-2xl"
+                    style={{ background: 'var(--surface-2)' }}
+                  />
+                ))}
+
+              {hasCloud &&
+                cloud!.map((p) => {
                   const shared = !!p.owner && !!uid && p.owner !== uid;
                   return (
-                    <li key={p.id} className="group relative">
+                    <div
+                      key={p.id}
+                      className="group relative overflow-hidden rounded-2xl transition-all duration-150 hover:-translate-y-0.5"
+                      style={{ background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--border-soft)' }}
+                    >
                       <button
                         type="button"
                         disabled={busy}
                         onClick={() => openCloud(p)}
                         title={p.name}
-                        className="flex w-full items-center gap-3 rounded-xl py-2.5 pl-2.5 pr-11 text-left transition-all duration-150 hover:bg-[var(--surface-3)] disabled:opacity-50"
-                        style={{ boxShadow: 'inset 0 0 0 1px var(--border-hair)' }}
+                        className="block w-full text-left disabled:opacity-50"
                       >
-                        <span
-                          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg transition-colors group-hover:brightness-110"
-                          style={{ background: 'var(--accent-soft)' }}
-                        >
-                          <FileText size={17} className="text-[var(--accent-text)]" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="flex items-center gap-1.5">
-                            <span className="truncate text-sm font-medium text-[var(--text-1)]">{p.name}</span>
-                            {shared && (
-                              <span
-                                className="shrink-0 rounded px-1 text-[10px] text-[var(--accent-text)]"
-                                style={{ background: 'var(--accent-soft)' }}
-                              >
-                                paylaşılan
-                              </span>
-                            )}
-                          </span>
-                          <span className="mt-0.5 block text-[11px] text-[var(--text-3)]">
-                            {relativeTime(p.updated_at)}
-                          </span>
-                        </span>
+                        <div className="aspect-[4/3] w-full overflow-hidden bg-white">
+                          <CloudThumbnail id={p.id} />
+                        </div>
+                        <div className="flex items-center justify-between gap-2 px-3.5 py-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="truncate text-sm font-semibold text-[var(--text-1)]">{p.name}</span>
+                              {shared && (
+                                <span
+                                  className="shrink-0 rounded px-1 text-[10px] text-[var(--accent-text)]"
+                                  style={{ background: 'var(--accent-soft)' }}
+                                >
+                                  paylaşılan
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-0.5 text-[11px] text-[var(--text-3)]">{relativeTime(p.updated_at)}</div>
+                          </div>
+                        </div>
                       </button>
-                      {/* Sil — yalnız SAHİBİ olduğun projede; üzerine gelince belirir (paylaşılan silinemez). */}
+                      {/* Sil — thumbnail sağ-üstünde, üzerine gelince belirir (paylaşılan silinemez). */}
                       {!shared && (
                         <button
                           type="button"
                           onClick={() => void removeCloud(p)}
                           aria-label={`"${p.name}" projesini sil`}
                           title="Sil"
-                          className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-lg text-[var(--text-3)] opacity-0 transition-all hover:bg-red-500/15 hover:text-red-400 focus:opacity-100 group-hover:opacity-100"
+                          className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-lg bg-black/45 text-white/90 opacity-0 backdrop-blur transition-all hover:bg-red-500/80 focus:opacity-100 group-hover:opacity-100"
                         >
                           <Trash2 size={15} />
                         </button>
                       )}
-                    </li>
+                    </div>
                   );
                 })}
-              </ul>
-              <div className="mt-5 mb-1 flex items-center gap-3">
-                <span className="h-px flex-1 bg-[var(--border-soft)]" />
-                <span className="text-[11px] font-medium uppercase tracking-[0.1em] text-[var(--text-3)]">
-                  veya yeni başla
-                </span>
-                <span className="h-px flex-1 bg-[var(--border-soft)]" />
-              </div>
             </div>
-          )}
 
-          <label htmlFor="proj-name" className="mb-1.5 block text-xs font-medium text-[var(--text-2)]">
-            Proje adı
-          </label>
-          <input
-            id="proj-name"
-            autoFocus={!hasCloud}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') createNew();
-            }}
-            placeholder="Örn. Ev Planı"
-            className="mb-3.5 w-full rounded-xl px-3.5 py-2.5 text-sm text-[var(--text-1)] outline-none transition-shadow focus:ring-2 focus:ring-[var(--accent)]"
-            style={{ background: 'var(--surface-3)', boxShadow: 'inset 0 0 0 1px var(--border-soft)' }}
-          />
+            {signedIn === true && !loadingCloud && !hasCloud && (
+              <p className="mt-6 text-sm text-[var(--text-3)]">
+                Henüz bulut projen yok — üstten ilk projeni oluştur, sonra <b>Ctrl+S</b> ile buluta kaydet.
+              </p>
+            )}
+          </>
+        )}
 
-          <button
-            type="button"
-            onClick={createNew}
-            disabled={busy}
-            className="mb-2 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
-            style={{
-              background: 'linear-gradient(180deg, var(--accent-hover), var(--accent))',
-              boxShadow: '0 8px 20px -8px var(--accent), inset 0 1px 0 rgba(255,255,255,0.15)',
-            }}
-          >
-            <Plus size={16} /> Yeni proje oluştur
-          </button>
-
-          <label
-            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-[var(--text-2)] transition-colors hover:bg-[var(--surface-3)] hover:text-[var(--text-1)]"
-            style={{ boxShadow: 'inset 0 0 0 1px var(--border-soft)' }}
-          >
-            <Upload size={15} />
-            {busy ? 'Açılıyor…' : 'Kayıtlı proje aç (.json)'}
-            <input
-              type="file"
-              accept=".json,application/json"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                e.target.value = ''; // aynı dosyayı tekrar seçince yeniden tetiklensin (bozuk .json sessiz no-op olmasın)
-                if (f) openFile(f);
-              }}
-            />
-          </label>
-
-          {signedIn === false ? (
-            <p className="mt-4 text-center text-xs text-[var(--text-3)]">
-              Projelerini buluta kaydedip her cihazdan sürdürmek için{' '}
-              <a href="/giris" className="font-medium text-[var(--accent-text)] hover:underline">
-                giriş yap
-              </a>
-              .
-            </p>
-          ) : (
-            <p className="mt-4 text-center text-xs text-[var(--text-3)]">
-              Adı sonradan üstteki alandan değiştirebilirsin. İndirilen dosyalar bu adı kullanır.
-            </p>
-          )}
-        </div>
+        {signedIn === null && (
+          <div className="grid place-items-center py-24 text-sm text-[var(--text-3)]">Yükleniyor…</div>
+        )}
       </div>
-    </main>
+    </div>
   );
 }

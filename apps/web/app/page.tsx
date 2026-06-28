@@ -12,6 +12,7 @@ import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { SiteFooter } from "@/components/marketing/SiteFooter";
 import { PromoDemo } from "@/components/marketing/PromoDemo";
 import { RoomRedirect } from "@/components/RoomRedirect";
+import { AppRedirect } from "@/components/AppRedirect";
 
 export const metadata: Metadata = {
   title: "Vesna — Tarayıcıda mimari tasarım, m² otomasyonu ve yapay zekâ",
@@ -30,6 +31,7 @@ export default function HomePage() {
   return (
     <>
     <RoomRedirect />
+    <AppRedirect />
     <SiteHeader />
     <main className="v-page">
       {/* HERO */}
