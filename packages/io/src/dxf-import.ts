@@ -153,7 +153,10 @@ export function importDxf(text: string): DxfImportResult {
     fallbackLayer: string,
     depth: number,
   ): void => {
-    const layer = e.layer || fallbackLayer;
+    // Blok İÇİNDEKİ (depth>0) entity'ler neredeyse her zaman layer "0"da çizilir → AutoCAD geleneğinde
+    // bu, INSERT'in katmanını MİRAS ALMAK demektir. "0" truthy olduğundan eski `e.layer || fallback`
+    // bunları "0"da bırakıp mobilya/sembol geometrisini tek katmana çökertiyordu. (Denetim L9.)
+    const layer = depth > 0 && (!e.layer || e.layer === '0') ? fallbackLayer : e.layer || fallbackLayer;
     // Tek bir bozuk entity tüm import'u öldürmesin → entity başına izole et, hatalıyı atla.
     try {
       const beforeW = walls.length;

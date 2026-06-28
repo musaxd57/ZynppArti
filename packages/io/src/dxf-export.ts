@@ -24,9 +24,12 @@ export function exportDxf(entities: readonly Entity[]): string {
   for (const e of entities) if (e.type === 'wall') walls.set(e.id, e);
 
   // HEADER: $INSUNITS=5 (cm) → yeniden içe-aktarımda birim ipucu (elle kalibrasyon gerekmez); $ACADVER.
+  // AC1015 (AutoCAD 2000): LWPOLYLINE (R14+) ve $INSUNITS (2000+) kullandığımız için R12 (AC1009) yerine
+  // bunu beyan ederiz — strict tüketiciler (AutoCAD) R12 başlıklı bir dosyada bu yenilikleri reddedebilir
+  // ("AutoCAD'de açılsın" hedefi). (Denetim L8.)
   out.push(
     '0', 'SECTION', '2', 'HEADER',
-    '9', '$ACADVER', '1', 'AC1009',
+    '9', '$ACADVER', '1', 'AC1015',
     '9', '$INSUNITS', '70', '5',
     '0', 'ENDSEC',
   );

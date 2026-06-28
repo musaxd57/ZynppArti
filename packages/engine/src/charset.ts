@@ -7,7 +7,9 @@ const ASCII =
   'abcdefghijklmnopqrstuvwxyz{|}~';
 
 const TURKISH = 'çşğıİöüÇŞĞÖÜ';
-const SYMBOLS = '²³°±×÷–—…«»€₺';
+// ✓ = çözüldü-yorum etiketindeki onay öneki (render-comment); atlasta yoksa BitmapText onu atlar (boş
+// boşluk görünür) → sete dahil (denetim L6).
+const SYMBOLS = '²³°±×÷–—…«»€₺✓';
 
 /** Mahal font atlasının kapsadığı tüm karakterler. */
 export const TR_CHARSET = ASCII + TURKISH + SYMBOLS;

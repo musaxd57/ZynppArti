@@ -251,6 +251,25 @@ describe('importDxf', () => {
     expect(w.end.y).toBeCloseTo(-50);
   });
 
+  it('blok içi layer "0" entity INSERT katmanını MİRAS alır (AutoCAD layer-0 geleneği, L9)', () => {
+    // Blok tanımındaki LINE layer "0"da → INSERT 'MOBILYA' katmanında. İçe-aktarımda "0"da kalmamalı.
+    const dxf = [
+      '0', 'SECTION', '2', 'BLOCKS',
+      '0', 'BLOCK', '8', '0', '2', 'SANDALYE', '10', '0.0', '20', '0.0', '30', '0.0', '3', 'SANDALYE',
+      '0', 'LINE', '8', '0',
+      '10', '0.0', '20', '0.0', '30', '0.0',
+      '11', '100.0', '21', '0.0', '31', '0.0',
+      '0', 'ENDBLK', '8', '0',
+      '0', 'ENDSEC',
+      '0', 'SECTION', '2', 'ENTITIES',
+      '0', 'INSERT', '8', 'MOBILYA', '2', 'SANDALYE', '10', '0.0', '20', '0.0', '30', '0.0',
+      '0', 'ENDSEC', '0', 'EOF',
+    ].join('\n');
+    const r = importDxf(dxf);
+    expect(r.walls).toHaveLength(1);
+    expect(r.walls[0]!.layerId).toBe('MOBILYA'); // "0" değil → INSERT katmanı miras alındı
+  });
+
   it('INSERT rotasyonu (90°) uygulanır', () => {
     // rotation kodu 50 = 90° → yerel (100,0) → DXF (0,100) → Y-flip → iç model (0,-100)
     const r = importDxf(blockDxf(['0', 'INSERT', '8', '0', '2', 'KAPI', '10', '0.0', '20', '0.0', '30', '0.0', '50', '90.0']));

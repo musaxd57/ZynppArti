@@ -26,6 +26,14 @@ describe('exportDxf', () => {
     expect(lines).toHaveLength(2);
   });
 
+  it('$ACADVER = AC1015 (LWPOLYLINE + $INSUNITS kullandığımız için R12 değil; denetim L8)', () => {
+    const rows = exportDxf([wall('a', 0, 0, 100, 0)]).split('\n');
+    const i = rows.indexOf('$ACADVER');
+    expect(i).toBeGreaterThan(-1);
+    expect(rows[i + 2]).toBe('AC1015'); // 9 $ACADVER / 1 / AC1015
+    expect(rows).not.toContain('AC1009'); // R12 başlığı yok
+  });
+
   it('HEADER $INSUNITS=5 (cm) + kullanılan katmanlar için LAYER tablosu yazar', () => {
     const dxf = exportDxf([wall('a', 0, 0, 100, 0, 'Mimari')]);
     expect(dxf).toContain('$INSUNITS');

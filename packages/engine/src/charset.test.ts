@@ -13,4 +13,8 @@ describe('TR_CHARSET', () => {
     expect(TR_CHARSET).toContain('A');
     expect(TR_CHARSET).toContain('z');
   });
+
+  it('includes the resolved-comment checkmark glyph (✓)', () => {
+    expect(TR_CHARSET).toContain('✓'); // render-comment çözüldü öneki bu glyph'i ister
+  });
 });
