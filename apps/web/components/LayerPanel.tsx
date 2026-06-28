@@ -258,7 +258,7 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
                 type="button"
                 onClick={() => layers.toggleLock(id)}
                 className={`${iconBtn} ${locked ? 'text-amber-400' : 'text-white/60'}`}
-                aria-label={`${name} katmanını ${locked ? 'kilidini aç' : 'kilitle'}`}
+                aria-label={locked ? `${name} katmanının kilidini aç` : `${name} katmanını kilitle`}
                 aria-pressed={locked}
                 title={locked ? 'Kilidi aç (seçilebilir yap)' : 'Kilitle'}
               >

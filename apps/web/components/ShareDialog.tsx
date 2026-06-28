@@ -9,6 +9,7 @@ import {
   type ProjectMember,
 } from '@/lib/supabase/projects';
 import { toast } from '@/lib/toast';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 
 const ROLES: { value: string; label: string }[] = [
   { value: 'viewer', label: 'Görüntüleyici' },
@@ -34,6 +35,8 @@ export function ShareDialog({
   const [busy, setBusy] = useState(false);
   const [members, setMembers] = useState<ProjectMember[] | null>(null);
   const emailRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef, true); // Tab odağı modal içinde kalsın + kapanınca geri ver (a11y M15)
 
   useEffect(() => {
     emailRef.current?.focus();
@@ -101,6 +104,7 @@ export function ShareDialog({
       }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={`"${projectName}" projesini paylaş`}

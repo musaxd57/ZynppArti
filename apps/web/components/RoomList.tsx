@@ -177,6 +177,7 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
                 }}
                 defaultValue={s.name}
                 onBlur={(e) => rename(s, e.target.value)}
+                aria-label="Mahal adı"
                 className="min-w-0 flex-1 rounded bg-white/10 px-2 py-1 outline-none focus:bg-white/20"
               />
               <span className="w-16 shrink-0 text-right tabular-nums opacity-80">
@@ -190,6 +191,7 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
                 onChange={(e) => setType(s, e.target.value as RoomType)}
                 className="min-w-0 flex-1 rounded bg-white/10 px-1 py-1 text-xs outline-none focus:bg-white/20"
                 title="Mahal tipi"
+                aria-label="Mahal tipi"
               >
                 {ROOM_TYPES.map((t) => (
                   <option key={t.key} value={t.key} className="bg-neutral-800">
@@ -202,6 +204,7 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
                 onChange={(e) => setMaterial(s, e.target.value)}
                 className="min-w-0 flex-1 rounded bg-white/10 px-1 py-1 text-xs outline-none focus:bg-white/20"
                 title="Zemin malzemesi (tarama deseni)"
+                aria-label="Zemin malzemesi"
               >
                 <option value="" className="bg-neutral-800">
                   Malzeme —

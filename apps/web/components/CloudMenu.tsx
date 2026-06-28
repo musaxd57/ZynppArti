@@ -88,14 +88,21 @@ export function CloudMenu({
     };
   }, []);
 
-  // Dışarı tıkla → kapat.
+  // Dışarı tıkla VEYA Escape → kapat (a11y M16: klavyeyle kapatılabilsin).
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent): void => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setOpen(false);
+    };
     document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [open]);
 
   // Marketing menüsünden "Bulut projelerim" (?bulut=1) ile gelince menüyü otomatik aç + listeyi tazele.
@@ -209,6 +216,8 @@ export function CloudMenu({
         type="button"
         className={`${btn} flex items-center gap-1.5`}
         title="Bulut (Kaydet/Aç)"
+        aria-haspopup="menu"
+        aria-expanded={open}
         onClick={() => {
           const next = !open;
           setOpen(next);
