@@ -132,7 +132,18 @@ export function LayerPanel({ store, layers }: LayerPanelProps) {
   useEffect(() => {
     try {
       const s = localStorage.getItem('zynpparti.layerLabels');
-      if (s) setLabels(JSON.parse(s) as Record<string, string>);
+      if (s) {
+        // Bozuk/elle düzenlenmiş veriye karşı doğrula (order ile tutarlı): yalnız string değerli düz nesne
+        // kabul; dizi/string/sayı-değer reddedilir (yoksa {...labels} string karakterlerini yayardı). L20.
+        const obj: unknown = JSON.parse(s);
+        if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+          const clean: Record<string, string> = {};
+          for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+            if (typeof v === 'string') clean[k] = v;
+          }
+          setLabels(clean);
+        }
+      }
       const o = localStorage.getItem(ORDER_KEY);
       if (o) {
         const parsed: unknown = JSON.parse(o);

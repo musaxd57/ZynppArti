@@ -134,10 +134,10 @@ function buildContext(store: EntityStore, selectedIds: string[]) {
     metrics.push(`Duvar sayısı: ${walls.length}`, `Kapı/Pencere: ${doors}/${windows}`);
   }
   if (parcels.length > 0) {
-    const pts = parcels.flatMap((p) => p.boundary);
-    if (pts.length >= 3) {
-      const w = (Math.max(...pts.map((p) => p.x)) - Math.min(...pts.map((p) => p.x))) / 100;
-      const h = (Math.max(...pts.map((p) => p.y)) - Math.min(...pts.map((p) => p.y))) / 100;
+    const b = parcelBounds(parcels);
+    if (b) {
+      const w = (b.maxX - b.minX) / 100;
+      const h = (b.maxY - b.minY) / 100;
       metrics.push(`Parsel sınırlayıcı kutu: ~${w.toFixed(1)} × ${h.toFixed(1)} m`);
     }
   }
@@ -244,14 +244,24 @@ function buildRenderPrompt(userText: string, store: EntityStore): string {
   return `Fotogerçekçi mimari iç/dış mekan görseli. ${userText}.${planNote} Gerçekçi ışık, malzeme ve perspektif; profesyonel mimari render kalitesi, insan/yazı yok.`;
 }
 
+/** Tüm parsellerin birleşik sınırlayıcı kutusu (dünya, cm); 3'ten az toplam nokta varsa null. (L23) */
+function parcelBounds(
+  parcels: readonly Parcel[],
+): { minX: number; minY: number; maxX: number; maxY: number } | null {
+  const pts = parcels.flatMap((p) => p.boundary);
+  if (pts.length < 3) return null;
+  const xs = pts.map((p) => p.x);
+  const ys = pts.map((p) => p.y);
+  return { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
+}
+
 /** Çiz modu için bağlam ipucu: parsel varsa kullanılabilir alanı (çekme paylı) AI'a bildir. */
 function buildDesignHint(store: EntityStore): string | undefined {
   const parcels = store.all().filter((e): e is Parcel => e.type === 'parcel');
-  if (parcels.length === 0) return undefined;
-  const pts = parcels.flatMap((p) => p.boundary);
-  if (pts.length < 3) return undefined;
-  const w = Math.round(Math.max(...pts.map((p) => p.x)) - Math.min(...pts.map((p) => p.x)) - 200);
-  const h = Math.round(Math.max(...pts.map((p) => p.y)) - Math.min(...pts.map((p) => p.y)) - 200);
+  const b = parcelBounds(parcels);
+  if (!b) return undefined;
+  const w = Math.round(b.maxX - b.minX - 200);
+  const h = Math.round(b.maxY - b.minY - 200);
   if (w <= 0 || h <= 0) return undefined;
   return `kullanılabilir alan yaklaşık ${w} x ${h} cm (planı parsel içine sığdır, çekme payı bırak)`;
 }
@@ -285,10 +295,10 @@ function applyLayout(
   const existing = all.filter((e): e is Wall => e.type === 'wall');
   let dx = 0;
   let dy = 0;
-  if (parcels.length > 0) {
-    const pts = parcels.flatMap((p) => p.boundary);
-    dx = Math.min(...pts.map((p) => p.x)) + 100;
-    dy = Math.min(...pts.map((p) => p.y)) + 100;
+  const pb = parcels.length > 0 ? parcelBounds(parcels) : null;
+  if (pb) {
+    dx = pb.minX + 100;
+    dy = pb.minY + 100;
   } else if (target) {
     // Planın kendi sol-üst köşesi `target`'a otursun (layout (0,0) varsaymadan — kesin konum).
     const rawMinX = Math.min(...walls.flatMap(([x1, , x2]) => [x1, x2]));
