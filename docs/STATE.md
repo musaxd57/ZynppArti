@@ -29,6 +29,7 @@
 - **EK BATCH'LER 2 (otonom, devam):** B11 (`123cb13`: L13 orphan-blob, L16 3B-export toast, L18 collab hata, L26/L27 metin) · B12 (`6321de3`: L0-L3 geometry test boşlukları, +8 test) · B13 (`98259b9`: L4 nested-batch guard +test, L11 askCopilot AbortSignal, L22 ROOM_TYPE_KEYS tek kaynak, L21 dead askDesign sil) · B14 (`a2a7e43`: L20 layerLabels doğrulama, L23 parcelBounds dedup).
 - **EK BATCH'LER 3 (otonom, kapanış):** B15 (`20fc409`: L17 Assistant hata-banner mode-scoped, L19 ProgramBuilder boş-girdi disabled) · B16 (`207b435`: L24 `EntityStore.byType<T>()` + 22 site sadeleştirme) · B17 (`2e53338`: L7 cull id-dizisi ayırmıyor `searchItems`, L14 CommandPalette combobox aria).
 - **✅ DENETİM TURU KAPANDI:** 72 onaylı bulgunun otonom-güvenli olanlarının **TAMAMI** düzeltildi (17 batch, ~20 commit, hepsi yeşil zincir + push). 4 HIGH + tüm güvenli MEDIUM/LOW.
+- **✅ SELF-REVIEW (oturum diff'i `e2d7711..HEAD`, 9 denetçi):** kendi ~22 commit'imde regresyon taraması → **1 onaylı regresyon** (oda-tohum `seededSpaces` erken-return'de sızıp sonraki model açılışına ad bulaştırabiliyordu) → tüketim recompute başına alındı + test (`22d34c7`). Diğer 8 alan temiz. Diff doğrulandı.
 - **⏸️ YALNIZ MOSES YAPABİLİR (altyapı kararı / görsel doğrulama — otonom DOKUNULMADI):**
   - **M9/M11 Paddle event-sıralama (occurred_at idempotency):** profiles'a `plan_updated_at` kolonu + webhook'ta eski-olayı-atla → şema+ürün kararı.
   - **M10 ücretsiz kota sunucu-tarafı:** şu an istemci kapısı (UX); kesin sınır için DB trigger/RPC.
