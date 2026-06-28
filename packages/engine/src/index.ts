@@ -22,4 +22,10 @@ export type { CanvasHandle } from './canvas-app';
 export type { SceneTool, ScenePointer } from './tool';
 export { TR_CHARSET, ROOM_FONT } from './charset';
 export { installRoomFont } from './room-font';
-export { buildSpaceFill, buildSpaceLabel, drawSpaceMaterial } from './render-space';
+export {
+  buildSpaceFill,
+  buildSpaceLabel,
+  drawSpaceMaterial,
+  buildSpaceMaterialSegs,
+  strokeSpaceMaterial,
+} from './render-space';

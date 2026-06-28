@@ -3,7 +3,13 @@ import { materialById, type Entity, type EntityId, type EntityStore, type StoreC
 import { SpatialIndex, type AABB } from './spatial-index';
 import { entityBounds, openingBounds } from './entity-bounds';
 import { buildWall, strokeWall } from './render-wall';
-import { buildSpaceFill, buildSpaceLabel, drawSpaceMaterial, drawSpacePerimeter } from './render-space';
+import {
+  buildSpaceFill,
+  buildSpaceLabel,
+  buildSpaceMaterialSegs,
+  strokeSpaceMaterial,
+  drawSpacePerimeter,
+} from './render-space';
 import { drawOpening } from './render-opening';
 import { drawDimension, buildDimensionLabel } from './render-dimension';
 import { drawParcel } from './render-parcel';
@@ -255,8 +261,10 @@ export class EntityLayer {
       // Zemin malzemesi tarama deseni (varsa) — dolgunun üstünde, çevre/duvarın altında.
       const material = materialById(entity.material);
       const hatch = material ? new Graphics() : null;
+      // Tarama segmentleri BİR KEZ hesaplanır (zoom'dan bağımsız) → zoom'da yalnız re-stroke (M2).
+      const hatchSegs = hatch && material ? buildSpaceMaterialSegs(entity, material) : [];
       if (hatch && material) {
-        drawSpaceMaterial(hatch, entity, material, px);
+        strokeSpaceMaterial(hatch, hatchSegs, material.color, px);
         this.spaceFill.addChild(hatch);
         objs.push(hatch);
       }
@@ -264,10 +272,11 @@ export class EntityLayer {
       drawSpacePerimeter(perimeter, entity, px);
       this.spaceFill.addChild(perimeter); // dolgunun üstünde, duvarların altında
       objs.push(perimeter);
-      // Tek redrawable: zoom'da çevre + (varsa) malzeme hatch birlikte yenilenir.
+      // Tek redrawable: zoom'da çevre + (varsa) malzeme hatch birlikte yenilenir — hatch artık yalnız
+      // re-stroke (segmentler kapanışta yakalı, yeniden hesaplanmaz).
       this.redrawables.set(entity.id, (p) => {
         drawSpacePerimeter(perimeter, entity, p);
-        if (hatch && material) drawSpaceMaterial(hatch, entity, material, p);
+        if (hatch && material) strokeSpaceMaterial(hatch, hatchSegs, material.color, p);
       });
       const label = buildSpaceLabel(entity);
       this.labelLayer.addChild(label);

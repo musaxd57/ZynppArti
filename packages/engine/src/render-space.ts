@@ -1,5 +1,5 @@
 import { BitmapText, Graphics } from 'pixi.js';
-import { hatchPattern, polygonArea, polygonLabelPoint } from '@zynpparti/geometry';
+import { hatchPattern, polygonArea, polygonLabelPoint, type Vec2 } from '@zynpparti/geometry';
 import { roomTypeColor, roomTypeOf, type Material, type Space } from '@zynpparti/document';
 import { ROOM_FONT } from './charset';
 import { LINEWEIGHTS, PALETTE } from './lineweights';
@@ -37,9 +37,35 @@ export function drawSpacePerimeter(g: Graphics, space: Space, pixelSize: number)
 }
 
 /**
- * Mahal zemin malzemesini tarama deseniyle çizer (VISUAL-CRAFT §3). Çizgiler dünya-uzaylı (cm
- * aralık), kalınlık ekran-sabit (hairline × pixelSize) → zoom'da incelir. Dolgunun üstünde,
- * çevre/duvarın altında durur. Zoom'da `pixelSize` ile yeniden çizilir.
+ * Mahal zemin tarama segmentleri (DÜNYA-uzaylı, cm; zoom'dan BAĞIMSIZ) — yalnız mahal/malzeme değişince
+ * hesaplanır. `hatchPattern` poligon bandını tarayıp her kenara karşı klipler (O(çevre/aralık × kenar)) →
+ * her zoom-kare'sinde tekrarı israftı (denetim M2, duvardaki buildWall/strokeWall ayrımının aynısı).
+ */
+export function buildSpaceMaterialSegs(space: Space, material: Material): { a: Vec2; b: Vec2 }[] {
+  if (space.boundary.length < 3) return [];
+  return hatchPattern(space.boundary, material.spacing, material.angle, material.kind);
+}
+
+/**
+ * Önceden hesaplanmış tarama segmentlerini çizer — zoom'da YALNIZ bunu çağır (geometri math'i değil).
+ * Kalınlık ekran-sabit (hairline × pixelSize) → zoom'da incelir.
+ */
+export function strokeSpaceMaterial(
+  g: Graphics,
+  segs: readonly { a: Vec2; b: Vec2 }[],
+  color: number,
+  pixelSize: number,
+): void {
+  g.clear();
+  if (segs.length === 0) return;
+  for (const s of segs) g.moveTo(s.a.x, s.a.y).lineTo(s.b.x, s.b.y);
+  g.stroke({ width: LINEWEIGHTS.hairline * pixelSize, color, alpha: 0.55 });
+}
+
+/**
+ * Mahal zemin malzemesini tarama deseniyle çizer (build + stroke tek seferde; VISUAL-CRAFT §3).
+ * Zoom'da tekrar çizilen yerlerde `buildSpaceMaterialSegs`'i BİR KEZ yapıp `strokeSpaceMaterial`
+ * kullan (EntityLayer böyle yapar) — geometri math'ini her kareye taşıma.
  */
 export function drawSpaceMaterial(
   g: Graphics,
@@ -47,11 +73,7 @@ export function drawSpaceMaterial(
   material: Material,
   pixelSize: number,
 ): void {
-  g.clear();
-  if (space.boundary.length < 3) return;
-  const segs = hatchPattern(space.boundary, material.spacing, material.angle, material.kind);
-  for (const s of segs) g.moveTo(s.a.x, s.a.y).lineTo(s.b.x, s.b.y);
-  g.stroke({ width: LINEWEIGHTS.hairline * pixelSize, color: material.color, alpha: 0.55 });
+  strokeSpaceMaterial(g, buildSpaceMaterialSegs(space, material), material.color, pixelSize);
 }
 
 /** Mahal etiketini (ad + canlı m²) merkeze yerleştirir. BitmapText → TR_CHARSET atlası. */
