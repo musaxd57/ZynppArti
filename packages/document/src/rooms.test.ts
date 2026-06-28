@@ -124,6 +124,90 @@ describe('RoomManager', () => {
     rm.destroy();
   });
 
+  it('yüklenen mahali TOHUM verince ad/tip/malzeme geri gelir (kaydet→aç veri kaybı, denetim H0)', () => {
+    // Taze oturum: store'da yalnız duvarlar var (mahaller kaydedilirken çıkarıldı). Kaydedilmiş mahal
+    // tohum verilir → recompute centroid eşleşmesiyle adı/tipi/malzemeyi yeni türetilen yüze taşır.
+    const store = squareStore();
+    const seeded: Space = {
+      id: 'old',
+      type: 'space',
+      layerId: 'rooms',
+      name: 'Mutfak',
+      roomType: 'kitchen',
+      material: 'seramik',
+      boundary: [
+        { x: 0, y: 0 },
+        { x: 400, y: 0 },
+        { x: 400, y: 300 },
+        { x: 0, y: 300 },
+      ],
+    };
+    const rm = new RoomManager(store, [seeded]);
+    const after = spaces(store)[0]!;
+    expect(after.name).toBe('Mutfak');
+    expect(after.roomType).toBe('kitchen');
+    expect(after.material).toBe('seramik');
+    expect(after.id).not.toBe('old'); // türetilmiş yeni mahal — tohum store'a yazılmadı
+    rm.destroy();
+  });
+
+  it('seedSpaces sonra duvar değişimi adı geri getirir ve tohum bir kez tüketilir', () => {
+    const store = new EntityStore();
+    const rm = new RoomManager(store); // boş başla
+    rm.seedSpaces([
+      {
+        id: 'old',
+        type: 'space',
+        layerId: 'rooms',
+        name: 'Banyo',
+        boundary: [
+          { x: 0, y: 0 },
+          { x: 400, y: 0 },
+          { x: 400, y: 300 },
+          { x: 0, y: 300 },
+        ],
+      },
+    ]);
+    const walls = [wall(0, 0, 400, 0), wall(400, 0, 400, 300), wall(400, 300, 0, 300), wall(0, 300, 0, 0)];
+    for (const w of walls) store.put(w);
+    store.emit({ added: walls.map((w) => w.id), updated: [], removed: [] });
+    expect(spaces(store)[0]!.name).toBe('Banyo');
+    // Tohum tüketildi: store'daki adı değiştir + recompute → eski tohum yeniden uygulanmamalı.
+    store.put({ ...spaces(store)[0]!, name: 'Banyo 2' });
+    rm.recompute();
+    expect(spaces(store)[0]!.name).toBe('Banyo 2');
+    rm.destroy();
+  });
+
+  it('bir kenar çok alt-bölünse de ad eşleşir (alan-ağırlıklı centroid, denetim M0)', () => {
+    // Tohum sınırının alt kenarında fazladan colinear noktalar var → KÖŞE-ortalaması (200,~55) yüz
+    // centroid'inden (200,150) >50 cm kayar ve eski yöntem eşleşmezdi; ALAN-ağırlıklı centroid (200,150)
+    // sabit kalır → ad korunur.
+    const store = squareStore();
+    const seeded: Space = {
+      id: 'old',
+      type: 'space',
+      layerId: 'rooms',
+      name: 'Oda',
+      boundary: [
+        { x: 0, y: 0 },
+        { x: 50, y: 0 },
+        { x: 100, y: 0 },
+        { x: 150, y: 0 },
+        { x: 200, y: 0 },
+        { x: 250, y: 0 },
+        { x: 300, y: 0 },
+        { x: 350, y: 0 },
+        { x: 400, y: 0 },
+        { x: 400, y: 300 },
+        { x: 0, y: 300 },
+      ],
+    };
+    const rm = new RoomManager(store, [seeded]);
+    expect(spaces(store)[0]!.name).toBe('Oda');
+    rm.destroy();
+  });
+
   it('destroy sonrası değişikliklere tepki vermez', () => {
     const store = squareStore();
     const rm = new RoomManager(store);

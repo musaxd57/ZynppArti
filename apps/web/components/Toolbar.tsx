@@ -15,6 +15,7 @@ import {
   type EntityStore,
   type History,
   type Sheet,
+  type Space,
 } from '@zynpparti/document';
 import type { ToolManager, ToolName } from '@zynpparti/tools';
 import { importDxf, importDwg, exportDxf, exportSvg } from '@zynpparti/io';
@@ -58,6 +59,8 @@ interface ToolbarProps {
   /** Zen modu: sol+sağ paneller gizli mi + aç/kapat. */
   chromeHidden?: boolean;
   onToggleChrome?: () => void;
+  /** Yüklenen mahalleri RoomManager'a tohum ver (ad/tip/malzeme geri gelsin) — model açma yollarında. */
+  seedRooms?: (spaces: readonly Space[]) => void;
 }
 
 /**
@@ -95,6 +98,7 @@ export function Toolbar({
   onOpenAssistant,
   chromeHidden,
   onToggleChrome,
+  seedRooms,
 }: ToolbarProps) {
   const [active, setActive] = useState<ToolName>(manager.activeTool);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -369,6 +373,8 @@ export function Toolbar({
       const loaded = deserializeModel(await file.text());
       // Mahaller (space) duvarlardan RoomManager ile türetilir → yüklemede atlanır, yeniden hesaplanır.
       const toAdd = loaded.filter((ent) => ent.type !== 'space');
+      // Kaydedilen mahalleri TOHUM ver: dispatch sonrası recompute, adı/tip/malzemeyi geri taşır (denetim H0).
+      seedRooms?.(loaded.filter((ent): ent is Space => ent.type === 'space'));
       // "Aç" = değiştir (tek undo). Ortak id'ler Update (Remove+Add DEĞİL) → aynı modeli tekrar açmak
       // BatchCommand tek-id kuralına takılmaz (denetim bulgusu).
       const cmds = replaceEntitiesCommands(store.all().filter((ent) => ent.type !== 'space'), toAdd);
@@ -449,7 +455,7 @@ export function Toolbar({
       <button type="button" onClick={() => jsonRef.current?.click()} className={btn} title="Model aç (.json) — Ctrl+O">
         Aç
       </button>
-      <CloudMenu store={store} history={history} zoomToFit={zoomToFit} />{/* giriş yoksa kendini gizler */}
+      <CloudMenu store={store} history={history} zoomToFit={zoomToFit} seedRooms={seedRooms} />{/* giriş yoksa kendini gizler */}
       <PlanBadge />{/* giriş yoksa kendini gizler */}
       <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button type="button" onClick={() => fileRef.current?.click()} className={btn}>

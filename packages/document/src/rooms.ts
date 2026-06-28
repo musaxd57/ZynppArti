@@ -1,4 +1,4 @@
-import { findFaces, type Segment, type Vec2 } from '@zynpparti/geometry';
+import { findFaces, polygonCentroid, type Segment, type Vec2 } from '@zynpparti/geometry';
 import type { EntityStore, StoreChange } from './store';
 import type { EntityId, Space, Wall } from './entities';
 import { AddEntity, RemoveEntity } from './command';
@@ -24,10 +24,27 @@ export class RoomManager {
   private knownWalls = new Set<EntityId>();
   private recomputing = false;
   private readonly unsubscribe: () => void;
+  /**
+   * Yüklenen (kaydedilmiş) mahaller — SONRAKİ recompute'un eşleşme kaynağına eklenir, bir kez tüketilir.
+   * Sebep (denetim H0): kaydet→aç turunda mahaller store'a girmeden çıkarılır; eşleşecek "eski" mahal
+   * olmadığından ad/tip/malzeme 'Mahal'a düşerdi. Bunları tohum verince centroid eşleşmesi adı geri taşır.
+   */
+  private seededSpaces: Space[] = [];
 
-  constructor(private readonly store: EntityStore) {
+  constructor(private readonly store: EntityStore, initialSpaces?: readonly Space[]) {
     this.unsubscribe = store.subscribe((c) => this.onChange(c));
+    if (initialSpaces?.length) this.seedSpaces(initialSpaces);
     this.recompute();
+  }
+
+  /**
+   * Yüklenen mahalleri sonraki recompute'un ad/tip/malzeme eşleşme kaynağına ekler (store'a YAZMAZ —
+   * türetilmiş mahallerle çakışmasın). Çağıran hemen ardından duvarları dispatch eder → recompute tetiklenir.
+   */
+  seedSpaces(spaces: readonly Space[]): void {
+    for (const s of spaces) {
+      if (s.type === 'space' && s.boundary.length >= 3) this.seededSpaces.push(s);
+    }
   }
 
   private onChange(change: StoreChange): void {
@@ -60,15 +77,19 @@ export class RoomManager {
       return;
     }
 
-    const oldSpaces = this.store.all().filter((e): e is Space => e.type === 'space');
+    // Store'daki mahaller silinip yeniden türetilir; eşleşme kaynağı = store + tohum (yüklenen mahaller).
+    const storeSpaces = this.store.all().filter((e): e is Space => e.type === 'space');
+    const matchSources: Space[] = [...storeSpaces, ...this.seededSpaces];
 
     // BİRE-BİR eşleştirme: her eski mahal en fazla BİR yeni yüze ad/tip/malzeme verir. Aksi halde bir oda
     // ikiye bölününce ve iki çocuk centroid'i de eski centroid'in toleransındaysa, aynı eski mahal iki
     // çocuğa birden kopyalanır (Y1). Açgözlü en-yakın-önce: tüm (yüz, eskiMahal) çiftlerini mesafeye göre
     // sırala; ikisi de boştaysa eşle, ikisini de tüketilmiş işaretle.
-    const faceCentroids = faces.map((b) => centroid(b));
-    const oldValid = oldSpaces
-      .map((s, i) => ({ i, c: centroid(s.boundary), ok: s.boundary.length >= 3 }))
+    // Alan-ağırlıklı centroid (M0): bir kenara ara nokta eklenince poligon ŞEKLİ değişmez → centroid sabit
+    // kalır; köşe-ortalaması ise kayar ve ad eşleşmesi kopardı.
+    const faceCentroids = faces.map((b) => polygonCentroid(b));
+    const oldValid = matchSources
+      .map((s, i) => ({ i, c: polygonCentroid(s.boundary), ok: s.boundary.length >= 3 }))
       .filter((o) => o.ok);
     const pairs: Array<{ fi: number; oi: number; d: number }> = [];
     for (let fi = 0; fi < faces.length; fi++) {
@@ -86,7 +107,7 @@ export class RoomManager {
       if (usedFace.has(p.fi) || usedOld.has(p.oi)) continue;
       usedFace.add(p.fi);
       usedOld.add(p.oi);
-      matchOf.set(p.fi, oldSpaces[p.oi]!);
+      matchOf.set(p.fi, matchSources[p.oi]!);
     }
 
     const newSpaces: Space[] = faces.map((boundary, fi) => {
@@ -107,32 +128,23 @@ export class RoomManager {
     // bir daha hiç mahal hesaplamaz). Denetim bulgusu.
     this.recomputing = true;
     try {
-      for (const s of oldSpaces) new RemoveEntity(s.id).apply(this.store);
+      // Yalnız STORE'daki mahaller silinir (tohum mahaller store'da değil — yalnız eşleşme kaynağıydı).
+      for (const s of storeSpaces) new RemoveEntity(s.id).apply(this.store);
       for (const s of newSpaces) new AddEntity(s).apply(this.store);
       this.store.emit({
         added: newSpaces.map((s) => s.id),
         updated: [],
-        removed: oldSpaces.map((s) => s.id),
+        removed: storeSpaces.map((s) => s.id),
       });
     } finally {
       this.recomputing = false;
+      this.seededSpaces = []; // tohum bu turda tüketildi (adlar artık türetilmiş mahallerde yaşıyor)
     }
   }
 
   destroy(): void {
     this.unsubscribe();
   }
-}
-
-function centroid(poly: readonly Vec2[]): Vec2 {
-  let x = 0;
-  let y = 0;
-  for (const p of poly) {
-    x += p.x;
-    y += p.y;
-  }
-  const n = poly.length || 1;
-  return { x: x / n, y: y / n };
 }
 
 function dist(a: Vec2, b: Vec2): number {

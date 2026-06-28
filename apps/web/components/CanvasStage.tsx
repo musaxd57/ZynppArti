@@ -21,6 +21,7 @@ import {
   createEntityId,
   nextSheetPosition,
   type Sheet,
+  type Space,
 } from '@zynpparti/document';
 import { ToolManager, createSnapper } from '@zynpparti/tools';
 import { seedDemo } from '@/lib/demo-seed';
@@ -70,6 +71,7 @@ export function CanvasStage() {
     zoomToFit: () => void;
     zoomToBounds: CanvasHandle['zoomToBounds'];
     viewportBounds: CanvasHandle['viewportBounds'];
+    seedRooms: (spaces: readonly Space[]) => void;
   } | null>(null);
   const [collab, setCollab] = useState<CollabHandle | null>(null);
   const [pageCount, setPageCount] = useState(1); // boş sayfa (grid karesi) sayısı — kullanıcı çoğaltır
@@ -217,10 +219,14 @@ export function CanvasStage() {
     // (collab/?ciz baypası veya doğrudan açılış) ise eski davranış: demo tohum.
     const pendingOpen = consumePendingOpen();
     const startEmpty = isStartEmpty();
+    // Yüklenen mahaller RoomManager'a TOHUM verilir (ad/tip/malzeme geri gelsin — denetim H0); store'a
+    // yazılmaz, türetilirler. RoomManager ilk recompute'ta tohumla eşleştirir.
+    const seededSpaces: Space[] = [];
     if (pendingOpen) {
       try {
         for (const e of deserializeModel(pendingOpen)) {
-          if (e.type !== 'space') store.put(e); // mahaller RoomManager'ca yeniden türetilir
+          if (e.type === 'space') seededSpaces.push(e);
+          else store.put(e); // mahaller RoomManager'ca yeniden türetilir
         }
       } catch (err) {
         console.error('Başlangıç model açma başarısız:', err);
@@ -248,7 +254,7 @@ export function CanvasStage() {
       if (pendingOpen) h.zoomToFit();
       const history = new History(store);
       // Mahalleri otomatik bul (engine entity katmanı abone olduktan sonra).
-      rooms = new RoomManager(store);
+      rooms = new RoomManager(store, seededSpaces);
       const snapIndicator = createSnapIndicator(h.overlay);
       manager = new ToolManager({
         store,
@@ -346,6 +352,7 @@ export function CanvasStage() {
         zoomToFit: h.zoomToFit,
         zoomToBounds: h.zoomToBounds,
         viewportBounds: h.viewportBounds,
+        seedRooms: (spaces) => rooms?.seedSpaces(spaces),
       });
     }).catch((err) => {
       // PixiJS init başarısız (WebGL yok/bellek) → sonsuz "yükleniyor" yerine hata göster.
@@ -451,6 +458,7 @@ export function CanvasStage() {
           onOpenAssistant={() => setAssistantOpen(true)}
           chromeHidden={chromeHidden}
           onToggleChrome={() => setChromeHidden((v) => !v)}
+          seedRooms={ui.seedRooms}
         />
       )}
       <div className="relative flex min-h-0 flex-1">

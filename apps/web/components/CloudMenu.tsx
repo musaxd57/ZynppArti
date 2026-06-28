@@ -7,6 +7,7 @@ import {
   deserializeModel,
   type EntityStore,
   type History,
+  type Space,
 } from '@zynpparti/document';
 import { Cloud } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/supabase/client';
@@ -46,10 +47,12 @@ export function CloudMenu({
   store,
   history,
   zoomToFit,
+  seedRooms,
 }: {
   store: EntityStore;
   history: History;
   zoomToFit?: () => void;
+  seedRooms?: (spaces: readonly Space[]) => void;
 }): React.ReactElement | null {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
@@ -158,6 +161,8 @@ export function CloudMenu({
     try {
       const loaded = deserializeModel(await loadProjectFromCloud(p.id));
       const toAdd = loaded.filter((ent) => ent.type !== 'space'); // mahaller türetilir
+      // Kaydedilen mahalleri TOHUM ver → recompute ad/tip/malzemeyi geri taşır (denetim H0).
+      seedRooms?.(loaded.filter((ent): ent is Space => ent.type === 'space'));
       // Ortak id'ler Update (Remove+Add DEĞİL) → BatchCommand tek-id kuralına takılmaz (denetim bulgusu).
       const cmds = replaceEntitiesCommands(store.all().filter((ent) => ent.type !== 'space'), toAdd);
       if (cmds.length > 0) {
