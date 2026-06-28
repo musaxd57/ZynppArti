@@ -81,14 +81,21 @@ export function ProgramBuilder({ onApply }: { onApply: (prompt: string) => void 
             className="mt-1 w-full resize-none rounded-md px-2 py-1.5 text-xs outline-none"
             style={{ background: 'var(--surface-3)', color: 'var(--text-1)' }}
           />
-          <button
-            type="button"
-            onClick={() => onApply(buildProgramPrompt(counts, totalM2, notes))}
-            className="mt-1 rounded-md px-3 py-1.5 text-sm font-semibold text-white"
-            style={{ background: 'var(--accent)' }}
-          >
-            Tarifi hazırla
-          </button>
+          {(() => {
+            const prompt = buildProgramPrompt(counts, totalM2, notes);
+            return (
+              <button
+                type="button"
+                disabled={!prompt}
+                onClick={() => onApply(prompt)}
+                title={prompt ? undefined : 'En az bir oda ekle'}
+                className="mt-1 rounded-md px-3 py-1.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ background: 'var(--accent)' }}
+              >
+                {prompt ? 'Tarifi hazırla' : 'En az bir oda ekle'}
+              </button>
+            );
+          })()}
         </div>
       )}
     </div>

@@ -479,6 +479,10 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
     }
   }, [initialCiz]);
 
+  // Mod değişince hata bandını temizle (denetim L17): Render'da oluşan hata Sor sekmesine geçince
+  // o thread'in altına yapışıp Sor hatası gibi görünmesin (error tek paylaşımlı string).
+  useEffect(() => setError(null), [mode]);
+
   const messages = threads[mode];
   const loading = loadingMode !== null;
   const nextId = (): string => `m${++idRef.current}`;
