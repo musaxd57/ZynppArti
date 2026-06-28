@@ -60,6 +60,8 @@ export class SelectTool implements SceneTool {
   private marqueeStart: Vec2 | null = null;
   /** Aktif tutamaç sürüklemesi (yalnız tek seçimde). */
   private dragHandle: { entity: Entity; index: number } | null = null;
+  /** Tutamaca basıldığı dünya konumu — sürükleme eşiği için (saf tık no-op olmalı). */
+  private dragHandleDown: Vec2 | null = null;
 
   /** Tutamaç sürüklerken snap'te hariç tutulacak id (kendi diğer ucuna yapışmasın). */
   private get dragExclude(): ReadonlySet<EntityId> | undefined {
@@ -95,6 +97,7 @@ export class SelectTool implements SceneTool {
         const idx = this.hitHandle(sel, p.world);
         if (idx >= 0) {
           this.dragHandle = { entity: sel, index: idx };
+          this.dragHandleDown = p.world;
           this.renderHover(null);
           return;
         }
@@ -155,13 +158,21 @@ export class SelectTool implements SceneTool {
   }
 
   onPointerUp(p: ScenePointer): void {
-    // Tutamaç sürüklemesi commit.
+    // Tutamaç sürüklemesi commit — yalnız GERÇEKTEN sürüklendiyse (eşik üstü).
     if (this.dragHandle) {
-      const np = this.ctx.snap(p.world, this.dragExclude);
-      this.ctx.history.dispatch(
-        new UpdateEntity(this.applyHandle(this.dragHandle.entity, this.dragHandle.index, np)),
-      );
+      const moved = this.dragHandleDown
+        ? Math.hypot(p.world.x - this.dragHandleDown.x, p.world.y - this.dragHandleDown.y)
+        : Infinity;
+      // Eşik altı = saf tık: snap imleci başka bir yakın noktaya/ızgaraya çekip tutamacı sessizce
+      // kaydırmasın + no-op UpdateEntity undo yığınını kirletmesin (denetim M4).
+      if (moved > DRAG_PX * this.ctx.pixelSize()) {
+        const np = this.ctx.snap(p.world, this.dragExclude);
+        this.ctx.history.dispatch(
+          new UpdateEntity(this.applyHandle(this.dragHandle.entity, this.dragHandle.index, np)),
+        );
+      }
       this.dragHandle = null;
+      this.dragHandleDown = null;
       this.ghostGfx.clear();
       this.renderSelection();
       return;
@@ -215,6 +226,12 @@ export class SelectTool implements SceneTool {
         e.preventDefault();
       }
     } else if (e.key === 'Escape') {
+      // Süren jesti (tutamaç/taşı/kutu-seçim) İPTAL et → sonraki pointer-up commit ETMESİN (denetim M3).
+      // Eskiden yalnız seçim temizleniyordu; dragHandle/moveOriginals duruyor, trailing up düzenlemeyi
+      // yine de uyguluyordu (Escape = CAD'de "işlemi iptal", sessizce başarısız oluyordu).
+      this.dragHandle = null;
+      this.dragHandleDown = null;
+      this.endGesture(); // ghost/marquee temizle + downWorld/downHitId/moveOriginals/marqueeStart sıfırla + faz UP
       this.setSelection([]);
     }
   }
@@ -252,6 +269,7 @@ export class SelectTool implements SceneTool {
     this.setSelection([]);
     this.renderHover(null);
     this.dragHandle = null;
+    this.dragHandleDown = null;
     this.endGesture();
     this.phase.send({ type: 'RESET' });
   }
