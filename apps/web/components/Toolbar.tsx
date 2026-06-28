@@ -23,6 +23,7 @@ import { alertDialog, confirmDialog } from '@/lib/dialog';
 import { toast } from '@/lib/toast';
 import { projectFileBase, useProjectName, setProjectName, DEFAULT_PROJECT_NAME } from '@/lib/project-name';
 import { clearCloudProjectId } from '@/lib/cloud-project';
+import { saveCurrentToCloud } from '@/lib/cloud-save';
 import { VesnaLogo } from './VesnaLogo';
 import { CloudMenu } from './CloudMenu';
 import { PlanBadge } from './PlanBadge';
@@ -108,7 +109,7 @@ export function Toolbar({
       const k = e.key.toLowerCase();
       if (k === 's') {
         e.preventDefault();
-        onSaveJson();
+        void handleSave();
       } else if (k === 'o') {
         e.preventDefault();
         jsonRef.current?.click();
@@ -331,6 +332,24 @@ export function Toolbar({
     toast('Model kaydedildi (.json).', 'success');
   }
 
+  /**
+   * Ctrl+S / "Kaydet" birincil kayıt: giriş yapılmışsa BULUTA kaydeder (bağlı projeye üzerine yazar,
+   * yoksa yeni proje açar) → kullanıcı kaldığı yerden devam eder. Giriş yoksa eski davranış: yerel .json
+   * indir. Böylece kaydetmek için aşağı açılan "Bulut" menüsünü açmak gerekmez (Moses isteği).
+   */
+  async function handleSave(): Promise<void> {
+    const res = await saveCurrentToCloud(store);
+    if (res.status === 'unauthenticated') {
+      onSaveJson(); // bulut kapalı / giriş yok → yerel .json indir
+    } else if (res.status === 'saved') {
+      toast(res.isNew ? 'Buluta kaydedildi (yeni proje).' : 'Buluta kaydedildi.', 'success');
+    } else if (res.status === 'blocked') {
+      toast(res.message, 'error', 6000);
+    } else {
+      toast(res.message, 'error', 5000);
+    }
+  }
+
   async function onOpenJson(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -413,7 +432,7 @@ export function Toolbar({
       <button type="button" onClick={() => void onNewModel()} className={btn} title="Yeni / temizle">
         Yeni
       </button>
-      <button type="button" onClick={onSaveJson} className={btn} title="Modeli kaydet (.json) — Ctrl+S">
+      <button type="button" onClick={() => void handleSave()} className={btn} title="Kaydet (Ctrl+S) — giriş yapılmışsa buluta, değilse .json olarak">
         Kaydet
       </button>
       <button type="button" onClick={() => jsonRef.current?.click()} className={btn} title="Model aç (.json) — Ctrl+O">

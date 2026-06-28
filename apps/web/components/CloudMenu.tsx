@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import {
   BatchCommand,
   replaceEntitiesCommands,
-  serializeModel,
   deserializeModel,
   type EntityStore,
   type History,
@@ -12,15 +11,13 @@ import {
 import { Cloud } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/supabase/client';
 import {
-  saveProjectToCloud,
   listCloudProjects,
   loadProjectFromCloud,
   deleteCloudProject,
-  getProfile,
   type CloudProject,
 } from '@/lib/supabase/projects';
-import { isPaidPlan, PLAN_QUOTAS } from '@/lib/plan';
-import { useProjectName, setProjectName } from '@/lib/project-name';
+import { saveCurrentToCloud } from '@/lib/cloud-save';
+import { setProjectName } from '@/lib/project-name';
 import { useCloudProjectId, setCloudProjectId } from '@/lib/cloud-project';
 import { toast } from '@/lib/toast';
 import { confirmDialog } from '@/lib/dialog';
@@ -54,14 +51,12 @@ export function CloudMenu({
   history: History;
   zoomToFit?: () => void;
 }): React.ReactElement | null {
-  const projectName = useProjectName();
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [projects, setProjects] = useState<CloudProject[] | null>(null);
   const [query, setQuery] = useState('');
   const [uid, setUid] = useState<string | null>(null);
-  const [plan, setPlan] = useState<string>('free');
   const [shareTarget, setShareTarget] = useState<CloudProject | null>(null);
   // Açık bulut projesinin id'si → tekrar "Kaydet" üzerine yazar. PAYLAŞILAN store: "Yeni"/yerel "Aç"
   // doküman değiştirince sıfırlanır → ilgisiz çizimi yanlış projeye yazma önlenir (denetim bulgusu).
@@ -79,7 +74,6 @@ export function CloudMenu({
       if (!active) return;
       setSignedIn(!!data.user);
       setUid(data.user?.id ?? null);
-      if (data.user) void getProfile().then((p) => active && setPlan(p?.plan ?? 'free')).catch(() => {});
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setSignedIn(!!session?.user);
@@ -116,65 +110,29 @@ export function CloudMenu({
 
   if (!signedIn) return null; // anahtar yok ya da giriş yok → gizli (anonim akış)
 
-  /**
-   * Ücretsiz plan kotası (ADR-0048): YENİ bulut projesi oluşturmadan önce sahip-olunan proje sayısını
-   * kontrol eder. Limit dolduysa engeller + yükselt mesajı. Üzerine-yazma (mevcut id) bu kapıdan geçmez.
-   * NOT: bu istemci kapısıdır (UX); kesin sınır için ileride sunucu/DB trigger eklenebilir.
-   */
-  async function ensureCanCreate(): Promise<boolean> {
-    if (isPaidPlan(plan)) return true;
-    let list = projects;
-    if (list === null) {
-      try {
-        list = await listCloudProjects();
-        setProjects(list);
-      } catch {
-        return true; // liste alınamadıysa kullanıcıyı engelleme (kapı sağlamlığı)
+  /** Ortak kaydet sonucu işleme (kota/hata toast'ı + liste tazeleme). Kaydet yolu `saveCurrentToCloud`. */
+  async function runSave(asNew: boolean): Promise<void> {
+    setBusy(true);
+    try {
+      const res = await saveCurrentToCloud(store, { asNew });
+      if (res.status === 'saved') {
+        setProjects(null); // liste bayatladı
+        toast(res.isNew ? 'Yeni bulut projesi oluşturuldu.' : 'Buluta kaydedildi.', 'success');
+        setOpen(false);
+      } else if (res.status === 'blocked') {
+        toast(res.message, 'error', 6000);
+      } else if (res.status === 'error') {
+        toast(res.message, 'error', 5000);
       }
-    }
-    const owned = list.filter((p) => !p.owner || p.owner === uid).length;
-    const cap = PLAN_QUOTAS.free.cloudProjects;
-    if (owned >= cap) {
-      toast(`Ücretsiz planda en fazla ${cap} bulut proje saklayabilirsin. Daha fazlası için Pro’ya geç.`, 'error', 6000);
-      return false;
-    }
-    return true;
-  }
-
-  async function save(): Promise<void> {
-    if (!currentId && !(await ensureCanCreate())) return; // yeni proje → kota kontrolü
-    setBusy(true);
-    try {
-      const { id } = await saveProjectToCloud({ id: currentId, name: projectName, json: serializeModel(store.all()) });
-      setCloudProjectId(id);
-      setProjects(null); // liste bayatladı
-      toast('Buluta kaydedildi.', 'success');
-      setOpen(false);
-    } catch (err) {
-      console.error('Bulut kaydetme hatası:', err);
-      toast(err instanceof Error ? err.message : 'Buluta kaydedilemedi.', 'error', 5000);
+      // 'unauthenticated' burada olmaz: CloudMenu yalnız giriş yapılmışken render edilir.
     } finally {
       setBusy(false);
     }
   }
 
-  /** Farklı kaydet — currentId yok sayılır, her zaman YENİ bulut projesi oluşturur. */
-  async function saveAsNew(): Promise<void> {
-    if (!(await ensureCanCreate())) return; // yeni proje → kota kontrolü
-    setBusy(true);
-    try {
-      const { id } = await saveProjectToCloud({ name: projectName, json: serializeModel(store.all()) });
-      setCloudProjectId(id);
-      setProjects(null);
-      toast('Yeni bulut projesi oluşturuldu.', 'success');
-      setOpen(false);
-    } catch (err) {
-      console.error('Bulut farklı-kaydet hatası:', err);
-      toast(err instanceof Error ? err.message : 'Kaydedilemedi.', 'error', 5000);
-    } finally {
-      setBusy(false);
-    }
-  }
+  const save = (): Promise<void> => runSave(false);
+  /** Farklı kaydet — bağ yok sayılır, her zaman YENİ bulut projesi oluşturur. */
+  const saveAsNew = (): Promise<void> => runSave(true);
 
   async function refreshList(): Promise<void> {
     setBusy(true);
