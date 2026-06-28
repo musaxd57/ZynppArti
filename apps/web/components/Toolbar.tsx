@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { jsPDF } from 'jspdf';
 import { svg2pdf } from 'svg2pdf.js';
 import {
@@ -99,29 +100,48 @@ export function Toolbar({
   seedRooms,
 }: ToolbarProps) {
   const [active, setActive] = useState<ToolName>(manager.activeTool);
-  const [exportOpen, setExportOpen] = useState(false); // "İndir ▾" menüsü (DXF/SVG/PNG/PDF tek menüde)
+  // "İndir ▾" menüsü. Üst çubuk overflow-x-auto ile kırptığından menü PORTAL ile body'ye, sabit konuma
+  // çizilir (yoksa çubuğun içinde kesilip kaydırma gerektiriyordu — Moses). Konum açılışta ölçülür.
+  const [exportPos, setExportPos] = useState<{ top: number; left: number } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const jsonRef = useRef<HTMLInputElement>(null);
-  const exportRef = useRef<HTMLDivElement>(null);
+  const exportBtnRef = useRef<HTMLButtonElement>(null);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => manager.subscribe(setActive), [manager]);
 
-  // İndir menüsü: dışarı tıkla / Escape → kapat.
+  // İndir menüsü: dışarı tıkla / Escape / kaydırma-yeniden boyut → kapat.
   useEffect(() => {
-    if (!exportOpen) return;
+    if (!exportPos) return;
     const onDown = (e: MouseEvent): void => {
-      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false);
+      const t = e.target as Node;
+      if (!exportBtnRef.current?.contains(t) && !exportMenuRef.current?.contains(t)) setExportPos(null);
     };
     const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') setExportOpen(false);
+      if (e.key === 'Escape') setExportPos(null);
     };
+    const close = (): void => setExportPos(null);
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
+    window.addEventListener('resize', close);
+    window.addEventListener('scroll', close, true);
     return () => {
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', close);
+      window.removeEventListener('scroll', close, true);
     };
-  }, [exportOpen]);
+  }, [exportPos]);
+
+  /** İndir menüsünü aç/kapat — açarken trigger butonun ekran konumunu ölçer (sabit-konum portal). */
+  const toggleExport = (): void => {
+    if (exportPos) {
+      setExportPos(null);
+      return;
+    }
+    const r = exportBtnRef.current?.getBoundingClientRect();
+    if (r) setExportPos({ top: r.bottom + 4, left: r.left });
+  };
 
   // Dosya kısayolları: Ctrl+S (kaydet) / Ctrl+O (aç). Tarayıcının kendi diyaloglarını bastır.
   useEffect(() => {
@@ -473,22 +493,25 @@ export function Toolbar({
       <button type="button" onClick={() => fileRef.current?.click()} className={btn}>
         CAD Yükle
       </button>
-      {/* İndir ▾ — DXF/SVG/PNG/PDF tek menüde (üst çubuk sadeliği; hiçbir format kaybolmadı). */}
-      <div ref={exportRef} className="relative shrink-0">
-        <button
-          type="button"
-          onClick={() => setExportOpen((o) => !o)}
-          className={`${btn} flex items-center gap-1`}
-          aria-haspopup="menu"
-          aria-expanded={exportOpen}
-          title="Çizimi dışa aktar (DXF / SVG / PNG / PDF)"
-        >
-          <Download size={15} /> İndir <ChevronDown size={13} />
-        </button>
-        {exportOpen && (
+      {/* İndir ▾ — DXF/SVG/PNG/PDF tek menüde. Menü PORTAL ile çubuğun overflow'unun DIŞINA çizilir. */}
+      <button
+        ref={exportBtnRef}
+        type="button"
+        onClick={toggleExport}
+        className={`${btn} flex shrink-0 items-center gap-1`}
+        aria-haspopup="menu"
+        aria-expanded={!!exportPos}
+        title="Çizimi dışa aktar (DXF / SVG / PNG / PDF)"
+      >
+        <Download size={15} /> İndir <ChevronDown size={13} />
+      </button>
+      {exportPos &&
+        createPortal(
           <div
+            ref={exportMenuRef}
             role="menu"
-            className="absolute left-0 top-full z-40 mt-1 w-32 rounded-lg border border-[var(--border-soft)] bg-[var(--surface-2)] p-1 shadow-lg"
+            style={{ position: 'fixed', top: exportPos.top, left: exportPos.left }}
+            className="z-[80] w-32 rounded-lg border border-[var(--border-soft)] bg-[var(--surface-2)] p-1 text-[13px] shadow-2xl"
           >
             {(
               [
@@ -504,16 +527,16 @@ export function Toolbar({
                 role="menuitem"
                 onClick={() => {
                   run();
-                  setExportOpen(false);
+                  setExportPos(null);
                 }}
                 className="block w-full rounded-md px-3 py-1.5 text-left text-[var(--text-2)] transition-colors hover:bg-[var(--surface-3)] hover:text-[var(--text-1)]"
               >
                 {label} indir
               </button>
             ))}
-          </div>
+          </div>,
+          document.body,
         )}
-      </div>
       <button
         type="button"
         onClick={() => onToggleChrome?.()}
