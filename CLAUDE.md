@@ -54,7 +54,7 @@ Rayon'un kanıtlanmış formülünü koruyoruz (2D öncelikli, tarayıcı öncel
 
 > Bu bölüm sadece **tek satır** özet içerir; gerçek durum `docs/STATE.md`'de.
 
-**🚀 CANLI YAYINDA** (`vesna.design` — Vercel web + Railway sync). **Faz 1–2 TAMAM** (çizim/import/mahal + canlı metrik + atıflı Türkçe yönetmelik copilot'u + **paralı AI açıldı**: 3-sağlayıcı router'lı doğal-dil copilot/Sor + Çiz + Render). **Faz 3 v1** (Yjs presence/seçim/yorum — kalıcılık+auth yok), **Faz 4/5 önizleme** (AI üretici + 3B/kesit/glTF/kamera). AI adı **Vesna**. Detay + sınırlar: `docs/STATE.md`. Yayın/runbook: `docs/DEPLOY.md`.
+**🚀 CANLI YAYINDA** (`vesna.design` — Vercel web + Railway sync). **Faz 1–2 TAMAM** (çizim/import/mahal + canlı metrik + atıflı Türkçe yönetmelik copilot'u + **paralı AI açıldı**: 3-sağlayıcı router'lı doğal-dil copilot/Sor + Çiz + Render). **Faz 3 v1** (Yjs presence/seçim/yorum; Supabase auth + bulut kalıcılık/paylaşım CANLI — gerçek zamanlı çok-yazar henüz v1), **Faz 4/5 önizleme** (AI üretici + 3B/kesit/glTF/kamera). AI adı **Vesna**. Detay + sınırlar: `docs/STATE.md`. Yayın/runbook: `docs/DEPLOY.md`.
 
 ---
 
@@ -70,8 +70,8 @@ pnpm test               # birim testleri (Vitest)
 pnpm lint               # ESLint
 pnpm format             # Prettier (format:check = yalnız kontrol)
 pnpm typecheck          # tsc --noEmit (TÜM paketlerde tip kontrolü)
-# NOT: test:watch / test:e2e henüz yok (Playwright kurulu değil; tarayıcı doğrulaması
-#      şu an headless Chrome/CDP ekran görüntüsüyle yapılıyor).
+# NOT: Playwright e2e KURULU → `pnpm --filter @zynpparti/web e2e` (CI'da çalışır). test:watch henüz yok;
+#      ek tarayıcı doğrulaması headless Chrome/CDP ekran görüntüsüyle yapılıyor.
 
 # Tek bir paketi hedeflemek için:
 pnpm --filter @zynpparti/geometry test
@@ -105,14 +105,14 @@ zynpparti/
 │   ├── tools/       ✅          ← çizim araçları (XState FSM'leri: duvar, ölçü, seçim…)
 │   ├── copilot/     ✅          ← deterministik Türkçe yönetmelik kural motoru (Faz 2B)
 │   ├── io/          ✅          ← DXF import (LINE/POLYLINE/CIRCLE/ARC/ELLIPSE/SPLINE/TEXT/INSERT, Y-flip+OCS) + DXF/SVG export + kalibrasyon (saf TS). DWG ✅ (tarayıcı WASM, libredwg-web). (PNG=engine, PDF=jsPDF, Excel=xlsx → apps/web)
-│   ├── collab/      ☐          ← gerçek zamanlı senkron (Yjs / commit-log) — Faz 3
+│   ├── collab/      ✅          ← gerçek zamanlı senkron (Yjs + y-websocket; provider/sync/room-labels) — Faz 3
 │   ├── blocks/      ☐          ← (blok kütüphanesi şimdilik document+engine içinde; ayrı paket yok)
-│   ├── ai/          ☐          ← sağlayıcı-bağımsız AI adapter (ADR-0006) — Faz 2 AI ayağı
+│   ├── ai/          ✅          ← sağlayıcı-bağımsız AI adapter (ADR-0006/0042; 3-sağlayıcı router) — canlı
 │   └── ui/          ☐          ← paylaşılan React bileşenleri + tasarım sistemi (şimdilik apps/web içinde)
 ├── apps/
 │   ├── web/         ✅          ← ana uygulama (Next.js + React, canvas burada gömülü)
-│   ├── api/         ☐          ← metadata backend (kullanıcı, proje, yorum, izin) — Faz 3
-│   └── sync/        ☐          ← gerçek zamanlı multiplayer backend (WebSocket) — Faz 3
+│   ├── api/         ☐          ← (ayrı metadata backend YOK; Supabase RPC/RLS + Next route'ları kullanılıyor)
+│   └── sync/        ✅          ← gerçek zamanlı multiplayer backend (WebSocket, server.mjs; Railway'de canlı)
 └── services/        ☐          ← ağır/asenkron işler (HENÜZ YOK; Faz 2 AI / Faz 4)
     ├── dwg-convert/ ☐          ← sunucu tarafı DWG↔DXF (ODA/LibreDWG yedeği)
     ├── ai-render/   ☐          ← plan/kesit → fotogerçekçi görsel (diffusion)
@@ -120,7 +120,7 @@ zynpparti/
 ```
 
 ★ = projenin belkemiği. Buralarda hata = her yerde hata. En çok özen burada.
-> **NOT:** Yukarıdaki ağaç hedef yapıdır; ☐ olanlar henüz oluşturulmadı. Bugün kurulu paketler: geometry, document, engine, tools, copilot, io + apps/web.
+> **NOT:** Yukarıdaki ağaç hedef yapıdır; ☐ olanlar henüz oluşturulmadı. Bugün kurulu paketler: geometry, document, engine, tools, copilot, io, **collab, ai** + apps/web, **apps/sync** (+ Supabase backend, `apps/web/lib/supabase` + `supabase/schema.sql`).
 
 > **Alt-ağaç CLAUDE.md:** Büyük paketlerin (örn. `packages/engine`) kendi `CLAUDE.md`'si olabilir; Claude o klasördeki dosyaları okurken otomatik yüklenir. Genel kural burada, pakete özel detay orada.
 
@@ -138,7 +138,7 @@ zynpparti/
 - **Zustand** ☐ — hafif UI state için planlandı; **şu an kurulu değil** (UI state yerel React `useState` ile). Doküman state'i hiçbir zaman burada olmaz (§6.1).
 - **TailwindCSS** ✅ — stil (v4).
 
-**İşbirliği / senkron** ☐ (Faz 3 — henüz hiçbiri kurulu değil)
+**İşbirliği / senkron** ✅ kısmi (Faz 3 — Yjs + y-websocket KURULU: presence/seçim/yorum; `packages/collab` + `apps/sync` özel WS sunucusu, Hocuspocus DEĞİL. Kalıcı çok-yazar/commit-log north-star.)
 - **Yjs (CRDT) + Hocuspocus** ile başla (hızlı, olgun, presence + offline). Ölçek/sürüm-kontrolü kritikleşince **Loro (Tree CRDT)** veya Rayon-tarzı **commit-log + invariant doğrulama** north-star (bkz. §6.4, `docs/LANDSCAPE.md §5`).
 
 **Geometri / CAD çekirdeği**
@@ -149,7 +149,7 @@ zynpparti/
 
 > Kütüphane karşılaştırması ve gerekçe: `docs/LANDSCAPE.md §6`.
 
-**Backend** ☐ (Faz 3 — henüz hiçbiri kurulu değil; şu an saf istemci uygulama)
+**Backend** ✅ Supabase (Postgres + Auth + Storage) CANLI (ADR-0047): `apps/web/lib/supabase` + `supabase/schema.sql` (profiles/projects/members/comments + RLS + `models` bucket), Google OAuth, bulut Kaydet/Aç/paylaş. Aşağıdaki Fastify/Prisma/NestJS alternatif seçimler kurulMADI — Supabase onların yerini tutuyor.
 - **Node.js + Fastify** (büyürse NestJS) — metadata API.
 - **PostgreSQL + Prisma** — kullanıcı, proje, organizasyon, yorum, izin **metadata'sı**. (Entity'ler burada DEĞİL — §6.5.)
 - **Blob storage (S3/R2/MinIO)** — model dosyaları (her model = bir dosya), DWG yüklemeleri, render çıktıları.
@@ -165,7 +165,7 @@ zynpparti/
 > **Model notu:** AI uçlarında **en güncel ve yetenekli Claude modelini** kullan — şu an varsayılan `claude-opus-4-8`. Anthropic API ile çalışırken model id, fiyat, tool-use ve caching için `/claude-api` referansını kontrol et; ezbere yazma.
 > **Sağlayıcı bağımsızlığı:** Tüm AI çağrıları `packages/ai` içinde sağlayıcı-bağımsız bir adapter arkasına konur (Anthropic + OpenAI; statik `.env` seçimi → ileride task-router + fallback). Karar: `docs/DECISIONS.md` ADR-0006. Faz 2'de kurulur.
 
-**Altyapı:** Turborepo ✅, Vitest ✅, ESLint+Prettier ✅, GitHub Actions ✅ (CI: lint+typecheck+test zorunlu). Playwright ☐ (henüz yok; tarayıcı doğrulaması headless Chrome/CDP ile).
+**Altyapı:** Turborepo ✅, Vitest ✅, ESLint+Prettier ✅, GitHub Actions ✅ (CI: lint+typecheck+test zorunlu). Playwright ✅ (e2e: `pnpm --filter @zynpparti/web e2e`, CI job; ek doğrulama headless Chrome/CDP ile).
 
 ---
 

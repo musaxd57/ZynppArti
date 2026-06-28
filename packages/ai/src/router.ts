@@ -1,9 +1,10 @@
 import type { AiProviderName, Tier } from './types';
 
 /**
- * Görev zorluğuna göre sağlayıcı yönlendirme (ADR-0042). Tasarım hedefi (Moses): **çoğu trafik
- * Akash** (ucuz açık model), **OpenAI nadir** (yalnız dar "orta" bant), **yönetmelik/akıl yürütme
- * Claude**. Heuristik + fallback; mükemmel sınıflandırma şart değil (yanlışta fallback devreye girer).
+ * Görev zorluğuna göre sağlayıcı yönlendirme (ADR-0042). Politika **HIZ-ÖNCELİKLİ** (bkz. FALLBACK_CHAINS
+ * + satır 86-91): **basit/orta → OpenAI** önce (~1.3sn), **karmaşık/yönetmelik → Claude (Anthropic)** önce
+ * (~2.7sn); **Akash her kademede yalnız SON yedek**. Heuristik + fallback; mükemmel sınıflandırma şart
+ * değil (yanlışta zincir bir sonraki sağlayıcıya düşer).
  */
 
 /**
