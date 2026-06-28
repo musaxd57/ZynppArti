@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { deserializeModel } from '@zynpparti/document';
 import { exportSvg } from '@zynpparti/io';
-import { Cloud, FolderOpen, Plus, Trash2, Upload } from 'lucide-react';
+import { Cloud, FolderOpen, Plus, Share2, Trash2, Upload } from 'lucide-react';
 import { setProjectName, DEFAULT_PROJECT_NAME } from '@/lib/project-name';
 import { setStartEmpty, setPendingOpen } from '@/lib/app-start';
 import { setCloudProjectId } from '@/lib/cloud-project';
@@ -18,6 +18,7 @@ import {
 import { toast } from '@/lib/toast';
 import { confirmDialog } from '@/lib/dialog';
 import { VesnaLogo } from './VesnaLogo';
+import { ShareDialog } from './ShareDialog';
 
 /** "3 gün önce" tarzı kısa göreli tarih (proje kartı). Geçersizse boş. */
 function relativeTime(iso: string): string {
@@ -87,6 +88,7 @@ export function StartScreen({ onStart }: { onStart: () => void }) {
   const [cloud, setCloud] = useState<CloudProject[] | null>(null);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [uid, setUid] = useState<string | null>(null);
+  const [shareTarget, setShareTarget] = useState<CloudProject | null>(null); // Paylaş modalı (sahip-only)
 
   useEffect(() => {
     let active = true;
@@ -339,17 +341,28 @@ export function StartScreen({ onStart }: { onStart: () => void }) {
                           </div>
                         </div>
                       </button>
-                      {/* Sil — thumbnail sağ-üstünde, üzerine gelince belirir (paylaşılan silinemez). */}
+                      {/* Paylaş + Sil — thumbnail sağ-üstünde, üzerine gelince belirir (yalnız SAHİBİ olduğun projede). */}
                       {!shared && (
-                        <button
-                          type="button"
-                          onClick={() => void removeCloud(p)}
-                          aria-label={`"${p.name}" projesini sil`}
-                          title="Sil"
-                          className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-lg bg-black/45 text-white/90 opacity-0 backdrop-blur transition-all hover:bg-red-500/80 focus:opacity-100 group-hover:opacity-100"
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        <div className="absolute right-2 top-2 flex gap-1.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+                          <button
+                            type="button"
+                            onClick={() => setShareTarget(p)}
+                            aria-label={`"${p.name}" projesini paylaş`}
+                            title="Paylaş"
+                            className="grid h-8 w-8 place-items-center rounded-lg bg-black/45 text-white/90 backdrop-blur transition-all hover:bg-[var(--accent)]"
+                          >
+                            <Share2 size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void removeCloud(p)}
+                            aria-label={`"${p.name}" projesini sil`}
+                            title="Sil"
+                            className="grid h-8 w-8 place-items-center rounded-lg bg-black/45 text-white/90 backdrop-blur transition-all hover:bg-red-500/80"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
                       )}
                     </div>
                   );
@@ -368,6 +381,14 @@ export function StartScreen({ onStart }: { onStart: () => void }) {
           <div className="grid place-items-center py-24 text-sm text-[var(--text-3)]">Yükleniyor…</div>
         )}
       </div>
+
+      {shareTarget && (
+        <ShareDialog
+          projectId={shareTarget.id}
+          projectName={shareTarget.name}
+          onClose={() => setShareTarget(null)}
+        />
+      )}
     </div>
   );
 }

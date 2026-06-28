@@ -26,7 +26,6 @@ import { projectFileBase, useProjectName, setProjectName, DEFAULT_PROJECT_NAME }
 import { clearCloudProjectId } from '@/lib/cloud-project';
 import { saveCurrentToCloud } from '@/lib/cloud-save';
 import { VesnaLogo } from './VesnaLogo';
-import { CloudMenu } from './CloudMenu';
 import { PlanBadge } from './PlanBadge';
 import { TOOL_ICONS } from './toolbar-icons';
 
@@ -455,7 +454,6 @@ export function Toolbar({
       <button type="button" onClick={() => jsonRef.current?.click()} className={btn} title="Model aç (.json) — Ctrl+O">
         Aç
       </button>
-      <CloudMenu store={store} history={history} zoomToFit={zoomToFit} seedRooms={seedRooms} />{/* giriş yoksa kendini gizler */}
       <PlanBadge />{/* giriş yoksa kendini gizler */}
       <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
       <button type="button" onClick={() => fileRef.current?.click()} className={btn}>
