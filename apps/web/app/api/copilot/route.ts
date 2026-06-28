@@ -188,7 +188,17 @@ export async function POST(req: Request): Promise<Response> {
     const { data: ud } = (await supabase?.auth.getUser()) ?? { data: { user: null } };
     let plan = 'free';
     if (supabase && ud.user) {
-      const { data: prof } = await supabase.from('profiles').select('plan').eq('id', ud.user.id).maybeSingle();
+      const { data: prof, error: profErr } = await supabase
+        .from('profiles')
+        .select('plan')
+        .eq('id', ud.user.id)
+        .maybeSingle();
+      if (profErr) {
+        // Plan SORGUSU geçici hata verdi → ödeyen kullanıcıyı 'free' sayıp yanlış "yükselt" gösterme;
+        // tekrar denenebilir 503 dön (kapıyı da açmaz — yalnız hatalı upgrade-CTA'yı önler). Denetim L25.
+        console.error('Render plan kontrolü hatası:', profErr.message);
+        return Response.json({ error: 'Plan doğrulanamadı, lütfen tekrar dene.' }, { status: 503 });
+      }
       plan = (prof?.plan as string | undefined) ?? 'free';
     }
     if (!isPaidPlan(plan)) {

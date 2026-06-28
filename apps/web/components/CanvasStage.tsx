@@ -391,9 +391,13 @@ export function CanvasStage() {
         aw.getStates().forEach((st, id) => {
           if (id === aw.clientID) return;
           const u = st.user as { color?: number } | undefined;
-          const color = u?.color ?? 0xffffff;
-          const c = st.cursor as { x: number; y: number } | null | undefined;
-          if (c) cursors.push({ id: String(id), x: c.x, y: c.y, color });
+          // Renk yalnız sayı ise kullan (eski/bozuk peer string gönderirse Pixi tint'e sızmasın).
+          const color = typeof u?.color === 'number' ? u.color : 0xffffff;
+          const c = st.cursor as { x?: unknown; y?: unknown } | null | undefined;
+          // İmleç x/y SONLU sayı olmalı — NaN/string overlay render'ını tüm istemcilerde bozabilir (denetim M20).
+          if (c && Number.isFinite(c.x) && Number.isFinite(c.y)) {
+            cursors.push({ id: String(id), x: c.x as number, y: c.y as number, color });
+          }
           const sel = st.selection as string[] | undefined;
           if (Array.isArray(sel)) {
             // Gelen tarafta da cap (kapamayan/eski bir peer dev dizi gönderirse render donmasın).

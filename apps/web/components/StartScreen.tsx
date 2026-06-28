@@ -180,6 +180,7 @@ export function StartScreen({ onStart }: { onStart: () => void }) {
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
+              e.target.value = ''; // aynı dosyayı tekrar seçince yeniden tetiklensin (bozuk .json sessiz no-op olmasın)
               if (f) openFile(f);
             }}
           />
