@@ -9,7 +9,7 @@ export type Plan = 'free' | 'pro' | 'studio';
 export const PLAN_LABEL: Record<Plan, string> = {
   free: 'Ücretsiz',
   pro: 'Pro',
-  studio: 'Studio',
+  studio: 'Stüdyo', // fiyatlandırma + iade sayfalarıyla tutarlı (TR yazım); rozet "Studio" göstermesin (L26)
 };
 
 /** Plan kotaları — `Infinity` = sınırsız. (fiyatlandirma sayfasıyla tutarlı: ücretsiz "3 aktif proje".) */

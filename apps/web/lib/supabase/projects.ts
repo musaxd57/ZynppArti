@@ -75,7 +75,13 @@ export async function saveProjectToCloud(opts: {
     storage_path: `${BUCKET}/${path}`,
     updated_at: new Date().toISOString(),
   });
-  if (row.error) throw row.error;
+  if (row.error) {
+    // YENİ proje + metadata yazılamadı (RLS/constraint) → az önce yüklenen blob'u yetim bırakma:
+    // metadata satırı olmayan blob listelenmez/açılmaz, tekrar denemelerde çöp birikir (denetim L13).
+    // Best-effort sil; üzerine-yazmada (opts.id var) blob meşru, dokunma.
+    if (!opts.id) await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
+    throw row.error;
+  }
   return { id };
 }
 

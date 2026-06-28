@@ -161,7 +161,7 @@ function GirisForm() {
                   }}
                   className="text-xs text-[var(--text-3)] transition hover:text-[var(--accent)]"
                 >
-                  Şifremi unuttum
+                  Parolamı unuttum
                 </button>
               )}
             </div>

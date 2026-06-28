@@ -42,6 +42,7 @@ export function CollabControl({
       updatePeers();
     } catch (e) {
       console.error('Canlı işbirliğine bağlanılamadı:', e);
+      toast('Canlı işbirliğine bağlanılamadı.', 'error'); // sessiz kalmasın (denetim L18)
     }
   };
 

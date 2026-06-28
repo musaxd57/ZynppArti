@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { projectFileBase } from '@/lib/project-name';
+import { toast } from '@/lib/toast';
 import * as THREE from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import {
@@ -268,6 +269,7 @@ export function View3D({ store }: { store: EntityStore }) {
             // binary:true → ArrayBuffer beklenir; değilse (JSON nesnesi) Blob "[object Object]" yazardı.
             if (!(result instanceof ArrayBuffer)) {
               console.error('GLB export: beklenmeyen (ikili olmayan) çıktı, atlanıyor.');
+              toast('3B model dışa aktarılamadı.', 'error'); // sessiz kalmasın (denetim L16)
               return;
             }
             const blob = new Blob([result], { type: 'model/gltf-binary' });
@@ -278,18 +280,27 @@ export function View3D({ store }: { store: EntityStore }) {
             a.click();
             URL.revokeObjectURL(url);
           },
-          (err) => console.error('GLB export hatası:', err),
+          (err) => {
+            console.error('GLB export hatası:', err);
+            toast('3B model dışa aktarılamadı.', 'error'); // sessiz kalmasın (denetim L16)
+          },
           { binary: true },
         );
       };
 
       // 3B görünümünü PNG indir (preserveDrawingBuffer açık → toDataURL boş gelmez).
       snapshotRef.current = (): void => {
-        renderer.render(scene, cam);
-        const a = document.createElement('a');
-        a.href = renderer.domElement.toDataURL('image/png');
-        a.download = `${projectFileBase()}-3b.png`;
-        a.click();
+        try {
+          renderer.render(scene, cam);
+          const a = document.createElement('a');
+          a.href = renderer.domElement.toDataURL('image/png');
+          a.download = `${projectFileBase()}-3b.png`;
+          a.click();
+        } catch (err) {
+          // toDataURL kirli-canvas/bellek nedeniyle patlayabilir → kullanıcı boş tıkla kalmasın (L16).
+          console.error('3B PNG anlık görüntü hatası:', err);
+          toast('3B görüntü kaydedilemedi.', 'error');
+        }
       };
 
       cleanup = (): void => {
