@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fitOpeningT, openingFrame, projectToWall } from './opening';
+import { fitOpeningT, openingCenterT, openingFrame, projectToWall } from './opening';
 import type { Opening, Wall } from './entities';
 
 const wall = (x1: number, y1: number, x2: number, y2: number, thickness = 20): Wall => ({
@@ -79,6 +79,25 @@ describe('fitOpeningT', () => {
 
   it('tam sığan genişlik (width = wallLen) → t ortaya kilitlenir', () => {
     expect(fitOpeningT(80, 80, 0.2)).toBeCloseTo(0.5, 6);
+  });
+});
+
+describe('openingCenterT (plan/kesit/3B/metraj ortak konum kaynağı — denetim L5)', () => {
+  it('sığan boşlukta t korunur', () => {
+    expect(openingCenterT(wall(0, 0, 200, 0), opening(0.5, 80))).toBeCloseTo(0.5, 6);
+  });
+
+  it('kısaltılmış duvarda uca yakın t içeri kısılır (plan ile aynı sığdırma)', () => {
+    // Duvar 200, kapı 80, t=1 → ham konum taşar; sığdırılmış t = 0.8 (= fitOpeningT).
+    const w = wall(0, 0, 200, 0);
+    const o = opening(1, 80);
+    expect(openingCenterT(w, o)).toBeCloseTo(0.8, 6);
+    // openingFrame (plan render) AYNI değeri kullanır → kesit/3B/metraj artık planla tutarlı.
+    expect(openingFrame(o, w).center.x).toBeCloseTo(openingCenterT(w, o) * 200, 6);
+  });
+
+  it('genişlik duvardan büyükse ortalanır (0.5)', () => {
+    expect(openingCenterT(wall(0, 0, 100, 0), opening(0.3, 120))).toBeCloseTo(0.5, 6);
   });
 });
 

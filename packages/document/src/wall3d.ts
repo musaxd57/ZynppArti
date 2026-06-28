@@ -1,4 +1,5 @@
 import type { Opening, Wall } from './entities';
+import { openingCenterT } from './opening';
 import {
   DEFAULT_WALL_HEIGHT_CM,
   DEFAULT_DOOR_HEAD_CM,
@@ -76,7 +77,11 @@ export function wallBoxesWithOpenings(
     const uy = len > 0 ? dy / len : 0;
     const angleRad = Math.atan2(dy, dx);
     const ops = (byWall.get(w.id) ?? [])
-      .map((o) => ({ a: Math.max(0, o.t * len - o.width / 2), b: Math.min(len, o.t * len + o.width / 2), kind: o.kind }))
+      // Sığdırılmış t (plan/kesit/metraj ile aynı) — ham o.t kısaltılmış duvarda kayardı (L5).
+      .map((o) => {
+        const c = openingCenterT(w, o) * len;
+        return { a: Math.max(0, c - o.width / 2), b: Math.min(len, c + o.width / 2), kind: o.kind };
+      })
       .filter((o) => o.b > o.a)
       .sort((p, q) => p.a - q.a);
 

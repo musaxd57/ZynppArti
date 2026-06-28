@@ -1,6 +1,7 @@
 import { polygonArea, distanceToPolygonBoundary } from '@zynpparti/geometry';
 import { BLOCK_DEFS, type BlockKind } from './block';
 import type { Block, Opening, Space, Wall } from './entities';
+import { openingCenterT } from './opening';
 import { wallMaterialById } from './wall-material';
 
 /**
@@ -197,8 +198,9 @@ export function computeTakeoff(
       if (o.kind !== 'door' || !(o.width > 0) || !Number.isFinite(o.width)) continue;
       const w = wallById.get(o.wallId);
       if (!w) continue;
-      const mx = w.start.x + o.t * (w.end.x - w.start.x);
-      const my = w.start.y + o.t * (w.end.y - w.start.y);
+      const t = openingCenterT(w, o); // sığdırılmış t (plan/kesit/3B ile aynı) — denetim L5
+      const mx = w.start.x + t * (w.end.x - w.start.x);
+      const my = w.start.y + t * (w.end.y - w.start.y);
       if (distanceToPolygonBoundary({ x: mx, y: my }, b) <= w.thickness / 2 + 8) doorCut += o.width;
     }
     skirtingCm += Math.max(0, perim - doorCut);

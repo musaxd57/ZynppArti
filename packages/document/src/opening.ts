@@ -31,6 +31,16 @@ export function fitOpeningT(wallLen: number, width: number, t: number): number |
   return Math.max(half, Math.min(1 - half, tt));
 }
 
+/**
+ * Boşluğun duvar üzerindeki SIĞDIRILMIŞ konum oranı (t ∈ [0,1]). TÜM tüketiciler (plan/kesit/3B/metraj)
+ * BUNU kullanmalı — ham `o.t` kısaltılmış duvarda taşar/uca kısılır ve görünümler arasında AYNI kapı
+ * farklı yerde çizilir (parametrik binding sürüklenmesi — denetim L5). Tek doğruluk kaynağı.
+ */
+export function openingCenterT(wall: Wall, o: Opening): number {
+  const len = Math.hypot(wall.end.x - wall.start.x, wall.end.y - wall.start.y) || 1;
+  return fitOpeningT(len, o.width, o.t) ?? 0.5;
+}
+
 /** Boşluğun duvardan türetilmiş çerçevesini hesaplar. */
 export function openingFrame(o: Opening, wall: Wall): OpeningFrame {
   const sx = wall.end.x - wall.start.x;
@@ -38,9 +48,8 @@ export function openingFrame(o: Opening, wall: Wall): OpeningFrame {
   const len = Math.hypot(sx, sy) || 1;
   const dx = sx / len;
   const dy = sy / len;
-  // t kısma: boşluk duvar dışına taşmasın (sığmazsa ortala — render best-effort).
-  // (Bozuk/elle düzenlenmiş modelde de savunma; serialize derin doğrulama yapmaz.)
-  const t = fitOpeningT(len, o.width, o.t) ?? 0.5;
+  // t kısma: boşluk duvar dışına taşmasın (sığmazsa ortala — render best-effort). Tek kaynak: openingCenterT.
+  const t = openingCenterT(wall, o);
   const cx = wall.start.x + sx * t;
   const cy = wall.start.y + sy * t;
   const half = o.width / 2;

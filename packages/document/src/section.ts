@@ -1,5 +1,6 @@
 import { segmentIntersection, distance, type Vec2 } from '@zynpparti/geometry';
 import type { Opening, Wall } from './entities';
+import { openingCenterT } from './opening';
 
 /**
  * Şematik kesit (ADR-0016) — saf hesap. Bir kesit çizgisi (a→b) çizilir; bu çizgiyi kesen duvarlar
@@ -123,7 +124,8 @@ function openingAtCut(
   const cutAlong = distance(wall.start, x); // x duvar segmenti üzerinde → start'a uzaklık = konum
   for (const o of openings) {
     if (!(o.width > 0) || !Number.isFinite(o.width)) continue; // bozuk genişlik → atla
-    const centerAlong = o.t * wallLen;
+    // SIĞDIRILMIŞ t (plan ile aynı) — ham o.t kısaltılmış duvarda planla tutarsız konum verirdi (L5).
+    const centerAlong = openingCenterT(wall, o) * wallLen;
     if (Math.abs(cutAlong - centerAlong) <= o.width / 2) {
       if (o.kind === 'door') {
         return { kind: 'door', sillCm: 0, headCm: Math.min(DEFAULT_DOOR_HEAD_CM, wallHeight) };
