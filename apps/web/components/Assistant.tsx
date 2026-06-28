@@ -8,6 +8,7 @@ import {
   UpdateEntity,
   centerlineAreaM2,
   createEntityId,
+  ROOM_TYPE_KEYS,
   type EntityStore,
   type History,
   type Opening,
@@ -85,17 +86,7 @@ interface AssistantProps {
 
 const WALL_THICKNESS = 20; // cm — AI taslağı için varsayılan duvar kalınlığı
 
-/** Geçerli mahal tipleri — LLM'in uydurduğu tip (ör. "bedroom") modele yazılmasın. */
-const VALID_ROOM_TYPES = new Set<RoomType>([
-  'living',
-  'kitchen',
-  'bathroom',
-  'wet',
-  'sleeping',
-  'circulation',
-  'service',
-  'other',
-]);
+// Geçerli mahal tipleri: document ROOM_TYPE_KEYS (tek kaynak) — LLM uydurması (ör. "bedroom") reddedilir.
 
 /** Bir entity'yi copilot için insan-okur tek satıra çevirir (seçim bağlamı zenginleştirme). */
 function describeEntity(store: EntityStore, id: string): string {
@@ -388,7 +379,7 @@ function applyLayout(
     const renameCmds: UpdateEntity[] = [];
     const used = new Set<string>();
     for (const r of rooms) {
-      const rt = r.type && VALID_ROOM_TYPES.has(r.type as RoomType) ? (r.type as RoomType) : undefined;
+      const rt = r.type && ROOM_TYPE_KEYS.has(r.type as RoomType) ? (r.type as RoomType) : undefined;
       const sp = spaces.find(
         (s) =>
           !used.has(s.id) &&

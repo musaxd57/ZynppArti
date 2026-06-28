@@ -30,6 +30,7 @@ export async function askCopilot(
   messages: readonly ChatMessage[],
   ctx: CopilotContext,
   forced?: AiProviderName,
+  signal?: AbortSignal,
 ): Promise<CopilotResult> {
   const available = Object.keys(providers) as AiProviderName[];
   if (available.length === 0) throw new NoProviderError();
@@ -46,10 +47,11 @@ export async function askCopilot(
   for (const name of order) {
     const provider = providers[name];
     if (!provider) continue;
-    // Maliyet koruması: her deneme zaman aşımlı (askıda upstream parayı açık tutmasın).
-    const { signal, dispose } = withTimeout(tierTimeoutMs(tier));
+    // Maliyet koruması: her deneme zaman aşımlı + parent signal (istemci kopunca upstream'i iptal et →
+    // boşa paralı token harcamasın; askCopilotStream ile tutarlı — denetim L11).
+    const { signal: attemptSignal, dispose } = withTimeout(tierTimeoutMs(tier), signal);
     try {
-      const answer = await provider.chat(messages, { system, maxTokens, signal });
+      const answer = await provider.chat(messages, { system, maxTokens, signal: attemptSignal });
       // Boş/yalnız-boşluk yanıt = başarısızlık say → sıradaki sağlayıcıya düş (boş baloncuk gösterme).
       if (answer.trim().length === 0) {
         lastErr = new Error(`Sağlayıcı "${name}" boş yanıt döndürdü.`);

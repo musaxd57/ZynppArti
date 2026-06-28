@@ -89,10 +89,11 @@ export class BatchCommand implements Command {
     // tersleri apply ÖNCESİ ortak durumdan yakalanır, bu yüzden id başına en çok bir komut olmalı.
     // (Bağlı duvar+boşluk batch'leri farklı id'lere dokunur → güvenli.) Net hata, undo'da gizemli
     // "entity bulunamadı" yerine geliştirme anında yakalanır.
+    // İÇ İÇE batch'ler DÜZLEŞTİRİLİR (denetim L4): eskiden id'siz oldukları için atlanıyorlardı →
+    // [Batch([Add a]), Remove a] guard'ı geçip undo'da "entity bulunamadı" veriyordu. Artık leaf id'ler
+    // tüm ağaçtan toplanır, kardeşle çakışma yakalanır.
     const seen = new Set<EntityId>();
-    for (const c of commands) {
-      const id = c.targetId;
-      if (id === undefined) continue; // iç içe batch / id'siz komut → atla
+    for (const id of this.leafTargetIds()) {
       if (seen.has(id)) {
         throw new Error(
           `BatchCommand "${label}": aynı entity (${id}) tek batch'te iki kez değiştirilemez ` +
@@ -101,6 +102,19 @@ export class BatchCommand implements Command {
       }
       seen.add(id);
     }
+  }
+
+  /** Bu batch'in (iç içe batch'ler dahil) tüm yaprak `targetId`'leri — bağımsızlık denetimi için. */
+  leafTargetIds(): EntityId[] {
+    const out: EntityId[] = [];
+    const walk = (cmds: readonly Command[]): void => {
+      for (const c of cmds) {
+        if (c instanceof BatchCommand) walk(c.commands);
+        else if (c.targetId !== undefined) out.push(c.targetId);
+      }
+    };
+    walk(this.commands);
+    return out;
   }
 
   apply(store: EntityStore): StoreChange {

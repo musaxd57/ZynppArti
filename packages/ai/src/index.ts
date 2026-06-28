@@ -17,7 +17,6 @@ export { buildProviders, parseForcedProvider, type ProviderEnv } from './provide
 export { askCopilot, askCopilotStream, NoProviderError, type CopilotResult } from './copilot';
 export { renderImage, OPENAI_IMAGE_MODEL } from './render';
 export {
-  askDesign,
   askDesignVariants,
   parseLayout,
   parseLayouts,
@@ -25,6 +24,5 @@ export {
   type Layout,
   type LayoutRoom,
   type LayoutOpening,
-  type DesignResult,
   type DesignVariantsResult,
 } from './design';

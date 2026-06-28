@@ -1,4 +1,5 @@
 import * as Y from 'yjs';
+import { ROOM_TYPE_KEYS } from '@zynpparti/document';
 import type { EntityStore, RoomType, Space, StoreChange } from '@zynpparti/document';
 
 /**
@@ -15,7 +16,6 @@ export interface RoomLabel {
   readonly material?: string;
 }
 
-const ROOM_TYPES = new Set(['living', 'kitchen', 'bathroom', 'wet', 'sleeping', 'circulation', 'service', 'other']);
 const MAX_LABEL_LEN = 120;
 
 /**
@@ -28,7 +28,10 @@ function sanitizeLabel(raw: unknown): RoomLabel | null {
   const r = raw as Record<string, unknown>;
   if (typeof r['name'] !== 'string') return null;
   const name = r['name'].slice(0, MAX_LABEL_LEN);
-  const roomType = typeof r['roomType'] === 'string' && ROOM_TYPES.has(r['roomType']) ? r['roomType'] : undefined;
+  const roomType =
+    typeof r['roomType'] === 'string' && ROOM_TYPE_KEYS.has(r['roomType'] as RoomType)
+      ? r['roomType']
+      : undefined;
   const material =
     typeof r['material'] === 'string' && r['material'].length <= MAX_LABEL_LEN ? r['material'] : undefined;
   return { name, ...(roomType ? { roomType } : {}), ...(material ? { material } : {}) };

@@ -52,10 +52,19 @@ describe('BatchCommand', () => {
     expect(
       () => new BatchCommand('bozuk', [new UpdateEntity(a), new RemoveEntity('a')]),
     ).toThrow(/aynı entity/);
-    // İç içe batch (id'siz) güvenli — duplicate denetimi onları atlar.
+    // İç içe batch + AYRIK id → güvenli (düzleştirilmiş leaf'ler çakışmaz).
     expect(
       () => new BatchCommand('dış', [new BatchCommand('iç', [new AddEntity(a)])]),
     ).not.toThrow();
+    // İç içe batch'in leaf'i KARDEŞLE çakışıyorsa yapım anında reddedilir (denetim L4): eskiden
+    // nested batch id'siz sayılıp atlanıyor, bu çakışma undo'da "entity bulunamadı" ile patlıyordu.
+    expect(
+      () =>
+        new BatchCommand('dış', [
+          new BatchCommand('iç', [new AddEntity(a)]),
+          new RemoveEntity('a'),
+        ]),
+    ).toThrow(/aynı entity/);
   });
 
   it('replaceEntitiesCommands: kaydedilen modeli tekrar acmak guarda takilmaz (Update kullanir)', () => {

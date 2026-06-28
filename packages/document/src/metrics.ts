@@ -25,6 +25,13 @@ export const ROOM_TYPES: ReadonlyArray<{ key: RoomType; label: string; color: nu
   { key: 'other', label: 'Diğer', color: 0x4a90d9 },
 ];
 
+/**
+ * Geçerli mahal-tipi anahtarları — TEK kaynak. LLM'in/peer'in uydurduğu tip (ör. "bedroom") modele
+ * yazılmadan reddedilir. Assistant + collab eskiden bu listeyi elle KOPYALIYORDU → yeni tip eklenince
+ * sessizce reddedip düşürürlerdi (denetim L22). Artık ROOM_TYPES'tan türetilir.
+ */
+export const ROOM_TYPE_KEYS: ReadonlySet<RoomType> = new Set(ROOM_TYPES.map((t) => t.key));
+
 const LABEL_BY_KEY = new Map(ROOM_TYPES.map((t) => [t.key, t.label]));
 const COLOR_BY_KEY = new Map(ROOM_TYPES.map((t) => [t.key, t.color]));
 

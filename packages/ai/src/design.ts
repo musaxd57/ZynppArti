@@ -37,11 +37,6 @@ export interface Layout {
   readonly openings: readonly LayoutOpening[];
 }
 
-export interface DesignResult extends Layout {
-  readonly provider: AiProviderName;
-  readonly model: string;
-}
-
 export const DESIGN_SYSTEM = [
   'Sen bir mimari kat planı taslak üreticisisin.',
   'Kullanıcının tarifine göre BASİT, dikdörtgensel bir kat planı üret.',
@@ -221,46 +216,6 @@ export function parseLayouts(text: string): Layout[] {
   }
   const single = validateLayout(parsed);
   return single ? [single] : [];
-}
-
-/**
- * Tasarım taslağı üretir: complex kademe zinciri (en iyi model) ile dener; ilk geçerli JSON'u döndürür.
- * Her sağlayıcı için ayrıştırma başarısız olursa sıradakine geçer (JSON üretemeyen modele takılmaz).
- */
-export async function askDesign(
-  providers: Partial<Record<AiProviderName, AiProvider>>,
-  prompt: string,
-  forced?: AiProviderName,
-  hint?: string,
-  signal?: AbortSignal,
-): Promise<DesignResult> {
-  const available = Object.keys(providers) as AiProviderName[];
-  const order = resolveChain(classifyDesignTier(prompt), available, forced);
-  const chain = order.length > 0 ? order : available;
-  const userContent = hint ? `${prompt}\n\n[Bağlam: ${hint}]` : prompt;
-
-  let lastErr: unknown;
-  for (const name of chain) {
-    const provider = providers[name];
-    if (!provider) continue;
-    const t = withTimeout(DESIGN_TIMEOUT_MS, signal);
-    try {
-      const text = await provider.chat([{ role: 'user', content: userContent }], {
-        system: DESIGN_SYSTEM,
-        maxTokens: 4000,
-        signal: t.signal,
-      });
-      const layout = parseLayout(text);
-      if (layout) return { ...layout, provider: name, model: provider.model };
-      lastErr = new Error(`Sağlayıcı "${name}" geçerli plan JSON üretemedi.`);
-    } catch (e) {
-      lastErr = e;
-    } finally {
-      t.dispose();
-    }
-    console.error('Tasarım üretimi başarısız, sıradaki sağlayıcı:', lastErr);
-  }
-  throw lastErr ?? new Error('Tasarım üretilemedi.');
 }
 
 export interface DesignVariantsResult {
