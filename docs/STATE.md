@@ -74,7 +74,15 @@
   - **Moses-territory (otonom dokunulmadı, YARIN'a):** MINSERT dizileri tek kopya (nadir) · INSERT-seviye mirror ·
     blok 2-nokta-kalibrasyonda ölçeklenmiyor (model alanı gerek) · presence peer-isim etiketi (feature) ·
     radius-bağımsız arc faceting (büyük eğri).
-- **TOPLAM (5 dalga + self-review, bu oturum): 17 fix commit + 5 doc, +12 test, hepsi yeşil zincir + push (main+default senkron).**
+- **Dalga 6 (1 ajan: routing/auth-gate) — 1 fix commit daha:**
+  - (web `7c4318f`) **HIGH: "← Projelerim" `#room=`'u temizlemiyordu** → galeriden yeni proje açınca CollabControl
+    eski odaya SESSİZCE geri bağlanıp özel çizimi paylaşılan odaya senkronluyordu (gizlilik/veri sızıntısı) +
+    reload'da galeri atlanıyordu. onBack URL'yi temizliyor + `?ciz=` tüketildikten sonra strip + setStartEmpty/
+    setPendingOpen karşılıklı-iptal (footgun). **TEMİZ:** middleware session-refresh, AppRedirect (loop yok),
+    AuthButtons abonelik, auth/callback — doğrulandı sağlam.
+- **TOPLAM (6 dalga + self-review, bu oturum): 18 fix commit + 5 doc, +12 test, hepsi yeşil zincir + push (main+default senkron).
+  Her dalga 1-14 gerçek bulgu; düzeltilenler arasında 4 HIGH (boş-Yeni bulut veri kaybı, çok-yazar undo crash,
+  her-kapıda hayalet çizgi, back-to-gallery oda sızıntısı). Kalanlar Moses-territory (domain/altyapı/feature/görsel).**
 
 **🆕 2026-06-29 (2) — AI duvar köşe boşluğu + admin hesabı (main'de canlı, `6087db4`):**
 - **AI duvar köşeleri kapanıyor (`39197c0`):** Moses AI'a çizdirdiği planda iç duvarların alt dış duvara değmediğini gördü (köşeler açık, ekran görüntüsüyle teyit — alt-orta kırpmada net boşluk). Sebep: LLM duvar uçlarını birkaç cm kaydırıyor → köşe/T-bağlantı buluşmuyor. Çözüm: yeni saf `snapSegmentsToGrid` (geometry) — yakın X/Y uç koordinatlarını ortak çizgilere kümeler (tol 50cm), `applyLayout`'ta entity kurmadan önce uygulanır; sıfır-uzunluk duvarlar atılır. +6 test (geometry 71).
