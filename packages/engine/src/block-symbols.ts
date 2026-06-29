@@ -155,16 +155,19 @@ export function drawBlockSymbol(g: Graphics, kind: BlockKind, lw: number): void 
       break;
     }
     case 'dining-table': {
-      outline();
+      // Footprint (def.w×def.h) sandalyeleri DE kapsar → seçim/hit-test/snap doğru. Masa, footprint'in
+      // ortasına SABİT 180×90 çizilir (outline() tüm footprint'i masa sanardı). 6 sandalye (3 üst + 3 alt),
+      // "6 kişi" etiketiyle tutarlı (eskiden 8 çiziliyordu ve hepsi footprint dışına taşıyordu — denetim).
+      const tHW = 90;
+      const tHH = 45;
+      g.rect(-tHW, -tHH, tHW * 2, tHH * 2).stroke(stroke); // masa
       const chair = (cx: number, cy: number): void => {
         g.rect(cx - 16, cy - 16, 32, 32).stroke(stroke);
       };
-      for (const cx of [-w / 3, 0, w / 3]) {
-        chair(cx, -hh - 22);
-        chair(cx, hh + 22);
+      for (const cx of [(-tHW * 2) / 3, 0, (tHW * 2) / 3]) {
+        chair(cx, -tHH - 22);
+        chair(cx, tHH + 22);
       }
-      chair(-hw - 22, 0);
-      chair(hw + 22, 0);
       break;
     }
     case 'coffee-table': {

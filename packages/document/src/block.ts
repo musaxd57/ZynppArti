@@ -60,7 +60,7 @@ export const BLOCK_DEFS: Record<BlockKind, BlockDef> = {
   'parking-space': { label: 'Otopark yeri', w: 250, h: 500 },
   wardrobe: { label: 'Gardırop', w: 120, h: 60 },
   nightstand: { label: 'Komodin', w: 45, h: 40 },
-  'dining-table': { label: 'Yemek masası (6 kişi)', w: 180, h: 90 },
+  'dining-table': { label: 'Yemek masası (6 kişi)', w: 180, h: 176 }, // masa 90 + üst/alt sandalye sıraları (footprint sandalyeleri kapsar → seçim/hit-test doğru)
   'coffee-table': { label: 'Orta sehpa', w: 110, h: 60 },
   dishwasher: { label: 'Bulaşık makinesi', w: 60, h: 60 },
   vanity: { label: 'Lavabo dolabı', w: 80, h: 50 },
