@@ -11,6 +11,9 @@ export interface RenderEnv {
   readonly OPENAI_API_KEY?: string;
   readonly OPENAI_IMAGE_MODEL?: string;
   readonly REPLICATE_API_TOKEN?: string;
+  /** Resmi varsayılan preserve modeli (önerilen, ör. black-forest-labs/flux-canny-dev) — sürüm hash istemez. */
+  readonly REPLICATE_PRESERVE_MODEL?: string;
+  /** Community varsayılan model sürüm hash'i (model verilmezse; ör. adirik/interior-design). */
   readonly REPLICATE_PRESERVE_VERSION?: string;
   readonly RENDER_PRESERVE_HD_MODEL?: string;
   readonly FAL_KEY?: string;
@@ -24,7 +27,8 @@ export function buildRenderProviders(env: RenderEnv): Partial<Record<RenderProvi
   }
   if (env.REPLICATE_API_TOKEN?.trim()) {
     out.replicate = replicateRenderProvider(env.REPLICATE_API_TOKEN.trim(), {
-      interiorVersion: env.REPLICATE_PRESERVE_VERSION?.trim() || undefined,
+      model: env.REPLICATE_PRESERVE_MODEL?.trim() || undefined,
+      version: env.REPLICATE_PRESERVE_VERSION?.trim() || undefined,
       hdModel: env.RENDER_PRESERVE_HD_MODEL?.trim() || undefined,
     });
   }

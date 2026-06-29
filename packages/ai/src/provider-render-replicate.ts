@@ -5,17 +5,19 @@ import type { RenderInput, RenderProvider, RenderResult } from './render-types';
 /**
  * "Geometriyi koru" (ControlNet) render sağlayıcısı — Replicate REST'e HAM fetch (yeni SDK bağımlılığı YOK).
  * Yalnız SUNUCU tarafı (token gizli). Senkron submit + poll (Prefer:wait), Hobby 60s tavanının ALTINDA bir
- * deadline ile sınırlı; deadline/iptalde best-effort cancel. Çıktı sunucuda data-url'e rehost edilir
- * (gizlilik: sağlayıcının geçici CDN URL'i istemciye gitmez + 1 saatlik URL süresi sorununu çözer).
+ * deadline; deadline/iptalde best-effort cancel. Çıktı sunucuda data-url'e rehost edilir (gizlilik +
+ * 1 saatlik URL süresi sorununu çözer).
  *
- * NOT: Model girdi-alan adları (image/control_image, prompt_strength…) seçilen modele göre DOĞRULANMALI
- * (activationSteps md.0). Varsayılan community model (adirik) → /v1/predictions + version pin (REQUIRED);
- * resmi flux HD → /v1/models/{slug}/predictions (pin istemez).
+ * İKİ MODEL AİLESİ — şemaları FARKLI, payload buna göre kurulur:
+ *  • RESMİ FLUX (önerilen, varsayılan): black-forest-labs/flux-canny-dev | flux-depth-dev. Endpoint
+ *    /v1/models/{slug}/predictions (sürüm hash GEREKMEZ). Şema: { prompt, control_image, guidance,
+ *    output_format, megapixels }. conditioning_scale/prompt_strength YOK → sadakat `guidance` ile.
+ *  • COMMUNITY SDXL (ör. adirik/interior-design): /v1/predictions + version hash (ZORUNLU). Şema:
+ *    { image, prompt, negative_prompt, conditioning_scale, prompt_strength, num_inference_steps, ... }.
  */
 
 const API = 'https://api.replicate.com/v1';
 
-/** Çıktı görselini SUNUCUDA indirip data-url'e çevirir (sağlayıcı URL'i istemciye sızmaz). */
 async function rehost(url: string, signal: AbortSignal): Promise<string> {
   const r = await fetch(url, { signal });
   if (!r.ok) throw new Error(`Render çıktısı indirilemedi (${r.status}).`);
@@ -32,10 +34,22 @@ interface Prediction {
   urls?: { get?: string };
 }
 
-export function replicateRenderProvider(
-  token: string,
-  opts?: { interiorVersion?: string; hdModel?: string },
-): RenderProvider {
+export interface ReplicateRenderOpts {
+  /** Resmi model slug'ı (ör. black-forest-labs/flux-canny-dev) — VARSAYILAN preserve modeli (sürüm istemez). */
+  readonly model?: string;
+  /** Community model sürüm hash'i (model verilmezse kullanılır; /v1/predictions + version). */
+  readonly version?: string;
+  /** Açık HD kademesi için resmi model slug'ı (input.hd=true). */
+  readonly hdModel?: string;
+}
+
+/** 0.55/0.75/0.9 (SDXL ölçeği) → FLUX guidance (~20-45; varsayılan 30). Yüksek sadakat = yüksek guidance. */
+function fluxGuidance(conditioningScale?: number): number {
+  const c = typeof conditioningScale === 'number' ? conditioningScale : 0.75;
+  return Math.round(Math.min(50, Math.max(15, c * 50)));
+}
+
+export function replicateRenderProvider(token: string, opts?: ReplicateRenderOpts): RenderProvider {
   const auth = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
   return {
     name: 'replicate',
@@ -44,25 +58,37 @@ export function replicateRenderProvider(
       const t = withTimeout(RENDER_PRESERVE_DEADLINE_MS, parent);
       let predId: string | undefined;
       try {
-        const useHd = !!(input.hd && opts?.hdModel);
-        const endpoint = useHd ? `${API}/models/${opts!.hdModel}/predictions` : `${API}/predictions`;
-        const modelInput: Record<string, unknown> = {
-          // adirik=image; flux=control_image → ikisini de gönder (model kendi okur, fazlası yok sayılır).
-          image: input.controlImage,
-          control_image: input.controlImage,
-          prompt: input.prompt,
-          negative_prompt: input.negativePrompt ?? '',
-          num_inference_steps: 30,
-          guidance_scale: 7,
-          prompt_strength: input.promptStrength ?? 0.75,
-          conditioning_scale: input.conditioningScale ?? 0.8,
-          output_format: 'jpeg',
-          width: 1024,
-          height: 1024,
-        };
+        // Model seçimi: HD (açıkça istenen) → hdModel; aksi halde resmi `model`; o da yoksa community `version`.
+        const officialSlug = input.hd && opts?.hdModel ? opts.hdModel : opts?.model;
+        const endpoint = officialSlug ? `${API}/models/${officialSlug}/predictions` : `${API}/predictions`;
+
+        let modelInput: Record<string, unknown>;
+        if (officialSlug) {
+          // RESMİ FLUX şeması (flux-canny-dev / flux-depth-dev). control_image data-URI kabul eder.
+          modelInput = {
+            prompt: input.prompt,
+            control_image: input.controlImage,
+            guidance: fluxGuidance(input.conditioningScale),
+            output_format: 'jpg',
+            megapixels: '1',
+          };
+        } else {
+          // COMMUNITY SDXL şeması (image + conditioning/prompt_strength). version pin ZORUNLU (yoksa 422).
+          modelInput = {
+            image: input.controlImage,
+            prompt: input.prompt,
+            negative_prompt: input.negativePrompt ?? '',
+            num_inference_steps: 30,
+            guidance_scale: 7,
+            prompt_strength: input.promptStrength ?? 0.75,
+            conditioning_scale: input.conditioningScale ?? 0.8,
+            output_format: 'jpeg',
+            width: 1024,
+            height: 1024,
+          };
+        }
         const payload: Record<string, unknown> = { input: modelInput };
-        // Community model → sürüm pin ZORUNLU (yoksa 422). Resmi flux → pin istemez.
-        if (!useHd) payload.version = opts?.interiorVersion;
+        if (!officialSlug) payload.version = opts?.version;
 
         const res = await fetch(endpoint, {
           method: 'POST',
@@ -76,7 +102,6 @@ export function replicateRenderProvider(
         }
         let pred = (await res.json()) as Prediction;
         predId = pred.id;
-        // Prefer:wait kısa kalırsa deadline'a kadar poll et.
         while (!['succeeded', 'failed', 'canceled'].includes(pred.status)) {
           await new Promise((r) => setTimeout(r, 1500));
           if (!pred.urls?.get) throw new Error('Replicate poll URL yok.');
@@ -89,10 +114,9 @@ export function replicateRenderProvider(
         const out = Array.isArray(pred.output) ? pred.output[0] : pred.output;
         if (typeof out !== 'string') throw new Error('Render çıktısı boş.');
         const image = await rehost(out, t.signal);
-        return { image, provider: 'replicate', model: useHd ? opts!.hdModel! : (opts?.interiorVersion ?? 'replicate-preserve') };
+        return { image, provider: 'replicate', model: officialSlug ?? opts?.version ?? 'replicate-preserve' };
       } catch (e) {
-        // BEST-EFFORT iptal — GERÇEK maliyet bağı plan-gate + günlük kota (başlamış iş yine faturalanabilir,
-        // Vercel hard-kill bu catch'i atlayabilir). Bu yüzden cancel'a güvenmiyoruz, sadece deniyoruz.
+        // BEST-EFFORT iptal — GERÇEK maliyet bağı plan-gate + günlük kota (başlamış iş yine faturalanabilir).
         if (predId) void fetch(`${API}/predictions/${predId}/cancel`, { method: 'POST', headers: auth }).catch(() => {});
         throw e;
       } finally {
