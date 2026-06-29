@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { EntityStore } from './store';
 import { History } from './history';
-import { AddEntity, UpdateEntity } from './command';
+import { AddEntity, UpdateEntity, RemoveEntity } from './command';
 import { makeWall, wallOf } from './test-helpers';
 
 describe('History', () => {
@@ -54,6 +54,26 @@ describe('History', () => {
     expect(() => history.undo()).not.toThrow();
     expect(() => history.redo()).not.toThrow();
     expect(store.size).toBe(0);
+  });
+
+  it('uzak peer hedef entity\'yi silince undo/dispatch ÇÖKMEZ ve stack bozulmaz (§6.4)', () => {
+    const store = new EntityStore();
+    const history = new History(store);
+    const w = makeWall('w1', { x: 0, y: 0 }, { x: 100, y: 0 });
+    history.dispatch(new AddEntity(w));
+    history.dispatch(new UpdateEntity({ ...w, start: { x: 50, y: 50 } })); // undoStack: [Remove, Update(w_prev)]
+
+    // Uzak peer w1'i sildi (collab onRemote → store.delete, History dışı).
+    store.delete('w1');
+
+    // Update'i geri almak invert'te "entity bulunamadı" fırlatırdı → artık atlanır, çökme yok.
+    expect(() => history.undo()).not.toThrow();
+    expect(store.has('w1')).toBe(false); // zombie diriltilmedi
+    // Bozuk girdi düşürüldü; sıradaki undo (Add'in tersi = Remove) hâlâ güvenli çalışır.
+    expect(() => history.undo()).not.toThrow();
+
+    // Silinmiş entity'ye dispatch de çökmemeli (no-op).
+    expect(() => history.dispatch(new RemoveEntity('w1'))).not.toThrow();
   });
 
   it('emits a change on every mutation', () => {
