@@ -357,7 +357,7 @@ export function CanvasStage({ onBack }: { onBack?: () => void } = {}) {
     }).catch((err) => {
       // PixiJS init başarısız (WebGL yok/bellek) → sonsuz "yükleniyor" yerine hata göster.
       console.error('Tuval başlatılamadı:', err);
-      setInitError(err instanceof Error ? err.message : String(err));
+      if (!disposed) setInitError(err instanceof Error ? err.message : String(err));
     });
 
     return () => {

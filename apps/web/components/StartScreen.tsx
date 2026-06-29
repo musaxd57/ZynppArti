@@ -92,18 +92,28 @@ export function StartScreen({ onStart }: { onStart: () => void }) {
 
   useEffect(() => {
     let active = true;
-    void isCloudSignedIn().then((yes) => {
-      if (!active) return;
-      setSignedIn(yes);
-      if (!yes) {
-        setCloud([]);
-        return;
-      }
-      void currentUserId().then((id) => active && setUid(id));
-      listCloudProjects()
-        .then((list) => active && setCloud(list))
-        .catch(() => active && setCloud([]));
-    });
+    void isCloudSignedIn()
+      .then((yes) => {
+        if (!active) return;
+        setSignedIn(yes);
+        if (!yes) {
+          setCloud([]);
+          return;
+        }
+        void currentUserId()
+          .then((id) => active && setUid(id))
+          .catch(() => active && setUid(null));
+        listCloudProjects()
+          .then((list) => active && setCloud(list))
+          .catch(() => active && setCloud([]));
+      })
+      .catch(() => {
+        // getUser() taşıma hatası → sessiz çökme yerine çıkış-yapılmamış varsay (yakalanmamış reddi önle).
+        if (active) {
+          setSignedIn(false);
+          setCloud([]);
+        }
+      });
     return () => {
       active = false;
     };

@@ -155,6 +155,11 @@ export function Toolbar({
         e.preventDefault();
         void handleSave();
       } else if (k === 'o') {
+        // Bir metin alanında yazarken Ctrl+O'yu YAKALAMA: dosya seçici açıp modeli değiştirmek
+        // (yıkıcı) kullanıcıyı şaşırtır. Kaydet (Ctrl+S) her yerde geçerli kalır (standart davranış).
+        const t = e.target as HTMLElement | null;
+        const tag = t?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t?.isContentEditable) return;
         e.preventDefault();
         jsonRef.current?.click();
       }
@@ -201,7 +206,10 @@ export function Toolbar({
     const a = document.createElement('a');
     a.href = href;
     a.download = name;
+    // Firefox: gövdeye ekli olmayan anchor'da click() güvenilmez olabilir → ekle, tıkla, kaldır.
+    document.body.appendChild(a);
     a.click();
+    a.remove();
   }
 
   async function onExportPng(): Promise<void> {
@@ -376,7 +384,12 @@ export function Toolbar({
 
   async function onNewModel(): Promise<void> {
     const toRemove = store.all().filter((ent) => ent.type !== 'space');
-    if (toRemove.length === 0) return;
+    // Boş tuvalde de bulut bağını kopar: aksi halde boş bir bulut projesini açıp "Yeni"ye basınca
+    // bağ kalır, sonra ilgisiz bir çizim Ctrl+S ile o projenin üstüne yazılır (veri kaybı — cloud-project.ts invariant'ı).
+    if (toRemove.length === 0) {
+      clearCloudProjectId();
+      return;
+    }
     if (!(await confirmDialog('Tüm çizim temizlensin mi? (Geri al ile dönülebilir.)'))) return;
     history.dispatch(new BatchCommand('Yeni', toRemove.map((ent) => new RemoveEntity(ent.id))));
     clearCloudProjectId(); // yeni doküman → bulut bağını kopar (yanlış üzerine yazma önlemi)
