@@ -140,9 +140,12 @@ export function drawBlockSymbol(g: Graphics, kind: BlockKind, lw: number): void 
     }
     case 'wardrobe': {
       outline();
+      const r = (w / 2) * 0.9;
       g.moveTo(-hw, -hh + 8).lineTo(hw, -hh + 8).stroke(stroke); // kapak hattı
-      g.arc(-hw, -hh + 8, (w / 2) * 0.9, 0, Math.PI / 2).stroke(stroke);
-      g.arc(hw, -hh + 8, (w / 2) * 0.9, Math.PI / 2, Math.PI).stroke(stroke);
+      // moveTo(yay başı) ŞART: önceki stroke() son noktayı seed'ler → arc() boş bir kiriş çizgisi ekler
+      // (arc2'ninki tam-genişlik yatay hayalet çizgi). (Denetim.)
+      g.moveTo(-hw + r, -hh + 8).arc(-hw, -hh + 8, r, 0, Math.PI / 2).stroke(stroke);
+      g.moveTo(hw, -hh + 8 + r).arc(hw, -hh + 8, r, Math.PI / 2, Math.PI).stroke(stroke);
       break;
     }
     case 'nightstand': {

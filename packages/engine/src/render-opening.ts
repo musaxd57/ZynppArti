@@ -38,7 +38,10 @@ export function drawOpening(g: Graphics, opening: Opening, wall: Wall, pixelSize
       .stroke({ width: LINEWEIGHTS.thin * pixelSize, color: PALETTE.roomPerimeter });
     const start = Math.atan2(f.b.y - f.a.y, f.b.x - f.a.x);
     const end = Math.atan2(leafEnd.y - f.a.y, leafEnd.x - f.a.x);
-    g.arc(f.a.x, f.a.y, opening.width, start, end)
+    // moveTo(arc başı = f.b) ŞART: önceki stroke() Pixi v8'de son noktayı (leafEnd) yeniden seed'ler →
+    // arc() leafEnd'den yay başına boş bir kiriş çizgisi ekler (her kapıda hayalet çapraz). (Denetim.)
+    g.moveTo(f.b.x, f.b.y)
+      .arc(f.a.x, f.a.y, opening.width, start, end)
       .stroke({ width: LINEWEIGHTS.hairline * pixelSize, color: PALETTE.roomPerimeter, alpha: 0.7 });
   } else {
     // 3b) Pencere: orta-çizgi boyunca cam çizgisi.

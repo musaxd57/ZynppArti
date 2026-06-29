@@ -39,8 +39,10 @@ export function buildDimensionLabel(dim: Dimension): BitmapText {
     style: { fontFamily: ROOM_FONT, fontSize: TEXT_SIZE, align: 'center' },
   });
   label.anchor.set(0.5);
-  // Metni ölçü çizgisinin biraz dışına (normal yönünde) kaydır.
-  label.position.set(t.mid.x + t.normal.x * TEXT_SIZE * 0.9, t.mid.y + t.normal.y * TEXT_SIZE * 0.9);
+  // Metni ölçü çizgisinin DIŞINA kaydır — offset yönünü takip et (ext() gibi). Negatif offset'te düz
+  // +normal, metni ölçü çizgisiyle ölçülen geometri arasına sokup çakıştırırdı.
+  const s = dim.offset >= 0 ? 1 : -1;
+  label.position.set(t.mid.x + t.normal.x * TEXT_SIZE * 0.9 * s, t.mid.y + t.normal.y * TEXT_SIZE * 0.9 * s);
   return label;
 }
 

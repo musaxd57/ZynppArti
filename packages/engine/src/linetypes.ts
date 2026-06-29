@@ -8,7 +8,7 @@ import type { Vec2 } from '@zynpparti/geometry';
  * aynı görünür). İleride GPU shader'a taşınabilir (CLAUDE.md §8.1).
  */
 
-/** Desen: dolu/boş uzunluk dizisi (ekran px). Örn. kesik = [6,4]; nokta = [1,3]; zincir = [10,3,2,3]. */
+/** Desen: dolu/boş uzunluk dizisi (ekran px). Örn. kesik = [6,4]; nokta = [1,3]; zincir = [12,4,2,4]. */
 export type DashPattern = readonly number[];
 
 export const DASH: DashPattern = [6, 4];
