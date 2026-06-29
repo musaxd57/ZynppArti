@@ -15,6 +15,13 @@ import { RENDER_TIMEOUT_MS, withTimeout } from './timeout';
 export const OPENAI_IMAGE_MODEL = 'gpt-image-1';
 
 /**
+ * "Geometriyi koru" (ControlNet) render deadline'ı — RENDER_TIMEOUT_MS'ten AYRI ve Vercel HOBBY
+ * maxDuration'ının (60s, docs/DEPLOY.md) ALTINDA olmalı: difüzyon submit+poll + cancel + rehost'a pay
+ * bırakır (fonksiyon hard-kill edilmeden hata döner). Bkz. provider-render-replicate.ts.
+ */
+export const RENDER_PRESERVE_DEADLINE_MS = 45_000;
+
+/**
  * Bir görsel üretir ve gösterilebilir bir kaynağa (data-URL veya http URL) çevirir.
  * gpt-image-1 base64 döndürür; dall-e-3 URL döndürür → ikisini de destekler.
  */

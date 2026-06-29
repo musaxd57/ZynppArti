@@ -15,7 +15,24 @@ export {
 } from './timeout';
 export { buildProviders, parseForcedProvider, type ProviderEnv } from './providers';
 export { askCopilot, askCopilotStream, NoProviderError, type CopilotResult } from './copilot';
-export { renderImage, OPENAI_IMAGE_MODEL } from './render';
+export { renderImage, OPENAI_IMAGE_MODEL, RENDER_PRESERVE_DEADLINE_MS } from './render';
+export {
+  type RenderProviderName,
+  type RenderMode,
+  type ControlType,
+  type RenderInput,
+  type RenderResult,
+  type RenderProvider,
+  RenderUnavailableError,
+} from './render-types';
+export { openaiRenderProvider } from './provider-render-openai';
+export { replicateRenderProvider } from './provider-render-replicate';
+export {
+  buildRenderProviders,
+  parseForcedRenderProvider,
+  resolveRenderChain,
+  type RenderEnv,
+} from './render-providers';
 export {
   askDesignVariants,
   parseLayout,
