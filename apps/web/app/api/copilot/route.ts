@@ -10,7 +10,7 @@ import {
   type CopilotContext,
 } from '@zynpparti/ai';
 import { getSupabaseServer } from '@/lib/supabase/server';
-import { isPaidPlan } from '@/lib/plan';
+import { isPaidPlan, isAdminEmail } from '@/lib/plan';
 
 /**
  * Copilot doğal-dil ucu (Fikir 1 + 3-sağlayıcı router, ADR-0006/0042). SUNUCU TARAFI — API
@@ -187,7 +187,10 @@ export async function POST(req: Request): Promise<Response> {
     const supabase = await getSupabaseServer();
     const { data: ud } = (await supabase?.auth.getUser()) ?? { data: { user: null } };
     let plan = 'free';
-    if (supabase && ud.user) {
+    if (supabase && ud.user && isAdminEmail(ud.user.email)) {
+      // Tam-yetkili admin e-posta → plan sorgusunu atla, doğrudan ücretli say (render açık).
+      plan = 'studio';
+    } else if (supabase && ud.user) {
       const { data: prof, error: profErr } = await supabase
         .from('profiles')
         .select('plan')

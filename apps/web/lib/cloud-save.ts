@@ -5,7 +5,7 @@ import { getSupabaseBrowser } from '@/lib/supabase/client';
 import { saveProjectToCloud, listCloudProjects, getProfile } from '@/lib/supabase/projects';
 import { getCloudProjectId, setCloudProjectId } from '@/lib/cloud-project';
 import { getProjectName } from '@/lib/project-name';
-import { isPaidPlan, PLAN_QUOTAS } from '@/lib/plan';
+import { isPaidPlan, isAdminEmail, PLAN_QUOTAS } from '@/lib/plan';
 
 /**
  * Tek bulut-kaydet yolu (ADR-0047). Ctrl+S, Toolbar "Kaydet" ve CloudMenu "Buluta kaydet" hepsi
@@ -91,7 +91,8 @@ export async function saveCurrentToCloud(
     if (!targetId) {
       try {
         const profile = await getProfile();
-        if (!isPaidPlan(profile?.plan ?? 'free')) {
+        // Admin e-posta veya ücretli plan → kota yok (sınırsız bulut proje).
+        if (!isAdminEmail(profile?.email) && !isPaidPlan(profile?.plan ?? 'free')) {
           const list = await listCloudProjects();
           const owned = list.filter((p) => !p.owner || p.owner === uid).length;
           const cap = PLAN_QUOTAS.free.cloudProjects;

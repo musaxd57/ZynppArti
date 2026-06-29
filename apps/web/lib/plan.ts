@@ -38,3 +38,15 @@ export function isPaidPlan(plan: string | null | undefined): boolean {
   const p = normalizePlan(plan);
   return p === 'pro' || p === 'studio';
 }
+
+/**
+ * Admin (tam-yetkili) e-postalar — plan/kota kapılarını baypas eder, her zaman 'studio' gibi davranır
+ * (AI render açık, sınırsız bulut proje/işbirlikçi). Sahip hesapları (Moses + ablası) ücretli kapılara
+ * takılmamalı (Moses isteği). Sunucuda da (render uç) e-posta ile doğrulanır → istemci-bypass'a kapalı.
+ */
+const ADMIN_EMAILS: ReadonlySet<string> = new Set(['musacinar2009@gmail.com']);
+
+/** E-posta tam-yetkili admin mi? (büyük/küçük + boşluk normalize edilir) */
+export function isAdminEmail(email: string | null | undefined): boolean {
+  return !!email && ADMIN_EMAILS.has(email.trim().toLowerCase());
+}
