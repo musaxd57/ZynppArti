@@ -1,5 +1,5 @@
 import type { Vec2 } from '@zynpparti/geometry';
-import { distanceToSegment, distanceToPolygonBoundary } from '@zynpparti/geometry';
+import { distanceToSegment, distanceToPolygonBoundary, segmentIntersection, pointInPolygon } from '@zynpparti/geometry';
 import {
   commentSize,
   dimensionGeometry,
@@ -11,6 +11,92 @@ import {
   type EntityStore,
 } from '@zynpparti/document';
 import type { SpatialIndex } from './spatial-index';
+import { entityBounds } from './entity-bounds';
+
+interface Rect {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
+function pointInRect(p: Vec2, r: Rect): boolean {
+  return p.x >= r.minX && p.x <= r.maxX && p.y >= r.minY && p.y <= r.maxY;
+}
+
+/** Eksen-hizalı dikdörtgenin köşeleri (kesişim testleri için). */
+function rectCorners(r: Rect): Vec2[] {
+  return [
+    { x: r.minX, y: r.minY },
+    { x: r.maxX, y: r.minY },
+    { x: r.maxX, y: r.maxY },
+    { x: r.minX, y: r.maxY },
+  ];
+}
+
+/** [a,b] segmenti dikdörtgeni kesiyor mu (ucu içeride ya da bir kenarı kesiyor)? */
+function segmentIntersectsRect(a: Vec2, b: Vec2, r: Rect): boolean {
+  if (pointInRect(a, r) || pointInRect(b, r)) return true;
+  const c = rectCorners(r);
+  for (let i = 0; i < 4; i++) {
+    if (segmentIntersection(a, b, c[i]!, c[(i + 1) % 4]!)) return true;
+  }
+  return false;
+}
+
+/** Poligon dikdörtgenle örtüşüyor mu (köşe içeride / kenar kesişiyor / dikdörtgen poligon içinde)? */
+function polygonIntersectsRect(ring: readonly Vec2[], r: Rect): boolean {
+  for (const v of ring) if (pointInRect(v, r)) return true;
+  for (const c of rectCorners(r)) if (pointInPolygon(c, ring)) return true;
+  for (let i = 0; i < ring.length; i++) {
+    if (segmentIntersectsRect(ring[i]!, ring[(i + 1) % ring.length]!, r)) return true;
+  }
+  return false;
+}
+
+function aabbOverlapsRect(e: Parameters<typeof entityBounds>[0], r: Rect): boolean {
+  const b = entityBounds(e);
+  return b.minX <= r.maxX && b.maxX >= r.minX && b.minY <= r.maxY && b.maxY >= r.minY;
+}
+
+/**
+ * Kutu-seçim (marquee) narrow-phase: rbush AABB (broad) adaylarından gerçek geometrisi dikdörtgenle
+ * kesişenleri döner. Eski kod yalnız broad-phase'di → çapraz bir duvarın BÜYÜK AABB'si, duvardan uzak
+ * boş bir köşeye çizilen kutuda bile onu seçtiriyordu (denetim). Segment-bazlı tipler için kesin
+ * segment-dikdörtgen testi; kutu-bazlı (eksen-hizalı) tipler için AABB zaten kesin.
+ */
+export function marqueeHitTest(
+  store: EntityStore,
+  index: SpatialIndex,
+  rect: Rect,
+  skipLayer?: (layerId: string) => boolean,
+): EntityId[] {
+  const out: EntityId[] = [];
+  for (const id of index.search(rect)) {
+    const e = store.get(id);
+    if (!e || e.type === 'space') continue;
+    if (skipLayer?.(e.layerId)) continue;
+    let hit = false;
+    if (e.type === 'wall') hit = segmentIntersectsRect(e.start, e.end, rect);
+    else if (e.type === 'section') hit = segmentIntersectsRect(e.a, e.b, rect);
+    else if (e.type === 'dimension') {
+      const g = dimensionGeometry(e);
+      hit = segmentIntersectsRect(g.da, g.db, rect);
+    } else if (e.type === 'opening') {
+      const wall = store.get(e.wallId);
+      hit = wall?.type === 'wall' ? pointInRect(openingFrame(e, wall).center, rect) : false;
+    } else if (e.type === 'parcel') hit = polygonIntersectsRect(e.boundary, rect);
+    else if (e.type === 'block') {
+      // Dönebilen blok: ayak izi köşelerinden biri kutuda VEYA kutu köşesi blok içinde.
+      hit = pointInRect(e.position, rect) || rectCorners(rect).some((c) => pointInBlock(e, c));
+    } else {
+      // annotation/comment/sheet: eksen-hizalı kutu → AABB örtüşmesi kesin.
+      hit = aabbOverlapsRect(e, rect);
+    }
+    if (hit) out.push(id);
+  }
+  return out;
+}
 
 /**
  * Bir dünya noktasının altındaki entity'yi bulur (ENGINEERING-NOTES §2):

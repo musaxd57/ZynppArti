@@ -82,6 +82,7 @@ export class DimensionTool implements SceneTool {
 
   private render(): void {
     this.preview.clear();
+    this.preview.alpha = 1; // clear() container alpha'sını sıfırlamaz → önceki ölçünün 0.7'si yeni ilk-bacağa sızmasın.
     if (!this.a || !this.cursor) return;
     const px = this.ctx.pixelSize();
     if (!this.b) {

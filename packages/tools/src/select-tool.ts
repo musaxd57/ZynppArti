@@ -11,7 +11,7 @@ import {
   type Entity,
   type EntityId,
 } from '@zynpparti/document';
-import { hitTest, highlightEntity, type SceneTool, type ScenePointer } from '@zynpparti/engine';
+import { hitTest, marqueeHitTest, highlightEntity, type SceneTool, type ScenePointer } from '@zynpparti/engine';
 import type { ToolContext } from './context';
 
 const HIT_PX = 8;
@@ -313,7 +313,7 @@ export class SelectTool implements SceneTool {
       .filter((e): e is Entity => !!e && isClonable(e) && !this.skip(e.layerId));
   }
 
-  /** Kutu içindeki seçilebilir entity'ler (mahaller hariç; gizli/kilitli katman atlanır). */
+  /** Kutu ile kesişen seçilebilir entity'ler (mahaller hariç; gizli/kilitli katman atlanır). */
   private marqueeHits(a: Vec2, b: Vec2): EntityId[] {
     const rect = {
       minX: Math.min(a.x, b.x),
@@ -321,10 +321,8 @@ export class SelectTool implements SceneTool {
       maxX: Math.max(a.x, b.x),
       maxY: Math.max(a.y, b.y),
     };
-    return this.ctx.index.search(rect).filter((id) => {
-      const e = this.ctx.store.get(id);
-      return !!e && e.type !== 'space' && !this.skip(e.layerId);
-    });
+    // Narrow-phase: AABB değil GERÇEK geometri kesişimi (çapraz duvarın büyük bbox'ı yanlış seçtirmesin).
+    return marqueeHitTest(this.ctx.store, this.ctx.index, rect, (lid) => this.skip(lid));
   }
 
   /** Seçili entity'leri döndürür (kopyala-yapıştır için ToolManager kullanır). */
