@@ -22,7 +22,19 @@
   (ai `b854149`) **garantili giriş kapısı** (AI hiç dış açıklık koymadıysa en uzun dış duvara sentezle) +
   parseLayouts TÜM JSON bloklarını dener (öndeki layout-olmayan obje planı atmasın) + askCopilot boş-yanıt fallback ·
   (sync `c40b068`) per-socket mesaj token-bucket (oda-içi flood amplifikasyonu sınırı, cömert/env-ayarlı).
-- Dalga 2 (render-visual-craft / perf-500k / security-RLS / persistence+copilot) çalışıyor. *(Tarayıcı teyidi Moses'ta.)*
+- **Dalga 2 (4 ajan: render / perf-500k / security-RLS / persistence+copilot) — 3 fix commit daha:**
+  - (render `9a8b62b`) **HIGH: her kapıda hayalet çapraz çizgi** — Pixi v8 `stroke()` son-noktayı yeniden
+    seed'liyor → sonraki `arc()` boş kiriş ekliyor; `moveTo(f.b)` ile düzeldi + wardrobe sembolü aynı bug +
+    dimension label negatif-offset tarafı + CHAIN dash yorumu.
+  - (perf `8629dac`) **RoomList + TakeoffPanel store-aboneliği trailing-debounce** (~100/120ms): sürüklemede
+    kare-başına computeMetrics/computeTakeoff O(n²) yeniden hesabı kaldırıldı (canlı m² hissi korunur, UI-only —
+    model/AI-Çiz senkron okuması etkilenmedi). *Perf teşhisi: jank kaynağı document-katmanı recompute kaskadı;
+    engine cull/index zaten 500k-hazır.*
+  - (cloud `2c05cde`) paylaşılan-projeyi-üzerine-yaz reddinde yetim blob temizliği (transient hatada meşru blob'a
+    dokunmadan).
+  - **Güvenlik tasarımı SAĞLAM teyit edildi** (RLS/RPC/storage/key-leakage temiz). Bulguların tümü ürün/altyapı
+    kararı = zaten flag'li (M9–M12, aşağıda) — otonom dokunulmadı. Copilot kuralları + serialize forward-compat:
+    domain/regülasyon yorumu → Moses (aşağıda). *(Tarayıcı teyidi Moses'ta: kapı/wardrobe çizimi + panel debounce hissi.)*
 
 **🆕 2026-06-29 (2) — AI duvar köşe boşluğu + admin hesabı (main'de canlı, `6087db4`):**
 - **AI duvar köşeleri kapanıyor (`39197c0`):** Moses AI'a çizdirdiği planda iç duvarların alt dış duvara değmediğini gördü (köşeler açık, ekran görüntüsüyle teyit — alt-orta kırpmada net boşluk). Sebep: LLM duvar uçlarını birkaç cm kaydırıyor → köşe/T-bağlantı buluşmuyor. Çözüm: yeni saf `snapSegmentsToGrid` (geometry) — yakın X/Y uç koordinatlarını ortak çizgilere kümeler (tol 50cm), `applyLayout`'ta entity kurmadan önce uygulanır; sıfır-uzunluk duvarlar atılır. +6 test (geometry 71).

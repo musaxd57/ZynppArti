@@ -45,6 +45,24 @@ Bugünkü UI işi canlıda ama gözle teyit edilmeli:
 - [ ] **M17 katman klavye erişimi:** sürükle-sırala/yeniden-adlandır klavyeyle (UX, görsel doğrulama).
 - [ ] **M23 grid viewport-relative:** uzak/import çizimde ızgara kayboluyor; core render + pan-perf → görsel doğrulama şart.
 
+### 2026-06-29 (3) dalga-2 — Moses kararı bekleyen (otonom DOKUNULMADI; tasarım sağlam teyit edildi)
+- [ ] **Anonim AI maliyet-istismarı:** `/api/copilot` yalnız `render`'ı plan-gate'liyor; `ask`/`design` (paralı LLM)
+  auth'suz, tek koruma in-memory IP-limiter (serverless'te etkisiz, M12). → `ask`/`design`'a oturum şartı +
+  paylaşımlı rate-limit. **ÜRÜN KARARI:** anonim kullanıcı AI'ı denesin mi? (funnel etkisi).
+- [ ] **aiRendersPerMonth hiç enforce edilmiyor:** Pro/Studio sınırsız render (PLAN_QUOTAS sayısı kullanılmıyor) →
+  aylık sayaç (`profiles.renders_used`) gerekiyorsa Moses karar versin.
+- [ ] **Paddle `custom_data.user_id` doğrulanmıyor:** ödeyen biri başka uid girip başkasının planını yükseltebilir
+  (kendine-zarar; M9/M11 ile birlikte customer_id↔uid eşlemesi).
+- [ ] **Copilot regülasyon yorumu (domain — mimar kararı):** (a) `checkDoorWidth` her <90cm kapıyı `warning`
+  yapıyor; TS 9111 90cm **erişilebilir** kapı değeri → standart 80-85cm konut kapıları boşuna uyarı veriyor;
+  `info`'ya indirilsin mi yoksa hepsi uyarı mı kalsın? (b) koridor net-genişlik 0'a clamp olunca atlanıyor
+  (çok-dar koridor saptanmıyor). (c) setback işaretsiz mesafe → parsel DIŞINDAKİ duvarı "çekme" gibi gösteriyor
+  (gerçek ihlal containment'ta yakalanıyor, mesaj yanıltıcı).
+- [ ] **Serialize forward-compat (MED):** Yeni build'in yeni block-kind/sheet-size'lı dosyası (hâlâ version 1)
+  eski build'de sessizce DÜŞÜYOR → sonraki kayıtta kalıcı kayıp. Doğru çözüm: **katalog büyüyünce
+  `MODEL_FORMAT_VERSION` artır** (guard düşürmek yerine reddetsin) — bir proje disiplini; kodla güvenli
+  otomatikleştirmek render-tolerans gerektirir.
+
 ## 3. Faz haritası (büyük resim — ROADMAP.md)
 - Faz 2 AI render/LLM maliyetli kısım ertelenmiş; deterministik her şey hazır.
 - Faz 3 kalıcı çok-yazar (Yjs presence var; commit-log north-star).
