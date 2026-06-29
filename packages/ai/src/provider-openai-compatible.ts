@@ -42,7 +42,8 @@ export function openAICompatibleProvider(cfg: OpenAICompatConfig): AiProvider {
         params,
         opts.signal ? { signal: opts.signal } : undefined,
       );
-      return (res.choices[0]?.message?.content ?? '').trim() || 'Yanıt üretilemedi (boş döndü).';
+      // Boşsa '' dön → askCopilot fallback'i tetiklensin (placeholder'ı başarı sanmasın — denetim).
+      return (res.choices[0]?.message?.content ?? '').trim();
     },
 
     async chatStream(messages, opts, onDelta): Promise<string> {

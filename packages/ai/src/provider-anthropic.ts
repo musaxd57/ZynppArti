@@ -36,11 +36,11 @@ export function anthropicProvider(apiKey: string, model: string = ANTHROPIC_DEFA
         .map((b) => b.text)
         .join('')
         .trim();
-      // Yanıt max_tokens'a takılıp boş kaldıysa (thinking tüm bütçeyi yediyse) bilgilendir.
+      // Yanıt max_tokens'a takılıp boş kaldıysa (thinking tüm bütçeyi yediyse) bilgilendir; aksi halde
+      // '' dön → askCopilot bunu başarısızlık sayıp SIRADAKİ sağlayıcıya düşsün (placeholder'ı "başarılı
+      // yanıt" sanıp fallback'i atlamasındı — denetim). max_tokens mesajı gerçek/bilgilendirici → korunur.
       if (!text) {
-        return res.stop_reason === 'max_tokens'
-          ? 'Yanıt çok uzun oldu ve kesildi; lütfen soruyu daraltın.'
-          : 'Yanıt üretilemedi (boş döndü).';
+        return res.stop_reason === 'max_tokens' ? 'Yanıt çok uzun oldu ve kesildi; lütfen soruyu daraltın.' : '';
       }
       return text;
     },

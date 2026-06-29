@@ -103,4 +103,13 @@ describe('parseLayouts (varyantlar)', () => {
   it('geçersiz varyantları eler', () => {
     expect(parseLayouts('{"variants":[{"walls":[]},{"walls":[[0,0,100,0]]}]}')).toHaveLength(1);
   });
+
+  it('öndeki GEÇERLİ-ama-layout-olmayan JSON objesini atlayıp gerçek planı bulur', () => {
+    // Model planı önce {"note":...} gibi geçerli JSON yazınca eski kod ilk blokta durup [] dönerdi.
+    const out = parseLayouts('{"note":"işte planınız"}\n{"walls":[[0,0,300,0]],"rooms":[],"openings":[]}');
+    expect(out).toHaveLength(1);
+    expect(out[0]!.walls[0]![2]).toBe(300);
+    // parseLayout (tekil) de aynı şekilde atlamalı.
+    expect(parseLayout('{"meta":1}{"walls":[[0,0,150,0]],"rooms":[]}')!.walls[0]![2]).toBe(150);
+  });
 });

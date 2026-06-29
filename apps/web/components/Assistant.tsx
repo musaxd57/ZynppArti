@@ -377,11 +377,24 @@ function applyLayout(
       });
     }
   }
-  // FAILSAFE: her planda EN AZ BİR dış giriş kapısı olmalı. AI tüm dış açıklıkları yanlışlıkla window
-  // etiketlediyse, dış açıklıklardan kapı-genişliğine en yakın olanı GİRİŞ KAPISI yap.
-  if (placed.some((p) => p.exterior) && !placed.some((p) => p.exterior && p.opening.kind === 'door')) {
+  // FAILSAFE: her planda EN AZ BİR dış giriş kapısı olmalı (DESIGN_SYSTEM zorunlu kuralı).
+  const hasExterior = placed.some((p) => p.exterior);
+  if (hasExterior && !placed.some((p) => p.exterior && p.opening.kind === 'door')) {
+    // AI tüm dış açıklıkları yanlışlıkla window etiketlediyse → kapı-genişliğine en yakın olanı kapı yap.
     const ext = placed.filter((p) => p.exterior).sort((a, b) => Math.abs(a.opening.width - 90) - Math.abs(b.opening.width - 90));
     ext[0]!.opening = { ...ext[0]!.opening, kind: 'door' };
+  } else if (!hasExterior) {
+    // AI hiç dış açıklık koymadı (ya da hiçbiri sınır duvarına ≤80 cm yakın düşmedi) → ev girişsiz kalmasın:
+    // en uzun dış duvarın ortasına (t=0.5) 90 cm giriş kapısı SENTEZLE.
+    const extWall = wallEntities
+      .filter(isExteriorWall)
+      .sort((a, b) => Math.hypot(b.end.x - b.start.x, b.end.y - b.start.y) - Math.hypot(a.end.x - a.start.x, a.end.y - a.start.y))[0];
+    if (extWall) {
+      placed.push({
+        opening: { id: createEntityId(), type: 'opening', layerId: 'default', wallId: extWall.id, t: 0.5, width: 90, kind: 'door' },
+        exterior: true,
+      });
+    }
   }
   for (const p of placed) {
     cmds.push(new AddEntity(p.opening));

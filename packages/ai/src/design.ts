@@ -95,15 +95,17 @@ function num(v: unknown): v is number {
 }
 
 /**
- * LLM metninden ilk dengeli {...} JSON bloğunu çıkarıp ayrıştırır (markdown/önek metne toleranslı).
- * STRING-FARKINDA: bir string literal içindeki `}` (ör. summary "salon } var") derinliği yanlışlıkla
- * sıfırlayıp geçerli planı `null` döndürmesin diye in-string + backslash-escape durumunu izler.
+ * LLM metnindeki TÜM dengeli {...} JSON bloklarını sırayla çıkarıp ayrıştırır (markdown/önek metne
+ * toleranslı). STRING-FARKINDA: bir string literal içindeki `}` (ör. summary "salon } var") derinliği
+ * yanlışlıkla sıfırlamasın diye in-string + backslash-escape durumunu izler.
+ *
+ * Neden TÜM bloklar (yalnız ilki değil): model planı, geçerli-ama-layout-OLMAYAN bir objenin (ör.
+ * `{"note":"..."}`) ARDINDAN yazabiliyor. İlk parse-edilebilir blokta durup orada validation başarısız
+ * olursa gerçek plan atlanırdı → çağıran her bloğu validate edip ilk GEÇERLİ olanı seçsin (denetim bulgusu).
  */
-function extractJson(text: string): unknown | null {
+function extractJsonBlocks(text: string): unknown[] {
+  const out: unknown[] = [];
   let start = text.indexOf('{');
-  // Birden çok dengeli {...} bloğunu dene: ilk blok geçerli JSON değilse (ör. modelin gövde metnindeki
-  // "{ana mekan}" gibi süs parantezi) SONRAKİNE geç — gerçek plan JSON'u onun ardından gelebilir.
-  // (Eski kod ilk blokta parse hatasında null dönüp geçerli planı atıyordu — denetim bulgusu.)
   while (start >= 0) {
     let depth = 0;
     let inStr = false;
@@ -133,11 +135,11 @@ function extractJson(text: string): unknown | null {
         }
       }
     }
-    if (parsed !== null) return parsed;
-    if (end < 0) return null; // dengeli blok kapanmadı → daha fazla deneme yok
-    start = text.indexOf('{', end + 1); // bu blok geçersizdi → bir sonraki '{'ten dene
+    if (parsed !== null) out.push(parsed); // {...} JSON.parse'ı asla null dönmez → başarı işareti
+    if (end < 0) break; // dengeli blok kapanmadı → daha fazla blok yok
+    start = text.indexOf('{', end + 1);
   }
-  return null;
+  return out;
 }
 
 /** Ayrıştırılmış bir nesneyi geçerli bir Layout'a doğrular (saf; null = geçersiz). */
@@ -197,25 +199,33 @@ function validateLayout(parsed: unknown): Layout | null {
   return { summary, walls, rooms, openings };
 }
 
-/** Tek bir plan ayrıştırır (geriye dönük uyum + tekil mod). */
+/** Tek bir plan ayrıştırır (geriye dönük uyum + tekil mod). İlk GEÇERLİ bloğu seçer. */
 export function parseLayout(text: string): Layout | null {
-  return validateLayout(extractJson(text));
+  for (const block of extractJsonBlocks(text)) {
+    const l = validateLayout(block);
+    if (l) return l;
+  }
+  return null;
 }
 
 /**
  * Bir veya çok plan ayrıştırır. LLM `{"variants":[plan, plan]}` döndürdüyse hepsini, tek plan
- * döndürdüyse onu tek elemanlı dizi olarak verir. Geçersiz varyantlar elenir.
+ * döndürdüyse onu tek elemanlı dizi olarak verir. Geçersiz varyantlar elenir. Bloklar sırayla denenir →
+ * ilk GEÇERLİ varyant-dizisi ya da tekil plan kazanır (önündeki layout-olmayan objeler atlanır).
  */
 export function parseLayouts(text: string): Layout[] {
-  const parsed = extractJson(text);
-  if (parsed && typeof parsed === 'object') {
-    const variants = (parsed as Record<string, unknown>).variants;
-    if (Array.isArray(variants)) {
-      return variants.map(validateLayout).filter((l): l is Layout => l !== null);
+  for (const block of extractJsonBlocks(text)) {
+    if (block && typeof block === 'object') {
+      const variants = (block as Record<string, unknown>).variants;
+      if (Array.isArray(variants)) {
+        const valid = variants.map(validateLayout).filter((l): l is Layout => l !== null);
+        if (valid.length > 0) return valid;
+      }
     }
+    const single = validateLayout(block);
+    if (single) return [single];
   }
-  const single = validateLayout(parsed);
-  return single ? [single] : [];
+  return [];
 }
 
 export interface DesignVariantsResult {
