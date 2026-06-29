@@ -189,10 +189,14 @@ export function findFaces(segments: readonly Segment[], snapTol = 1, minArea = 1
     .map((poly, idx) => ({ poly, comp: ringComp[idx]!, area: polygonArea(poly), signed: signedArea(poly) }))
     .filter((f) => f.area >= minArea);
   if (faces.length === 0) return [];
-  const outerByComp = new Map<number, number>(); // bileşen → o bileşendeki en büyük alanlı yüz indeksi
+  const outerByComp = new Map<number, number>(); // bileşen → o bileşenin dış (sınırsız) yüzü
+  // Dış (sınırsız) yüz, half-edge dolaşımında SAAT yönünde (signed < 0) çıkar; iç odalar CCW (signed > 0).
+  // Eskiden "en büyük |alan|" ile seçiliyordu; ama dışarıdan değen sarkık duvar (spur) iç oda ile dış
+  // yüze AYNI |alan|ı verir (spur git-gel = net 0) → strict-> eşitlikte yanlış yüzü tutup oda poligonuna
+  // spike kaçırabiliyordu (denetim). İşaret bunu tek-anlamlı ayırır: en negatif signed = dış yüz.
   faces.forEach((f, i) => {
     const cur = outerByComp.get(f.comp);
-    if (cur === undefined || f.area > faces[cur]!.area) outerByComp.set(f.comp, i);
+    if (cur === undefined || f.signed < faces[cur]!.signed) outerByComp.set(f.comp, i);
   });
   const outers = new Set(outerByComp.values());
 

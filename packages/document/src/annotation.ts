@@ -10,7 +10,8 @@ export const DEFAULT_ANNOTATION_HEIGHT = 25;
  */
 export function annotationSize(a: Annotation): { w: number; h: number } {
   const lines = a.text.length ? a.text.split('\n') : [''];
-  const cols = Math.max(1, ...lines.map((l) => l.length));
+  // reduce — Math.max(...spread) ~10⁵+ satırda argüman sınırını aşıp RangeError atardı.
+  const cols = lines.reduce((m, l) => Math.max(m, l.length), 1);
   return { w: cols * a.height * 0.6, h: lines.length * a.height * 1.2 };
 }
 

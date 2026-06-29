@@ -52,6 +52,25 @@ describe('findFaces', () => {
     expect(polygonArea(faces[0]!)).toBeCloseTo(30000);
   });
 
+  it('dışarıdan değen sarkık duvar (spur) oda poligonuna spike kaçırmaz', () => {
+    // Kare oda + sağ kenarın ortasından (200,100) dışarı uzanan sarkık duvar. Spur git-gel net 0 alan →
+    // iç oda ile dış yüz AYNI |alan|ı verir; eski "en büyük |alan|" tie-break yanlış yüzü tutup oda
+    // poligonuna (260,100) spike'ını gömüyordu (denetim). İşaret-bazlı dış-yüz seçimi temiz kareyi döndürmeli.
+    const segs: Segment[] = [
+      { a: vec2(0, 0), b: vec2(200, 0) },
+      { a: vec2(200, 0), b: vec2(200, 100) },
+      { a: vec2(200, 100), b: vec2(200, 200) },
+      { a: vec2(200, 200), b: vec2(0, 200) },
+      { a: vec2(0, 200), b: vec2(0, 0) },
+      { a: vec2(200, 100), b: vec2(260, 100) }, // dışarı sarkan duvar
+    ];
+    const faces = findFaces(segs);
+    expect(faces).toHaveLength(1);
+    expect(polygonArea(faces[0]!)).toBeCloseTo(40000);
+    // Hiçbir köşe x>200 olmamalı (spike gömülmemiş).
+    for (const v of faces[0]!) expect(v.x).toBeLessThanOrEqual(200.001);
+  });
+
   it('kesişen ama kapalı bölge oluşturmayan iki çizgi → mahal yok', () => {
     const faces = findFaces([
       { a: vec2(0, 0), b: vec2(100, 100) },

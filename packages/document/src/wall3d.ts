@@ -104,7 +104,7 @@ export function wallBoxesWithOpenings(
     for (const o of ops) {
       box(cursor, o.a, h, 0); // boşluktan önceki dolu parça
       if (o.kind === 'window') {
-        box(o.a, o.b, WINDOW_SILL, 0); // denizlik
+        box(o.a, o.b, Math.min(WINDOW_SILL, h), 0); // denizlik (kısa duvarda h'yi aşmasın — section.ts ile tutarlı)
         box(o.a, o.b, h - WINDOW_HEAD, WINDOW_HEAD); // lento
       } else {
         box(o.a, o.b, h - DOOR_HEIGHT, DOOR_HEIGHT); // kapı üstü lento
