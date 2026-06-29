@@ -7,6 +7,23 @@
 
 ## ŞU AN
 
+**🆕 2026-06-29 (3) — HATA + İYİLEŞTİRME DENETİMİ, dalga 1 (main'de canlı, son `c40b068`):**
+- Moses "4 saat durmadan hata/iyileştirme ara, agentlarla" dedi → 5 paralel denetim ajanı (geometry+document,
+  engine+tools, io, web, ai+copilot+collab) → 14 gerçek bulgu, otonom-güvenli olanlar düzeltildi (6 commit, hepsi
+  yeşil zincir + push: branch + main + default senkron). **+5 test** (geometry 73, engine 42, io 44, ai 45).
+- **Düzeltmeler:** (web `4f841d0`) boş tuvalde "Yeni" bulut bağını koparıyor (yanlış proje üzerine-yazma/veri kaybı),
+  input'ta Ctrl+O ele geçirilmiyor, galeri auth catch, download() body'e ekli, setInitError disposed guard ·
+  (io `5150c9c`) eksik $INSUNITS kodları (Å/nm/µm/Gm) + CIRCLE/ELLIPSE/SPLINE OCS sınırı belgelendi (dxf-parser
+  extrusion'ı yalnız ARC'ta parse ediyor → aynalı eğri zaten kayıp, no-op) · (geometry `2ded376`) **findFaces dış-yüz
+  seçimi |alan| yerine signed-area İŞARETİ ile** — dışarıdan değen sarkık duvar (spur) oda poligonuna spike
+  kaçırmasını önler (perimeter/centroid/sıva bozulmasını giderir) + wall3d denizlik h-clamp + annotationSize reduce ·
+  (engine/tools `98bba9b`) **marquee narrow-phase** (çapraz duvarın büyük AABB'si boş köşede seçtirmesin) +
+  pointercancel araç-jesti temizliği (FSM 'dragging'de kilitlenmesin) + dimension alpha sızıntısı ·
+  (ai `b854149`) **garantili giriş kapısı** (AI hiç dış açıklık koymadıysa en uzun dış duvara sentezle) +
+  parseLayouts TÜM JSON bloklarını dener (öndeki layout-olmayan obje planı atmasın) + askCopilot boş-yanıt fallback ·
+  (sync `c40b068`) per-socket mesaj token-bucket (oda-içi flood amplifikasyonu sınırı, cömert/env-ayarlı).
+- Dalga 2 (render-visual-craft / perf-500k / security-RLS / persistence+copilot) çalışıyor. *(Tarayıcı teyidi Moses'ta.)*
+
 **🆕 2026-06-29 (2) — AI duvar köşe boşluğu + admin hesabı (main'de canlı, `6087db4`):**
 - **AI duvar köşeleri kapanıyor (`39197c0`):** Moses AI'a çizdirdiği planda iç duvarların alt dış duvara değmediğini gördü (köşeler açık, ekran görüntüsüyle teyit — alt-orta kırpmada net boşluk). Sebep: LLM duvar uçlarını birkaç cm kaydırıyor → köşe/T-bağlantı buluşmuyor. Çözüm: yeni saf `snapSegmentsToGrid` (geometry) — yakın X/Y uç koordinatlarını ortak çizgilere kümeler (tol 50cm), `applyLayout`'ta entity kurmadan önce uygulanır; sıfır-uzunluk duvarlar atılır. +6 test (geometry 71).
 - **Admin hesabı (`6087db4`):** `musacinar2009@gmail.com` tam-yetkili ('studio' gibi): AI render açık (sunucu tarafı, **auth e-postasıyla** doğrulanır → istemci-bypass'a kapalı) + sınırsız bulut proje (kota atlanır). `isAdminEmail` (`lib/plan.ts`). Başka hesap eklemek = ADMIN_EMAILS setine ekle.
