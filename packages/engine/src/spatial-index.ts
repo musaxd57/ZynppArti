@@ -30,6 +30,9 @@ export class SpatialIndex {
   private readonly items = new Map<EntityId, IndexItem>();
 
   insert(id: EntityId, box: AABB): void {
+    // İdempotans: id zaten indeksliyse eski referansı önce sök. Aksi halde rbush'a ikinci düğüm girer,
+    // `items` yalnız yeniyi tutar → eski hayalet düğüm bir daha silinemez (referansı kaybolur). (Sertleştirme.)
+    if (this.items.has(id)) this.remove(id);
     const item: IndexItem = { minX: box.minX, minY: box.minY, maxX: box.maxX, maxY: box.maxY, id };
     this.tree.insert(item);
     this.items.set(id, item);

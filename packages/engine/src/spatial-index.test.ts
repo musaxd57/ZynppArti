@@ -37,6 +37,17 @@ describe('SpatialIndex', () => {
     expect(idx.search(box(205, 205, 206, 206))).toEqual(['a']);
   });
 
+  it('aynı id\'ye tekrar insert → hayalet düğüm bırakmaz (idempotans)', () => {
+    const idx = new SpatialIndex();
+    idx.insert('a', box(0, 0, 10, 10));
+    idx.insert('a', box(200, 200, 210, 210)); // eski referans sökülmeli
+    expect(idx.size).toBe(1);
+    expect(idx.search(box(0, 0, 10, 10))).toEqual([]); // eski kutu kalmadı
+    expect(idx.search(box(205, 205, 206, 206))).toEqual(['a']);
+    idx.remove('a');
+    expect(idx.search(box(0, 0, 300, 300))).toEqual([]); // hayalet düğüm yok
+  });
+
   it('bulk loads and clears', () => {
     const idx = new SpatialIndex();
     idx.bulkLoad([

@@ -215,8 +215,10 @@ export function computeTakeoff(
     paintAreaM2: paintCm2 / CM2_PER_M2,
     floorAreaM2: floorCm2 / CM2_PER_M2,
     skirtingM: skirtingCm / 100,
-    doorCount: openings.filter((o) => o.kind === 'door').length,
-    windowCount: openings.filter((o) => o.kind === 'window').length,
+    // Geçerli (genişlik > 0, sonlu) açıklıkları say — schedule() ve duvar-kesimi zaten bozuk genişliği
+    // eliyor; saymada elemezsek bozuk/import açıklık adedi şişer ve maliyeti (adet × ₺) yanlış artar (denetim).
+    doorCount: openings.filter((o) => o.kind === 'door' && o.width > 0 && Number.isFinite(o.width)).length,
+    windowCount: openings.filter((o) => o.kind === 'window' && o.width > 0 && Number.isFinite(o.width)).length,
     doorSchedule: schedule(openings, 'door'),
     windowSchedule: schedule(openings, 'window'),
     blockSchedule: blockSchedule(blocks),
