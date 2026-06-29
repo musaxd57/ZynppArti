@@ -58,14 +58,24 @@ export function RoomList({ store, history, renameId, onRenameConsumed }: RoomLis
   const [walls, setWalls] = useState<Wall[]>(() => getWalls(store));
   const inputs = useRef(new Map<string, HTMLInputElement | null>());
 
-  useEffect(
-    () =>
-      store.subscribe(() => {
-        setSpaces(getSpaces(store));
-        setWalls(getWalls(store));
-      }),
-    [store],
-  );
+  useEffect(() => {
+    // Sürükleme sırasında store HER KARE emit eder; bu re-render başına computeMetrics
+    // (O(mahal×kenar×duvar)) yeniden hesaplar → büyük planda jank. Trailing debounce ile son
+    // değişiklikten ~100 ms sonra bir kez güncelle (gözle "canlı m²" hissi korunur, kare-başına yük gider).
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const refresh = (): void => {
+      setSpaces(getSpaces(store));
+      setWalls(getWalls(store));
+    };
+    const unsub = store.subscribe(() => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(refresh, 100);
+    });
+    return () => {
+      if (timer) clearTimeout(timer);
+      unsub();
+    };
+  }, [store]);
 
   // Çift tık isteği gelince ilgili mahalin input'una odaklan + metni seç.
   useEffect(() => {

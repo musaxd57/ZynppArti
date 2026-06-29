@@ -67,7 +67,19 @@ export function TakeoffPanel({ store }: TakeoffPanelProps) {
   const [prices, setPrices] = useState<UnitPrices>(DEFAULT_UNIT_PRICES);
   const [editPrices, setEditPrices] = useState(false);
 
-  useEffect(() => store.subscribe(() => setVersion((v) => v + 1)), [store]);
+  // Sürüklemede store her kare emit eder; computeTakeoff (O(duvar×mahal)) pahalı → trailing debounce
+  // ile son değişiklikten ~120 ms sonra bir kez yeniden hesapla (metraj panelinin kare-başına yükü gider).
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsub = store.subscribe(() => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => setVersion((v) => v + 1), 120);
+    });
+    return () => {
+      if (timer) clearTimeout(timer);
+      unsub();
+    };
+  }, [store]);
 
   // Birim fiyatlar localStorage'da kalıcı (kullanıcı kendi rayicini girer); bozuk kayıt → varsayılan.
   useEffect(() => {
