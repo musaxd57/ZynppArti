@@ -101,10 +101,15 @@ export function CanvasStage({ onBack }: { onBack?: () => void } = {}) {
   // (window.location → useSearchParams Suspense gereksinimi yok; app zaten tam istemci.)
   useEffect(() => {
     try {
-      const ciz = new URLSearchParams(window.location.search).get('ciz');
+      const url = new URL(window.location.href);
+      const ciz = url.searchParams.get('ciz');
       if (ciz && ciz.trim()) {
         setInitialCiz(ciz.trim().slice(0, 300));
         setAssistantOpen(true);
+        // Tüketildikten sonra URL'den at → galeriye dönüp tekrar proje açınca / reload'da Çiz paneli
+        // bayat istemle yeniden AÇILMASIN (denetim).
+        url.searchParams.delete('ciz');
+        window.history.replaceState(null, '', url.pathname + url.search + url.hash);
       }
     } catch {
       /* yoksay */

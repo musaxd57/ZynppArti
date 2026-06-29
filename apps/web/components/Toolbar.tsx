@@ -395,6 +395,14 @@ export function Toolbar({
       !(await confirmDialog('Projelere dön? Kaydedilmemiş değişiklikler kaybolur — önce Kaydet (Ctrl+S).'))
     )
       return;
+    // URL'yi temizle (#room= ve ?ciz=). Aksi halde galeriden yeni proje açınca CanvasStage remount olur,
+    // CollabControl eski #room='a SESSİZCE geri bağlanıp ÖZEL çizimi paylaşılan odaya senkronlar (gizlilik
+    // sızıntısı); ayrıca reload'da AppGate galeriyi atlar (denetim HIGH).
+    try {
+      window.history.replaceState(null, '', window.location.pathname);
+    } catch {
+      /* yoksay */
+    }
     onBackToGallery();
   }
 
