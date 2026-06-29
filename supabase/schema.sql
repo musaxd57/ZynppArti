@@ -246,3 +246,47 @@ create policy models_shared_read on storage.objects
     and split_part(storage.filename(name), '.', 1) ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
     and public.can_access_project((split_part(storage.filename(name), '.', 1))::uuid)
   );
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- AI RENDER GÜNLÜK KOTASI (ADR — "geometriyi koru" ControlNet maliyet backstop'u)
+-- ─────────────────────────────────────────────────────────────────────────────
+-- "Geometriyi koru" render her çağrıda GERÇEK PARA harcar (Replicate). Plan-gate (Pro/Studio+admin)
+-- kimin çağırabileceğini sınırlar ama ödeyen bir hesap günde on binlerce çağrı yapabilir → bu tablo +
+-- ATOMİK RPC günlük üst sınırı (kullanıcı/gün) tek transaction'da say+ekle ile uygular (TOCTOU-güvenli).
+-- route /api/copilot (mode=render, renderMode=preserve) bunu pahalı çağrıdan ÖNCE fail-closed çağırır.
+create table if not exists public.render_events (
+  id bigserial primary key,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+create index if not exists render_events_user_day on public.render_events (user_id, created_at);
+
+alter table public.render_events enable row level security;
+-- Kullanıcı yalnız KENDİ render olaylarını görür (RPC security definer ile yazar; doğrudan insert'e gerek yok).
+drop policy if exists render_events_self_read on public.render_events;
+create policy render_events_self_read on public.render_events
+  for select using (user_id = auth.uid());
+
+-- Atomik kota: bugünkü sayım < p_cap ise satır ekle + true döner; değilse false (insert YOK).
+-- Kullanıcı-başı TRANSACTION advisory lock → aynı kullanıcının eşzamanlı iki isteği SERİleşir (count+insert
+-- yarışı tam kapanır; lock işlem sonunda bırakılır). security definer → RLS'i aşar ama YALNIZ p_user için
+-- sayar/ekler; search_path sabitlenir (enjeksiyon önlemi).
+create or replace function public.claim_render_slot(p_user uuid, p_cap int)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  n int;
+begin
+  perform pg_advisory_xact_lock(hashtext('render_slot:' || p_user::text));
+  select count(*) into n from public.render_events
+    where user_id = p_user and created_at >= date_trunc('day', now());
+  if n >= p_cap then
+    return false;
+  end if;
+  insert into public.render_events (user_id) values (p_user);
+  return true;
+end;
+$$;

@@ -18,6 +18,16 @@ import {
   type Wall,
 } from '@zynpparti/document';
 import { pointInPolygon, findFaces, snapSegmentsToGrid, type Seg4 } from '@zynpparti/geometry';
+import { perspectiveControlPng, wallsOnlyControlPng, controlImageTooLarge } from '@/lib/render-control-image';
+
+/** "Geometriye sadakat" 3-kademesi → ControlNet koşul gücü + difüzyon serbestliği (asla 1.0). */
+const RENDER_FIDELITY = {
+  low: { cond: 0.55, strength: 0.9 },
+  med: { cond: 0.75, strength: 0.75 },
+  high: { cond: 0.9, strength: 0.6 },
+} as const;
+type Fidelity = keyof typeof RENDER_FIDELITY;
+type RenderCaps = { creative: boolean; preserve: boolean; hd: boolean };
 import { VesnaLogo } from './VesnaLogo';
 import { ProgramBuilder } from './ProgramBuilder';
 import { useProjectFileBase } from '@/lib/project-name';
@@ -506,6 +516,11 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
   // Hangi modda istek sürüyor (yalnız o modda "üretiliyor" göstergesi çıksın).
   const [loadingMode, setLoadingMode] = useState<Mode | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Render alt-modu: 'creative' (OpenAI text→image, varsayılan) | 'preserve' (ControlNet, geometriyi koru).
+  const [renderMode, setRenderMode] = useState<'creative' | 'preserve'>('creative');
+  const [controlSource, setControlSource] = useState<'3d' | 'top'>('3d'); // 3B perspektif (fotogerçekçi) | üstten plan (stilize)
+  const [fidelity, setFidelity] = useState<Fidelity>('med');
+  const [renderCaps, setRenderCaps] = useState<RenderCaps | null>(null); // sunucu yapılandırması (env-gate → toggle disable)
   // Puan bir kez hesaplanıp saklanır (her render'da findFaces çağırma — O(n²) önle).
   const [variants, setVariants] = useState<{ layout: Layout; score: number | null }[] | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -528,6 +543,18 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
   // Mod değişince hata bandını temizle (denetim L17): Render'da oluşan hata Sor sekmesine geçince
   // o thread'in altına yapışıp Sor hatası gibi görünmesin (error tek paylaşımlı string).
   useEffect(() => setError(null), [mode]);
+
+  // Render yetenekleri (env-gate): "Geometriyi koru" sunucuda yapılandırılmadıysa toggle DISABLED gösterilir.
+  useEffect(() => {
+    let active = true;
+    fetch('/api/render/capabilities')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((c) => active && c && setRenderCaps(c as RenderCaps))
+      .catch(() => active && setRenderCaps({ creative: true, preserve: false, hd: false }));
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Escape → paneli kapat (diğer overlay'lerle tutarlı a11y). Bir metin alanında yazarken DEĞİL
   // (yazımı bozmasın; Ctrl+O guard'ıyla aynı disiplin).
@@ -684,12 +711,35 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
           typeOut('draw', id, `${vs.length} alternatif plan hazır — en uyumlu üstte, birini seç.`);
         }
       } else if (m === 'render') {
+        const reqBody: Record<string, unknown> = { mode: 'render', prompt: buildRenderPrompt(text, store) };
+        if (renderMode === 'preserve') {
+          // Kontrol görseli istemcide üretilir (3B perspektif = fotogerçekçi; üstten plan = stilize).
+          const controlImage = controlSource === '3d' ? perspectiveControlPng(store) : await wallsOnlyControlPng(store.all());
+          if (!controlImage) throw new Error('Kontrol görseli üretilemedi — önce duvar çiz.');
+          if (controlImageTooLarge(controlImage)) throw new Error('Kontrol görseli çok büyük (çizimi sadeleştir).');
+          const f = RENDER_FIDELITY[fidelity];
+          reqBody.renderMode = 'preserve';
+          reqBody.controlImage = controlImage;
+          reqBody.controlType = controlSource === '3d' ? 'depth' : 'canny';
+          reqBody.conditioningScale = f.cond;
+          reqBody.promptStrength = f.strength;
+        }
         const res = await fetch('/api/copilot', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mode: 'render', prompt: buildRenderPrompt(text, store) }),
+          body: JSON.stringify(reqBody),
           signal: ctrl.signal,
         });
+        if (!res.ok) {
+          // Hata mesajını (402 yükselt / 429 kota / 503 yapılandırma / 502 sağlayıcı) banda taşı.
+          let msg = `Hata (${res.status})`;
+          try {
+            msg = ((await res.json()) as { error?: string }).error ?? msg;
+          } catch {
+            /* JSON değilse genel mesaj */
+          }
+          throw new Error(msg);
+        }
         const data = await readJson(res);
         const image = (data as { image?: string }).image;
         const id = nextId();
@@ -955,6 +1005,63 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
       {error && (
         <div role="alert" className="mx-3 rounded bg-red-500/15 p-2 text-xs text-red-200">
           {error}
+        </div>
+      )}
+
+      {/* Render alt-modu kontrolleri (yalnız Render sekmesinde) */}
+      {mode === 'render' && (
+        <div className="border-t border-white/10 px-3 pt-2 text-xs">
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => setRenderMode('creative')}
+              className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${renderMode === 'creative' ? 'bg-white/20 font-medium' : 'bg-white/5 text-white/60 hover:bg-white/10'}`}
+            >
+              Yaratıcı
+            </button>
+            <button
+              type="button"
+              disabled={!renderCaps?.preserve}
+              onClick={() => renderCaps?.preserve && setRenderMode('preserve')}
+              title={renderCaps?.preserve ? 'Plan/3B geometrisini koruyarak render et' : 'Yakında — sunucuda yapılandırılmadı'}
+              className={`flex-1 rounded-md px-2 py-1.5 transition-colors ${renderMode === 'preserve' ? 'bg-white/20 font-medium' : 'bg-white/5 text-white/60 hover:bg-white/10'} disabled:cursor-not-allowed disabled:opacity-40`}
+            >
+              Geometriyi koru{!renderCaps?.preserve && ' 🔒'}
+            </button>
+          </div>
+          {renderMode === 'preserve' && (
+            <div className="mt-2 flex flex-col gap-2">
+              <div className="flex gap-1">
+                {(['3d', 'top'] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setControlSource(s)}
+                    className={`flex-1 rounded px-2 py-1 text-[11px] transition-colors ${controlSource === s ? 'bg-blue-600/40 text-white' : 'bg-white/5 text-white/55 hover:bg-white/10'}`}
+                  >
+                    {s === '3d' ? '3B Perspektif (fotogerçekçi)' : 'Üstten Plan (stilize)'}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-white/45">Geometriye sadakat:</span>
+                {(['low', 'med', 'high'] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setFidelity(k)}
+                    className={`rounded px-2 py-0.5 text-[11px] transition-colors ${fidelity === k ? 'bg-white/25 text-white' : 'bg-white/5 text-white/55 hover:bg-white/10'}`}
+                  >
+                    {k === 'low' ? 'Düşük' : k === 'med' ? 'Orta' : 'Yüksek'}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] leading-tight text-white/40">
+                Geometriyi koru modunda plan/3B görseliniz görsel üretimi için üçüncü taraf sağlayıcıya (Replicate)
+                gönderilir; kalıcı saklanmaz.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

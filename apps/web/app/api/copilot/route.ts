@@ -3,11 +3,14 @@ import {
   parseForcedProvider,
   askCopilotStream,
   askDesignVariants,
-  renderImage,
-  OPENAI_IMAGE_MODEL,
+  buildRenderProviders,
+  resolveRenderChain,
+  parseForcedRenderProvider,
   NoProviderError,
   type ChatMessage,
   type CopilotContext,
+  type RenderEnv,
+  type RenderProviderName,
 } from '@zynpparti/ai';
 import { getSupabaseServer } from '@/lib/supabase/server';
 import { isPaidPlan, isAdminEmail } from '@/lib/plan';
@@ -22,6 +25,20 @@ import { isPaidPlan, isAdminEmail } from '@/lib/plan';
  */
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+/**
+ * Vercel fonksiyon süresi tavanı. HOBBY planında sert sınır 60s (docs/DEPLOY.md) → 90/120 DEĞİL.
+ * "Geometriyi koru" difüzyonu RENDER_PRESERVE_DEADLINE_MS=45s ile bunun ALTINDA tutulur (cancel+rehost payı).
+ */
+export const maxDuration = 60;
+
+/** ControlNet render negatif promptu — mimari artefakt/halüsinasyonu bastırır (tek kaynak). */
+const RENDER_NEGATIVE_PROMPT =
+  'blurry, deformed walls, extra rooms, warped perspective, floor plan, blueprint, text, labels, dimensions, watermark, toy model, dollhouse, people';
+
+/** Güvenli aralığa kıs (istemci 3-stop değerleri gönderse de sunucu doğrular). */
+function clampNum(v: unknown, lo: number, hi: number, dflt: number): number {
+  return typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : dflt;
+}
 
 /** Maliyet/kötüye-kullanım koruması: aşırı uzun geçmiş/mesaj sınırlanır (uç henüz auth'suz). */
 const MAX_MESSAGES = 20;
@@ -187,7 +204,8 @@ export async function POST(req: Request): Promise<Response> {
     const supabase = await getSupabaseServer();
     const { data: ud } = (await supabase?.auth.getUser()) ?? { data: { user: null } };
     let plan = 'free';
-    if (supabase && ud.user && isAdminEmail(ud.user.email)) {
+    const isAdmin = !!(supabase && ud.user && isAdminEmail(ud.user.email));
+    if (isAdmin) {
       // Tam-yetkili admin e-posta → plan sorgusunu atla, doğrudan ücretli say (render açık).
       plan = 'studio';
     } else if (supabase && ud.user) {
@@ -210,41 +228,96 @@ export async function POST(req: Request): Promise<Response> {
         { status: 402 },
       );
     }
-    const key = process.env.OPENAI_API_KEY?.trim();
-    if (!key) {
+    // Mod: 'creative' (OpenAI text→image — MEVCUT davranış, varsayılan) | 'preserve' (ControlNet, geometriyi koru).
+    const renderMode = (body as { renderMode?: unknown }).renderMode === 'preserve' ? 'preserve' : 'creative';
+    const controlImage = (body as { controlImage?: unknown }).controlImage;
+    if (renderMode === 'preserve') {
+      if (typeof controlImage !== 'string' || !/^data:image\/(png|jpeg);base64,/.test(controlImage)) {
+        return Response.json({ error: 'Geçerli kontrol görseli gerekli (png/jpeg).' }, { status: 400 });
+      }
+      if (controlImage.length > 3_500_000) {
+        return Response.json({ error: 'Kontrol görseli çok büyük (≤1024 px gönderin).' }, { status: 413 });
+      }
+      // GÜNLÜK KOTA — pahalı ControlNet çağrısından ÖNCE, ATOMİK, FAIL-CLOSED (profErr deseni). YALNIZ
+      // preserve (creative MEVCUT davranışta kalır, kota yok) ve admin HARİÇ (Moses A/B için sınırsız).
+      // RPC yoksa/şema uygulanmadıysa → 503 (kapı açılmaz; cost-abuse'a karşı gerçek backstop).
+      if (!isAdmin && supabase && ud.user) {
+        const cap = Number(process.env.RENDER_DAILY_CAP ?? 30);
+        const { data: allowed, error: capErr } = await supabase.rpc('claim_render_slot', {
+          p_user: ud.user.id,
+          p_cap: cap,
+        });
+        if (capErr) {
+          console.error('Render kota RPC hatası:', capErr.message);
+          return Response.json({ error: 'Render kotası doğrulanamadı, tekrar dene.' }, { status: 503 });
+        }
+        if (!allowed) {
+          return Response.json(
+            { error: `Günlük render limitine ulaşıldı (${cap}). Yarın tekrar dene.` },
+            { status: 429 },
+          );
+        }
+      }
+    }
+
+    // ENV-GATE: anahtarı olmayan sağlayıcı kurulmaz → preserve'de REPLICATE yoksa zincir BOŞ → 503, sıfır harcama.
+    const renderProviders = buildRenderProviders(process.env as unknown as RenderEnv);
+    const chain = resolveRenderChain(
+      renderMode,
+      Object.keys(renderProviders) as RenderProviderName[],
+      parseForcedRenderProvider(process.env.RENDER_PRESERVE_PROVIDER),
+    );
+    if (chain.length === 0) {
       return Response.json(
-        { error: 'Render için OPENAI_API_KEY gerekli (görsel üretimi).' },
+        {
+          error:
+            renderMode === 'preserve'
+              ? 'Geometriyi koru modu sunucuda yapılandırılmadı (REPLICATE_API_TOKEN gerekli).'
+              : 'Render için OPENAI_API_KEY gerekli (görsel üretimi).',
+        },
         { status: 503 },
       );
     }
-    try {
-      const image = await renderImage(key, p.slice(0, 4000), process.env.OPENAI_IMAGE_MODEL, req.signal);
-      return Response.json({ mode: 'render', image });
-    } catch (e) {
-      // HAM sağlayıcı mesajı YALNIZ sunucu logunda (Vercel logs) — hesap/org/fatura/upstream metni
-      // istemciye sızmasın. İstemciye sade KATEGORİ döneriz (HTTP durumundan türetilmiş). (ADR/güvenlik.)
-      console.error('Render başarısız:', e);
-      const status = typeof (e as { status?: unknown }).status === 'number' ? (e as { status: number }).status : 0;
-      const category =
-        status === 401 || status === 403
-          ? 'model erişimi/yetki yok'
-          : status === 429
-            ? 'kota/limit doldu — biraz sonra tekrar dene'
-            : status === 400
-              ? 'istek reddedildi (içerik politikası olabilir)'
-              : status === 402
-                ? 'fatura/bakiye sorunu'
-                : status >= 500
-                  ? 'sağlayıcı geçici hata'
-                  : 'görsel üretilemedi';
-      const model = process.env.OPENAI_IMAGE_MODEL ?? OPENAI_IMAGE_MODEL;
-      return Response.json(
-        {
-          error: `Görsel üretilemedi (${category}). "${model}" modeline erişim yoksa OPENAI_IMAGE_MODEL=dall-e-3 dene.`,
-        },
-        { status: 502 },
-      );
+
+    const ct = (body as { controlType?: unknown }).controlType;
+    const controlType: 'depth' | 'canny' | 'mlsd' | undefined =
+      ct === 'depth' || ct === 'canny' || ct === 'mlsd' ? ct : undefined;
+    const renderInput = {
+      prompt: p.slice(0, 4000),
+      mode: renderMode as 'creative' | 'preserve',
+      negativePrompt: RENDER_NEGATIVE_PROMPT,
+      controlImage: typeof controlImage === 'string' ? controlImage : undefined,
+      controlType,
+      conditioningScale: clampNum((body as { conditioningScale?: unknown }).conditioningScale, 0.3, 0.95, 0.8),
+      promptStrength: clampNum((body as { promptStrength?: unknown }).promptStrength, 0.4, 0.95, 0.75),
+      hd: (body as { hd?: unknown }).hd === true,
+    };
+
+    let lastErr: unknown;
+    for (const name of chain) {
+      try {
+        const r = await renderProviders[name]!.generate(renderInput, req.signal);
+        return Response.json({ mode: 'render', image: r.image }); // YANIT ŞEKLİ KIRILMAZ
+      } catch (e) {
+        lastErr = e;
+        console.error(`Render sağlayıcı "${name}" başarısız:`, e);
+      }
     }
+    // HAM sağlayıcı mesajı YALNIZ sunucu logunda; istemciye sade KATEGORİ (HTTP durumundan). (güvenlik.)
+    const status = typeof (lastErr as { status?: unknown })?.status === 'number' ? (lastErr as { status: number }).status : 0;
+    const category =
+      status === 401 || status === 403
+        ? 'model erişimi/yetki yok'
+        : status === 429
+          ? 'kota/limit doldu — biraz sonra tekrar dene'
+          : status === 400 || status === 422
+            ? 'istek reddedildi (model/girdi uyumsuz olabilir)'
+            : status === 402
+              ? 'fatura/bakiye sorunu'
+              : status >= 500
+                ? 'sağlayıcı geçici hata'
+                : 'görsel üretilemedi';
+    return Response.json({ error: `Görsel üretilemedi (${category}).` }, { status: 502 });
   }
 
   // Tasarım (çizim) modu: messages yerine tek "prompt" alır; AI kat planı JSON'u üretir.
