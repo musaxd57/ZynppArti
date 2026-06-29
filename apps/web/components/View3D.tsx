@@ -163,9 +163,13 @@ export function View3D({ store }: { store: EntityStore }) {
       }
 
       // Kesit: planda kesit çizgisi varsa, 3B modeli o düşey düzlemden kes (clipping plane — CSG'siz).
-      const sectionEnt = store.all().find((e) => e.type === 'section') as
-        | { a: { x: number; y: number }; b: { x: number; y: number } }
-        | undefined;
+      // SON kesit çizgisi (SectionPanel'in seçim-yoksa varsayılanıyla hizalı; eskiden İLK'i alıp panelle
+      // farklı düzlemden kesebiliyordu). Tam seçim-eşitliği selectedIds plumbing gerektirir (LOW, ertelendi).
+      const sectionsAll = store.all().filter((e) => e.type === 'section') as Array<{
+        a: { x: number; y: number };
+        b: { x: number; y: number };
+      }>;
+      const sectionEnt = sectionsAll[sectionsAll.length - 1];
       let sectionPlane: THREE.Plane | null = null;
       if (sectionEnt) {
         const dirX = sectionEnt.b.x - sectionEnt.a.x;
@@ -256,8 +260,16 @@ export function View3D({ store }: { store: EntityStore }) {
 
       // 3B modeli glTF/GLB olarak dışa aktar (BIM/3B araçlarda açılır — Faz 5 kriteri).
       exportGlbRef.current = (): void => {
+        // cm→m: sahne cm cinsinde; glTF'in fiili birimi METRE → ham export Blender/BIM'de 100× büyük açılır.
+        // İçeriği 0.01 ölçekli bir GRUBA klonla (Scene-root transform'u glTF'te yok sayılır; node transform'u
+        // sayılır) ve onu aktar. Klon geom/mat'i paylaşır (dispose ETME) ve canlı sahneye dokunmaz. (Denetim.)
+        const scaled = new THREE.Group();
+        scaled.scale.setScalar(0.01);
+        for (const child of scene.children) scaled.add(child.clone());
+        const exportRoot = new THREE.Group();
+        exportRoot.add(scaled);
         new GLTFExporter().parse(
-          scene,
+          exportRoot,
           (result) => {
             // binary:true → ArrayBuffer beklenir; değilse (JSON nesnesi) Blob "[object Object]" yazardı.
             if (!(result instanceof ArrayBuffer)) {

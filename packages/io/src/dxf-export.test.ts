@@ -26,6 +26,24 @@ describe('exportDxf', () => {
     expect(lines).toHaveLength(2);
   });
 
+  it('kesit (A—A\') entity\'sini LINE + uç etiketleri olarak yazar (SVG ile simetrik; denetim)', () => {
+    const section = {
+      id: 's1',
+      type: 'section' as const,
+      layerId: 'default',
+      a: { x: 0, y: 0 },
+      b: { x: 200, y: 0 },
+      label: 'A',
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rows = exportDxf([section as any]).split('\n');
+    expect(rows.filter((l) => l === 'LINE')).toHaveLength(1); // kesit çizgisi
+    const texts = rows.filter((l) => l === 'TEXT');
+    expect(texts.length).toBeGreaterThanOrEqual(2); // 'A' ve "A'"
+    expect(rows).toContain('A');
+    expect(rows).toContain("A'");
+  });
+
   it('$ACADVER = AC1015 (LWPOLYLINE + $INSUNITS kullandığımız için R12 değil; denetim L8)', () => {
     const rows = exportDxf([wall('a', 0, 0, 100, 0)]).split('\n');
     const i = rows.indexOf('$ACADVER');

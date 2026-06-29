@@ -87,6 +87,13 @@ export function exportDxf(entities: readonly Entity[]): string {
           text(out, e.layerId, polygonCentroid(e.boundary), 20, e.name);
         }
         break;
+      case 'section':
+        // Kesit (A—A') işareti: çizgi + uçlarda etiket. SVG'ye giriyordu ama DXF'e GİRMİYORDU →
+        // CAD round-trip'te kesit işaretleri kayboluyordu (asimetrik fidelity, denetim).
+        line(out, e.layerId, e.a, e.b);
+        text(out, e.layerId, e.a, 24, e.label);
+        text(out, e.layerId, e.b, 24, `${e.label}'`);
+        break;
       // Pafta (baskı çerçevesi) DXF model uzayına yazılmaz.
       case 'sheet':
         break;
