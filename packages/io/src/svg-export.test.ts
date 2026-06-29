@@ -35,6 +35,28 @@ describe('exportSvg', () => {
     expect(w).toBeGreaterThanOrEqual(400); // bounds section'ı içeriyor (boş 100x100 değil)
   });
 
+  it('pafta antet\'i (başlık/proje/ölçek) SVG\'ye girer (eskiden hiç çizilmiyordu)', () => {
+    const sheet = {
+      id: 'sh',
+      type: 'sheet' as const,
+      layerId: 'sheet',
+      position: { x: 0, y: 0 },
+      size: 'A3' as const,
+      orientation: 'landscape' as const,
+      scale: 50,
+      title: 'Zemin Kat Planı',
+      project: 'Villa X',
+      date: '2026-06-29',
+      sheetNo: 'P-01',
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const svg = exportSvg([sheet as any]);
+    expect(svg).toContain('Zemin Kat Planı'); // antet başlık satırı
+    expect(svg).toContain('Villa X'); // proje satırı
+    expect(svg).toContain('Ölçek 1:50'); // ölçek satırı
+    expect(svg).toContain('P-01'); // pafta no
+  });
+
   it('viewBox tüm entity sınırlarını çevreler (margin dahil)', () => {
     const svg = exportSvg([wall]);
     const m = svg.match(/viewBox="([^"]+)"/);

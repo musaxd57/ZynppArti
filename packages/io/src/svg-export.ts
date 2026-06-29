@@ -5,6 +5,9 @@ import {
   formatLength,
   openingFrame,
   roomTypeColor,
+  sheetMmToModelCm,
+  sheetModelSize,
+  sheetTitleBlock,
   solidBands,
   toHexColor,
   type Entity,
@@ -61,6 +64,36 @@ export function exportSvg(
   }
 
   const body: string[] = [];
+  // pafta: dış çerçeve + 10mm iç kenar + sağ-alt antet (render-sheet.ts aynası). En altta (içeriğin arkasında).
+  // Eskiden SVG/PDF'e HİÇ girmiyordu → çok-sayfa PDF'te proje/no/ölçek/başlık antet'i kayıptı (denetim).
+  // Beyaz kağıt zemini için koyu çizgi/metin; dikey ortalamada svg2pdf güvenliği için y-ofset (dominant-baseline değil).
+  for (const e of entities) {
+    if (e.type !== 'sheet') continue;
+    const sz = sheetModelSize(e);
+    const sx = e.position.x;
+    const sy = e.position.y;
+    body.push(`<rect x="${num(sx)}" y="${num(sy)}" width="${num(sz.w)}" height="${num(sz.h)}" fill="none" stroke="#333" stroke-width="2" />`);
+    const fcm = sheetMmToModelCm(e.scale);
+    const mg = 10 * fcm;
+    body.push(`<rect x="${num(sx + mg)}" y="${num(sy + mg)}" width="${num(sz.w - 2 * mg)}" height="${num(sz.h - 2 * mg)}" fill="none" stroke="#999" stroke-width="1" stroke-opacity="0.7" />`);
+    if (e.plain) continue;
+    const tb = sheetTitleBlock(e);
+    body.push(`<rect x="${num(tb.x)}" y="${num(tb.y)}" width="${num(tb.w)}" height="${num(tb.h)}" fill="none" stroke="#333" stroke-width="1" />`);
+    const rowH = tb.h / 3;
+    for (let i = 1; i < 3; i++) body.push(seg({ x: tb.x, y: tb.y + i * rowH }, { x: tb.x + tb.w, y: tb.y + i * rowH }, '#999', 0.5));
+    const fontSize = rowH * 0.55;
+    const pad = 3 * fcm;
+    const tline = (text: string, row: number): void => {
+      const ty = tb.y + row * rowH + rowH / 2 + fontSize * 0.35; // baseline'ı satır ortasına yaklaştır
+      body.push(`<text x="${num(tb.x + pad)}" y="${num(ty)}" font-family="sans-serif" font-size="${num(fontSize)}" fill="#222" text-anchor="start">${esc(text)}</text>`);
+    };
+    tline(e.title || 'Pafta', 0);
+    const row1 = [e.project, e.date].filter(Boolean).join('  ·  ');
+    if (row1) tline(row1, 1);
+    const orient = e.orientation === 'landscape' ? 'yatay' : 'düşey';
+    const row2 = `Ölçek 1:${e.scale}  ·  ${e.size} ${orient}${e.sheetNo ? '  ·  ' + e.sheetNo : ''}`;
+    tline(row2, 2);
+  }
   // mahal dolgusu + ad
   for (const e of entities) {
     if (e.type !== 'space' || e.boundary.length < 3) continue;
@@ -248,13 +281,19 @@ function computeBounds(entities: readonly Entity[], walls: Map<EntityId, Wall>):
         break;
       case 'annotation': {
         const lines = e.text.split('\n');
-        const wEst = Math.max(1, ...lines.map((l) => l.length)) * e.height * 0.6;
+        const wEst = lines.reduce((m, l) => Math.max(m, l.length), 1) * e.height * 0.6; // reduce: spread çok-satırda RangeError atardı
+
         add(e.position);
         add({ x: e.position.x + wEst, y: e.position.y + lines.length * e.height * 1.2 });
         break;
       }
-      case 'sheet':
+      case 'sheet': {
+        // Pafta çerçevesi artık SVG'ye çiziliyor → bounds'a katılsın (yoksa kırpılır / yalnız-pafta export boş döner).
+        const sz = sheetModelSize(e);
+        add(e.position);
+        add({ x: e.position.x + sz.w, y: e.position.y + sz.h });
         break;
+      }
     }
   }
   if (![minX, minY, maxX, maxY].every(Number.isFinite)) return null;
