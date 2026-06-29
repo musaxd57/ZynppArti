@@ -7,6 +7,22 @@
 
 ## ŞU AN
 
+**🆕 2026-06-29 (4) — VESNA "ÇİZ" PROMPTU DÜNYA-SINIFI YENİDEN TASARIM (main'de canlı, `05d7da6`):**
+- Moses "Çiz promptlarını 20 ajanla didik didik geliştir" dedi → **~20-ajanlı workflow** (12 web-araştırma açısı:
+  rakipler[Maket/ArkDesign/Finch/TestFit/Hypar/Forma]/akademik[Graph2Plan/HouseGAN/Tell2Design]/LLM+Claude prompt
+  müh./tasarım ilkeleri/antropometri/TR norm/CEO konuşmaları/hata modları/few-shot/çeşitlilik → 2 aday → 4 adversaryal
+  yargıç → 1 final birleştirme; ~1M token). Yeni `DESIGN_SYSTEM` (`packages/ai/src/design.ts`).
+- **JSON sözleşmesi birebir korundu (testlerle güvenceli):** yalnız-JSON ilk-karakter `{`, kesin şema anahtarları,
+  tam-sayı cm + sınırlar, `type` enum = ROOM_TYPE_KEYS, ≥1 dış giriş kapısı, `{variants}`.
+- **Kazanımlar:** topoloji-önce içsel muhakeme (program→komşuluk grafiği→bölgeleme→ızgara; Claude adaptive thinking;
+  sağlayıcı-agnostik "içsel düşün, çıktı `{` ile başlar" kilidi) · somut TR norm + antropometri (oda m²/dar-kenar,
+  koridor ≥120, kapı 90/80, ıslak-çekirdek, yön/ışık, erişilebilirlik) · kapalı-köşe/paylaşılan-tek-duvar/ızgara
+  kuralları · elle-doğrulanmış kompakt few-shot (2+1) + 8-maddelik öz-denetim · varyantlar gerçek "parti" farkı.
+- **Final ajan iki yargıcın da kaçırdığı GİZLİ sözleşme bug'ını yakaladı:** adaylar type enum'unu bedroom/wc/hall'a
+  çevirmişti (kod sessizce düşürürdü) → doğru 8 değere + açık eşlemeye geri çevrildi.
+- **Maliyet:** +~700-820 input token/çağrı (~2.5-3×, alt-cent); takip: Anthropic system bloğuna prompt-caching.
+  **Moses: gerçek bir Çiz isteğiyle (ör. "100 m² 3+1, açık mutfak") plan kalitesini gözle test et.** +3 koruma testi (design 20).
+
 **🆕 2026-06-29 (3) — HATA + İYİLEŞTİRME DENETİMİ, dalga 1 (main'de canlı, son `c40b068`):**
 - Moses "4 saat durmadan hata/iyileştirme ara, agentlarla" dedi → 5 paralel denetim ajanı (geometry+document,
   engine+tools, io, web, ai+copilot+collab) → 14 gerçek bulgu, otonom-güvenli olanlar düzeltildi (6 commit, hepsi
