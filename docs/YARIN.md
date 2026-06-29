@@ -7,21 +7,21 @@
 ---
 
 ## ⚡ 2026-06-29 (5) — RENDER "GEOMETRİYİ KORU" AKTİVASYONU (kod canlıda DORMANT, anahtar bekliyor)
-ControlNet render kodu canlıda ama anahtarsız uyuyor. **Moses flux-canny-dev (resmi) seçti** → kod buna ayarlı
-(model-ailesi farkında: FLUX şeması `control_image`/`guidance`/`output_format`, sürüm hash GEREKMEZ). AÇMAK İÇİN:
-- [ ] **1. Replicate hesabı:** replicate.com → kayıt + fatura/kredi → API token (sağ üst → API tokens).
-- [ ] **2. Vercel env (Production+Preview) + apps/web/.env.local:**
-  `REPLICATE_API_TOKEN=r8_...` + `REPLICATE_PRESERVE_MODEL=black-forest-labs/flux-canny-dev`.
-  (Opsiyonel: `RENDER_PRESERVE_HD_MODEL=black-forest-labs/flux-depth-dev`, `RENDER_DAILY_CAP=30`. Sürüm hash YOK.)
-- [ ] **3. Supabase:** `supabase/schema.sql`'i tekrar çalıştır (idempotent) → `render_events` + `claim_render_slot` RPC.
-  (Olmadan preserve render fail-closed 503 verir — maliyet backstop'u.)
-- [ ] **4. Redeploy** → giriş yapılı Pro/admin ile `GET /api/render/capabilities` `{preserve:true}` dönmeli.
-- [ ] **5. Test:** Pro/admin hesapla Render → "Geometriyi koru" + "3B Perspektif" → gerçek planda dene (trial kredi).
-- [ ] **6. ⚠️ İLK TESTTE:** flux-canny-dev şeması resmi/belgeli ama canlı doğrulanmadı — 422 gelirse
-  `provider-render-replicate.ts` FLUX payload'ındaki alan adlarını (guidance/control_image/output_format/megapixels)
-  modelin Replicate sayfasındaki "Input schema"ya göre düzelt (Claude'a "şu hatayı aldım" de, anında düzeltir).
-- [ ] **7. A/B (opsiyonel):** flux-canny-dev (kenar) vs flux-depth-dev (derinlik, 3B'ye daha uygun) — `REPLICATE_PRESERVE_MODEL`'i
-  değiştir, kod aynı. Yavaşsa (Hobby 60s) Vercel Pro (300s) maliyet kararı.
+ControlNet render kodu canlıda. **Moses flux-canny-dev (resmi) seçti** → kod buna ayarlı (model-ailesi farkında:
+FLUX şeması `control_image`/`guidance`/`output_format`, sürüm hash GEREKMEZ).
+- [x] **1. Replicate token alındı** (2026-06-29).
+- [x] **2. Vercel env eklendi:** `REPLICATE_API_TOKEN` + `REPLICATE_PRESERVE_MODEL=black-forest-labs/flux-canny-dev`
+  (ikisi de Production+Preview, ekran görüntüsüyle teyit).
+- [x] **3. Supabase schema çalıştırıldı** → `render_events` + `claim_render_slot` RPC canlı ("Success. No rows returned").
+- [ ] **4. KALAN — REDEPLOY:** env değişkenleri yalnız YENİ deploy'da devreye girer → Vercel → Deployments →
+  en üstteki (main) → ••• → Redeploy (ya da bir sonraki push otomatik).
+- [ ] **5. KALAN — TEST (vesna.design'da, preview URL'de DEĞİL):** Pro/admin ile Google girişi → Render →
+  "Geometriyi koru" kilidi açık mı (`/api/render/capabilities` `preserve:true`) → "3B Perspektif" + plan → render dene.
+- [ ] **6. ⚠️ İLK RENDER'DA 422 gelirse:** flux-canny-dev'in Replicate "Input schema" ekranını Claude'a at →
+  `provider-render-replicate.ts` FLUX payload alan adlarını (guidance/control_image/output_format/megapixels) düzeltir.
+- [ ] **7. A/B (opsiyonel):** flux-canny-dev ↔ flux-depth-dev (3B'ye daha uygun) — `REPLICATE_PRESERVE_MODEL` değiştir,
+  kod aynı. HD yavaşsa (Hobby 60s) Vercel Pro (300s) maliyet kararı.
+- NOT: Google OAuth + oturum `vesna.design` için ayarlı → preview deploy URL'de giriş redirect hatası verebilir; test production'da.
 
 ## ✅ 2026-06-28 — DENETİM + SELF-REVIEW + UI ELDEN GEÇİRME (main'de canlı, son `85c3abb`)
 - **30+ ajan denetimi** (72 onaylı bulgu) → tüm otonom-güvenli bulgular düzeltildi (4 HIGH dahil: plan
