@@ -25,7 +25,8 @@ Bugünkü UI işi canlıda ama gözle teyit edilmeli:
 - [ ] **Oda adı (en kritik fix):** çiz → Ctrl+S → kapat → tekrar gir → galeriden aç → **oda adların geri geldi mi?**
 
 ## 1. Bekleyen küçük öneriler (Moses onaylarsa)
-- [ ] **"← Projelerim" butonu**: çalışma ekranından galeriye dönüş yolu yok (şu an "Yeni" / sayfa yenile).
+- [x] **"← Projelerim" butonu** ✅ (`43e36b3`): üst çubuğun en başına eklendi → galeriye (StartScreen) döner.
+  Kaydedilmemiş çizim varsa onay ister (Kaydet hatırlatması). Zincir yeşil. *(Tarayıcı teyidi Moses'ta.)*
 - [ ] **Thumbnail hızlandırma**: her kart TAM JSON indiriyor (çok projede yavaş) → kaydederken küçük önizleme sakla.
 - [ ] **Sunum (3B kamera turu)**: görünümler kalıcı değil + video export yok → kalıcı + MP4/GIF export.
 - [ ] **Redirect davranışı**: giriş yapan kullanıcı kökte landing'i göremiyor — istenirse "Site'ye dön" geçişi.

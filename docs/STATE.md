@@ -7,6 +7,8 @@
 
 ## ŞU AN
 
+**🆕 2026-06-29 — "← Projelerim" geri butonu (main'de canlı, `43e36b3`):** Çalışma ekranından galeriye (StartScreen) dönüş yolu yoktu (yalnız "Yeni"/sayfa yenile). Üst çubuğun en başına **"← Projelerim"** butonu eklendi → AppGate `app→start` fazına döner (CanvasStage unmount). Kaydedilmemiş çizim içeriği varsa onaylı (Kaydet/Ctrl+S hatırlatması), boşsa direkt. Toolbar `onBackToGallery` prop (verilmezse buton gizli). Zincir yeşil (web typecheck · lint · build). *(Tarayıcı teyidi Moses'ta.)*
+
 **🚀 CANLI YAYINDA:** Web `https://vesna.design` (Vercel) + sync `wss://zynpparti-production.up.railway.app` (Railway). 3 AI anahtarı Vercel env'de; AI adı **Vesna**.
 **Faz:** 2 (AI copilot ✅) + Faz 4 erken önizleme (AI üretici ✅) + Faz 1 DWG import ✅ + Faz 3 (presence+seçim+yorum) + Faz 5 (3B+kesit+glTF+kamera keyframe) önizleme.
 **Branch:** `main` canlıda (her şey merge'li). 2026-06-25 büyük tur main'de + canlı: (a) otonom sertleştirme (serialize/AI/lock/dxf/perf/collab/findFaces/a11y…), (b) Moses 5-görevi (render hata-A, perf turu [?perf HUD + RoomManager cap + reverse-index + nearestAxis viewport + duvar hatch build/stroke + render-group], 3B GPU-fan on-demand, domain kararları), (c) **proje-adı + karşılama ekranı + çoklu-pafta yöneticisi + AI viewport-yerleştirme**, (d) PNG/Excel toast + metin-focus düzeltmeleri. **Test 318→365**, zincir yeşil (typecheck 9/9 · lint 9/9 · web build). render-group + start-screen ekran görüntüsüyle doğrulandı. Açık flag: çok-sayfa PDF, AI tam tıkla-bırak ghost, slab-mirror teyidi, render-space/sheet hatch follow-up (`docs/YARIN.md`).
