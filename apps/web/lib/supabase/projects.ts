@@ -76,10 +76,18 @@ export async function saveProjectToCloud(opts: {
     updated_at: new Date().toISOString(),
   });
   if (row.error) {
-    // YENİ proje + metadata yazılamadı (RLS/constraint) → az önce yüklenen blob'u yetim bırakma:
-    // metadata satırı olmayan blob listelenmez/açılmaz, tekrar denemelerde çöp birikir (denetim L13).
-    // Best-effort sil; üzerine-yazmada (opts.id var) blob meşru, dokunma.
-    if (!opts.id) await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
+    // Metadata yazılamadı (RLS/constraint) → az önce yüklenen blob'u yetim bırakma: metadata satırı
+    // olmayan blob listelenmez/açılmaz, tekrar denemelerde çöp birikir (denetim L13).
+    if (!opts.id) {
+      // Yeni proje → blob kesin yetim, best-effort sil.
+      await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
+    } else {
+      // Üzerine-yazma reddedildi: bu id bize ait OLMAYABİLİR (paylaşılan projeyi hedefledik, sahiplik
+      // okunamamıştı) → blob kendi klasörümüzde yetim kalır. Sahip-satırın YOKLUĞU KESİNSE sil; sorgu
+      // da hata verirse (transient) DOKUNMA — meşru üzerine-yazılan blob'u yanlışlıkla silmeyelim.
+      const check = await supabase.from('projects').select('id').eq('id', id).eq('owner', uid).maybeSingle();
+      if (!check.error && !check.data) await supabase.storage.from(BUCKET).remove([path]).catch(() => {});
+    }
     throw row.error;
   }
   return { id };
