@@ -88,6 +88,18 @@ Bugünkü UI işi canlıda ama gözle teyit edilmeli:
 - [ ] **median-thickness çift-orta (minor):** `metrics.ts` çift sayıda duvarda üst-orta elemanı alıyor (ortalama değil);
   yalnız copilot net-genişlik kontrolünü etkiler, m²/maliyeti DEĞİL.
 
+### 2026-06-29 (3) dalga-5 — export/import kalan (otonom dokunulmadı)
+- [ ] **Pafta ANTET'i SVG/PDF'e girmiyor (MED, GÖRSEL DOĞRULAMA):** `svg-export.ts` sheet entity'sini çizmiyor →
+  çerçeve + antet (başlık/proje/tarih/Ölçek 1:N/pafta-no) export'ta KAYIP (profesyonel çıktının özü). Fix:
+  `render-sheet.ts`'i (frame + title-block + escaped metin) SVG'ye aynala. Görsel doğrulama şart → Moses.
+- [ ] **MINSERT dizileri (MED, nadir):** dxf-parser `columnCount/rowCount/spacing` veriyor ama INSERT tek kopya
+  yerleştiriliyor → dizi (kolon/park/oturma) tek kopyaya çöküyor. Fix: satır×kolon döngüsü, blok dönmüş çerçevede ofset.
+- [ ] **INSERT-seviye mirror (LOW):** ins extrusion (0,0,−1) uygulanmıyor (çocuk entity'lerde var); aynalı blok yerleşimi aynalanmaz.
+- [ ] **Blok 2-nokta kalibrasyonda ölçeklenmiyor:** `scaleEntityAbout` blok pozisyonunu taşıyor ama boyutunu değil
+  (blok katalog-boyutlu, per-instance scale alanı yok) → büyük kalibrasyonda mobilya küçük kalır. Block.scale alanı = model değişimi (sürüm artışı).
+- [ ] **Presence peer-isim etiketi (feature):** uzak imleçler yalnız renkle ayrışıyor, isim yok. RemoteCursor'a name + BitmapText.
+- [ ] **Arc faceting radius-bağımsız (LOW):** sabit 15°/segment → büyük yarıçaplı eğride kaba; radius-bağımlı segment sayısı (sagitta cap).
+
 ## 3. Faz haritası (büyük resim — ROADMAP.md)
 - Faz 2 AI render/LLM maliyetli kısım ertelenmiş; deterministik her şey hazır.
 - Faz 3 kalıcı çok-yazar (Yjs presence var; commit-log north-star).

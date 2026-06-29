@@ -62,7 +62,17 @@
   (invert saf→apply öncesi throw store'u bozmaz), marquee narrow-phase, debounce (leak/stale yok), parseLayouts
   (yanlış-blok seçmiyor), glTF clone (canlı sahne/paylaşılan kaynak güvenli), token-bucket math, orphan-blob guard.
   Tek not (regresyon değil, kasıtlı): `dispatch` artık programcı-hatası throw'unu da yutuyor (console.error'la).
-- **TOPLAM (4 dalga + self-review, bu oturum): 15 fix commit + 4 doc, +11 test, hepsi yeşil zincir + push (main+default senkron).**
+- **Dalga 5 (3 ajan: SVG/PDF-export / metin-charset-presence / kalibrasyon-DXF-tessellation) — 1 fix commit daha:**
+  - (export/engine `75e4a33`) **çok-sayfa PDF'te paftayı KESEN geometri sayfayı düşürmüyor** (sheetHasContent
+    point-in-rect → AABB-örtüşme) + import wireframe duvarda ince opening-kesim (beyaz-kutu artefaktı) +
+    buildSpaceLabel dejenere sınırda null (NaN konum yerine).
+  - **TEMİZ ÇIKAN:** charset TR tam (ğĞıİşŞçÇöÖüÜ ✓), font install race yok, label/peer leak yok; kalibrasyon
+    + INSERT-composition + ellipse/arc/bulge math doğrulandı (sağlam); XML-escape/viewBox/multi-page-clip temiz.
+  - **Moses-territory (otonom dokunulmadı, YARIN'a):** pafta ANTET'i (proje/no/ölçek/başlık) SVG/PDF'e
+    girmiyor (görsel doğrulama gerek) · MINSERT dizileri tek kopya (nadir) · INSERT-seviye mirror · blok
+    2-nokta-kalibrasyonda ölçeklenmiyor (model alanı gerek) · presence peer-isim etiketi (feature) ·
+    radius-bağımsız arc faceting (büyük eğri).
+- **TOPLAM (5 dalga + self-review, bu oturum): 16 fix commit + 5 doc, +11 test, hepsi yeşil zincir + push (main+default senkron).**
 
 **🆕 2026-06-29 (2) — AI duvar köşe boşluğu + admin hesabı (main'de canlı, `6087db4`):**
 - **AI duvar köşeleri kapanıyor (`39197c0`):** Moses AI'a çizdirdiği planda iç duvarların alt dış duvara değmediğini gördü (köşeler açık, ekran görüntüsüyle teyit — alt-orta kırpmada net boşluk). Sebep: LLM duvar uçlarını birkaç cm kaydırıyor → köşe/T-bağlantı buluşmuyor. Çözüm: yeni saf `snapSegmentsToGrid` (geometry) — yakın X/Y uç koordinatlarını ortak çizgilere kümeler (tol 50cm), `applyLayout`'ta entity kurmadan önce uygulanır; sıfır-uzunluk duvarlar atılır. +6 test (geometry 71).
