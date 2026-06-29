@@ -458,6 +458,30 @@ function TypingDots({ label }: { label: string }) {
 }
 
 /**
+ * Render göstergesi: AI görsel üretimi uzun sürer (~birkaç sn–yarım dk) → üç nokta yerine DÖNEN DAİRE +
+ * canlı saniye sayacı, "çalışıyor/donmadı" hissi net olsun (kullanıcı isteği). Sayaç her sn ilerler.
+ */
+function RenderSpinner() {
+  const [secs, setSecs] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setSecs((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="msg-in flex items-center gap-2.5 self-start rounded-lg bg-white/10 px-3 py-2 text-sm text-white/70">
+      <span
+        className="h-[18px] w-[18px] shrink-0 animate-spin rounded-full border-2 border-[var(--accent)]/30 border-t-[var(--accent)]"
+        aria-hidden
+      />
+      <span>
+        Görsel üretiliyor… <span className="tabular-nums text-white/45">{secs}s</span>
+        <span className="block text-[10px] leading-tight text-white/40">AI render birkaç saniye–yarım dakika sürebilir; lütfen bekle.</span>
+      </span>
+    </div>
+  );
+}
+
+/**
  * Sohbet metnindeki basit markdown'ı işler: `**kalın**` → <strong>. (LLM çıktısı ham `**...**`
  * yıldızlarıyla görünüyordu.) Bağımlılık yok, dangerouslySetInnerHTML yok (XSS güvenli) — metni
  * parçalara bölüp yalnız bold'u sarmalar. Satır sonları whitespace-pre-wrap ile korunur.
@@ -923,8 +947,8 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
             const last = messages[messages.length - 1];
             // Daktilo/akış başladıysa (dolu asistan balonu) göstergeyi gizle.
             if (last?.role === 'assistant' && (last.content || last.image)) return null;
-            const label = mode === 'render' ? 'Görsel üretiliyor…' : 'Yanıt hazırlanıyor…';
-            return <TypingDots label={label} />;
+            // Render uzun sürer → dönen daire + sayaç; Sor hızlı → üç nokta.
+            return mode === 'render' ? <RenderSpinner /> : <TypingDots label="Yanıt hazırlanıyor…" />;
           })()}
       </div>
 
