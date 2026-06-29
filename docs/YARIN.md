@@ -77,6 +77,17 @@ Bugünkü UI işi canlıda ama gözle teyit edilmeli:
 - [ ] **DXF kapı/pencere ayrımı (minor):** export ikisini de tek LINE çiziyor (SVG ayırıyor: pencere düz, kapı kesik).
   Katman/işaretle ayrılabilir.
 
+### 2026-06-29 (3) dalga-4 — METRAJ domain/mimar kararı (otonom dokunulmadı; sayısal totaller değişir)
+- [ ] **Floor/ceiling/paint NET vs GROSS alan:** `takeoff.ts` floor/tavan/boya + tesisat, `polygonArea(boundary)` =
+  centerline (brüt) kullanıyor; net iç alan değil → ~%4 fazla (100 m²/20cm duvarda ~+4 m²). `metrics.netGrossAreaM2`
+  zaten net hesaplıyor; takeoff onu kullanmalı mı? **Mimar kararı** (teklifte brüt mü net mi metrajlanır).
+- [ ] **"İç/Dış sıva" kategorisi:** `cost.ts` bunları 'Kaba yapı'ya koyuyor; TR metrajda sıva 'İnce yapı'. Sadece
+  panel/Excel gruplaması (totaller aynı). Mimar onayıyla taşınabilir.
+- [ ] **c===0 duvar plaster yüzü:** mahal tanımlı değilken her duvar 2 iç-yüz + 0 cephe sayılıyor (iç sıva ~2×,
+  cephe 0). Mahalsiz/izole duvar belirsiz → mimar kararı.
+- [ ] **median-thickness çift-orta (minor):** `metrics.ts` çift sayıda duvarda üst-orta elemanı alıyor (ortalama değil);
+  yalnız copilot net-genişlik kontrolünü etkiler, m²/maliyeti DEĞİL.
+
 ## 3. Faz haritası (büyük resim — ROADMAP.md)
 - Faz 2 AI render/LLM maliyetli kısım ertelenmiş; deterministik her şey hazır.
 - Faz 3 kalıcı çok-yazar (Yjs presence var; commit-log north-star).
