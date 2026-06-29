@@ -28,9 +28,13 @@ const INSUNITS_TO_CM: Record<number, number> = {
   8: 2.54e-4, // microinch
   9: 2.54e-3, // mil
   10: 91.44, // yard
+  11: 1e-8, // Ångström (1e-10 m)
+  12: 1e-7, // nanometer
+  13: 1e-4, // micrometer (µm)
   14: 10, // decimeter
   15: 1000, // dekameter
   16: 10000, // hectometer
+  17: 1e11, // Gigameter (1e9 m)
 };
 
 export interface DxfImportResult {
@@ -184,6 +188,9 @@ export function importDxf(text: string): DxfImportResult {
         }
       } else if (e.type === 'CIRCLE') {
         const c = e as ICircleEntity;
+        // NOT: ocsTf burada uygulanamıyor — dxf-parser CIRCLE/ELLIPSE/SPLINE için extrusion (210/220/230)
+        // alanını parse etmiyor (yalnız ARC'ta var), dolayısıyla aynalanmış daire bu seviyede zaten
+        // saptanamaz. Nadir bir durum; ham extrusion parse etmeden kapatılamaz (denetim notu).
         tessellateArc(c.center, c.radius, 0, Math.PI * 2, factor, layer, walls, tf);
         layers.add(layer);
       } else if (e.type === 'ARC') {
