@@ -35,6 +35,19 @@
   - **Güvenlik tasarımı SAĞLAM teyit edildi** (RLS/RPC/storage/key-leakage temiz). Bulguların tümü ürün/altyapı
     kararı = zaten flag'li (M9–M12, aşağıda) — otonom dokunulmadı. Copilot kuralları + serialize forward-compat:
     domain/regülasyon yorumu → Moses (aşağıda). *(Tarayıcı teyidi Moses'ta: kapı/wardrobe çizimi + panel debounce hissi.)*
+- **Dalga 3 (4 ajan: 3D/export / collab+undo / a11y / tool-FSM+layers) — 4 fix commit daha:**
+  - (collab `d6c48bc`) **HIGH: çok-yazarda undo/redo/dispatch ÇÖKMESİ** — uzak peer entity'yi silince `invert`'in
+    "entity bulunamadı" throw'u yakalanmıyor + undo stack'i bozuyordu (§6.4). History.run try/catch: invert SAF
+    (apply öncesi → store değişmez, zombie diriltilmez), başarısız adım atlanır, stack tutarlı. +test.
+  - (tools `70cb606`) **snapper gizli/kilitli katmana snap'liyordu** (tek istisna pick yolu) → skipLayer predicate.
+  - (io/web `ebb5271`) DXF'e **kesit (A—A') export'u** (SVG'de vardı, DXF'te yoktu → round-trip kaybı) + **glTF
+    cm→m ölçek** (BIM'de 100× büyük açılıyordu) + 3B kesit = panelin son-kesiti. +test.
+  - (web a11y `a0a4d94`) View3D modal focus-trap + ContextMenu klavye-navigasyonu (role=menu) + Assistant Escape
+    + PropertiesPanel/Panel aria etiketleri.
+  - **Moses-territory (otonom dokunulmadı, YARIN'a yazıldı):** collab last-writer çakışması (commit-log gerek),
+    eşzamanlı-join çiftleme (v1), serialize forward-compat (katalog büyüyünce sürüm-artışı disiplini),
+    solo/layer-reorder edge, LayerPanel klavye (M17), DXF kapı/pencere ayrımı (minor).
+- **TOPLAM (3 dalga, bu oturum): 13 fix commit + 3 doc, +9 test, hepsi yeşil zincir + push (main+default senkron).**
 
 **🆕 2026-06-29 (2) — AI duvar köşe boşluğu + admin hesabı (main'de canlı, `6087db4`):**
 - **AI duvar köşeleri kapanıyor (`39197c0`):** Moses AI'a çizdirdiği planda iç duvarların alt dış duvara değmediğini gördü (köşeler açık, ekran görüntüsüyle teyit — alt-orta kırpmada net boşluk). Sebep: LLM duvar uçlarını birkaç cm kaydırıyor → köşe/T-bağlantı buluşmuyor. Çözüm: yeni saf `snapSegmentsToGrid` (geometry) — yakın X/Y uç koordinatlarını ortak çizgilere kümeler (tol 50cm), `applyLayout`'ta entity kurmadan önce uygulanır; sıfır-uzunluk duvarlar atılır. +6 test (geometry 71).

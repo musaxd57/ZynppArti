@@ -63,6 +63,20 @@ Bugünkü UI işi canlıda ama gözle teyit edilmeli:
   `MODEL_FORMAT_VERSION` artır** (guard düşürmek yerine reddetsin) — bir proje disiplini; kodla güvenli
   otomatikleştirmek render-tolerans gerektirir.
 
+### 2026-06-29 (3) dalga-3 — Moses kararı/altyapı (otonom dokunulmadı)
+- [ ] **Collab last-writer çakışması (§6.4 hard case):** A bir entity'yi taşır (undo stack'te eski hali); B uzaktan
+  aynı entity'yi değiştirir; A undo yapınca B'nin düzenlemesini sessizce ezer. Çözüm: planlanan commit-log/invariant
+  katmanı (en azından "yakalamadan beri değişti mi" tespiti + reddet/rebase). Crash artık yok (dalga-3'te düzeldi),
+  ama sessiz-ezme kalıyor.
+- [ ] **Eşzamanlı boş-odaya katılım çiftlemesi:** iki istemci aynı anda boş odaya bağlanınca ikisi de yerel çizimini
+  push eder → birleşik/çift çizim. Çözüm: tek "pusher" seçimi (awareness lideri / sunucu) ya da transactional
+  "seeded" flag. v1 sınırı, kabul edilmiş.
+- [ ] **acceptRemote sarkık binding (LOW):** docstring "sarkık binding reddedilir" diyor ama `opening.wallId`
+  var-olmayan duvara işaret edebiliyor + `t` aralık-denetimsiz (t=1e9 kabul). Çözüm: wallId çözünürlüğü doğrula
+  ya da render eksik-duvarı tolere etsin.
+- [ ] **DXF kapı/pencere ayrımı (minor):** export ikisini de tek LINE çiziyor (SVG ayırıyor: pencere düz, kapı kesik).
+  Katman/işaretle ayrılabilir.
+
 ## 3. Faz haritası (büyük resim — ROADMAP.md)
 - Faz 2 AI render/LLM maliyetli kısım ertelenmiş; deterministik her şey hazır.
 - Faz 3 kalıcı çok-yazar (Yjs presence var; commit-log north-star).
