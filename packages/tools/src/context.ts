@@ -129,6 +129,7 @@ function nearestAxis(
   tol: number,
   vp: AABB | null,
   exclude?: ReadonlySet<EntityId>,
+  skipLayer?: (layerId: string) => boolean,
 ): { value: number; ref: Vec2 } | null {
   // Şerit, dik eksende GÖRÜNÜR alanla sınırlanır (yoksa ±BIG): hizalama yalnız ekrandaki geometriye
   // bakar → çok büyük modelde şerit tüm modeli değil yalnız viewport bandını döndürür (perf).
@@ -146,6 +147,7 @@ function nearestAxis(
     if (exclude?.has(id)) continue;
     const e = store.get(id);
     if (!e) continue;
+    if (skipLayer?.(e.layerId)) continue; // gizli/kilitli katman geometrisine hizalama yapma
     for (const sp of snapPoints(e)) {
       const d = Math.abs(sp.p[axis] - world[axis]);
       if (d < bestD) {
@@ -172,6 +174,7 @@ export function createSnapper(
   pixelSize: () => number,
   onSnap?: (hint: SnapHint) => void,
   viewport?: () => AABB | null,
+  skipLayer?: (layerId: string) => boolean,
 ): (world: Vec2, exclude?: ReadonlySet<EntityId>) => Vec2 {
   return (world: Vec2, exclude?: ReadonlySet<EntityId>): Vec2 => {
     const px = pixelSize();
@@ -192,6 +195,7 @@ export function createSnapper(
       if (exclude?.has(id)) continue;
       const e = store.get(id);
       if (!e) continue;
+      if (skipLayer?.(e.layerId)) continue; // gizli/kilitli katman geometrisine yakalama yapma (diğer pick yolları gibi)
       for (const sp of snapPoints(e)) {
         const d = distance(world, sp.p);
         if (d < bestPtD) {
@@ -246,8 +250,8 @@ export function createSnapper(
     // 2) Eksen hizalama (yoksa 3) ızgara). Eksenler bağımsız: biri hizalanırken diğeri ızgaraya düşebilir.
     const aTol = ALIGN_PX * px;
     const vp = viewport?.() ?? null;
-    const vx = nearestAxis(store, index, world, 'x', aTol, vp, exclude);
-    const hy = nearestAxis(store, index, world, 'y', aTol, vp, exclude);
+    const vx = nearestAxis(store, index, world, 'x', aTol, vp, exclude, skipLayer);
+    const hy = nearestAxis(store, index, world, 'y', aTol, vp, exclude, skipLayer);
     const snapped: Vec2 = {
       x: vx ? vx.value : Math.round(world.x / SNAP_GRID) * SNAP_GRID,
       y: hy ? hy.value : Math.round(world.y / SNAP_GRID) * SNAP_GRID,

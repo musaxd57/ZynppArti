@@ -268,6 +268,7 @@ export function CanvasStage({ onBack }: { onBack?: () => void } = {}) {
           h.pixelSize,
           (hint) => snapIndicator.show(hint, h.pixelSize()),
           h.viewportBounds, // hizalama yalnız görünür geometriye (büyük modelde perf)
+          (id) => h.layers.isHidden(id) || h.layers.isLocked(id), // gizli/kilitli katmana snap'leme
         ),
         isLayerHidden: (id) => h.layers.isHidden(id),
         isLayerLocked: (id) => h.layers.isLocked(id),
