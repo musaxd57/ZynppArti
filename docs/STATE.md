@@ -7,6 +7,27 @@
 
 ## ŞU AN
 
+**🆕 2026-06-29 (5) — RENDER "GEOMETRİYİ KORU" (ControlNet) MODU — env-gated, canlıda DORMANT (`bc928c0`):**
+- Moses "ControlNet render, Çiz gibi ajanlarla geliştir" dedi → **~21-ajanlı workflow** (11 web-araştırma:
+  Replicate vs Fal, ControlNet/SDXL/Flux modelleri, kontrol-görseli, Vercel-async, maliyet, gizlilik, rakipler
+  → 2 mimari aday → 3 yargıç → final; ~1.3M token). 2 katmanda uygulandı, **hepsi yeşil + push**:
+  - **Katman 1 (`packages/ai`):** sağlayıcı-agnostik render adapter — `RenderProvider` arayüzü + OpenAI wrapper
+    (creative, değişmedi) + **Replicate ControlNet (ham fetch, YENİ DEP YOK)** + buildRenderProviders/
+    resolveRenderChain (env-gated). +8 test.
+  - **Katman 2 (`apps/web`):** istemci kontrol-görseli (BİRİNCİL = offscreen 3B perspektif three.js render →
+    fotogerçekçi; İKİNCİL = yalnız-duvar SVG üstten, stilize) · route render dalı (maxDuration=60, preserve
+    validation + **fail-closed atomik günlük kota** `claim_render_slot` RPC, admin muaf) · `/api/render/capabilities` ·
+    Assistant UI (Yaratıcı|Geometriyi koru toggle + 3B/üstten kaynak + 3-kademe sadakat + Replicate rıza satırı) ·
+    schema render_events + RPC · .env.example.
+- **Sözleşme korundu:** creative (OpenAI text→image) AYNEN; anahtarsız preserve → toggle disabled + route 503
+  (sıfır harcama); Vercel-Hobby (60s) farkında; gizlilik (çıktı sunucuda rehost, rıza satırı); saf-paket sızıntısı yok.
+- **Model:** default `adirik/interior-design` (~$0.0065/render, Hobby-safe); HD `flux-depth/canny-dev` (Pro-gated). Env'le değişir.
+- **⚠️ MOSES AKTİVASYON (canlıya açmak için — YARIN.md'de adım adım):** (1) Replicate hesabı + kredi + token,
+  (2) Vercel env: `REPLICATE_API_TOKEN` + `REPLICATE_PRESERVE_VERSION` (adirik sürüm hash'i), (3) `supabase/schema.sql`
+  tekrar çalıştır (render_events + RPC), (4) redeploy → `/api/render/capabilities` `preserve:true` dönmeli, (5) Pro/admin
+  hesapla gerçek planda "Geometriyi koru" test. **NOT:** Replicate model girdi-alan adları (image/control_image,
+  prompt_strength) provisional — ilk testte modelin şemasına göre doğrulanmalı (provider-render-replicate.ts).
+
 **🆕 2026-06-29 (4) — VESNA "ÇİZ" PROMPTU DÜNYA-SINIFI YENİDEN TASARIM (main'de canlı, `05d7da6`):**
 - Moses "Çiz promptlarını 20 ajanla didik didik geliştir" dedi → **~20-ajanlı workflow** (12 web-araştırma açısı:
   rakipler[Maket/ArkDesign/Finch/TestFit/Hypar/Forma]/akademik[Graph2Plan/HouseGAN/Tell2Design]/LLM+Claude prompt

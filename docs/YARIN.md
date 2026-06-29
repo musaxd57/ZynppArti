@@ -6,6 +6,21 @@
 
 ---
 
+## ⚡ 2026-06-29 (5) — RENDER "GEOMETRİYİ KORU" AKTİVASYONU (kod canlıda DORMANT, anahtar bekliyor)
+ControlNet render kodu `bc928c0` ile canlıda ama anahtarsız uyuyor. AÇMAK İÇİN (Moses):
+- [ ] **1. Replicate hesabı:** replicate.com → kayıt + fatura/kredi → API token (replicate.com/account/api-tokens).
+- [ ] **2. Model sürüm hash'i:** replicate.com/adirik/interior-design sayfasından güncel `version` hash'ini kopyala.
+- [ ] **3. Vercel env (Production+Preview) + apps/web/.env.local:** `REPLICATE_API_TOKEN=r8_...` + `REPLICATE_PRESERVE_VERSION=<hash>`.
+  (Opsiyonel: `RENDER_PRESERVE_HD_MODEL=black-forest-labs/flux-depth-dev`, `RENDER_DAILY_CAP=30`.)
+- [ ] **4. Supabase:** `supabase/schema.sql`'i tekrar çalıştır (idempotent) → `render_events` + `claim_render_slot` RPC gelir.
+  (Bu olmadan preserve render fail-closed 503 verir — maliyet backstop'u.)
+- [ ] **5. Redeploy** → giriş yapılı Pro/admin ile `GET /api/render/capabilities` `{preserve:true}` dönmeli.
+- [ ] **6. Test:** Pro/admin hesapla Render → "Geometriyi koru" + "3B Perspektif" → gerçek planda dene (trial kredi).
+- [ ] **7. ⚠️ İLK TESTTE DOĞRULA:** Replicate model girdi-alan adları (`image`/`control_image`/`prompt_strength`/
+  `conditioning_scale`) provisional — adirik şeması farklıysa `provider-render-replicate.ts` payload'ını düzelt.
+- [ ] **8. A/B (opsiyonel):** ucuz `adirik` vs HD `flux-depth` — kazananı env ile seç (kod değişmez). HD Hobby 60s'i
+  aşabilir → gerekirse Vercel Pro (300s) maliyet kararı.
+
 ## ✅ 2026-06-28 — DENETİM + SELF-REVIEW + UI ELDEN GEÇİRME (main'de canlı, son `85c3abb`)
 - **30+ ajan denetimi** (72 onaylı bulgu) → tüm otonom-güvenli bulgular düzeltildi (4 HIGH dahil: plan
   self-upgrade açığı, Paddle paying→free downgrade, **oda adı veri kaybı**) + **self-review** (kendi diff'imde
