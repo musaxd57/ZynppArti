@@ -17,7 +17,7 @@ import {
   type Space,
   type Wall,
 } from '@zynpparti/document';
-import { pointInPolygon, findFaces } from '@zynpparti/geometry';
+import { pointInPolygon, findFaces, snapSegmentsToGrid, type Seg4 } from '@zynpparti/geometry';
 import { VesnaLogo } from './VesnaLogo';
 import { ProgramBuilder } from './ProgramBuilder';
 import { useProjectFileBase } from '@/lib/project-name';
@@ -286,6 +286,15 @@ function applyLayout(
   windowCount: number;
   bounds?: { minX: number; minY: number; maxX: number; maxY: number };
 } {
+  if (walls.length === 0) return { drawn: 0, named: 0, openingCount: 0, doorCount: 0, windowCount: 0 };
+
+  // LLM duvar uçlarını birkaç cm kaydırabiliyor → köşeler/T-bağlantılar tam kapanmıyor (iç duvar dış
+  // duvara değmiyor, kullanıcı gözlemi). Buluşması gereken yakın uçları ortak çizgilere hizala; sonra
+  // hizalama yüzünden sıfır-uzunluğa düşen (iki ucu birleşen) duvarları at. (TOL < en küçük gerçek oda.)
+  const SNAP_TOL = 50; // cm
+  walls = snapSegmentsToGrid(walls as Seg4[], SNAP_TOL).filter(
+    ([x1, y1, x2, y2]) => Math.hypot(x2 - x1, y2 - y1) > 1,
+  ) as [number, number, number, number][];
   if (walls.length === 0) return { drawn: 0, named: 0, openingCount: 0, doorCount: 0, windowCount: 0 };
 
   // Yerleşim: parsel varsa onun sol-üst köşesine ~1 m çekmeyle; yoksa `target` (kullanıcının baktığı
