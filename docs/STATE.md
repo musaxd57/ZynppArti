@@ -7,6 +7,11 @@
 
 ## ŞU AN
 
+**🆕 2026-06-29 (2) — AI duvar köşe boşluğu + admin hesabı (main'de canlı, `6087db4`):**
+- **AI duvar köşeleri kapanıyor (`39197c0`):** Moses AI'a çizdirdiği planda iç duvarların alt dış duvara değmediğini gördü (köşeler açık, ekran görüntüsüyle teyit — alt-orta kırpmada net boşluk). Sebep: LLM duvar uçlarını birkaç cm kaydırıyor → köşe/T-bağlantı buluşmuyor. Çözüm: yeni saf `snapSegmentsToGrid` (geometry) — yakın X/Y uç koordinatlarını ortak çizgilere kümeler (tol 50cm), `applyLayout`'ta entity kurmadan önce uygulanır; sıfır-uzunluk duvarlar atılır. +6 test (geometry 71).
+- **Admin hesabı (`6087db4`):** `musacinar2009@gmail.com` tam-yetkili ('studio' gibi): AI render açık (sunucu tarafı, **auth e-postasıyla** doğrulanır → istemci-bypass'a kapalı) + sınırsız bulut proje (kota atlanır). `isAdminEmail` (`lib/plan.ts`). Başka hesap eklemek = ADMIN_EMAILS setine ekle.
+- Zincir yeşil (typecheck 9/9 · lint 9/9 · web build). *(Tarayıcı teyidi Moses'ta: AI Çiz köşe kapanışı + admin render/kota.)* **NOT:** El-çizimi duvarların köşe-join'i (render miter) ayrı/daha riskli iş — bu tur AI yoluna odaklandı.
+
 **🆕 2026-06-29 — "← Projelerim" geri butonu (main'de canlı, `43e36b3`):** Çalışma ekranından galeriye (StartScreen) dönüş yolu yoktu (yalnız "Yeni"/sayfa yenile). Üst çubuğun en başına **"← Projelerim"** butonu eklendi → AppGate `app→start` fazına döner (CanvasStage unmount). Kaydedilmemiş çizim içeriği varsa onaylı (Kaydet/Ctrl+S hatırlatması), boşsa direkt. Toolbar `onBackToGallery` prop (verilmezse buton gizli). Zincir yeşil (web typecheck · lint · build). *(Tarayıcı teyidi Moses'ta.)*
 
 **🚀 CANLI YAYINDA:** Web `https://vesna.design` (Vercel) + sync `wss://zynpparti-production.up.railway.app` (Railway). 3 AI anahtarı Vercel env'de; AI adı **Vesna**.

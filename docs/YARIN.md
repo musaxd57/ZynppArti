@@ -24,6 +24,13 @@ Bugünkü UI işi canlıda ama gözle teyit edilmeli:
 - [ ] **Üst çubuk:** "İndir ▾" butonun altında **tam görünüyor mu** (kaydırmasız)? Aç/Bulut/Ücretsiz gitti mi?
 - [ ] **Oda adı (en kritik fix):** çiz → Ctrl+S → kapat → tekrar gir → galeriden aç → **oda adların geri geldi mi?**
 
+## 0.5 — 2026-06-29 (2): AI duvar köşeleri + admin hesabı (canlı `6087db4`)
+- [x] **AI duvar köşe boşluğu** ✅: `snapSegmentsToGrid` (geometry) → AI Çiz duvar uçları ortak çizgilere
+  hizalanıyor (köşe/T-bağlantı kapanıyor). *(Moses: AI'a yeni plan çizdir → köşeler kapalı mı?)*
+- [x] **Admin hesap** ✅: `musacinar2009@gmail.com` tam yetki (render açık + sınırsız proje). *(Moses: render dene.)*
+- [ ] **Takip — el-çizimi duvar köşe-join (render miter):** Hand-drawn duvarlarda da köşe notch'u olabilir;
+  render tarafı join daha riskli (canlı engine değişimi) → ayrı tur + görsel doğrulama.
+
 ## 1. Bekleyen küçük öneriler (Moses onaylarsa)
 - [x] **"← Projelerim" butonu** ✅ (`43e36b3`): üst çubuğun en başına eklendi → galeriye (StartScreen) döner.
   Kaydedilmemiş çizim varsa onay ister (Kaydet hatırlatması). Zincir yeşil. *(Tarayıcı teyidi Moses'ta.)*
