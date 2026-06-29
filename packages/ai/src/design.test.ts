@@ -1,5 +1,40 @@
 import { describe, it, expect } from 'vitest';
-import { parseLayout, parseLayouts } from './design';
+import { parseLayout, parseLayouts, DESIGN_SYSTEM } from './design';
+
+const ROOM_TYPES = ['living', 'kitchen', 'bathroom', 'wet', 'sleeping', 'circulation', 'service', 'other'];
+
+describe('DESIGN_SYSTEM gömülü few-shot örneği', () => {
+  // <ornek>…</ornek> içindeki few-shot JSON'unu çıkar (prompt prose'unda dengesiz süs parantezi —
+  // "ilk karakteri {" gibi — olduğundan tüm promptu değil yalnız örnek bloğunu ayrıştırırız; bu prose
+  // üretimi ETKİLEMEZ: model yalnız { ile başlayan JSON üretir, prompt hiç ayrıştırılmaz).
+  const example = (): string => {
+    const m = DESIGN_SYSTEM.match(/<ornek>\s*([\s\S]*?)\s*<\/ornek>/);
+    if (!m) throw new Error('DESIGN_SYSTEM içinde <ornek> bloğu yok');
+    return m[1]!;
+  };
+
+  it('kendi ayrıştırıcımızla GEÇERLİ bir plana çözülür (örnek bozulursa modele kötü şablon öğretiriz)', () => {
+    const layout = parseLayout(example());
+    expect(layout).not.toBeNull();
+    expect(layout!.walls.length).toBeGreaterThanOrEqual(8);
+    expect(layout!.rooms.length).toBeGreaterThanOrEqual(5);
+    expect(layout!.openings.some((o) => o.kind === 'door')).toBe(true);
+    expect(layout!.openings.some((o) => o.kind === 'window')).toBe(true);
+  });
+
+  it('örnekteki tüm oda tipleri koddaki ROOM_TYPE_KEYS enum\'unda (sessizce düşmez)', () => {
+    const layout = parseLayout(example())!;
+    for (const r of layout.rooms) {
+      if (r.type !== undefined) expect(ROOM_TYPES).toContain(r.type);
+    }
+  });
+
+  it('sözleşme işaretleri promptta korunur (yalnız-JSON + şema anahtarları)', () => {
+    expect(DESIGN_SYSTEM).toContain('İLK karakteri {');
+    expect(DESIGN_SYSTEM).toContain('"variants"');
+    for (const key of ['summary', 'walls', 'rooms', 'openings']) expect(DESIGN_SYSTEM).toContain(key);
+  });
+});
 
 describe('parseLayout', () => {
   it('düz JSON ayrıştırır', () => {
