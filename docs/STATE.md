@@ -57,7 +57,12 @@
   - **Moses-territory metraj (domain/mimar kararı — otonom dokunulmadı, YARIN'a):** floor/ceiling/paint **gross
     (centerline) yerine net** alan kullanmalı mı (~%4 fazla); "İç/Dış sıva" kategorisi Kaba→İnce yapı; c===0 duvar
     plaster yüzü; median-thickness çift-orta. (Sayısal totaller değişeceği için mimar onayı.)
-- **TOPLAM (4 dalga, bu oturum): 15 fix commit + 4 doc, +11 test, hepsi yeşil zincir + push (main+default senkron).**
+- **✅ SELF-REVIEW (2 adversaryal ajan, oturum diff'i `6e01e74..HEAD`): REGRESYON YOK.** 15+ değişiklik tek tek
+  doğrulandı — planar-faces winding elle izlendi (bounded CCW+ / outer CW−, tie imkânsız), history crash-safety
+  (invert saf→apply öncesi throw store'u bozmaz), marquee narrow-phase, debounce (leak/stale yok), parseLayouts
+  (yanlış-blok seçmiyor), glTF clone (canlı sahne/paylaşılan kaynak güvenli), token-bucket math, orphan-blob guard.
+  Tek not (regresyon değil, kasıtlı): `dispatch` artık programcı-hatası throw'unu da yutuyor (console.error'la).
+- **TOPLAM (4 dalga + self-review, bu oturum): 15 fix commit + 4 doc, +11 test, hepsi yeşil zincir + push (main+default senkron).**
 
 **🆕 2026-06-29 (2) — AI duvar köşe boşluğu + admin hesabı (main'de canlı, `6087db4`):**
 - **AI duvar köşeleri kapanıyor (`39197c0`):** Moses AI'a çizdirdiği planda iç duvarların alt dış duvara değmediğini gördü (köşeler açık, ekran görüntüsüyle teyit — alt-orta kırpmada net boşluk). Sebep: LLM duvar uçlarını birkaç cm kaydırıyor → köşe/T-bağlantı buluşmuyor. Çözüm: yeni saf `snapSegmentsToGrid` (geometry) — yakın X/Y uç koordinatlarını ortak çizgilere kümeler (tol 50cm), `applyLayout`'ta entity kurmadan önce uygulanır; sıfır-uzunluk duvarlar atılır. +6 test (geometry 71).
