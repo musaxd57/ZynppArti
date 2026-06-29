@@ -89,9 +89,9 @@ Bugünkü UI işi canlıda ama gözle teyit edilmeli:
   yalnız copilot net-genişlik kontrolünü etkiler, m²/maliyeti DEĞİL.
 
 ### 2026-06-29 (3) dalga-5 — export/import kalan (otonom dokunulmadı)
-- [ ] **Pafta ANTET'i SVG/PDF'e girmiyor (MED, GÖRSEL DOĞRULAMA):** `svg-export.ts` sheet entity'sini çizmiyor →
-  çerçeve + antet (başlık/proje/tarih/Ölçek 1:N/pafta-no) export'ta KAYIP (profesyonel çıktının özü). Fix:
-  `render-sheet.ts`'i (frame + title-block + escaped metin) SVG'ye aynala. Görsel doğrulama şart → Moses.
+- [x] **Pafta ANTET'i SVG/PDF'e EKLENDİ** ✅: `svg-export.ts` artık sheet çerçeve + 10mm margin + antet
+  (başlık/proje/tarih/Ölçek/pafta-no) çiziyor + sheet bounds'a katıldı. **Moses: gerçek PDF export'unda antet
+  yerleşimini/metin sığmasını gözle teyit et.**
 - [ ] **MINSERT dizileri (MED, nadir):** dxf-parser `columnCount/rowCount/spacing` veriyor ama INSERT tek kopya
   yerleştiriliyor → dizi (kolon/park/oturma) tek kopyaya çöküyor. Fix: satır×kolon döngüsü, blok dönmüş çerçevede ofset.
 - [ ] **INSERT-seviye mirror (LOW):** ins extrusion (0,0,−1) uygulanmıyor (çocuk entity'lerde var); aynalı blok yerleşimi aynalanmaz.
