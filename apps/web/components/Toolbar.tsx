@@ -20,7 +20,7 @@ import {
 } from '@zynpparti/document';
 import type { ToolManager, ToolName } from '@zynpparti/tools';
 import { importDxf, importDwg, exportDxf, exportSvg } from '@zynpparti/io';
-import { Undo2, Redo2, Maximize, PanelLeft, PanelLeftClose, Download, ChevronDown } from 'lucide-react';
+import { Undo2, Redo2, Maximize, PanelLeft, PanelLeftClose, Download, ChevronDown, ArrowLeft } from 'lucide-react';
 import { alertDialog, confirmDialog } from '@/lib/dialog';
 import { toast } from '@/lib/toast';
 import { projectFileBase, useProjectName, setProjectName, DEFAULT_PROJECT_NAME } from '@/lib/project-name';
@@ -60,6 +60,8 @@ interface ToolbarProps {
   onToggleChrome?: () => void;
   /** Yüklenen mahalleri RoomManager'a tohum ver (ad/tip/malzeme geri gelsin) — model açma yollarında. */
   seedRooms?: (spaces: readonly Space[]) => void;
+  /** "← Projelerim" — karşılama ekranına (galeri) dönüş. Verilmezse buton gizlenir. */
+  onBackToGallery?: () => void;
 }
 
 /**
@@ -98,6 +100,7 @@ export function Toolbar({
   chromeHidden,
   onToggleChrome,
   seedRooms,
+  onBackToGallery,
 }: ToolbarProps) {
   const [active, setActive] = useState<ToolName>(manager.activeTool);
   // "İndir ▾" menüsü. Üst çubuk overflow-x-auto ile kırptığından menü PORTAL ile body'ye, sabit konuma
@@ -357,6 +360,20 @@ export function Toolbar({
     toast('DXF indirildi.', 'success');
   }
 
+  /**
+   * "← Projelerim": karşılama ekranına (galeri) döner. CanvasStage unmount olacağı için bellekteki
+   * kaydedilmemiş çizim KAYBOLUR → çizim içeriği varsa önce onay iste (Kaydet hatırlat). Boşsa direkt dön.
+   */
+  async function onBack(): Promise<void> {
+    if (!onBackToGallery) return;
+    if (
+      hasDrawableContent() &&
+      !(await confirmDialog('Projelere dön? Kaydedilmemiş değişiklikler kaybolur — önce Kaydet (Ctrl+S).'))
+    )
+      return;
+    onBackToGallery();
+  }
+
   async function onNewModel(): Promise<void> {
     const toRemove = store.all().filter((ent) => ent.type !== 'space');
     if (toRemove.length === 0) return;
@@ -442,6 +459,20 @@ export function Toolbar({
 
   return (
     <div className="z-30 flex w-full shrink-0 flex-nowrap items-center gap-1 overflow-x-auto border-b border-[var(--border-soft)] bg-[var(--surface-2)] p-1.5 text-[13px] text-[var(--text-1)]">
+      {onBackToGallery && (
+        <>
+          <button
+            type="button"
+            onClick={() => void onBack()}
+            className={`${btn} flex shrink-0 items-center gap-1`}
+            title="Projelerim — karşılama ekranına dön"
+            aria-label="Projelerim"
+          >
+            <ArrowLeft className="h-[18px] w-[18px]" /> Projelerim
+          </button>
+          <span className="mx-1 h-5 w-px shrink-0 bg-[var(--border-soft)]" />
+        </>
+      )}
       <input
         aria-label="Proje adı"
         value={projectName}

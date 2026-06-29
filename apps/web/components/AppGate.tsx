@@ -23,5 +23,5 @@ export function AppGate() {
 
   if (phase === 'loading') return null; // ilk paint: nötr (hidrasyon güvenli)
   if (phase === 'start') return <StartScreen onStart={() => setPhase('app')} />;
-  return <CanvasStage />;
+  return <CanvasStage onBack={() => setPhase('start')} />;
 }

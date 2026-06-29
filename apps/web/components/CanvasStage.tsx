@@ -58,7 +58,7 @@ const PRESENCE_COLORS = [0x5b5bd6, 0xffb454, 0x71d083, 0xff9592, 0x4fd1e0, 0xe05
  * Engine canvas + araç yöneticisini DOM'a bağlayan React sarmalı.
  * PixiJS yalnızca istemcide çalışır → 'use client' + useEffect içinde mount edilir.
  */
-export function CanvasStage() {
+export function CanvasStage({ onBack }: { onBack?: () => void } = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [ui, setUi] = useState<{
     manager: ToolManager;
@@ -463,6 +463,7 @@ export function CanvasStage() {
           chromeHidden={chromeHidden}
           onToggleChrome={() => setChromeHidden((v) => !v)}
           seedRooms={ui.seedRooms}
+          onBackToGallery={onBack}
         />
       )}
       <div className="relative flex min-h-0 flex-1">
