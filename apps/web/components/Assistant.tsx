@@ -505,6 +505,21 @@ export function Assistant({ store, history, selectedIds, open, onClose, zoomToFi
   // o thread'in altına yapışıp Sor hatası gibi görünmesin (error tek paylaşımlı string).
   useEffect(() => setError(null), [mode]);
 
+  // Escape → paneli kapat (diğer overlay'lerle tutarlı a11y). Bir metin alanında yazarken DEĞİL
+  // (yazımı bozmasın; Ctrl+O guard'ıyla aynı disiplin).
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key !== 'Escape') return;
+      const t = e.target as HTMLElement | null;
+      const tag = t?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || t?.isContentEditable) return;
+      onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
   const messages = threads[mode];
   const loading = loadingMode !== null;
   const nextId = (): string => `m${++idRef.current}`;

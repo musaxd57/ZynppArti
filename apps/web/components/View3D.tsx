@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { projectFileBase } from '@/lib/project-name';
+import { useFocusTrap } from '@/lib/use-focus-trap';
 import { toast } from '@/lib/toast';
 import * as THREE from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
@@ -16,6 +17,8 @@ import { wallBoxesWithOpenings, roomTypeColor, type EntityStore } from '@zynppar
  */
 export function View3D({ store }: { store: EntityStore }) {
   const [open, setOpen] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef, open); // tam-ekran modal: Tab odağı içeride kalsın + kapanınca tetikleyiciye dön (a11y)
   const [error, setError] = useState<string | null>(null);
   const [spin, setSpin] = useState(false);
   const spinRef = useRef(false); // animasyon döngüsü bunu okur (otomatik tur)
@@ -371,10 +374,12 @@ export function View3D({ store }: { store: EntityStore }) {
       )}
       {open && (
         <div
+          ref={dialogRef}
+          tabIndex={-1}
           role="dialog"
           aria-modal="true"
           aria-label="3B önizleme"
-          className="fixed inset-0 z-50 flex flex-col bg-neutral-950"
+          className="fixed inset-0 z-50 flex flex-col bg-neutral-950 outline-none"
         >
           <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2 text-white">
             <span className="text-sm font-semibold">3B Önizleme (şematik)</span>

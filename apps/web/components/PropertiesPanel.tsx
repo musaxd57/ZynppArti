@@ -143,6 +143,7 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
       <Panel title="Özellikler — Metin" widthClass="w-full">
         <div className="flex flex-col gap-1">
           <input
+            aria-label="Metin"
             defaultValue={a.text}
             onBlur={(ev) => {
               const txt = ev.target.value.trim();
@@ -175,6 +176,7 @@ export function PropertiesPanel({ store, history, selectedIds }: PropertiesPanel
       <Panel title="Özellikler — Yorum" widthClass="w-full">
         <div className="flex flex-col gap-1">
           <input
+            aria-label="Yorum"
             defaultValue={c.text}
             onBlur={(ev) => {
               const txt = ev.target.value.trim();
