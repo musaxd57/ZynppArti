@@ -48,6 +48,12 @@ const rooms = new Map();
 // cap; aşımda 1013 (try again later) ile kapat. Env ile ayarlanır (Railway). maxPayload + heartbeat zaten var.
 const MAX_TOTAL_CONNS = Number(process.env.MAX_CONNECTIONS) || 2000;
 const MAX_PEERS_PER_ROOM = Number(process.env.MAX_PEERS_PER_ROOM) || 50;
+// Mesaj-hızı sınırı (denetim): maxPayload frame BOYUTUNU sınırlar ama FREKANSI değil → tek kötü-niyetli
+// peer odaya saniyede binlerce frame basıp ~×50 yayın amplifikasyonuyla doyurabilirdi. Per-socket
+// token-bucket: cömert (normal Yjs sync/awareness trafiği asla takılmaz), sürekli aşımda bağlantıyı
+// 1013 ile kapat (sessiz mesaj-düşürmek Yjs tutarlılığını bozardı; reconnect temiz re-sync verir). Env-ayarlı.
+const MSG_BURST = Number(process.env.MAX_MSG_BURST) || 400; // anlık patlama kapasitesi
+const MSG_PER_SEC = Number(process.env.MAX_MSG_PER_SEC) || 200; // sürekli doldurma hızı
 
 wss.on('connection', (ws, req) => {
   // Global bağlantı sınırı (yeni soket clients'a zaten eklendi → > ile MAX'ı tavan yap).
@@ -71,7 +77,20 @@ wss.on('connection', (ws, req) => {
     ws.isAlive = true;
   });
 
+  // Per-socket mesaj token-bucket (yukarıdaki açıklama).
+  let tokens = MSG_BURST;
+  let lastRefill = Date.now();
+
   ws.on('message', (data, isBinary) => {
+    const now = Date.now();
+    tokens = Math.min(MSG_BURST, tokens + ((now - lastRefill) / 1000) * MSG_PER_SEC);
+    lastRefill = now;
+    if (tokens < 1) {
+      // Sürekli flood → bağlantıyı kapat (relay etme). İstemci yeniden bağlanıp tam re-sync olur.
+      ws.close(1013, 'rate limit');
+      return;
+    }
+    tokens -= 1;
     for (const peer of peers) {
       if (peer !== ws && peer.readyState === peer.OPEN) peer.send(data, { binary: isBinary });
     }
