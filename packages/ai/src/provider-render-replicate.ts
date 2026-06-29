@@ -65,12 +65,13 @@ export function replicateRenderProvider(token: string, opts?: ReplicateRenderOpt
         let modelInput: Record<string, unknown>;
         if (officialSlug) {
           // RESMİ FLUX şeması (flux-canny-dev / flux-depth-dev). control_image data-URI kabul eder.
+          // MİNİMAL tutuyoruz: Replicate resmi modellerde BİLİNMEYEN alanı 422 ile reddeder → yalnız kesin
+          // alanlar (prompt, control_image, guidance). output_format/megapixels/steps varsayılanda kalır
+          // (rehost çıktının content-type'ını okur → webp/png/jpg fark etmez). 422'de buradan alan eklenir/çıkarılır.
           modelInput = {
             prompt: input.prompt,
             control_image: input.controlImage,
             guidance: fluxGuidance(input.conditioningScale),
-            output_format: 'jpg',
-            megapixels: '1',
           };
         } else {
           // COMMUNITY SDXL şeması (image + conditioning/prompt_strength). version pin ZORUNLU (yoksa 422).
