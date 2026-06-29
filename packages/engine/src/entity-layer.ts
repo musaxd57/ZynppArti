@@ -279,8 +279,10 @@ export class EntityLayer {
         if (hatch && material) strokeSpaceMaterial(hatch, hatchSegs, material.color, p);
       });
       const label = buildSpaceLabel(entity);
-      this.labelLayer.addChild(label);
-      objs.push(label);
+      if (label) {
+        this.labelLayer.addChild(label);
+        objs.push(label);
+      }
     }
     // Görünürlük TEK kaynaktan (cull) yönetilir → yeni obje viewport dışındaysa yanlışlıkla çizilmesin
     // diye gizli başlar; değişiklik sonrası cull (satır ~71) görünür alandakileri açar. (Artımlı cull şartı.)

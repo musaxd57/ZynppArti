@@ -95,8 +95,11 @@ export function exportSvg(
     const wall = walls.get(e.wallId);
     if (!wall) continue;
     const f = openingFrame(e, wall);
+    // İçe-aktarılan duvar ince (3px) wireframe çizilir → kesimi de ince olmalı; aksi halde thickness kadar
+    // geniş beyaz bant çevre içeriği örter (beyaz kutu artefaktı). Native (poché) duvarda tam kalınlık kesilir.
+    const cutW = wall.color != null ? 4 : wall.thickness + 1;
     body.push(
-      `<line x1="${num(f.a.x)}" y1="${num(f.a.y)}" x2="${num(f.b.x)}" y2="${num(f.b.y)}" stroke="#ffffff" stroke-width="${num(wall.thickness + 1)}" stroke-linecap="butt" />`,
+      `<line x1="${num(f.a.x)}" y1="${num(f.a.y)}" x2="${num(f.b.x)}" y2="${num(f.b.y)}" stroke="#ffffff" stroke-width="${num(cutW)}" stroke-linecap="butt" />`,
     );
     body.push(
       `<line x1="${num(f.a.x)}" y1="${num(f.a.y)}" x2="${num(f.b.x)}" y2="${num(f.b.y)}" stroke="#1a1a1a" stroke-width="1" stroke-dasharray="${e.kind === 'window' ? '0' : '6 4'}" />`,

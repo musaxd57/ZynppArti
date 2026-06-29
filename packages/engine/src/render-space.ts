@@ -77,7 +77,10 @@ export function drawSpaceMaterial(
 }
 
 /** Mahal etiketini (ad + canlı m²) merkeze yerleştirir. BitmapText → TR_CHARSET atlası. */
-export function buildSpaceLabel(space: Space): BitmapText {
+export function buildSpaceLabel(space: Space): BitmapText | null {
+  // Dejenere sınır (<3 nokta) → polygonArea/polygonLabelPoint NaN → label.position NaN olur (etiket kaybolur/
+  // garip yere gider). fill/perimeter zaten <3'te erken döner; etiket de dönsün.
+  if (space.boundary.length < 3) return null;
   const area = polygonArea(space.boundary) / 10000; // cm² → m²
   const label = new BitmapText({
     text: `${space.name}\n${formatArea(area)} m²`,

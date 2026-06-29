@@ -76,14 +76,30 @@ function sheetHasContent(s: Sheet, ents: readonly Entity[]): boolean {
   const x1 = x0 + w;
   const y1 = y0 + h;
   const inRect = (p: { x: number; y: number }): boolean => p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1;
+  // Segment/poligonun AABB'si sayfa dikdörtgeniyle örtüşüyor mu? Eski kod yalnız nokta-içeride bakıyordu →
+  // sayfayı KESEN (uçları dışarıda) bir duvar/parsel "boş" sayılıp o sayfa PDF'ten sessizce DÜŞÜYORDU.
+  // AABB-örtüşmesi broad-phase: olası false-positive (hafif boş sayfa dahil) zararsız; içerik düşürmemek esas.
+  const overlaps = (pts: { x: number; y: number }[]): boolean => {
+    let nx = Infinity, ny = Infinity, xx = -Infinity, xy = -Infinity;
+    for (const p of pts) {
+      if (p.x < nx) nx = p.x;
+      if (p.y < ny) ny = p.y;
+      if (p.x > xx) xx = p.x;
+      if (p.y > xy) xy = p.y;
+    }
+    return nx <= x1 && xx >= x0 && ny <= y1 && xy >= y0;
+  };
   for (const e of ents) {
-    let pts: { x: number; y: number }[] = [];
-    if (e.type === 'wall') pts = [e.start, e.end, { x: (e.start.x + e.end.x) / 2, y: (e.start.y + e.end.y) / 2 }];
-    else if (e.type === 'parcel') pts = [...e.boundary];
-    else if (e.type === 'dimension' || e.type === 'section') pts = [e.a, e.b];
-    else if (e.type === 'block' || e.type === 'annotation' || e.type === 'comment') pts = [e.position];
+    if (e.type === 'wall') {
+      if (overlaps([e.start, e.end])) return true;
+    } else if (e.type === 'parcel') {
+      if (overlaps([...e.boundary])) return true;
+    } else if (e.type === 'dimension' || e.type === 'section') {
+      if (overlaps([e.a, e.b])) return true;
+    } else if (e.type === 'block' || e.type === 'annotation' || e.type === 'comment') {
+      if (inRect(e.position)) return true; // küçük/nokta öğe → konum yeterli
+    }
     // sheet/space/opening → atla (sheet kendisi, space türetilmiş, opening duvara bağlı)
-    if (pts.some(inRect)) return true;
   }
   return false;
 }
